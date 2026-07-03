@@ -1,0 +1,19 @@
+{
+  "name": "eiv-solution-air-mobile-shell",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android WebView shell wrapping the EIV Solution Air web app",
+  "scripts": {
+    "assets": "capacitor-assets generate --android",
+    "sync": "cap sync android"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/core": "^8.4.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.1"
+  }
+}

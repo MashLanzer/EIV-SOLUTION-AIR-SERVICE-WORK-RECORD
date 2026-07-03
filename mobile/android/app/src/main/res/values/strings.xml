@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">EIV Solution Air</string>
+    <string name="title_activity_main">EIV Solution Air</string>
+    <string name="package_name">com.eivsolutionair.workrecord</string>
+    <string name="custom_url_scheme">com.eivsolutionair.workrecord</string>
+</resources>
