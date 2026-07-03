@@ -3,11 +3,14 @@
 import { useRef, useState, useTransition, type FormEvent } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
+import { Briefcase, User, Clock, DollarSign, PenTool, Save, X } from "lucide-react";
 
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FormSection } from "@/components/forms/FormSection";
 import {
   SignaturePad,
   type SignaturePadHandle,
@@ -87,8 +90,8 @@ export function WorkRecordForm({
   }
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <FormSection icon={Briefcase} title="Job Details">
         <div className="flex flex-col gap-2">
           <Label htmlFor="date">Date</Label>
           <Input
@@ -125,6 +128,9 @@ export function WorkRecordForm({
             defaultValue={defaultValues?.helperName}
           />
         </div>
+      </FormSection>
+
+      <FormSection icon={User} title="Customer">
         <div className="flex flex-col gap-2">
           <Label htmlFor="customerName">Customer Name</Label>
           <Input
@@ -143,6 +149,9 @@ export function WorkRecordForm({
             defaultValue={defaultValues?.customerAddress}
           />
         </div>
+      </FormSection>
+
+      <FormSection icon={Clock} title="Time & Work">
         <div className="flex flex-col gap-2">
           <Label htmlFor="arrivalTime">Arrival Time</Label>
           <Input
@@ -177,6 +186,9 @@ export function WorkRecordForm({
             defaultValue={defaultValues?.workPerformedNotes}
           />
         </div>
+      </FormSection>
+
+      <FormSection icon={DollarSign} title="Payment">
         <div className="flex flex-col gap-2">
           <Label htmlFor="leadInstallerPay">Lead Installer Pay ($)</Label>
           <Input
@@ -200,9 +212,9 @@ export function WorkRecordForm({
             defaultValue={defaultValues?.helperPay}
           />
         </div>
-      </div>
+      </FormSection>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <FormSection icon={PenTool} title="Signatures">
         <SignaturePad
           ref={customerSigRef}
           label="Customer Signature"
@@ -213,16 +225,18 @@ export function WorkRecordForm({
           label="Installer Signature"
           defaultValue={defaultValues?.installerSignature}
         />
-      </div>
+      </FormSection>
 
       {(signatureError || state?.error) && (
-        <p className="text-sm text-red-600" role="alert">
-          {signatureError ?? state?.error}
-        </p>
+        <Alert variant="error">{signatureError ?? state?.error}</Alert>
       )}
 
-      <div className="flex gap-3">
+      {/* Spacer so the fixed mobile action bar doesn't cover the last section */}
+      <div className="h-16 sm:hidden" />
+
+      <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
         <Button type="submit" size="lg" disabled={pending}>
+          <Save className="h-4 w-4" />
           {pending ? "Saving..." : submitLabel}
         </Button>
         <Button
@@ -231,6 +245,7 @@ export function WorkRecordForm({
           size="lg"
           onClick={() => router.back()}
         >
+          <X className="h-4 w-4" />
           Cancel
         </Button>
       </div>

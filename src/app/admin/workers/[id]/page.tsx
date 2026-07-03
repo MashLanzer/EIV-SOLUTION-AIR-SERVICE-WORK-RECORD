@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+import { KeyRound, Ban, CheckCircle2 } from "lucide-react";
 
+import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,14 +31,14 @@ export default async function WorkerDetailPage({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {tempPassword && (
-          <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">
+          <Alert variant="success">
             <p className="font-medium">Temporary password:</p>
             <p className="font-mono text-base">{tempPassword}</p>
-            <p className="mt-1 text-xs text-green-700">
+            <p className="mt-1 text-xs">
               Share this with {worker.name} now — it will not be shown again.
               They will be asked to set a new password on their next sign in.
             </p>
-          </div>
+          </Alert>
         )}
 
         <div className="flex flex-col gap-1 text-sm">
@@ -61,11 +63,17 @@ export default async function WorkerDetailPage({
         <div className="flex gap-2">
           <form action={resetWorkerPasswordAction.bind(null, worker.id)}>
             <Button type="submit" variant="outline">
+              <KeyRound className="h-4 w-4" />
               Reset Password
             </Button>
           </form>
           <form action={toggleWorkerActiveAction.bind(null, worker.id)}>
             <Button type="submit" variant={worker.active ? "destructive" : "default"}>
+              {worker.active ? (
+                <Ban className="h-4 w-4" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
               {worker.active ? "Deactivate" : "Reactivate"}
             </Button>
           </form>

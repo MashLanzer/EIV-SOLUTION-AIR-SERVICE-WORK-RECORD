@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { User } from "@prisma/client";
+import { Users, Settings } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableBody,
@@ -15,9 +17,11 @@ import {
 export function WorkersTable({ workers }: { workers: User[] }) {
   if (workers.length === 0) {
     return (
-      <p className="rounded-md border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-        No worker accounts yet.
-      </p>
+      <EmptyState
+        icon={Users}
+        title="No worker accounts yet"
+        description="Create one to get your team started."
+      />
     );
   }
 
@@ -49,7 +53,10 @@ export function WorkersTable({ workers }: { workers: User[] }) {
             </TableCell>
             <TableCell className="text-right">
               <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/workers/${worker.id}`}>Manage</Link>
+                <Link href={`/admin/workers/${worker.id}`}>
+                  <Settings className="h-4 w-4" />
+                  Manage
+                </Link>
               </Button>
             </TableCell>
           </TableRow>

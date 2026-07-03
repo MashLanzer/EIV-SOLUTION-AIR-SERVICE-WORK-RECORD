@@ -1,3 +1,5 @@
+import { FileText, Sheet } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RecordsFilterBar } from "@/components/records/RecordsFilterBar";
@@ -55,6 +57,7 @@ export default async function AdminRecordsPage({
           size="sm"
           formAction="/admin/records/export/pdf"
         >
+          <FileText className="h-4 w-4" />
           Export to PDF
         </Button>
         <Button
@@ -63,6 +66,7 @@ export default async function AdminRecordsPage({
           size="sm"
           formAction="/admin/records/export/excel"
         >
+          <Sheet className="h-4 w-4" />
           Export to Excel
         </Button>
       </form>

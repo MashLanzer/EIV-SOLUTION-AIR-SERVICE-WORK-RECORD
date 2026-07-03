@@ -1,13 +1,14 @@
 import Link from "next/link";
 
+import { Logo } from "@/components/layout/Logo";
 import { LogoutButton } from "@/components/layout/LogoutButton";
 
 export function WorkerNav({ name }: { name: string }) {
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-        <Link href="/records" className="font-semibold text-slate-900">
-          EIV Solution Air
+        <Link href="/records">
+          <Logo />
         </Link>
         <div className="flex items-center gap-4">
           <span className="hidden text-sm text-slate-500 sm:inline">{name}</span>

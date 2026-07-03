@@ -2,6 +2,7 @@
 
 import { useRef, useState, useImperativeHandle, forwardRef } from "react";
 import SignatureCanvas from "react-signature-canvas";
+import { Eraser, PenLine } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
     const [mode, setMode] = useState<"preview" | "draw">(
       defaultValue ? "preview" : "draw"
     );
+    const [isEmpty, setIsEmpty] = useState(true);
 
     useImperativeHandle(ref, () => ({
       getDataUrl: () => {
@@ -41,8 +43,12 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
               type="button"
               variant="ghost"
               size="sm"
-              onClick={() => sigRef.current?.clear()}
+              onClick={() => {
+                sigRef.current?.clear();
+                setIsEmpty(true);
+              }}
             >
+              <Eraser className="h-3.5 w-3.5" />
               Clear
             </Button>
           ) : (
@@ -52,11 +58,12 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
               size="sm"
               onClick={() => setMode("draw")}
             >
+              <PenLine className="h-3.5 w-3.5" />
               Re-sign
             </Button>
           )}
         </div>
-        <div className="rounded-md border border-slate-300 bg-white">
+        <div className="relative rounded-md border-2 border-dashed border-slate-300 bg-white">
           {mode === "preview" ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -65,14 +72,23 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
               className="h-40 w-full object-contain"
             />
           ) : (
-            <SignatureCanvas
-              ref={sigRef}
-              penColor="black"
-              canvasProps={{
-                className: "w-full h-40 rounded-md",
-                style: { touchAction: "none" },
-              }}
-            />
+            <>
+              {isEmpty && (
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-300">
+                  <PenLine className="h-6 w-6" />
+                  <span className="text-xs">Sign here</span>
+                </div>
+              )}
+              <SignatureCanvas
+                ref={sigRef}
+                penColor="#0f172a"
+                onBegin={() => setIsEmpty(false)}
+                canvasProps={{
+                  className: "w-full h-40 rounded-md",
+                  style: { touchAction: "none" },
+                }}
+              />
+            </>
           )}
         </div>
       </div>

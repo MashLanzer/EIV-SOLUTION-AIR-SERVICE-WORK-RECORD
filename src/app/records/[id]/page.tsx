@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Download } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,10 @@ export default async function RecordDetailPage({
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Job #{record.jobNumber}</CardTitle>
         <Button asChild variant="outline" size="sm">
-          <Link href={`/records/${record.id}/pdf`}>Download PDF</Link>
+          <Link href={`/records/${record.id}/pdf`}>
+            <Download className="h-4 w-4" />
+            Download PDF
+          </Link>
         </Button>
       </CardHeader>
       <CardContent>

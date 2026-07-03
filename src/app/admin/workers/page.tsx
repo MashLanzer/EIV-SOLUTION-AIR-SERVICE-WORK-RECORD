@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +14,10 @@ export default async function AdminWorkersPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">Workers</h1>
         <Button asChild>
-          <Link href="/admin/workers/new">New Worker</Link>
+          <Link href="/admin/workers/new">
+            <UserPlus className="h-4 w-4" />
+            New Worker
+          </Link>
         </Button>
       </div>
 

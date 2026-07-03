@@ -28,7 +28,7 @@ export function RecordCard({
             <span className="font-semibold text-slate-900">
               Job #{record.jobNumber}
             </span>
-            <Badge variant="secondary">{formatDate(record.date)}</Badge>
+            <Badge>{formatDate(record.date)}</Badge>
           </div>
           <div className="text-sm text-slate-600">{record.customerName}</div>
           <div className="text-sm text-slate-500">{record.typeOfWork}</div>

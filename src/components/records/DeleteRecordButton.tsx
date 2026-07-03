@@ -1,5 +1,7 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { deleteRecordAction } from "@/actions/records";
 
@@ -13,8 +15,8 @@ export function DeleteRecordButton({ recordId }: { recordId: string }) {
         }
       }}
     >
-      <Button type="submit" variant="destructive" size="sm">
-        Delete
+      <Button type="submit" variant="destructive" size="icon" aria-label="Delete record">
+        <Trash2 className="h-4 w-4" />
       </Button>
     </form>
   );

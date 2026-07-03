@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Download } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,10 @@ export default async function AdminEditRecordPage({
         <CardTitle>Edit Job #{record.jobNumber}</CardTitle>
         <div className="flex gap-2">
           <Button asChild variant="outline" size="sm">
-            <a href={`/admin/records/${record.id}/pdf`}>Download PDF</a>
+            <a href={`/admin/records/${record.id}/pdf`}>
+              <Download className="h-4 w-4" />
+              Download PDF
+            </a>
           </Button>
           <DeleteRecordButton recordId={record.id} />
         </div>

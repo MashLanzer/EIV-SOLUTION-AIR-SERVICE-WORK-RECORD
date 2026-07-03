@@ -1,7 +1,9 @@
 import Link from "next/link";
 import type { WorkRecord } from "@prisma/client";
+import { ClipboardList, Pencil, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableBody,
@@ -33,9 +35,11 @@ export function RecordsTable({
 }) {
   if (records.length === 0) {
     return (
-      <p className="rounded-md border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-        No records match these filters.
-      </p>
+      <EmptyState
+        icon={ClipboardList}
+        title="No records match these filters"
+        description="Try adjusting or clearing the filters above."
+      />
     );
   }
 
@@ -72,11 +76,15 @@ export function RecordsTable({
             <TableCell>{record.submittedBy.name}</TableCell>
             <TableCell>{record.typeOfWork}</TableCell>
             <TableCell className="flex justify-end gap-2 text-right">
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/records/${record.id}`}>Edit</Link>
+              <Button asChild variant="outline" size="icon">
+                <Link href={`/admin/records/${record.id}`} aria-label="Edit record">
+                  <Pencil className="h-4 w-4" />
+                </Link>
               </Button>
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/records/${record.id}/pdf`}>PDF</Link>
+              <Button asChild variant="outline" size="icon">
+                <Link href={`/admin/records/${record.id}/pdf`} aria-label="Download PDF">
+                  <Download className="h-4 w-4" />
+                </Link>
               </Button>
               <DeleteRecordButton recordId={record.id} />
             </TableCell>
