@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  WORKER
+}
+
+model User {
+  id                 String       @id @default(cuid())
+  username           String       @unique
+  passwordHash       String
+  name               String
+  role               Role         @default(WORKER)
+  active             Boolean      @default(true)
+  mustChangePassword Boolean      @default(true)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  submittedRecords   WorkRecord[] @relation("SubmittedBy")
+}
+
+model WorkRecord {
+  id                 String   @id @default(cuid())
+  date               DateTime @db.Date
+  jobNumber          String
+  leadInstallerName  String
+  helperName         String?
+  customerName       String
+  customerAddress    String
+  arrivalTime        String
+  departureTime      String
+  typeOfWork         String
+  workPerformedNotes String   @db.Text
+  leadInstallerPay   Decimal  @db.Decimal(10, 2)
+  helperPay          Decimal? @db.Decimal(10, 2)
+  customerSignature  String   @db.Text
+  installerSignature String   @db.Text
+  submittedById      String
+  submittedBy        User     @relation("SubmittedBy", fields: [submittedById], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([date])
+  @@index([jobNumber])
+  @@index([customerName])
+}
