@@ -30,7 +30,7 @@ jobs:
 
       - name: Install mobile shell dependencies
         working-directory: mobile
-        run: npm ci
+        run: npm install
 
       - name: Generate app icons and splash screen
         working-directory: mobile
