@@ -30,7 +30,7 @@ export function WorkersTable({ workers }: { workers: User[] }) {
       <TableHeader>
         <TableRow>
           <TableHead>Name</TableHead>
-          <TableHead>Username</TableHead>
+          <TableHead>Email</TableHead>
           <TableHead>Role</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
@@ -40,7 +40,7 @@ export function WorkersTable({ workers }: { workers: User[] }) {
         {workers.map((worker) => (
           <TableRow key={worker.id}>
             <TableCell>{worker.name}</TableCell>
-            <TableCell>{worker.username}</TableCell>
+            <TableCell>{worker.email}</TableCell>
             <TableCell>
               <Badge variant={worker.role === "ADMIN" ? "default" : "secondary"}>
                 {worker.role}

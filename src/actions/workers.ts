@@ -5,8 +5,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
-import { generateTempPassword, hashPassword } from "@/lib/password";
-import { createWorkerSchema } from "@/lib/validations";
+import { createWorkerSchema, updateWorkerEmailSchema } from "@/lib/validations";
 
 export type WorkerFormState = { error?: string } | undefined;
 
@@ -17,7 +16,7 @@ export async function createWorkerAction(
   await requireAdmin();
 
   const parsed = createWorkerSchema.safeParse({
-    username: formData.get("username"),
+    email: formData.get("email"),
     name: formData.get("name"),
     role: formData.get("role"),
   });
@@ -25,27 +24,22 @@ export async function createWorkerAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const username = parsed.data.username.trim().toLowerCase();
-  const existing = await prisma.user.findUnique({ where: { username } });
+  const email = parsed.data.email.trim().toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    return { error: "That username is already taken" };
+    return { error: "That email is already authorized" };
   }
-
-  const tempPassword = generateTempPassword();
-  const passwordHash = await hashPassword(tempPassword);
 
   const user = await prisma.user.create({
     data: {
-      username,
+      email,
       name: parsed.data.name,
       role: parsed.data.role,
-      passwordHash,
-      mustChangePassword: true,
     },
   });
 
   revalidatePath("/admin/workers");
-  redirect(`/admin/workers/${user.id}?tempPassword=${encodeURIComponent(tempPassword)}`);
+  redirect(`/admin/workers/${user.id}`);
 }
 
 export async function toggleWorkerActiveAction(userId: string) {
@@ -62,17 +56,29 @@ export async function toggleWorkerActiveAction(userId: string) {
   revalidatePath(`/admin/workers/${userId}`);
 }
 
-export async function resetWorkerPasswordAction(userId: string) {
+export type UpdateWorkerEmailState = { error?: string } | undefined;
+
+export async function updateWorkerEmailAction(
+  userId: string,
+  _prevState: UpdateWorkerEmailState,
+  formData: FormData
+): Promise<UpdateWorkerEmailState> {
   await requireAdmin();
 
-  const tempPassword = generateTempPassword();
-  const passwordHash = await hashPassword(tempPassword);
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: { passwordHash, mustChangePassword: true },
+  const parsed = updateWorkerEmailSchema.safeParse({
+    email: formData.get("email"),
   });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  const email = parsed.data.email.trim().toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing && existing.id !== userId) {
+    return { error: "That email is already authorized" };
+  }
+
+  await prisma.user.update({ where: { id: userId }, data: { email } });
 
   revalidatePath(`/admin/workers/${userId}`);
-  redirect(`/admin/workers/${userId}?tempPassword=${encodeURIComponent(tempPassword)}`);
 }

@@ -10,7 +10,7 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <AdminSidebar name={session.user.name ?? session.user.username} />
+      <AdminSidebar name={session.user.name ?? session.user.email ?? ""} />
       <main className="max-w-6xl px-4 py-6 sm:ml-60 sm:px-8">{children}</main>
     </div>
   );

@@ -17,14 +17,6 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/records", req.nextUrl.origin));
   }
 
-  if (
-    req.auth?.user?.mustChangePassword &&
-    !pathname.startsWith("/change-password") &&
-    !pathname.startsWith("/api")
-  ) {
-    return NextResponse.redirect(new URL("/change-password", req.nextUrl.origin));
-  }
-
   return NextResponse.next();
 });
 

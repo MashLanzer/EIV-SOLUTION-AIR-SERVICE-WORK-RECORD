@@ -10,7 +10,7 @@ export default async function RecordsLayout({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <WorkerNav name={session.user.name ?? session.user.username} />
+      <WorkerNav name={session.user.name ?? session.user.email ?? ""} />
       <main className="mx-auto max-w-3xl px-4 py-6">{children}</main>
     </div>
   );

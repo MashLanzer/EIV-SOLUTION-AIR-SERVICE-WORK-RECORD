@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { hashPassword, generateTempPassword } from "@/lib/password";
 
 export const runtime = "nodejs";
 
-// Temporary production diagnostic/reset endpoint, gated by SETUP_SECRET.
-// Resets the given username's password to a fresh temp password and forces
-// a password change on next login. Remove this route (and the SETUP_SECRET
-// env var) once done troubleshooting.
+// One-time production bootstrap endpoint, gated by SETUP_SECRET.
+// Upserts a User by email so the very first admin can be authorized to
+// sign in with Google before any admin exists to add them from the UI.
+// Delete this route (and the SETUP_SECRET env var) once the first admin
+// has confirmed they can sign in.
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const key = searchParams.get("key");
@@ -17,27 +17,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const username = (searchParams.get("username") || "admin").trim().toLowerCase();
-  const user = await prisma.user.findUnique({ where: { username } });
-  if (!user) {
-    return NextResponse.json({ error: "User not found", username }, { status: 404 });
+  const email = (searchParams.get("email") ?? "").trim().toLowerCase();
+  const name = searchParams.get("name") ?? "Admin";
+  const role = searchParams.get("role") === "WORKER" ? "WORKER" : "ADMIN";
+
+  if (!email) {
+    return NextResponse.json({ error: "Missing email" }, { status: 400 });
   }
 
-  const password = generateTempPassword();
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      passwordHash: await hashPassword(password),
-      mustChangePassword: true,
-      active: true,
-    },
+  const user = await prisma.user.upsert({
+    where: { email },
+    update: { name, role, active: true },
+    create: { email, name, role, active: true },
   });
 
   return NextResponse.json({
-    username: user.username,
-    password,
+    email: user.email,
+    name: user.name,
     role: user.role,
-    active: true,
-    mustChangePassword: true,
+    active: user.active,
   });
 }

@@ -1,32 +1,27 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const username = process.env.SEED_ADMIN_USERNAME ?? "admin";
-  const password = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe123!";
+  const email = (process.env.SEED_ADMIN_EMAIL ?? "").trim().toLowerCase();
   const name = process.env.SEED_ADMIN_NAME ?? "Admin";
 
-  const existing = await prisma.user.findUnique({ where: { username } });
-  if (existing) {
-    console.log(`Admin user "${username}" already exists, skipping.`);
+  if (!email) {
+    console.log("SEED_ADMIN_EMAIL is not set, skipping admin seed.");
     return;
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    console.log(`Admin user "${email}" already exists, skipping.`);
+    return;
+  }
+
   await prisma.user.create({
-    data: {
-      username,
-      name,
-      passwordHash,
-      role: "ADMIN",
-      mustChangePassword: true,
-    },
+    data: { email, name, role: "ADMIN" },
   });
 
-  console.log(`Created admin user "${username}" with temporary password "${password}".`);
-  console.log("Log in and change this password immediately.");
+  console.log(`Created admin user "${email}". They can now sign in with Google.`);
 }
 
 main()

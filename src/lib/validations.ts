@@ -1,21 +1,5 @@
 import { z } from "zod";
 
-export const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-});
-
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(8, "New password must be at least 8 characters"),
-    confirmPassword: z.string().min(1, "Please confirm your new password"),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
 export const TYPE_OF_WORK_OPTIONS = [
   "Installation",
   "Repair",
@@ -48,10 +32,11 @@ export const workRecordSchema = z.object({
 });
 
 export const createWorkerSchema = z.object({
-  username: z
-    .string()
-    .min(3, "Username must be at least 3 characters")
-    .regex(/^[a-z0-9._-]+$/i, "Only letters, numbers, dots, dashes and underscores"),
+  email: z.string().email("Enter a valid email address"),
   name: z.string().min(1, "Name is required"),
   role: z.enum(["ADMIN", "WORKER"]),
+});
+
+export const updateWorkerEmailSchema = z.object({
+  email: z.string().email("Enter a valid email address"),
 });

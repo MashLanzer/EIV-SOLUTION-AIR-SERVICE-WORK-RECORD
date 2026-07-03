@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { Wind } from "lucide-react";
 
-import { LoginForm } from "@/components/forms/LoginForm";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
@@ -9,13 +9,13 @@ import { auth } from "@/lib/auth";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ passwordChanged?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const { passwordChanged } = await searchParams;
+  const { error } = await searchParams;
 
   const session = await auth();
   if (session?.user) {
-    redirect(session.user.mustChangePassword ? "/change-password" : "/");
+    redirect("/");
   }
 
   return (
@@ -29,15 +29,16 @@ export default async function LoginPage({
           <CardDescription>Installation / Service Work Record</CardDescription>
         </CardHeader>
         <CardContent>
-          {passwordChanged && (
-            <Alert variant="success" className="mb-4">
-              Password updated. Please sign in again.
+          {error === "AccessDenied" && (
+            <Alert variant="error" className="mb-4">
+              This Google account isn&apos;t authorized. Ask your
+              administrator to add it.
             </Alert>
           )}
           <p className="mb-4 text-center text-sm text-slate-500">
-            Enter the username and password your supervisor gave you.
+            Sign in with the Google account your supervisor authorized.
           </p>
-          <LoginForm />
+          <GoogleSignInButton />
         </CardContent>
       </Card>
     </div>

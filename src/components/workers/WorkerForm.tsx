@@ -21,8 +21,8 @@ export function WorkerForm() {
         <Input id="name" name="name" required autoFocus />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="username">Username</Label>
-        <Input id="username" name="username" required />
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" name="email" type="email" placeholder="name@gmail.com" required />
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="role">Role</Label>
