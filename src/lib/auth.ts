@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [

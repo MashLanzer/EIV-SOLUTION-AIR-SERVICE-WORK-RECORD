@@ -130,10 +130,12 @@ function RecordPage({ record }: { record: RecordWithWorker }) {
 
       <View style={styles.signatureRow}>
         <View style={styles.signatureBox}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf's Image is not an HTML img */}
           <Image src={record.customerSignature} style={styles.signatureImage} />
           <Text style={styles.signatureCaption}>Customer Signature</Text>
         </View>
         <View style={styles.signatureBox}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf's Image is not an HTML img */}
           <Image src={record.installerSignature} style={styles.signatureImage} />
           <Text style={styles.signatureCaption}>Installer Signature</Text>
         </View>

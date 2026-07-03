@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,7 +61,7 @@ export function RecordsFilterBar({
           Apply Filters
         </Button>
         <Button type="button" variant="ghost" size="sm" asChild>
-          <a href="/admin/records">Clear</a>
+          <Link href="/admin/records">Clear</Link>
         </Button>
       </div>
     </form>
