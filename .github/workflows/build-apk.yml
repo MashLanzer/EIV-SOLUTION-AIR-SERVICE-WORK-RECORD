@@ -7,6 +7,9 @@ on:
       - ".github/workflows/build-apk.yml"
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -53,3 +56,14 @@ jobs:
           name: eiv-solution-air-debug-apk
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 90
+
+      - name: Publish APK to a GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-apk
+          name: EIV Solution Air - Android (debug APK)
+          body: >
+            Debug APK wrapping the live web app in a native Android shell.
+            Automatically rebuilt from the latest mobile/ changes. Enable
+            "install from unknown sources" on Android before opening it.
+          files: mobile/android/app/build/outputs/apk/debug/app-debug.apk
