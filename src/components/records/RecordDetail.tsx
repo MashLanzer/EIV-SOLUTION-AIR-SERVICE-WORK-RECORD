@@ -1,5 +1,7 @@
 import type { WorkRecord } from "@prisma/client";
 
+import { formatTime } from "@/lib/format";
+
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
@@ -30,8 +32,8 @@ export function RecordDetail({ record }: { record: WorkRecord }) {
         <Field label="Helper" value={record.helperName} />
         <Field label="Customer Name" value={record.customerName} />
         <Field label="Customer Address" value={record.customerAddress} />
-        <Field label="Arrival Time" value={record.arrivalTime} />
-        <Field label="Departure Time" value={record.departureTime} />
+        <Field label="Arrival Time" value={formatTime(record.arrivalTime)} />
+        <Field label="Departure Time" value={formatTime(record.departureTime)} />
         <Field label="Type of Work" value={record.typeOfWork} />
         <Field
           label="Lead Installer Pay"

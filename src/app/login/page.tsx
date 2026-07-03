@@ -1,5 +1,8 @@
+import { redirect } from "next/navigation";
+
 import { LoginForm } from "@/components/forms/LoginForm";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
 export default async function LoginPage({
   searchParams,
@@ -7,6 +10,11 @@ export default async function LoginPage({
   searchParams: Promise<{ passwordChanged?: string }>;
 }) {
   const { passwordChanged } = await searchParams;
+
+  const session = await auth();
+  if (session?.user) {
+    redirect(session.user.mustChangePassword ? "/change-password" : "/");
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
