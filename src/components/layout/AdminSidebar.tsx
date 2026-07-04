@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Users,
   Contact,
+  BarChart3,
   Menu,
   X,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/records", label: "Records", icon: ClipboardList, exact: false },
   { href: "/admin/customers", label: "Customers", icon: Contact, exact: false },
+  { href: "/admin/reports", label: "Pay Report", icon: BarChart3, exact: false },
   { href: "/admin/workers", label: "Workers", icon: Users, exact: false },
 ];
 
