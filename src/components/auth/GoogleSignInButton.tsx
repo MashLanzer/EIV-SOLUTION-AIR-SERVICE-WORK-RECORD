@@ -6,16 +6,13 @@ import { Button } from "@/components/ui/button";
 
 export function GoogleSignInButton() {
   const handleClick = async () => {
-    const capacitor = window.Capacitor;
-
     // Inside the Android app shell: Google's OAuth flow doesn't complete in
-    // the embedded WebView (its PKCE cookie check fails), so open the flow
-    // in the system browser instead. It finishes at /native-handoff, which
-    // hands the session back to the app via a deep link (NativeAuthBridge).
-    if (capacitor?.isNativePlatform?.()) {
-      const url = new URL("/login", window.location.origin);
-      url.searchParams.set("native", "1");
-      await capacitor.Plugins?.Browser?.open({ url: url.toString() });
+    // the embedded WebView, so sign-in runs in the system browser instead.
+    // This custom-scheme navigation is caught natively (MainActivity), which
+    // opens /login?native=1 in the browser; that flow finishes at
+    // /native-handoff, which deep-links the session back into the app.
+    if (window.Capacitor?.isNativePlatform?.()) {
+      window.location.href = "eivsolutionair://open-login";
       return;
     }
 

@@ -19,7 +19,7 @@ android {
         // (required for the Trusted Web Activity to run fullscreen).
         // Debug-distribution key only - not a Play Store upload key.
         shared {
-            storeFile file("../signing.keystore")
+            storeFile file("../../signing.keystore")
             storePassword "eivsolutionair2026"
             keyAlias "eivsolutionair"
             keyPassword "eivsolutionair2026"

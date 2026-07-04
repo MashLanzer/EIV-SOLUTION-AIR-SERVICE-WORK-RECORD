@@ -7,8 +7,8 @@ android {
         applicationId "com.eivsolutionair.workrecord"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "3.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,10 +16,25 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        // Fixed key committed to the repo so every CI build has the same
+        // signature and installs as an update instead of requiring an
+        // uninstall. Debug-distribution key only - not a Play Store key.
+        shared {
+            storeFile file("../../signing.keystore")
+            storePassword "eivsolutionair2026"
+            keyAlias "eivsolutionair"
+            keyPassword "eivsolutionair2026"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.shared
+        }
+        debug {
+            signingConfig signingConfigs.shared
         }
     }
 }

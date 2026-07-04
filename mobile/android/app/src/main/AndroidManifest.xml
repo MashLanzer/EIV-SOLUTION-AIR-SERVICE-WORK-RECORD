@@ -22,13 +22,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Deep link used to hand control back to the app after
-                 Google Sign-In completes in the system browser. -->
+            <!-- Deep links handled by MainActivity: eivsolutionair://open-login
+                 bounces sign-in out to the system browser, and
+                 eivsolutionair://auth-callback brings the session back. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="eivsolutionair" android:host="auth-callback" />
+                <data android:scheme="eivsolutionair" />
             </intent-filter>
 
         </activity>

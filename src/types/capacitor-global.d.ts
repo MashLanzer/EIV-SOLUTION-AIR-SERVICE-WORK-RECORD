@@ -4,17 +4,5 @@
 interface Window {
   Capacitor?: {
     isNativePlatform?: () => boolean;
-    Plugins?: {
-      Browser?: {
-        open: (options: { url: string }) => Promise<void>;
-        close?: () => Promise<void>;
-      };
-      App?: {
-        addListener: (
-          eventName: "appUrlOpen",
-          callback: (event: { url: string }) => void
-        ) => Promise<{ remove: () => void }>;
-      };
-    };
   };
 }
