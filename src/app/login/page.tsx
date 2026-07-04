@@ -9,13 +9,13 @@ import { auth } from "@/lib/auth";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; native?: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
-  const { error, native } = await searchParams;
+  const { error } = await searchParams;
 
   const session = await auth();
   if (session?.user) {
-    redirect(native ? "/native-handoff" : "/");
+    redirect("/");
   }
 
   return (
