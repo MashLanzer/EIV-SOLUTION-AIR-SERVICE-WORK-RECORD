@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
-import { Download } from "lucide-react";
+import { CheckCircle2, Download } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
-import { updateRecordAction } from "@/actions/records";
+import { StatusBadge } from "@/components/records/StatusBadge";
+import { approveRecordAction, updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminEditRecordPage({
@@ -27,8 +28,19 @@ export default async function AdminEditRecordPage({
     <Card>
       {saved && <SuccessToast message="Record saved" />}
       <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle>Edit Job #{record.jobNumber}</CardTitle>
+        <div className="flex items-center gap-3">
+          <CardTitle>Edit Job #{record.jobNumber}</CardTitle>
+          <StatusBadge status={record.status} />
+        </div>
         <div className="flex gap-2">
+          {record.status === "SUBMITTED" && (
+            <form action={approveRecordAction.bind(null, record.id)}>
+              <Button type="submit" size="sm">
+                <CheckCircle2 className="h-4 w-4" />
+                Approve
+              </Button>
+            </form>
+          )}
           <Button asChild variant="outline" size="sm">
             <a href={`/admin/records/${record.id}/pdf`}>
               <Download className="h-4 w-4" />

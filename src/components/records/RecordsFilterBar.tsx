@@ -19,7 +19,7 @@ export function RecordsFilterBar({
   workers: Worker[];
 }) {
   return (
-    <form method="GET" className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+    <form method="GET" className="grid grid-cols-2 gap-3 sm:grid-cols-6">
       <div className="flex flex-col gap-1">
         <Label htmlFor="dateFrom">From</Label>
         <Input
@@ -56,7 +56,15 @@ export function RecordsFilterBar({
         <Label htmlFor="jobNumber">Job #</Label>
         <Input id="jobNumber" name="jobNumber" defaultValue={filters.jobNumber} />
       </div>
-      <div className="col-span-2 flex items-end gap-2 sm:col-span-5">
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="status">Status</Label>
+        <Select id="status" name="status" defaultValue={filters.status ?? ""}>
+          <option value="">All</option>
+          <option value="SUBMITTED">Submitted</option>
+          <option value="APPROVED">Approved</option>
+        </Select>
+      </div>
+      <div className="col-span-2 flex items-end gap-2 sm:col-span-6">
         <Button type="submit" variant="outline" size="sm">
           Apply Filters
         </Button>

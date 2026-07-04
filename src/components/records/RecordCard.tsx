@@ -3,6 +3,7 @@ import type { WorkRecord } from "@prisma/client";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/records/StatusBadge";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -28,10 +29,13 @@ export function RecordCard({
             <span className="font-semibold text-slate-900">
               Job #{record.jobNumber}
             </span>
-            <Badge>{formatDate(record.date)}</Badge>
+            <Badge variant="secondary">{formatDate(record.date)}</Badge>
           </div>
           <div className="text-sm text-slate-600">{record.customerName}</div>
-          <div className="text-sm text-slate-500">{record.typeOfWork}</div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-500">{record.typeOfWork}</span>
+            <StatusBadge status={record.status} />
+          </div>
         </CardContent>
       </Card>
     </Link>

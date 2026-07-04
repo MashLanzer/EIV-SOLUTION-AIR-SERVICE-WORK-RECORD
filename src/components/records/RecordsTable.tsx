@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { SelectAllCheckbox } from "@/components/records/SelectAllCheckbox";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
+import { StatusBadge } from "@/components/records/StatusBadge";
 
 type RecordWithWorker = WorkRecord & { submittedBy: { name: string } };
 
@@ -52,6 +53,7 @@ export function RecordsTable({
           </TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Job #</TableHead>
+          <TableHead>Status</TableHead>
           <TableHead>Customer</TableHead>
           <TableHead>Submitted By</TableHead>
           <TableHead>Type of Work</TableHead>
@@ -72,6 +74,9 @@ export function RecordsTable({
             </TableCell>
             <TableCell>{formatDate(record.date)}</TableCell>
             <TableCell>{record.jobNumber}</TableCell>
+            <TableCell>
+              <StatusBadge status={record.status} />
+            </TableCell>
             <TableCell>{record.customerName}</TableCell>
             <TableCell>{record.submittedBy.name}</TableCell>
             <TableCell>{record.typeOfWork}</TableCell>

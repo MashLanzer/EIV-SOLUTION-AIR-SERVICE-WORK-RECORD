@@ -127,3 +127,14 @@ export async function deleteRecordAction(recordId: string) {
   revalidatePath("/admin/records");
   redirect("/admin/records");
 }
+
+export async function approveRecordAction(recordId: string) {
+  await requireAdmin();
+  await prisma.workRecord.update({
+    where: { id: recordId },
+    data: { status: "APPROVED" },
+  });
+  revalidatePath("/admin/records");
+  revalidatePath(`/admin/records/${recordId}`);
+  revalidatePath("/admin");
+}

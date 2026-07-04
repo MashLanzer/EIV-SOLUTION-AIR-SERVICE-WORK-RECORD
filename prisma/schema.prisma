@@ -12,6 +12,11 @@ enum Role {
   WORKER
 }
 
+enum RecordStatus {
+  SUBMITTED
+  APPROVED
+}
+
 model User {
   id               String       @id @default(cuid())
   email            String       @unique
@@ -37,14 +42,16 @@ model WorkRecord {
   workPerformedNotes String   @db.Text
   leadInstallerPay   Decimal  @db.Decimal(10, 2)
   helperPay          Decimal? @db.Decimal(10, 2)
-  customerSignature  String   @db.Text
-  installerSignature String   @db.Text
+  customerSignature  String       @db.Text
+  installerSignature String       @db.Text
+  status             RecordStatus @default(SUBMITTED)
   submittedById      String
-  submittedBy        User     @relation("SubmittedBy", fields: [submittedById], references: [id])
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  submittedBy        User         @relation("SubmittedBy", fields: [submittedById], references: [id])
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
   @@index([date])
   @@index([jobNumber])
   @@index([customerName])
+  @@index([status])
 }

@@ -5,6 +5,7 @@ import {
   CalendarRange,
   Users,
   ArrowRight,
+  Clock3,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -35,18 +36,25 @@ function formatDate(date: Date) {
 }
 
 export default async function AdminDashboardPage() {
-  const [totalRecords, recordsThisWeek, recordsThisMonth, activeWorkers, recentRecords] =
-    await Promise.all([
-      prisma.workRecord.count(),
-      prisma.workRecord.count({ where: { date: { gte: startOfWeek() } } }),
-      prisma.workRecord.count({ where: { date: { gte: startOfMonth() } } }),
-      prisma.user.count({ where: { active: true } }),
-      prisma.workRecord.findMany({
-        take: 5,
-        orderBy: { createdAt: "desc" },
-        include: { submittedBy: { select: { name: true } } },
-      }),
-    ]);
+  const [
+    totalRecords,
+    recordsThisWeek,
+    recordsThisMonth,
+    activeWorkers,
+    pendingReview,
+    recentRecords,
+  ] = await Promise.all([
+    prisma.workRecord.count(),
+    prisma.workRecord.count({ where: { date: { gte: startOfWeek() } } }),
+    prisma.workRecord.count({ where: { date: { gte: startOfMonth() } } }),
+    prisma.user.count({ where: { active: true } }),
+    prisma.workRecord.count({ where: { status: "SUBMITTED" } }),
+    prisma.workRecord.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      include: { submittedBy: { select: { name: true } } },
+    }),
+  ]);
 
   const stats = [
     { label: "Total Records", value: totalRecords, icon: ClipboardList },
@@ -59,7 +67,25 @@ export default async function AdminDashboardPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-semibold text-slate-900">Dashboard</h1>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <Link
+          href="/admin/records?status=SUBMITTED"
+          aria-label={`${pendingReview} records pending review`}
+        >
+          <Card className="h-full transition-shadow hover:shadow-md">
+            <CardContent className="flex items-center gap-3 p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+                <Clock3 className="h-5 w-5" />
+              </span>
+              <div>
+                <div className="text-2xl font-semibold text-slate-900">
+                  {pendingReview}
+                </div>
+                <div className="text-sm text-slate-500">Pending Review</div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="flex items-center gap-3 p-4">

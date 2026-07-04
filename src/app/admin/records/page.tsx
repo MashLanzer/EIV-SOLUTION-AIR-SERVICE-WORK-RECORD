@@ -51,6 +51,7 @@ export default async function AdminRecordsPage({
         <input type="hidden" name="workerId" value={filters.workerId ?? ""} />
         <input type="hidden" name="customerName" value={filters.customerName ?? ""} />
         <input type="hidden" name="jobNumber" value={filters.jobNumber ?? ""} />
+        <input type="hidden" name="status" value={filters.status ?? ""} />
         <Button
           type="submit"
           variant="outline"

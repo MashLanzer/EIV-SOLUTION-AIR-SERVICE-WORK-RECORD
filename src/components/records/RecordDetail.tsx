@@ -1,5 +1,6 @@
 import type { WorkRecord } from "@prisma/client";
 
+import { StatusBadge } from "@/components/records/StatusBadge";
 import { formatTime } from "@/lib/format";
 
 function formatDate(date: Date) {
@@ -25,6 +26,9 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 export function RecordDetail({ record }: { record: WorkRecord }) {
   return (
     <div className="flex flex-col gap-6">
+      <div>
+        <StatusBadge status={record.status} />
+      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Date" value={formatDate(record.date)} />
         <Field label="Job #" value={record.jobNumber} />

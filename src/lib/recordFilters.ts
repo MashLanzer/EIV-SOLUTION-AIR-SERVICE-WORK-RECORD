@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma, RecordStatus } from "@prisma/client";
 
 export interface RecordFilterParams {
   dateFrom?: string;
@@ -6,8 +6,11 @@ export interface RecordFilterParams {
   workerId?: string;
   customerName?: string;
   jobNumber?: string;
+  status?: RecordStatus;
   ids?: string[];
 }
+
+const RECORD_STATUSES: RecordStatus[] = ["SUBMITTED", "APPROVED"];
 
 export function parseRecordFilterParams(
   searchParams: Record<string, string | string[] | undefined>
@@ -20,12 +23,17 @@ export function parseRecordFilterParams(
       : [searchParams.ids]
     : undefined;
 
+  const rawStatus = first(searchParams.status);
+
   return {
     dateFrom: first(searchParams.dateFrom) || undefined,
     dateTo: first(searchParams.dateTo) || undefined,
     workerId: first(searchParams.workerId) || undefined,
     customerName: first(searchParams.customerName) || undefined,
     jobNumber: first(searchParams.jobNumber) || undefined,
+    status: RECORD_STATUSES.includes(rawStatus as RecordStatus)
+      ? (rawStatus as RecordStatus)
+      : undefined,
     ids: ids && ids.length > 0 ? ids : undefined,
   };
 }
@@ -52,6 +60,9 @@ export function buildRecordWhereClause(
   }
   if (filters.jobNumber) {
     where.jobNumber = { contains: filters.jobNumber, mode: "insensitive" };
+  }
+  if (filters.status) {
+    where.status = filters.status;
   }
 
   return where;
