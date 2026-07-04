@@ -11,10 +11,14 @@
   --color-accent: #0ea5e9;
   --color-accent-foreground: #ffffff;
   --color-accent-soft: #e0f2fe;
+  --color-accent-text: #075985;
   --color-success: #16a34a;
   --color-success-soft: #dcfce7;
+  --color-success-text: #166534;
   --color-destructive: #dc2626;
+  --color-destructive-hover: #b91c1c;
   --color-destructive-soft: #fee2e2;
+  --color-destructive-text: #991b1b;
 }
 
 @theme inline {
@@ -26,12 +30,28 @@
   --color-accent: var(--color-accent);
   --color-accent-foreground: var(--color-accent-foreground);
   --color-accent-soft: var(--color-accent-soft);
+  --color-accent-text: var(--color-accent-text);
   --color-success: var(--color-success);
   --color-success-soft: var(--color-success-soft);
+  --color-success-text: var(--color-success-text);
   --color-destructive: var(--color-destructive);
+  --color-destructive-hover: var(--color-destructive-hover);
   --color-destructive-soft: var(--color-destructive-soft);
+  --color-destructive-text: var(--color-destructive-text);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --animate-fade-up: fade-up 0.2s ease-out;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 body {

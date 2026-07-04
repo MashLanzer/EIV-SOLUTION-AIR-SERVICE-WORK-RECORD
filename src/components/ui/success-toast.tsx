@@ -25,8 +25,8 @@ export function SuccessToast({ message }: { message: string }) {
       role="status"
       className="fixed inset-x-0 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4"
     >
-      <div className="flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
-        <CheckCircle2 className="h-4 w-4 text-green-400" />
+      <div className="flex animate-fade-up items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
+        <CheckCircle2 className="h-4 w-4 text-success-soft" />
         {message}
       </div>
     </div>

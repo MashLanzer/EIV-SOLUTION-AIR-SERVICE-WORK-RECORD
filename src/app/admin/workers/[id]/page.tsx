@@ -1,11 +1,9 @@
 import { notFound } from "next/navigation";
-import { Ban, CheckCircle2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToggleWorkerActiveButton } from "@/components/workers/ToggleWorkerActiveButton";
 import { UpdateWorkerEmailForm } from "@/components/workers/UpdateWorkerEmailForm";
-import { toggleWorkerActiveAction } from "@/actions/workers";
 import { prisma } from "@/lib/prisma";
 
 export default async function WorkerDetailPage({
@@ -47,16 +45,11 @@ export default async function WorkerDetailPage({
         </div>
 
         <div className="flex gap-2">
-          <form action={toggleWorkerActiveAction.bind(null, worker.id)}>
-            <Button type="submit" variant={worker.active ? "destructive" : "default"}>
-              {worker.active ? (
-                <Ban className="h-4 w-4" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4" />
-              )}
-              {worker.active ? "Deactivate" : "Reactivate"}
-            </Button>
-          </form>
+          <ToggleWorkerActiveButton
+            workerId={worker.id}
+            active={worker.active}
+            name={worker.name}
+          />
         </div>
       </CardContent>
     </Card>

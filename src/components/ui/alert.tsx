@@ -8,9 +8,9 @@ const alertVariants = cva(
   {
     variants: {
       variant: {
-        error: "bg-destructive-soft text-red-800",
-        success: "bg-success-soft text-green-800",
-        info: "bg-accent-soft text-sky-800",
+        error: "bg-destructive-soft text-destructive-text",
+        success: "bg-success-soft text-success-text",
+        info: "bg-accent-soft text-accent-text",
       },
     },
     defaultVariants: {
