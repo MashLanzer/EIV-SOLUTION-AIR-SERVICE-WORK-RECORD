@@ -47,6 +47,8 @@ jobs:
         working-directory: mobile/android
         run: chmod +x gradlew
 
+      # Re-run trigger: rebuild for a clean reinstall after a device-side
+      # WebView issue was suspected.
       - name: Build debug APK
         working-directory: mobile/android
         run: ./gradlew assembleDebug --no-daemon
