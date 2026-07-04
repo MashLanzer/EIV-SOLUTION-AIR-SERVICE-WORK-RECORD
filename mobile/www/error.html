@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EIV Solution Air</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8fafc;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #0f172a;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        max-width: 340px;
+        margin: 16px;
+        padding: 24px;
+        text-align: center;
+      }
+      h1 { font-size: 18px; margin: 0 0 8px; }
+      p { font-size: 14px; color: #64748b; margin: 0 0 16px; }
+      button {
+        background: #2563eb;
+        color: #fff;
+        border: 0;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-size: 15px;
+        font-weight: 500;
+        width: 100%;
+      }
+      #diag {
+        margin-top: 16px;
+        padding: 8px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 11px;
+        color: #475569;
+        text-align: left;
+        word-break: break-all;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>No se pudo cargar la aplicación</h1>
+      <p>
+        Revisa tu conexión a internet. Reintentando automáticamente…
+      </p>
+      <button onclick="retry()">Reintentar ahora</button>
+      <div id="diag">Diagnosticando conexión…</div>
+    </div>
+    <script>
+      var SITE = "https://eiv-solution-air-service-work-recor.vercel.app";
+      var diag = document.getElementById("diag");
+
+      function retry() {
+        window.location.href = SITE + "/login";
+      }
+
+      // Probe the site and show the REAL failure reason, so a screenshot of
+      // this screen tells us exactly what went wrong on this device.
+      function probe() {
+        var started = Date.now();
+        fetch(SITE + "/login", { cache: "no-store" })
+          .then(function (res) {
+            var ms = Date.now() - started;
+            diag.textContent =
+              "Servidor respondió: HTTP " + res.status + " en " + ms + "ms";
+            if (res.ok) {
+              // Site is reachable now — go back to it automatically.
+              setTimeout(retry, 1500);
+            }
+          })
+          .catch(function (err) {
+            var ms = Date.now() - started;
+            diag.textContent =
+              "Fallo de red tras " + ms + "ms:\n" +
+              (err && err.name ? err.name + ": " : "") +
+              (err && err.message ? err.message : String(err)) +
+              "\n\nUserAgent:\n" + navigator.userAgent +
+              "\n\nOnline: " + navigator.onLine;
+            // Keep probing; recover as soon as the network does.
+            setTimeout(probe, 5000);
+          });
+      }
+      probe();
+    </script>
+  </body>
+</html>
