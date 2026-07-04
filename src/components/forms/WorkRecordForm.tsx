@@ -9,7 +9,16 @@ import {
 } from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
-import { Briefcase, User, Clock, DollarSign, PenTool, Save, X } from "lucide-react";
+import {
+  Briefcase,
+  User,
+  Clock,
+  DollarSign,
+  Camera,
+  PenTool,
+  Save,
+  X,
+} from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -19,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CustomerAutocomplete } from "@/components/forms/CustomerAutocomplete";
 import { FormSection } from "@/components/forms/FormSection";
+import { PhotoField } from "@/components/forms/PhotoField";
 import {
   SignaturePad,
   type SignaturePadHandle,
@@ -41,6 +51,7 @@ export interface WorkRecordFormValues {
   helperPay: string;
   customerSignature: string;
   installerSignature: string;
+  photos: string[];
 }
 
 interface WorkRecordFormProps {
@@ -299,6 +310,11 @@ export function WorkRecordForm({
           />
           <FieldError id="helperPay-error" message={fieldError("helperPay")} />
         </div>
+      </FormSection>
+
+      <FormSection icon={Camera} title="Photos (optional)">
+        <PhotoField defaultPhotos={defaultValues?.photos} />
+        <FieldError id="photos-error" message={fieldError("photos")} />
       </FormSection>
 
       <FormSection icon={PenTool} title="Signatures">

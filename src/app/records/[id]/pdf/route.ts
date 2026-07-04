@@ -13,7 +13,10 @@ export async function GET(
   const { id } = await params;
   const session = await requireAuth();
 
-  const record = await prisma.workRecord.findUnique({ where: { id } });
+  const record = await prisma.workRecord.findUnique({
+    where: { id },
+    include: { photos: { orderBy: { position: "asc" } } },
+  });
   if (!record) {
     return new NextResponse("Not found", { status: 404 });
   }

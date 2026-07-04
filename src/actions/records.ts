@@ -28,6 +28,9 @@ function parseRecordForm(formData: FormData) {
     helperPay: formData.get("helperPay") || undefined,
     customerSignature: formData.get("customerSignature"),
     installerSignature: formData.get("installerSignature"),
+    photos: formData
+      .getAll("photos")
+      .filter((v): v is string => typeof v === "string" && v.length > 0),
   });
 }
 
@@ -85,6 +88,14 @@ export async function createRecordAction(
       customerSignature: data.customerSignature,
       installerSignature: data.installerSignature,
       submittedById: session.user.id,
+      photos: data.photos?.length
+        ? {
+            create: data.photos.map((dataUrl, position) => ({
+              dataUrl,
+              position,
+            })),
+          }
+        : undefined,
     },
   });
 
@@ -133,6 +144,15 @@ export async function updateRecordAction(
       helperPay: data.helperPay === "" || data.helperPay == null ? null : data.helperPay,
       customerSignature: data.customerSignature,
       installerSignature: data.installerSignature,
+      // The form always posts the record's current photo set, so a full
+      // replace keeps order and removals correct.
+      photos: {
+        deleteMany: {},
+        create: (data.photos ?? []).map((dataUrl, position) => ({
+          dataUrl,
+          position,
+        })),
+      },
     },
   });
 

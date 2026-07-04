@@ -19,7 +19,10 @@ export default async function AdminEditRecordPage({
 }) {
   const { id } = await params;
   const { saved } = await searchParams;
-  const record = await prisma.workRecord.findUnique({ where: { id } });
+  const record = await prisma.workRecord.findUnique({
+    where: { id },
+    include: { photos: { orderBy: { position: "asc" } } },
+  });
   if (!record) notFound();
 
   const boundAction = updateRecordAction.bind(null, record.id);
@@ -68,6 +71,7 @@ export default async function AdminEditRecordPage({
             helperPay: record.helperPay?.toString() ?? "",
             customerSignature: record.customerSignature,
             installerSignature: record.installerSignature,
+            photos: record.photos.map((p) => p.dataUrl),
           }}
           submitLabel="Save Changes"
         />

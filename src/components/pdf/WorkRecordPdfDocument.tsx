@@ -1,9 +1,14 @@
 import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
-import type { WorkRecord } from "@prisma/client";
+import type { WorkPhoto, WorkRecord } from "@prisma/client";
 
 import { formatTime } from "@/lib/format";
 
-type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } };
+type RecordWithWorker = WorkRecord & {
+  submittedBy?: { name: string };
+  // Present only on single-record PDFs; bulk exports skip photos to keep
+  // multi-record files small.
+  photos?: WorkPhoto[];
+};
 
 const styles = StyleSheet.create({
   page: {
@@ -146,6 +151,41 @@ function RecordPage({ record }: { record: RecordWithWorker }) {
   );
 }
 
+function PhotosPage({ record }: { record: RecordWithWorker }) {
+  return (
+    <Page size="LETTER" style={styles.page}>
+      <View style={styles.header}>
+        <Text style={styles.companyName}>EIV Solution Air</Text>
+        <Text style={styles.formTitle}>
+          Job #{record.jobNumber} — Photos
+        </Text>
+      </View>
+      <View style={photoStyles.grid}>
+        {(record.photos ?? []).map((photo) => (
+          // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf's Image is not an HTML img
+          <Image key={photo.id} src={photo.dataUrl} style={photoStyles.photo} />
+        ))}
+      </View>
+    </Page>
+  );
+}
+
+const photoStyles = StyleSheet.create({
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+  photo: {
+    width: "48%",
+    height: 240,
+    objectFit: "contain",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderStyle: "solid",
+  },
+});
+
 export function WorkRecordPdfDocument({
   records,
 }: {
@@ -156,6 +196,11 @@ export function WorkRecordPdfDocument({
       {records.map((record) => (
         <RecordPage key={record.id} record={record} />
       ))}
+      {records
+        .filter((record) => (record.photos?.length ?? 0) > 0)
+        .map((record) => (
+          <PhotosPage key={`${record.id}-photos`} record={record} />
+        ))}
     </Document>
   );
 }

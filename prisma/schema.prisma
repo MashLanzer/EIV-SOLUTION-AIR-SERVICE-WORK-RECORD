@@ -28,6 +28,17 @@ model User {
   submittedRecords WorkRecord[] @relation("SubmittedBy")
 }
 
+model WorkPhoto {
+  id        String     @id @default(cuid())
+  recordId  String
+  record    WorkRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  position  Int
+  dataUrl   String     @db.Text
+  createdAt DateTime   @default(now())
+
+  @@index([recordId])
+}
+
 model Customer {
   id        String       @id @default(cuid())
   name      String
@@ -60,6 +71,7 @@ model WorkRecord {
   status             RecordStatus @default(SUBMITTED)
   customerId         String?
   customer           Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  photos             WorkPhoto[]
   submittedById      String
   submittedBy        User         @relation("SubmittedBy", fields: [submittedById], references: [id])
   createdAt          DateTime     @default(now())

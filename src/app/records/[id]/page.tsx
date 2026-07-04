@@ -20,7 +20,10 @@ export default async function RecordDetailPage({
   const { saved } = await searchParams;
   const session = await requireAuth();
 
-  const record = await prisma.workRecord.findUnique({ where: { id } });
+  const record = await prisma.workRecord.findUnique({
+    where: { id },
+    include: { photos: { orderBy: { position: "asc" } } },
+  });
   if (!record) notFound();
   if (session.user.role !== "ADMIN" && record.submittedById !== session.user.id) {
     notFound();

@@ -1,4 +1,4 @@
-import type { WorkRecord } from "@prisma/client";
+import type { WorkPhoto, WorkRecord } from "@prisma/client";
 
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { formatTime } from "@/lib/format";
@@ -23,7 +23,11 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export function RecordDetail({ record }: { record: WorkRecord }) {
+export function RecordDetail({
+  record,
+}: {
+  record: WorkRecord & { photos?: WorkPhoto[] };
+}) {
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -53,6 +57,25 @@ export function RecordDetail({ record }: { record: WorkRecord }) {
         label="Work Performed / Notes"
         value={<p className="whitespace-pre-wrap">{record.workPerformedNotes}</p>}
       />
+
+      {record.photos && record.photos.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+            Photos
+          </span>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {record.photos.map((photo) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={photo.id}
+                src={photo.dataUrl}
+                alt={`Work photo ${photo.position + 1}`}
+                className="aspect-square w-full rounded-md border border-slate-200 object-cover"
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">

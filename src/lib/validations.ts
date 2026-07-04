@@ -8,6 +8,8 @@ export const TYPE_OF_WORK_OPTIONS = [
   "Other",
 ] as const;
 
+export const MAX_PHOTOS = 4;
+
 export const workRecordSchema = z.object({
   date: z.string().min(1, "Date is required"),
   jobNumber: z.string().min(1, "Job # is required"),
@@ -29,6 +31,15 @@ export const workRecordSchema = z.object({
     .string()
     .min(1, "Installer signature is required")
     .max(300_000, "Signature image is too large"),
+  photos: z
+    .array(
+      z
+        .string()
+        .regex(/^data:image\/(jpeg|png|webp);base64,/, "Invalid photo format")
+        .max(700_000, "A photo is too large")
+    )
+    .max(MAX_PHOTOS, `At most ${MAX_PHOTOS} photos per record`)
+    .optional(),
 });
 
 export const createWorkerSchema = z.object({
