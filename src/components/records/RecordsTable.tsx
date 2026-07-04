@@ -16,7 +16,10 @@ import { SelectAllCheckbox } from "@/components/records/SelectAllCheckbox";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
 
-type RecordWithWorker = WorkRecord & { submittedBy: { name: string } };
+type RecordWithWorker = Pick<
+  WorkRecord,
+  "id" | "date" | "jobNumber" | "customerName" | "typeOfWork" | "status"
+> & { submittedBy: { name: string } };
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {

@@ -4,34 +4,53 @@ import { ClipboardList, Plus, Search, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { RecordCard } from "@/components/records/RecordCard";
+import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 
 export default async function RecordsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; saved?: string }>;
+  searchParams: Promise<{ q?: string; saved?: string; page?: string }>;
 }) {
   const session = await requireAuth();
-  const { q, saved } = await searchParams;
+  const { q, saved, page: rawPage } = await searchParams;
   const query = q?.trim() || undefined;
+  const page = parsePage(rawPage);
 
-  const records = await prisma.workRecord.findMany({
-    where: {
-      submittedById: session.user.id,
-      ...(query
-        ? {
-            OR: [
-              { jobNumber: { contains: query, mode: "insensitive" } },
-              { customerName: { contains: query, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    orderBy: { date: "desc" },
-  });
+  const where = {
+    submittedById: session.user.id,
+    ...(query
+      ? {
+          OR: [
+            { jobNumber: { contains: query, mode: "insensitive" as const } },
+            { customerName: { contains: query, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const [total, records] = await Promise.all([
+    prisma.workRecord.count({ where }),
+    prisma.workRecord.findMany({
+      where,
+      // Keep signature/photo payloads out of the list query
+      select: {
+        id: true,
+        jobNumber: true,
+        date: true,
+        customerName: true,
+        typeOfWork: true,
+        status: true,
+      },
+      orderBy: { date: "desc" },
+      ...paginationArgs(page),
+    }),
+  ]);
+  const pages = pageCount(total);
 
   return (
     <div className="flex flex-col gap-4 pb-20 sm:pb-0">
@@ -87,15 +106,23 @@ export default async function RecordsPage({
           />
         )
       ) : (
-        <div className="flex flex-col gap-3">
-          {records.map((record) => (
-            <RecordCard
-              key={record.id}
-              record={record}
-              href={`/records/${record.id}`}
-            />
-          ))}
-        </div>
+        <>
+          <div className="flex flex-col gap-3">
+            {records.map((record) => (
+              <RecordCard
+                key={record.id}
+                record={record}
+                href={`/records/${record.id}`}
+              />
+            ))}
+          </div>
+          <Pagination
+            page={page}
+            pageCount={pages}
+            basePath="/records"
+            params={{ q: query }}
+          />
+        </>
       )}
 
       <Link

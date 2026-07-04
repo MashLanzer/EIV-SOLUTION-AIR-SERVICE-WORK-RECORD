@@ -37,7 +37,14 @@ export default async function AdminCustomerPage({
     include: {
       records: {
         orderBy: { date: "desc" },
-        include: { submittedBy: { select: { name: true } } },
+        select: {
+          id: true,
+          date: true,
+          jobNumber: true,
+          status: true,
+          typeOfWork: true,
+          submittedBy: { select: { name: true } },
+        },
       },
     },
   });

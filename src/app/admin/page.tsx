@@ -52,7 +52,14 @@ export default async function AdminDashboardPage() {
     prisma.workRecord.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
-      include: { submittedBy: { select: { name: true } } },
+      select: {
+        id: true,
+        jobNumber: true,
+        customerName: true,
+        date: true,
+        arrivalTime: true,
+        submittedBy: { select: { name: true } },
+      },
     }),
   ]);
 

@@ -2,8 +2,10 @@ import { FileText, Sheet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { RecordsFilterBar } from "@/components/records/RecordsFilterBar";
 import { RecordsTable } from "@/components/records/RecordsTable";
+import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
 
@@ -17,18 +19,31 @@ export default async function AdminRecordsPage({
   const rawParams = await searchParams;
   const filters = parseRecordFilterParams(rawParams);
   const where = buildRecordWhereClause(filters);
+  const page = parsePage(rawParams.page);
 
-  const [records, workers] = await Promise.all([
+  const [total, records, workers] = await Promise.all([
+    prisma.workRecord.count({ where }),
     prisma.workRecord.findMany({
       where,
-      include: { submittedBy: { select: { name: true } } },
+      // Keep signature/photo payloads out of the list query
+      select: {
+        id: true,
+        date: true,
+        jobNumber: true,
+        customerName: true,
+        typeOfWork: true,
+        status: true,
+        submittedBy: { select: { name: true } },
+      },
       orderBy: { date: "desc" },
+      ...paginationArgs(page),
     }),
     prisma.user.findMany({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
   ]);
+  const pages = pageCount(total);
 
   return (
     <div className="flex flex-col gap-6">
@@ -77,6 +92,20 @@ export default async function AdminRecordsPage({
           <RecordsTable records={records} exportFormId={EXPORT_FORM_ID} />
         </CardContent>
       </Card>
+
+      <Pagination
+        page={page}
+        pageCount={pages}
+        basePath="/admin/records"
+        params={{
+          dateFrom: filters.dateFrom,
+          dateTo: filters.dateTo,
+          workerId: filters.workerId,
+          customerName: filters.customerName,
+          jobNumber: filters.jobNumber,
+          status: filters.status,
+        }}
+      />
     </div>
   );
 }

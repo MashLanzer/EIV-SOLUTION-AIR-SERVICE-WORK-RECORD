@@ -14,11 +14,16 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
+export type RecordCardData = Pick<
+  WorkRecord,
+  "id" | "jobNumber" | "date" | "customerName" | "typeOfWork" | "status"
+>;
+
 export function RecordCard({
   record,
   href,
 }: {
-  record: WorkRecord;
+  record: RecordCardData;
   href: string;
 }) {
   return (

@@ -7,6 +7,8 @@ import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFil
 
 export const runtime = "nodejs";
 
+const MAX_EXCEL_RECORDS = 2000;
+
 export async function GET(request: Request) {
   await requireAdmin();
 
@@ -17,19 +19,27 @@ export async function GET(request: Request) {
     workerId: url.searchParams.get("workerId") ?? undefined,
     customerName: url.searchParams.get("customerName") ?? undefined,
     jobNumber: url.searchParams.get("jobNumber") ?? undefined,
+    status: url.searchParams.get("status") ?? undefined,
     ids: url.searchParams.getAll("ids"),
   });
   const where = buildRecordWhereClause(filters);
+
+  const total = await prisma.workRecord.count({ where });
+  if (total === 0) {
+    return new NextResponse("No records match these filters", { status: 404 });
+  }
+  if (total > MAX_EXCEL_RECORDS) {
+    return new NextResponse(
+      `This export would contain ${total} records; the Excel limit is ${MAX_EXCEL_RECORDS}. Narrow the filters (e.g. a smaller date range) and try again.`,
+      { status: 400 }
+    );
+  }
 
   const records = await prisma.workRecord.findMany({
     where,
     include: { submittedBy: { select: { name: true } } },
     orderBy: { date: "desc" },
   });
-
-  if (records.length === 0) {
-    return new NextResponse("No records match these filters", { status: 404 });
-  }
 
   const buffer = await buildWorkbook(records);
 
