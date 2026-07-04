@@ -59,13 +59,15 @@ jobs:
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 90
 
-      - name: Publish APK to a GitHub Release
+      - name: Publish APK to a new GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: android-apk
-          name: EIV Solution Air - Android (debug APK)
+          tag_name: android-apk-${{ github.run_number }}
+          name: EIV Solution Air - Android (debug APK) - build ${{ github.run_number }}
           body: >
             Debug APK wrapping the live web app in a native Android shell.
-            Automatically rebuilt from the latest mobile/ changes. Enable
-            "install from unknown sources" on Android before opening it.
+            Built from commit ${{ github.sha }}. Each build gets its own
+            release/link (instead of overwriting one) so there's no risk of
+            installing a stale, cached download. Enable "install from
+            unknown sources" on Android before opening it.
           files: mobile/android/app/build/outputs/apk/debug/app-debug.apk
