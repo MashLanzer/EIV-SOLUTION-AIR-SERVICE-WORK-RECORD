@@ -1,12 +1,19 @@
 "use client";
 
-import { useRef, useState, useTransition, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { Briefcase, User, Clock, DollarSign, PenTool, Save, X } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -69,6 +76,22 @@ export function WorkRecordForm({
   const installerSigRef = useRef<SignaturePadHandle>(null);
   const [signatureError, setSignatureError] = useState<string | null>(null);
 
+  const fieldError = (name: string) => state?.fieldErrors?.[name]?.[0];
+  const invalid = (name: string) => (fieldError(name) ? true : undefined);
+  const describedBy = (name: string) =>
+    fieldError(name) ? `${name}-error` : undefined;
+
+  // After a failed server validation, bring the first offending field
+  // into view (the form is long on phones).
+  useEffect(() => {
+    if (!state?.fieldErrors) return;
+    requestAnimationFrame(() => {
+      formRef.current
+        ?.querySelector('[aria-invalid="true"]')
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [state]);
+
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSignatureError(null);
@@ -104,7 +127,10 @@ export function WorkRecordForm({
             type="date"
             required
             defaultValue={defaultValues?.date ?? todayIsoDate()}
+            aria-invalid={invalid("date")}
+            aria-describedby={describedBy("date")}
           />
+          <FieldError id="date-error" message={fieldError("date")} />
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="jobNumber">Job #</Label>
@@ -113,7 +139,10 @@ export function WorkRecordForm({
             name="jobNumber"
             required
             defaultValue={defaultValues?.jobNumber}
+            aria-invalid={invalid("jobNumber")}
+            aria-describedby={describedBy("jobNumber")}
           />
+          <FieldError id="jobNumber-error" message={fieldError("jobNumber")} />
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="leadInstallerName">Lead Installer</Label>
@@ -122,6 +151,12 @@ export function WorkRecordForm({
             name="leadInstallerName"
             required
             defaultValue={defaultValues?.leadInstallerName}
+            aria-invalid={invalid("leadInstallerName")}
+            aria-describedby={describedBy("leadInstallerName")}
+          />
+          <FieldError
+            id="leadInstallerName-error"
+            message={fieldError("leadInstallerName")}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -130,7 +165,10 @@ export function WorkRecordForm({
             id="helperName"
             name="helperName"
             defaultValue={defaultValues?.helperName}
+            aria-invalid={invalid("helperName")}
+            aria-describedby={describedBy("helperName")}
           />
+          <FieldError id="helperName-error" message={fieldError("helperName")} />
         </div>
       </FormSection>
 
@@ -142,6 +180,12 @@ export function WorkRecordForm({
             name="customerName"
             required
             defaultValue={defaultValues?.customerName}
+            aria-invalid={invalid("customerName")}
+            aria-describedby={describedBy("customerName")}
+          />
+          <FieldError
+            id="customerName-error"
+            message={fieldError("customerName")}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -151,6 +195,12 @@ export function WorkRecordForm({
             name="customerAddress"
             required
             defaultValue={defaultValues?.customerAddress}
+            aria-invalid={invalid("customerAddress")}
+            aria-describedby={describedBy("customerAddress")}
+          />
+          <FieldError
+            id="customerAddress-error"
+            message={fieldError("customerAddress")}
           />
         </div>
       </FormSection>
@@ -164,6 +214,12 @@ export function WorkRecordForm({
             type="time"
             required
             defaultValue={defaultValues?.arrivalTime}
+            aria-invalid={invalid("arrivalTime")}
+            aria-describedby={describedBy("arrivalTime")}
+          />
+          <FieldError
+            id="arrivalTime-error"
+            message={fieldError("arrivalTime")}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -174,11 +230,24 @@ export function WorkRecordForm({
             type="time"
             required
             defaultValue={defaultValues?.departureTime}
+            aria-invalid={invalid("departureTime")}
+            aria-describedby={describedBy("departureTime")}
+          />
+          <FieldError
+            id="departureTime-error"
+            message={fieldError("departureTime")}
           />
         </div>
         <div className="flex flex-col gap-2 sm:col-span-2">
           <Label>Type of Work</Label>
-          <TypeOfWorkField defaultValue={defaultValues?.typeOfWork} />
+          <TypeOfWorkField
+            defaultValue={defaultValues?.typeOfWork}
+            invalid={invalid("typeOfWork")}
+          />
+          <FieldError
+            id="typeOfWork-error"
+            message={fieldError("typeOfWork")}
+          />
         </div>
         <div className="flex flex-col gap-2 sm:col-span-2">
           <Label htmlFor="workPerformedNotes">Work Performed / Notes</Label>
@@ -188,6 +257,12 @@ export function WorkRecordForm({
             required
             rows={5}
             defaultValue={defaultValues?.workPerformedNotes}
+            aria-invalid={invalid("workPerformedNotes")}
+            aria-describedby={describedBy("workPerformedNotes")}
+          />
+          <FieldError
+            id="workPerformedNotes-error"
+            message={fieldError("workPerformedNotes")}
           />
         </div>
       </FormSection>
@@ -203,6 +278,12 @@ export function WorkRecordForm({
             min="0"
             required
             defaultValue={defaultValues?.leadInstallerPay}
+            aria-invalid={invalid("leadInstallerPay")}
+            aria-describedby={describedBy("leadInstallerPay")}
+          />
+          <FieldError
+            id="leadInstallerPay-error"
+            message={fieldError("leadInstallerPay")}
           />
         </div>
         <div className="flex flex-col gap-2">
@@ -214,7 +295,10 @@ export function WorkRecordForm({
             step="0.01"
             min="0"
             defaultValue={defaultValues?.helperPay}
+            aria-invalid={invalid("helperPay")}
+            aria-describedby={describedBy("helperPay")}
           />
+          <FieldError id="helperPay-error" message={fieldError("helperPay")} />
         </div>
       </FormSection>
 

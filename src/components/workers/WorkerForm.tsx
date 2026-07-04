@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,11 +32,7 @@ export function WorkerForm() {
           <option value="ADMIN">Admin</option>
         </Select>
       </div>
-      {state?.error && (
-        <p className="text-sm text-red-600" role="alert">
-          {state.error}
-        </p>
-      )}
+      {state?.error && <Alert variant="error">{state.error}</Alert>}
       <Button type="submit" disabled={pending}>
         {pending ? "Creating..." : "Create account"}
       </Button>

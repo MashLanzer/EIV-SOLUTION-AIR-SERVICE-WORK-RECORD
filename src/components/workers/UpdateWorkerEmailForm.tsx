@@ -7,6 +7,7 @@ import {
   updateWorkerEmailAction,
   type UpdateWorkerEmailState,
 } from "@/actions/workers";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -35,11 +36,7 @@ export function UpdateWorkerEmailForm({
         <Pencil className="h-4 w-4" />
         {pending ? "Saving..." : "Update email"}
       </Button>
-      {state?.error && (
-        <p className="text-sm text-red-600" role="alert">
-          {state.error}
-        </p>
-      )}
+      {state?.error && <Alert variant="error">{state.error}</Alert>}
     </form>
   );
 }

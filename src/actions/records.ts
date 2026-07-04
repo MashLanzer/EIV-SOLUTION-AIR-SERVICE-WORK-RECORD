@@ -2,12 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireAuth } from "@/lib/session";
 import { workRecordSchema } from "@/lib/validations";
 
-export type RecordFormState = { error?: string } | undefined;
+export type RecordFormState =
+  | { error?: string; fieldErrors?: Record<string, string[]> }
+  | undefined;
 
 function parseRecordForm(formData: FormData) {
   return workRecordSchema.safeParse({
@@ -36,7 +39,10 @@ export async function createRecordAction(
 
   const parsed = parseRecordForm(formData);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
   }
 
   const data = parsed.data;
@@ -61,7 +67,7 @@ export async function createRecordAction(
   });
 
   revalidatePath("/records");
-  redirect("/records");
+  redirect("/records?saved=1");
 }
 
 export async function updateRecordAction(
@@ -79,7 +85,10 @@ export async function updateRecordAction(
 
   const parsed = parseRecordForm(formData);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
   }
 
   const data = parsed.data;
@@ -105,7 +114,11 @@ export async function updateRecordAction(
 
   revalidatePath("/records");
   revalidatePath("/admin/records");
-  redirect(session.user.role === "ADMIN" ? `/admin/records/${recordId}` : `/records/${recordId}`);
+  redirect(
+    session.user.role === "ADMIN"
+      ? `/admin/records/${recordId}?saved=1`
+      : `/records/${recordId}?saved=1`
+  );
 }
 
 export async function deleteRecordAction(recordId: string) {
