@@ -5,12 +5,30 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 export function GoogleSignInButton() {
+  const handleClick = async () => {
+    const capacitor = window.Capacitor;
+
+    // Inside the Android app shell: Google's OAuth flow doesn't complete in
+    // the embedded WebView (its PKCE cookie check fails), so open the flow
+    // in the system browser instead. It finishes at /native-handoff, which
+    // hands the session back to the app via a deep link (NativeAuthBridge).
+    if (capacitor?.isNativePlatform?.()) {
+      const url = new URL("/login", window.location.origin);
+      url.searchParams.set("native", "1");
+      await capacitor.Plugins?.Browser?.open({ url: url.toString() });
+      return;
+    }
+
+    const native = new URLSearchParams(window.location.search).get("native");
+    await signIn("google", { redirectTo: native ? "/native-handoff" : "/" });
+  };
+
   return (
     <Button
       type="button"
       size="lg"
       className="w-full"
-      onClick={() => signIn("google", { redirectTo: "/" })}
+      onClick={handleClick}
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
         <path
