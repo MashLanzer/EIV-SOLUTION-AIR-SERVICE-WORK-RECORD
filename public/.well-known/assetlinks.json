@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.eivsolutionair.workrecord",
+      "sha256_cert_fingerprints": [
+        "4E:A1:0D:8F:D2:56:B4:DE:E9:52:5F:95:31:19:BB:6B:7F:B0:60:E9:4A:33:DD:C3:0C:84:CF:59:F3:20:34:E1"
+      ]
+    }
+  }
+]

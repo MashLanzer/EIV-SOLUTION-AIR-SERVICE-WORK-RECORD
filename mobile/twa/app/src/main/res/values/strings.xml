@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EIV Solution Air</string>
+    <!-- Tells Chrome which site this app is allowed to display fullscreen.
+         Must match the site's /.well-known/assetlinks.json, which in turn
+         lists this APK's signing certificate fingerprint. -->
+    <string name="asset_statements">
+        [{
+            \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+            \"target\": {
+                \"namespace\": \"web\",
+                \"site\": \"https://eiv-solution-air-service-work-recor.vercel.app\"
+            }
+        }]
+    </string>
+</resources>

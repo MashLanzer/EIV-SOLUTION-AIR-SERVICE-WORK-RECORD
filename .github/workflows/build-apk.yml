@@ -27,45 +27,30 @@ jobs:
       - name: Install Android SDK components
         run: sdkmanager --install "platforms;android-36" "build-tools;36.0.0"
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Install mobile shell dependencies
-        working-directory: mobile
-        run: npm install
-
-      - name: Generate app icons and splash screen
-        working-directory: mobile
-        run: npx capacitor-assets generate --android
-
-      - name: Sync Capacitor Android project
-        working-directory: mobile
-        run: npx cap sync android
-
       - name: Grant execute permission for gradlew
-        working-directory: mobile/android
+        working-directory: mobile/twa
         run: chmod +x gradlew
 
-      - name: Build debug APK
-        working-directory: mobile/android
-        run: ./gradlew assembleDebug --no-daemon
+      - name: Build release APK (Trusted Web Activity)
+        working-directory: mobile/twa
+        run: ./gradlew assembleRelease --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
-          name: eiv-solution-air-debug-apk
-          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          name: eiv-solution-air-apk
+          path: mobile/twa/app/build/outputs/apk/release/app-release.apk
           retention-days: 90
 
       - name: Publish APK to a new GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-apk-${{ github.run_number }}
-          name: EIV Solution Air - Android (debug APK) - build ${{ github.run_number }}
+          name: EIV Solution Air - Android (TWA) - build ${{ github.run_number }}
           body: >
-            Debug APK wrapping the live web app in a native Android shell.
-            Built from commit ${{ github.sha }}. Each build gets its own
-            release/link (instead of overwriting one) so there's no risk of
-            installing a stale, cached download. Enable "install from
-            unknown sources" on Android before opening it.
-          files: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            Android app rendering the live site through Chrome itself
+            (Trusted Web Activity) - same engine and cookies as the browser,
+            so Google Sign-In works directly. Built from commit
+            ${{ github.sha }}. Signed with the repo's fixed key, so future
+            builds install as updates. Enable "install from unknown sources"
+            on Android before opening it.
+          files: mobile/twa/app/build/outputs/apk/release/app-release.apk

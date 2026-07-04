@@ -1,0 +1,42 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace "com.eivsolutionair.workrecord"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.eivsolutionair.workrecord"
+        minSdkVersion 24
+        targetSdkVersion 36
+        versionCode 2
+        versionName "2.0"
+    }
+
+    signingConfigs {
+        // Fixed key committed to the repo so every CI build has the same
+        // signature: installs update in place, and the certificate
+        // fingerprint stays in sync with the site's assetlinks.json
+        // (required for the Trusted Web Activity to run fullscreen).
+        // Debug-distribution key only - not a Play Store upload key.
+        shared {
+            storeFile file("../signing.keystore")
+            storePassword "eivsolutionair2026"
+            keyAlias "eivsolutionair"
+            keyPassword "eivsolutionair2026"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.shared
+        }
+        debug {
+            signingConfig signingConfigs.shared
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.6.2'
+}
