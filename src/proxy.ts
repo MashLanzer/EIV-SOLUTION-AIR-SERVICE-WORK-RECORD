@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
 // /.well-known/assetlinks.json must stay public: Chrome fetches it to verify
-// the Android app (TWA) is allowed to display this site fullscreen.
-const PUBLIC_PATHS = ["/login", "/api/auth", "/api/setup", "/.well-known"];
+// the Android app is allowed to display this site fullscreen.
+const PUBLIC_PATHS = ["/login", "/api/auth", "/.well-known"];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;

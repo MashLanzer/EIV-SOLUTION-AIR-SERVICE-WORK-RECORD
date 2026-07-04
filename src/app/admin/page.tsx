@@ -98,7 +98,7 @@ export default async function AdminDashboardPage() {
             <div>
               <CardTitle className="text-base">Manage Workers</CardTitle>
               <p className="mt-1 text-sm text-slate-500">
-                Create accounts, deactivate, reset passwords
+                Authorize emails, set roles, deactivate accounts
               </p>
             </div>
             <Button asChild variant="outline" size="icon">

@@ -1,6 +1,12 @@
 "use client";
 
-import { useRef, useState, useImperativeHandle, forwardRef } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Eraser, PenLine } from "lucide-react";
 
@@ -33,6 +39,30 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
         return pad.getTrimmedCanvas().toDataURL("image/png");
       },
     }));
+
+    // Keep the canvas bitmap in sync with its CSS size (and device pixel
+    // ratio), redrawing existing strokes - otherwise strokes land offset
+    // from the finger after a rotation/resize, or get cleared entirely.
+    useEffect(() => {
+      if (mode !== "draw") return;
+      const pad = sigRef.current;
+      const canvas = pad?.getCanvas();
+      if (!pad || !canvas) return;
+
+      const resize = () => {
+        const data = pad.toData();
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d")?.scale(ratio, ratio);
+        pad.fromData(data);
+      };
+
+      resize();
+      const observer = new ResizeObserver(resize);
+      observer.observe(canvas);
+      return () => observer.disconnect();
+    }, [mode]);
 
     return (
       <div className={cn("flex flex-col gap-2", className)}>
@@ -82,6 +112,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
               <SignatureCanvas
                 ref={sigRef}
                 penColor="#0f172a"
+                clearOnResize={false}
                 onBegin={() => setIsEmpty(false)}
                 canvasProps={{
                   className: "w-full h-40 rounded-md",

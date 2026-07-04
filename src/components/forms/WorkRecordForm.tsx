@@ -45,7 +45,11 @@ interface WorkRecordFormProps {
 }
 
 function todayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  // Local calendar day - toISOString() alone is UTC and can be off by a
+  // day for evening use in the Americas.
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().slice(0, 10);
 }
 
 export function WorkRecordForm({
@@ -232,9 +236,9 @@ export function WorkRecordForm({
       )}
 
       {/* Spacer so the fixed mobile action bar doesn't cover the last section */}
-      <div className="h-16 sm:hidden" />
+      <div className="h-[calc(4rem+env(safe-area-inset-bottom))] sm:hidden" />
 
-      <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+      <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0">
         <Button type="submit" size="lg" disabled={pending}>
           <Save className="h-4 w-4" />
           {pending ? "Saving..." : submitLabel}
