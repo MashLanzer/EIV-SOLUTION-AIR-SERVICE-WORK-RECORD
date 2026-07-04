@@ -17,6 +17,7 @@ import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { CustomerAutocomplete } from "@/components/forms/CustomerAutocomplete";
 import { FormSection } from "@/components/forms/FormSection";
 import {
   SignaturePad,
@@ -175,13 +176,11 @@ export function WorkRecordForm({
       <FormSection icon={User} title="Customer">
         <div className="flex flex-col gap-2">
           <Label htmlFor="customerName">Customer Name</Label>
-          <Input
-            id="customerName"
-            name="customerName"
-            required
+          <CustomerAutocomplete
             defaultValue={defaultValues?.customerName}
-            aria-invalid={invalid("customerName")}
-            aria-describedby={describedBy("customerName")}
+            addressInputId="customerAddress"
+            invalid={invalid("customerName")}
+            describedBy={describedBy("customerName")}
           />
           <FieldError
             id="customerName-error"

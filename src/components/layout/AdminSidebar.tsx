@@ -3,7 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ClipboardList, Users, Menu, X } from "lucide-react";
+import {
+  LayoutDashboard,
+  ClipboardList,
+  Users,
+  Contact,
+  Menu,
+  X,
+} from "lucide-react";
 
 import { Logo } from "@/components/layout/Logo";
 import { LogoutButton } from "@/components/layout/LogoutButton";
@@ -12,6 +19,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/records", label: "Records", icon: ClipboardList, exact: false },
+  { href: "/admin/customers", label: "Customers", icon: Contact, exact: false },
   { href: "/admin/workers", label: "Workers", icon: Users, exact: false },
 ];
 

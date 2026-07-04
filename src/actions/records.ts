@@ -31,6 +31,26 @@ function parseRecordForm(formData: FormData) {
   });
 }
 
+// Find-or-create the customer for a record, case-insensitively on
+// name+address (a raw unique index enforces this at the DB level).
+async function upsertCustomerId(name: string, address: string) {
+  const match = {
+    name: { equals: name, mode: "insensitive" as const },
+    address: { equals: address, mode: "insensitive" as const },
+  };
+  const existing = await prisma.customer.findFirst({ where: match });
+  if (existing) return existing.id;
+  try {
+    const created = await prisma.customer.create({ data: { name, address } });
+    return created.id;
+  } catch {
+    // Unique-index race with a concurrent submission - fetch the winner.
+    const winner = await prisma.customer.findFirst({ where: match });
+    if (winner) return winner.id;
+    throw new Error("Failed to save customer");
+  }
+}
+
 export async function createRecordAction(
   _prevState: RecordFormState,
   formData: FormData
@@ -46,8 +66,10 @@ export async function createRecordAction(
   }
 
   const data = parsed.data;
+  const customerId = await upsertCustomerId(data.customerName, data.customerAddress);
   await prisma.workRecord.create({
     data: {
+      customerId,
       date: new Date(data.date),
       jobNumber: data.jobNumber,
       leadInstallerName: data.leadInstallerName,
@@ -92,9 +114,11 @@ export async function updateRecordAction(
   }
 
   const data = parsed.data;
+  const customerId = await upsertCustomerId(data.customerName, data.customerAddress);
   await prisma.workRecord.update({
     where: { id: recordId },
     data: {
+      customerId,
       date: new Date(data.date),
       jobNumber: data.jobNumber,
       leadInstallerName: data.leadInstallerName,

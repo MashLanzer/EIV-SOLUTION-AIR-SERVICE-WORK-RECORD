@@ -28,6 +28,19 @@ model User {
   submittedRecords WorkRecord[] @relation("SubmittedBy")
 }
 
+model Customer {
+  id        String       @id @default(cuid())
+  name      String
+  address   String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  records   WorkRecord[]
+
+  // Uniqueness is enforced by a raw functional index in the migration:
+  // UNIQUE (lower(name), lower(address))
+  @@index([name])
+}
+
 model WorkRecord {
   id                 String   @id @default(cuid())
   date               DateTime @db.Date
@@ -45,6 +58,8 @@ model WorkRecord {
   customerSignature  String       @db.Text
   installerSignature String       @db.Text
   status             RecordStatus @default(SUBMITTED)
+  customerId         String?
+  customer           Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   submittedById      String
   submittedBy        User         @relation("SubmittedBy", fields: [submittedById], references: [id])
   createdAt          DateTime     @default(now())
