@@ -9,6 +9,8 @@ interface CustomerSuggestion {
   id: string;
   name: string;
   address: string;
+  phone: string | null;
+  email: string | null;
 }
 
 // Customer-name input with a suggestions dropdown backed by
@@ -18,11 +20,15 @@ interface CustomerSuggestion {
 export function CustomerAutocomplete({
   defaultValue,
   addressInputId,
+  phoneInputId,
+  emailInputId,
   invalid,
   describedBy,
 }: {
   defaultValue?: string;
   addressInputId: string;
+  phoneInputId?: string;
+  emailInputId?: string;
   invalid?: boolean;
   describedBy?: string;
 }) {
@@ -75,10 +81,14 @@ export function CustomerAutocomplete({
     controllerRef.current?.abort();
     setValue(suggestion.name);
     setOpen(false);
-    const addressInput = document.getElementById(addressInputId);
-    if (addressInput instanceof HTMLInputElement) {
-      addressInput.value = suggestion.address;
-    }
+    const fill = (inputId: string | undefined, val: string | null) => {
+      if (!inputId) return;
+      const el = document.getElementById(inputId);
+      if (el instanceof HTMLInputElement && val) el.value = val;
+    };
+    fill(addressInputId, suggestion.address);
+    fill(phoneInputId, suggestion.phone);
+    fill(emailInputId, suggestion.email);
   }
 
   return (

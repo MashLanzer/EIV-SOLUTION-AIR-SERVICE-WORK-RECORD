@@ -25,7 +25,7 @@ export async function GET(request: Request) {
         { address: { contains: q, mode: "insensitive" } },
       ],
     },
-    select: { id: true, name: true, address: true },
+    select: { id: true, name: true, address: true, phone: true, email: true },
     orderBy: { updatedAt: "desc" },
     take: 8,
   });

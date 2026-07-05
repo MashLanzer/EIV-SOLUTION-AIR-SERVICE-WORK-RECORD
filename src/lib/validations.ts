@@ -42,6 +42,17 @@ export const workRecordSchema = z.object({
     .optional(),
 });
 
+export const customerSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  address: z.string().min(1, "Address is required"),
+  phone: z.string().max(40).optional().or(z.literal("")),
+  email: z
+    .string()
+    .email("Enter a valid email address")
+    .optional()
+    .or(z.literal("")),
+});
+
 export const createWorkerSchema = z.object({
   email: z.string().email("Enter a valid email address"),
   name: z.string().min(1, "Name is required"),

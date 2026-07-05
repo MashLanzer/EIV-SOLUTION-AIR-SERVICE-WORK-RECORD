@@ -46,6 +46,8 @@ export interface WorkRecordFormValues {
   helperName: string;
   customerName: string;
   customerAddress: string;
+  customerPhone: string;
+  customerEmail: string;
   arrivalTime: string;
   departureTime: string;
   typeOfWork: string;
@@ -167,6 +169,8 @@ export function WorkRecordForm({
       helperName: (fd.get("helperName") as string) ?? "",
       customerName: (fd.get("customerName") as string) ?? "",
       customerAddress: (fd.get("customerAddress") as string) ?? "",
+      customerPhone: (fd.get("customerPhone") as string) ?? "",
+      customerEmail: (fd.get("customerEmail") as string) ?? "",
       arrivalTime: (fd.get("arrivalTime") as string) ?? "",
       departureTime: (fd.get("departureTime") as string) ?? "",
       typeOfWork: (fd.get("typeOfWork") as string) ?? "",
@@ -336,6 +340,8 @@ export function WorkRecordForm({
             <CustomerAutocomplete
               defaultValue={values?.customerName}
               addressInputId="customerAddress"
+              phoneInputId="customerPhone"
+              emailInputId="customerEmail"
               invalid={invalid("customerName")}
               describedBy={describedBy("customerName")}
             />
@@ -357,6 +363,24 @@ export function WorkRecordForm({
             <FieldError
               id="customerAddress-error"
               message={fieldError("customerAddress")}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="customerPhone">Customer Phone (optional)</Label>
+            <Input
+              id="customerPhone"
+              name="customerPhone"
+              type="tel"
+              defaultValue={values?.customerPhone}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="customerEmail">Customer Email (optional)</Label>
+            <Input
+              id="customerEmail"
+              name="customerEmail"
+              type="email"
+              defaultValue={values?.customerEmail}
             />
           </div>
         </FormSection>

@@ -36,15 +36,32 @@ function parseRecordForm(formData: FormData) {
 
 // Find-or-create the customer for a record, case-insensitively on
 // name+address (a raw unique index enforces this at the DB level).
-async function upsertCustomerId(name: string, address: string) {
+// Optional phone/email are filled in when provided (kept if already set).
+async function upsertCustomerId(
+  name: string,
+  address: string,
+  phone?: string,
+  email?: string
+) {
   const match = {
     name: { equals: name, mode: "insensitive" as const },
     address: { equals: address, mode: "insensitive" as const },
   };
+  const contact = {
+    ...(phone ? { phone } : {}),
+    ...(email ? { email } : {}),
+  };
   const existing = await prisma.customer.findFirst({ where: match });
-  if (existing) return existing.id;
+  if (existing) {
+    if (Object.keys(contact).length > 0) {
+      await prisma.customer.update({ where: { id: existing.id }, data: contact });
+    }
+    return existing.id;
+  }
   try {
-    const created = await prisma.customer.create({ data: { name, address } });
+    const created = await prisma.customer.create({
+      data: { name, address, ...contact },
+    });
     return created.id;
   } catch {
     // Unique-index race with a concurrent submission - fetch the winner.
@@ -52,6 +69,16 @@ async function upsertCustomerId(name: string, address: string) {
     if (winner) return winner.id;
     throw new Error("Failed to save customer");
   }
+}
+
+// Optional customer contact fields ride along on the record form but live
+// on the Customer, not the WorkRecord.
+function parseCustomerContact(formData: FormData) {
+  const phone = (formData.get("customerPhone") as string | null)?.trim() || undefined;
+  const email =
+    (formData.get("customerEmail") as string | null)?.trim().toLowerCase() ||
+    undefined;
+  return { phone, email };
 }
 
 export async function createRecordAction(
@@ -69,7 +96,13 @@ export async function createRecordAction(
   }
 
   const data = parsed.data;
-  const customerId = await upsertCustomerId(data.customerName, data.customerAddress);
+  const contact = parseCustomerContact(formData);
+  const customerId = await upsertCustomerId(
+    data.customerName,
+    data.customerAddress,
+    contact.phone,
+    contact.email
+  );
   await prisma.workRecord.create({
     data: {
       customerId,
@@ -130,7 +163,13 @@ export async function updateRecordAction(
   }
 
   const data = parsed.data;
-  const customerId = await upsertCustomerId(data.customerName, data.customerAddress);
+  const contact = parseCustomerContact(formData);
+  const customerId = await upsertCustomerId(
+    data.customerName,
+    data.customerAddress,
+    contact.phone,
+    contact.email
+  );
   await prisma.workRecord.update({
     where: { id: recordId },
     data: {

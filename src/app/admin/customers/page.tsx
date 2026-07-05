@@ -89,6 +89,7 @@ export default async function AdminCustomersPage({
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Address</TableHead>
+                  <TableHead>Contact</TableHead>
                   <TableHead>Jobs</TableHead>
                   <TableHead className="text-right">History</TableHead>
                 </TableRow>
@@ -100,6 +101,9 @@ export default async function AdminCustomersPage({
                       {customer.name}
                     </TableCell>
                     <TableCell>{customer.address}</TableCell>
+                    <TableCell className="text-sm text-slate-500">
+                      {customer.phone || customer.email || "—"}
+                    </TableCell>
                     <TableCell>{customer._count.records}</TableCell>
                     <TableCell className="text-right">
                       <Button asChild variant="outline" size="sm">
