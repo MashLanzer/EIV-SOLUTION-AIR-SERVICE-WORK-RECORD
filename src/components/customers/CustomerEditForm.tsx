@@ -81,6 +81,19 @@ export function CustomerEditForm({
         </div>
       </div>
 
+      <label className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+        <input
+          type="checkbox"
+          name="applyToExistingRecords"
+          className="mt-0.5"
+        />
+        <span>
+          Also update the name/address on this customer&apos;s existing work
+          records. Leave unchecked to keep their past records exactly as they
+          were submitted.
+        </span>
+      </label>
+
       {state?.error && <Alert variant="error">{state.error}</Alert>}
 
       <div>

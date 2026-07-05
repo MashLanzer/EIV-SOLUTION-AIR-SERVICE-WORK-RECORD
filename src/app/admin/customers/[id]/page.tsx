@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
 import {
   Table,
@@ -19,6 +20,7 @@ import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
 import { DeleteCustomerButton } from "@/components/customers/DeleteCustomerButton";
 import { MergeCustomerForm } from "@/components/customers/MergeCustomerForm";
 import { StatusBadge } from "@/components/records/StatusBadge";
+import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 
 function formatDate(date: Date) {
@@ -35,28 +37,37 @@ export default async function AdminCustomerPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string; merged?: string; error?: string }>;
+  searchParams: Promise<{
+    saved?: string;
+    merged?: string;
+    error?: string;
+    page?: string;
+  }>;
 }) {
   const { id } = await params;
-  const { saved, merged, error } = await searchParams;
+  const { saved, merged, error, page: rawPage } = await searchParams;
+  const page = parsePage(rawPage);
 
-  const customer = await prisma.customer.findUnique({
-    where: { id },
-    include: {
-      records: {
-        orderBy: { date: "desc" },
-        select: {
-          id: true,
-          date: true,
-          jobNumber: true,
-          status: true,
-          typeOfWork: true,
-          submittedBy: { select: { name: true } },
-        },
-      },
-    },
-  });
+  const customer = await prisma.customer.findUnique({ where: { id } });
   if (!customer) notFound();
+
+  const [recordCount, records] = await Promise.all([
+    prisma.workRecord.count({ where: { customerId: id } }),
+    prisma.workRecord.findMany({
+      where: { customerId: id },
+      orderBy: { date: "desc" },
+      select: {
+        id: true,
+        date: true,
+        jobNumber: true,
+        status: true,
+        typeOfWork: true,
+        submittedBy: { select: { name: true } },
+      },
+      ...paginationArgs(page),
+    }),
+  ]);
+  const pages = pageCount(recordCount);
 
   const others = await prisma.customer.findMany({
     where: { id: { not: id } },
@@ -130,11 +141,11 @@ export default async function AdminCustomerPage({
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            Job History ({customer.records.length})
+            Job History ({recordCount})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {customer.records.length === 0 ? (
+          {records.length === 0 ? (
             <EmptyState
               icon={ClipboardList}
               title="No jobs yet"
@@ -153,7 +164,7 @@ export default async function AdminCustomerPage({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {customer.records.map((record) => (
+                {records.map((record) => (
                   <TableRow key={record.id}>
                     <TableCell>{formatDate(record.date)}</TableCell>
                     <TableCell>{record.jobNumber}</TableCell>
@@ -179,6 +190,12 @@ export default async function AdminCustomerPage({
           )}
         </CardContent>
       </Card>
+
+      <Pagination
+        page={page}
+        pageCount={pages}
+        basePath={`/admin/customers/${id}`}
+      />
     </div>
   );
 }

@@ -241,9 +241,11 @@ export function WorkRecordForm({
     const formData = new FormData(formRef.current!);
     formData.set("customerSignature", customerSignature);
     formData.set("installerSignature", installerSignature);
-    // Clear the saved draft on submit; if the server rejects it, autosave
-    // re-creates it on the next edit.
-    if (draftKey) clearDraft(draftKey);
+    // The draft is deliberately NOT cleared here: if the request never
+    // reaches the server (offline flip mid-submit, server error, timeout),
+    // clearing it now would lose the signature/photos with no way back.
+    // It's cleared once we land on the post-save page, which only happens
+    // on a confirmed success (see ClearDraftOnMount on /records?saved=1).
     startTransition(() => {
       formAction(formData);
     });

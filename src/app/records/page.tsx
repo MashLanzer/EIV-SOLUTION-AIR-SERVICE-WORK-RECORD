@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
+import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { RecordCard } from "@/components/records/RecordCard";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
@@ -54,7 +55,12 @@ export default async function RecordsPage({
 
   return (
     <div className="flex flex-col gap-4 pb-20 sm:pb-0">
-      {saved && <SuccessToast message="Record saved" />}
+      {saved && (
+        <>
+          <SuccessToast message="Record saved" />
+          <ClearDraftOnMount draftKey={`new-record:${session.user.id}`} />
+        </>
+      )}
 
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">My Records</h1>

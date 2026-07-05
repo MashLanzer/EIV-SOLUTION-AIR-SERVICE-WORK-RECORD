@@ -70,6 +70,31 @@ describe("workRecordSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("rejects a departure time at or before the arrival time", () => {
+    const same = workRecordSchema.safeParse({
+      ...baseRecord(),
+      arrivalTime: "09:00",
+      departureTime: "09:00",
+    });
+    expect(same.success).toBe(false);
+
+    const earlier = workRecordSchema.safeParse({
+      ...baseRecord(),
+      arrivalTime: "09:00",
+      departureTime: "08:30",
+    });
+    expect(earlier.success).toBe(false);
+  });
+
+  it("accepts a departure time after the arrival time", () => {
+    const result = workRecordSchema.safeParse({
+      ...baseRecord(),
+      arrivalTime: "09:00",
+      departureTime: "09:01",
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("customerSchema", () => {

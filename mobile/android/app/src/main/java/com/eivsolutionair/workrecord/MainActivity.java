@@ -3,7 +3,9 @@ package com.eivsolutionair.workrecord;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 import android.webkit.CookieManager;
+import android.widget.Toast;
 import com.getcapacitor.BridgeActivity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -18,6 +20,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends BridgeActivity {
 
+    private static final String TAG = "NativeHandoff";
     private static final String SITE = "https://eiv-solution-air-service-work-recor.vercel.app";
     private static final String SCHEME = "eivsolutionair";
     private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
@@ -83,16 +86,33 @@ public class MainActivity extends BridgeActivity {
                 int status = conn.getResponseCode();
                 InputStream stream = status == 200 ? conn.getInputStream() : conn.getErrorStream();
                 String responseBody = readAll(stream);
-                if (status != 200) return;
+                if (status != 200) {
+                    handleExchangeFailure("Sign-in exchange failed (HTTP " + status + "): " + responseBody);
+                    return;
+                }
 
                 JSONObject json = new JSONObject(responseBody);
                 String token = json.getString("token");
                 String cookieName = json.getString("cookieName");
                 installSessionCookie(cookieName, token);
-            } catch (Exception ignored) {
-                // Network hiccup or an already-expired/used code - the user
-                // just lands on the login screen and can sign in again.
+            } catch (Exception e) {
+                // Network hiccup or an already-expired/used code - surface it
+                // instead of leaving the WebView stuck on a stale page with
+                // no explanation, and send the user back to a clean retry.
+                handleExchangeFailure(e.toString());
             }
+        });
+    }
+
+    private void handleExchangeFailure(String reason) {
+        Log.w(TAG, "Native sign-in handoff failed: " + reason);
+        runOnUiThread(() -> {
+            Toast.makeText(
+                this,
+                "Sign-in didn't finish - please try again.",
+                Toast.LENGTH_LONG
+            ).show();
+            bridge.getWebView().loadUrl(SITE + "/login");
         });
     }
 

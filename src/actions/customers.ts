@@ -33,18 +33,37 @@ export async function updateCustomerAction(
   }
 
   const { name, address, phone, email } = parsed.data;
-  await prisma.customer.update({
-    where: { id: customerId },
-    data: {
-      name,
-      address,
-      phone: phone ? phone : null,
-      email: email ? email : null,
-    },
-  });
+  // Off by default: existing records keep the customer name/address as it
+  // was when they were submitted, since they can be signed/approved
+  // paperwork - only touch them when the admin explicitly opts in.
+  const applyToExistingRecords = formData.get("applyToExistingRecords") === "on";
+
+  await prisma.$transaction([
+    prisma.customer.update({
+      where: { id: customerId },
+      data: {
+        name,
+        address,
+        phone: phone ? phone : null,
+        email: email ? email : null,
+      },
+    }),
+    ...(applyToExistingRecords
+      ? [
+          prisma.workRecord.updateMany({
+            where: { customerId },
+            data: { customerName: name, customerAddress: address },
+          }),
+        ]
+      : []),
+  ]);
 
   revalidatePath("/admin/customers");
   revalidatePath(`/admin/customers/${customerId}`);
+  if (applyToExistingRecords) {
+    revalidatePath("/admin/records");
+    revalidatePath("/records");
+  }
   redirect(`/admin/customers/${customerId}?saved=1`);
 }
 

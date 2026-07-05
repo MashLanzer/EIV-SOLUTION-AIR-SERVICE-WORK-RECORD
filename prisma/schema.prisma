@@ -102,5 +102,8 @@ model WorkRecord {
   @@index([date])
   @@index([jobNumber])
   @@index([customerName])
-  @@index([status])
+  // Covers status-only lookups (e.g. pending-review counts) via the
+  // leftmost column, plus the status+date range scans the pay report and
+  // dashboard run - replaces the old standalone @@index([status]).
+  @@index([status, date])
 }

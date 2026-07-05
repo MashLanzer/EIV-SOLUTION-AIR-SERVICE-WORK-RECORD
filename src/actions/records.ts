@@ -81,6 +81,30 @@ function parseCustomerContact(formData: FormData) {
   return { phone, email };
 }
 
+// jobNumber has no DB-level uniqueness constraint (a hard @unique could fail
+// to migrate against existing duplicate data), so this app-level check is
+// the only thing stopping two records from silently sharing a job number.
+async function findDuplicateJobNumber(jobNumber: string, excludeRecordId?: string) {
+  return prisma.workRecord.findFirst({
+    where: {
+      jobNumber: { equals: jobNumber.trim(), mode: "insensitive" },
+      ...(excludeRecordId ? { NOT: { id: excludeRecordId } } : {}),
+    },
+    select: { customerName: true, date: true },
+  });
+}
+
+function jobNumberTakenError(dup: { customerName: string; date: Date }): RecordFormState {
+  return {
+    error: "Please fix the highlighted fields.",
+    fieldErrors: {
+      jobNumber: [
+        `Already used on a record for ${dup.customerName} (${dup.date.toISOString().slice(0, 10)}).`,
+      ],
+    },
+  };
+}
+
 export async function createRecordAction(
   _prevState: RecordFormState,
   formData: FormData
@@ -96,6 +120,9 @@ export async function createRecordAction(
   }
 
   const data = parsed.data;
+  const dupJobNumber = await findDuplicateJobNumber(data.jobNumber);
+  if (dupJobNumber) return jobNumberTakenError(dupJobNumber);
+
   const contact = parseCustomerContact(formData);
   const customerId = await upsertCustomerId(
     data.customerName,
@@ -163,6 +190,9 @@ export async function updateRecordAction(
   }
 
   const data = parsed.data;
+  const dupJobNumber = await findDuplicateJobNumber(data.jobNumber, recordId);
+  if (dupJobNumber) return jobNumberTakenError(dupJobNumber);
+
   const contact = parseCustomerContact(formData);
   const customerId = await upsertCustomerId(
     data.customerName,

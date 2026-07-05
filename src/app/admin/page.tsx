@@ -20,6 +20,7 @@ import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
 
 const WEEKS_BACK = 8;
+const TYPE_WINDOW_MONTHS = 12;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function startOfWeek(base = new Date()) {
@@ -37,6 +38,13 @@ function startOfWeek(base = new Date()) {
 function startOfMonth() {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+}
+
+// A trailing window instead of "all time" keeps the type-of-work groupBy
+// from scanning the entire table forever as the record count grows.
+function monthsAgo(months: number) {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, 1));
 }
 
 function formatDate(date: Date) {
@@ -92,6 +100,7 @@ export default async function AdminDashboardPage() {
     }),
     prisma.workRecord.groupBy({
       by: ["typeOfWork"],
+      where: { date: { gte: monthsAgo(TYPE_WINDOW_MONTHS) } },
       _count: { _all: true },
     }),
     buildPayReport(payParams),
@@ -201,7 +210,9 @@ export default async function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex-row items-center gap-2 space-y-0">
             <Wrench className="h-4 w-4 text-accent" />
-            <CardTitle className="text-base">Work by type</CardTitle>
+            <CardTitle className="text-base">
+              Work by type (last {TYPE_WINDOW_MONTHS} months)
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <BarList data={typeData} emptyLabel="No records yet" />
