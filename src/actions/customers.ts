@@ -60,6 +60,13 @@ export async function mergeCustomerAction(
     redirect(`/admin/customers/${sourceId}?error=merge`);
   }
 
+  // Guard against a stale option (target deleted/merged elsewhere between
+  // page load and submit) before moving records and deleting the source.
+  const target = await prisma.customer.findUnique({ where: { id: targetId } });
+  if (!target) {
+    redirect(`/admin/customers/${sourceId}?error=merge`);
+  }
+
   await prisma.$transaction([
     prisma.workRecord.updateMany({
       where: { customerId: sourceId },

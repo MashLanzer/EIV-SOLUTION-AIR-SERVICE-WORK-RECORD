@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { Merge } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,9 @@ export function MergeCustomerForm({
   others: OtherCustomer[];
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const id = useId();
+  const titleId = `${id}-title`;
+  const descriptionId = `${id}-description`;
 
   if (others.length === 0) return null;
 
@@ -40,16 +43,18 @@ export function MergeCustomerForm({
       </Button>
       <dialog
         ref={dialogRef}
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         onClick={(e) => {
           if (e.target === e.currentTarget) e.currentTarget.close();
         }}
-        className="m-auto w-[calc(100vw-2rem)] max-w-md animate-fade-up rounded-lg border border-slate-200 bg-white p-6 shadow-xl backdrop:bg-black/40"
+        className="m-auto w-[calc(100vw-2rem)] max-w-md animate-fade-up rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl backdrop:bg-black/40"
       >
         <form action={mergeCustomerAction.bind(null, sourceId)}>
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 id={titleId} className="text-base font-semibold text-slate-900 dark:text-slate-100">
             Merge customer
           </h2>
-          <p className="mt-2 text-sm text-slate-500">
+          <p id={descriptionId} className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             Move every job from this customer to the one you pick, then delete
             this duplicate. This can&apos;t be undone.
           </p>

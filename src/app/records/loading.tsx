@@ -11,7 +11,7 @@ export default function RecordsLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4"
+            className="flex flex-col gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"
           >
             <div className="flex items-center justify-between">
               <Skeleton className="h-5 w-28" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { Undo2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,9 @@ import { requestChangesAction } from "@/actions/records";
 export function RequestChangesButton({ recordId }: { recordId: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const action = requestChangesAction.bind(null, recordId);
+  const id = useId();
+  const titleId = `${id}-title`;
+  const descriptionId = `${id}-description`;
 
   return (
     <>
@@ -27,16 +30,18 @@ export function RequestChangesButton({ recordId }: { recordId: string }) {
       </Button>
       <dialog
         ref={dialogRef}
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         onClick={(e) => {
           if (e.target === e.currentTarget) e.currentTarget.close();
         }}
-        className="m-auto w-[calc(100vw-2rem)] max-w-md animate-fade-up rounded-lg border border-slate-200 bg-white p-6 shadow-xl backdrop:bg-black/40"
+        className="m-auto w-[calc(100vw-2rem)] max-w-md animate-fade-up rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl backdrop:bg-black/40"
       >
         <form action={action} onSubmit={() => dialogRef.current?.close()}>
-          <h2 className="text-base font-semibold text-slate-900">
+          <h2 id={titleId} className="text-base font-semibold text-slate-900 dark:text-slate-100">
             Return for changes
           </h2>
-          <p className="mt-2 text-sm text-slate-500">
+          <p id={descriptionId} className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             Explain what needs fixing. The worker will see this note and can
             edit and resubmit the record.
           </p>

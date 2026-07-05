@@ -4,7 +4,12 @@ import { auth } from "@/lib/auth";
 
 // /.well-known/assetlinks.json must stay public: Chrome fetches it to verify
 // the Android app is allowed to display this site fullscreen.
-const PUBLIC_PATHS = ["/login", "/api/auth", "/.well-known"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/api/auth",
+  "/api/native-handoff/exchange",
+  "/.well-known",
+];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;

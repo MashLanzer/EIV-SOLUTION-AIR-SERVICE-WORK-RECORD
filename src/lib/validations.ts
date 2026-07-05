@@ -62,3 +62,7 @@ export const createWorkerSchema = z.object({
 export const updateWorkerEmailSchema = z.object({
   email: z.string().email("Enter a valid email address"),
 });
+
+export const updateWorkerRoleSchema = z.object({
+  role: z.enum(["ADMIN", "WORKER"]),
+});

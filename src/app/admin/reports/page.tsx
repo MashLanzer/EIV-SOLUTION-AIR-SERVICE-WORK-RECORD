@@ -1,7 +1,13 @@
 import { BarChart3, Sheet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { DatePresets } from "@/components/ui/date-presets";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -35,7 +41,7 @@ export default async function AdminReportsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-slate-900">Pay Report</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Pay Report</h1>
 
       <Card>
         <CardHeader>
@@ -72,9 +78,13 @@ export default async function AdminReportsPage({
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            Pay by Person ({report.recordCount} record
+            Pay by Person ({report.recordCount} approved record
             {report.recordCount === 1 ? "" : "s"})
           </CardTitle>
+          <CardDescription>
+            Records still pending review or returned for changes aren&apos;t
+            counted until they&apos;re approved.
+          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {report.rows.length === 0 ? (
@@ -97,7 +107,7 @@ export default async function AdminReportsPage({
               <TableBody>
                 {report.rows.map((row) => (
                   <TableRow key={row.name.toLowerCase()}>
-                    <TableCell className="font-medium text-slate-900">
+                    <TableCell className="font-medium text-slate-900 dark:text-slate-100">
                       {row.name}
                     </TableCell>
                     <TableCell>{row.jobs}</TableCell>
@@ -107,13 +117,13 @@ export default async function AdminReportsPage({
                     <TableCell className="text-right">
                       {money(row.helperTotal)}
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-slate-900">
+                    <TableCell className="text-right font-semibold text-slate-900 dark:text-slate-100">
                       {money(row.total)}
                     </TableCell>
                   </TableRow>
                 ))}
-                <TableRow className="bg-slate-50">
-                  <TableCell className="font-semibold text-slate-900">
+                <TableRow className="bg-slate-50 dark:bg-slate-800">
+                  <TableCell className="font-semibold text-slate-900 dark:text-slate-100">
                     Grand Total
                   </TableCell>
                   <TableCell className="font-semibold">
@@ -125,7 +135,7 @@ export default async function AdminReportsPage({
                   <TableCell className="text-right font-semibold">
                     {money(report.grand.helperTotal)}
                   </TableCell>
-                  <TableCell className="text-right font-semibold text-slate-900">
+                  <TableCell className="text-right font-semibold text-slate-900 dark:text-slate-100">
                     {money(report.grand.total)}
                   </TableCell>
                 </TableRow>

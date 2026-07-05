@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClipboardList, Mail, MapPin, Pencil, Phone } from "lucide-react";
 
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -34,10 +35,10 @@ export default async function AdminCustomerPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string; merged?: string }>;
+  searchParams: Promise<{ saved?: string; merged?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { saved, merged } = await searchParams;
+  const { saved, merged, error } = await searchParams;
 
   const customer = await prisma.customer.findUnique({
     where: { id },
@@ -68,12 +69,18 @@ export default async function AdminCustomerPage({
     <div className="flex flex-col gap-6">
       {saved && <SuccessToast message="Customer saved" />}
       {merged && <SuccessToast message="Customers merged" />}
+      {error === "merge" && (
+        <Alert variant="error">
+          Couldn&apos;t merge - pick a valid customer to merge into and try
+          again.
+        </Alert>
+      )}
 
       <div>
-        <h1 className="text-xl font-semibold text-slate-900">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
           {customer.name}
         </h1>
-        <div className="mt-1 flex flex-col gap-1 text-sm text-slate-500">
+        <div className="mt-1 flex flex-col gap-1 text-sm text-slate-500 dark:text-slate-400">
           <span className="flex items-center gap-1.5">
             <MapPin className="h-4 w-4 shrink-0" />
             {customer.address}

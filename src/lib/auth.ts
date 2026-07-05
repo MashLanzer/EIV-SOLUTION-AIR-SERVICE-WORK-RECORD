@@ -18,16 +18,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return !!dbUser && dbUser.active;
     },
     async jwt({ token, user }) {
-      if (user?.email) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: user.email.toLowerCase() },
-        });
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.role = dbUser.role;
-          token.name = dbUser.name;
-        }
-      }
+      // Runs on every request that reads the session (not just sign-in), so
+      // this re-checks `active`/role/name against the DB each time instead
+      // of trusting whatever was baked into the token weeks ago. Returning
+      // null drops the session immediately - deactivating someone takes
+      // effect on their very next request, not just their next sign-in.
+      const email = (user?.email ?? (token.email as string | undefined))?.toLowerCase();
+      if (!email) return token;
+
+      const dbUser = await prisma.user.findUnique({ where: { email } });
+      if (!dbUser || !dbUser.active) return null;
+
+      token.id = dbUser.id;
+      token.role = dbUser.role;
+      token.name = dbUser.name;
       return token;
     },
     session({ session, token }) {

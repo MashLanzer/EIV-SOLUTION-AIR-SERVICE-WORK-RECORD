@@ -83,7 +83,7 @@ export default async function AdminRecordsPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">All Work Records</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">All Work Records</h1>
       </div>
 
       <Card>
@@ -95,31 +95,42 @@ export default async function AdminRecordsPage({
         </CardContent>
       </Card>
 
-      <form id={EXPORT_FORM_ID} method="GET" className="flex justify-end gap-2">
+      <form
+        id={EXPORT_FORM_ID}
+        method="GET"
+        className="flex flex-col items-end gap-1"
+      >
         <input type="hidden" name="dateFrom" value={filters.dateFrom ?? ""} />
         <input type="hidden" name="dateTo" value={filters.dateTo ?? ""} />
         <input type="hidden" name="workerId" value={filters.workerId ?? ""} />
         <input type="hidden" name="customerName" value={filters.customerName ?? ""} />
         <input type="hidden" name="jobNumber" value={filters.jobNumber ?? ""} />
         <input type="hidden" name="status" value={filters.status ?? ""} />
-        <Button
-          type="submit"
-          variant="outline"
-          size="sm"
-          formAction="/admin/records/export/pdf"
-        >
-          <FileText className="h-4 w-4" />
-          Export to PDF
-        </Button>
-        <Button
-          type="submit"
-          variant="outline"
-          size="sm"
-          formAction="/admin/records/export/excel"
-        >
-          <Sheet className="h-4 w-4" />
-          Export to Excel
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            type="submit"
+            variant="outline"
+            size="sm"
+            formAction="/admin/records/export/pdf"
+            title="Bulk PDF exports don't include work photos"
+          >
+            <FileText className="h-4 w-4" />
+            Export to PDF
+          </Button>
+          <Button
+            type="submit"
+            variant="outline"
+            size="sm"
+            formAction="/admin/records/export/excel"
+          >
+            <Sheet className="h-4 w-4" />
+            Export to Excel
+          </Button>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          PDF exports of multiple records don&apos;t include work photos -
+          open a record and download its PDF individually for those.
+        </p>
       </form>
 
       <Card>

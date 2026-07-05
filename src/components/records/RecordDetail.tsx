@@ -15,10 +15,10 @@ function formatDate(date: Date) {
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+      <span className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
         {label}
       </span>
-      <span className="text-sm text-slate-900">{value || "—"}</span>
+      <span className="text-sm text-slate-900 dark:text-slate-100">{value || "—"}</span>
     </div>
   );
 }
@@ -60,7 +60,7 @@ export function RecordDetail({
 
       {record.photos && record.photos.length > 0 && (
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
             Photos
           </span>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -70,7 +70,7 @@ export function RecordDetail({
                 key={photo.id}
                 src={photo.dataUrl}
                 alt={`Work photo ${photo.position + 1}`}
-                className="aspect-square w-full rounded-md border border-slate-200 object-cover"
+                className="aspect-square w-full rounded-md border border-slate-200 dark:border-slate-800 object-cover"
               />
             ))}
           </div>
@@ -79,25 +79,25 @@ export function RecordDetail({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
             Customer Signature
           </span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={record.customerSignature}
             alt="Customer signature"
-            className="h-32 rounded-md border border-slate-200 bg-white object-contain"
+            className="h-32 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 object-contain"
           />
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-400">
+          <span className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
             Installer Signature
           </span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={record.installerSignature}
             alt="Installer signature"
-            className="h-32 rounded-md border border-slate-200 bg-white object-contain"
+            className="h-32 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 object-contain"
           />
         </div>
       </div>

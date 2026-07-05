@@ -42,7 +42,7 @@ function NavLinks({ pathname, onNavigate }: { pathname: string; onNavigate?: () 
               "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               isActive
                 ? "bg-accent-soft text-primary"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
             )}
           >
             <Icon className="h-4 w-4" />
@@ -61,27 +61,27 @@ export function AdminSidebar({ name }: { name: string }) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-slate-200 bg-white sm:flex">
-        <div className="flex h-16 items-center border-b border-slate-200 px-4">
+      <aside className="fixed inset-y-0 left-0 z-20 hidden w-60 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sm:flex">
+        <div className="flex h-16 items-center border-b border-slate-200 dark:border-slate-800 px-4">
           <Logo />
         </div>
         <div className="flex-1 overflow-y-auto p-3">
           <NavLinks pathname={pathname} />
         </div>
-        <div className="flex items-center justify-between gap-2 border-t border-slate-200 p-3">
-          <span className="truncate text-sm text-slate-500">{name}</span>
+        <div className="flex items-center justify-between gap-2 border-t border-slate-200 dark:border-slate-800 p-3">
+          <span className="truncate text-sm text-slate-500 dark:text-slate-400">{name}</span>
           <LogoutButton />
         </div>
       </aside>
 
       {/* Mobile top bar */}
-      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4 sm:hidden">
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 sm:hidden">
         <Logo />
         <button
           type="button"
           aria-label="Open menu"
           onClick={() => setMobileOpen(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <Menu className="h-5 w-5" />
         </button>
@@ -94,14 +94,14 @@ export function AdminSidebar({ name }: { name: string }) {
             className="absolute inset-0 bg-black/30"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute inset-y-0 left-0 flex w-64 flex-col bg-white shadow-xl">
-            <div className="flex h-14 items-center justify-between border-b border-slate-200 px-4">
+          <div className="absolute inset-y-0 left-0 flex w-64 flex-col bg-white dark:bg-slate-900 shadow-xl">
+            <div className="flex h-14 items-center justify-between border-b border-slate-200 dark:border-slate-800 px-4">
               <Logo />
               <button
                 type="button"
                 aria-label="Close menu"
                 onClick={() => setMobileOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100"
+                className="flex h-9 w-9 items-center justify-center rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -109,8 +109,8 @@ export function AdminSidebar({ name }: { name: string }) {
             <div className="flex-1 overflow-y-auto p-3">
               <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
             </div>
-            <div className="flex items-center justify-between gap-2 border-t border-slate-200 p-3">
-              <span className="truncate text-sm text-slate-500">{name}</span>
+            <div className="flex items-center justify-between gap-2 border-t border-slate-200 dark:border-slate-800 p-3">
+              <span className="truncate text-sm text-slate-500 dark:text-slate-400">{name}</span>
               <LogoutButton />
             </div>
           </div>

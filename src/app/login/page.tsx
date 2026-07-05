@@ -19,7 +19,7 @@ export default async function LoginPage({
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-800 px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <span className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
@@ -35,7 +35,7 @@ export default async function LoginPage({
               administrator to add it.
             </Alert>
           )}
-          <p className="mb-4 text-center text-sm text-slate-500">
+          <p className="mb-4 text-center text-sm text-slate-500 dark:text-slate-400">
             Sign in with the Google account your supervisor authorized.
           </p>
           <GoogleSignInButton />

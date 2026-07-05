@@ -56,6 +56,20 @@ model Customer {
   @@index([name])
 }
 
+// A short-lived, single-use code minted by /native-handoff and redeemed by
+// the native app's exchange call. Keeps the actual session token out of the
+// eivsolutionair:// deep link, where it could be intercepted by another app
+// registering the same custom scheme or linger in system/browser logs.
+model NativeHandoffCode {
+  id         String   @id
+  token      String   @db.Text
+  cookieName String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([expiresAt])
+}
+
 model WorkRecord {
   id                 String   @id @default(cuid())
   date               DateTime @db.Date

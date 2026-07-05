@@ -57,6 +57,8 @@ export default async function AdminCustomersPage({
         OR: [
           { name: { contains: query, mode: "insensitive" as const } },
           { address: { contains: query, mode: "insensitive" as const } },
+          { phone: { contains: query, mode: "insensitive" as const } },
+          { email: { contains: query, mode: "insensitive" as const } },
         ],
       }
     : undefined;
@@ -80,17 +82,17 @@ export default async function AdminCustomersPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-slate-900">Customers</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Customers</h1>
 
       <form method="get" className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
         <Input
           type="search"
           name="q"
-          placeholder="Search by name or address"
+          placeholder="Search by name, address, phone, or email"
           defaultValue={query}
           className="pl-9"
-          aria-label="Search customers"
+          aria-label="Search customers by name, address, phone, or email"
         />
       </form>
 
@@ -135,11 +137,11 @@ export default async function AdminCustomersPage({
               <TableBody>
                 {customers.map((customer) => (
                   <TableRow key={customer.id}>
-                    <TableCell className="font-medium text-slate-900">
+                    <TableCell className="font-medium text-slate-900 dark:text-slate-100">
                       {customer.name}
                     </TableCell>
                     <TableCell>{customer.address}</TableCell>
-                    <TableCell className="text-sm text-slate-500">
+                    <TableCell className="text-sm text-slate-500 dark:text-slate-400">
                       {customer.phone || customer.email || "—"}
                     </TableCell>
                     <TableCell>{customer._count.records}</TableCell>

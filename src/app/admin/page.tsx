@@ -127,7 +127,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-slate-900">Dashboard</h1>
+      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Dashboard</h1>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <Link
@@ -140,10 +140,10 @@ export default async function AdminDashboardPage() {
                 <Clock3 className="h-5 w-5" />
               </span>
               <div>
-                <div className="text-2xl font-semibold text-slate-900">
+                <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {pendingReview}
                 </div>
-                <div className="text-sm text-slate-500">Pending Review</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">Pending Review</div>
               </div>
             </CardContent>
           </Card>
@@ -155,10 +155,10 @@ export default async function AdminDashboardPage() {
                 <stat.icon className="h-5 w-5" />
               </span>
               <div>
-                <div className="text-2xl font-semibold text-slate-900">
+                <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
                   {stat.value}
                 </div>
-                <div className="text-sm text-slate-500">{stat.label}</div>
+                <div className="text-sm text-slate-500 dark:text-slate-400">{stat.label}</div>
               </div>
             </CardContent>
           </Card>
@@ -185,7 +185,9 @@ export default async function AdminDashboardPage() {
         <Card>
           <CardHeader className="flex-row items-center gap-2 space-y-0">
             <DollarSign className="h-4 w-4 text-accent" />
-            <CardTitle className="text-base">Top pay this month</CardTitle>
+            <CardTitle className="text-base">
+              Top approved pay this month
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <BarList
@@ -212,7 +214,7 @@ export default async function AdminDashboardPage() {
           <CardContent className="flex items-center justify-between p-4">
             <div>
               <CardTitle className="text-base">All Work Records</CardTitle>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 View and filter every submitted record
               </p>
             </div>
@@ -227,7 +229,7 @@ export default async function AdminDashboardPage() {
           <CardContent className="flex items-center justify-between p-4">
             <div>
               <CardTitle className="text-base">Manage Workers</CardTitle>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 Authorize emails, set roles, deactivate accounts
               </p>
             </div>
@@ -252,23 +254,23 @@ export default async function AdminDashboardPage() {
               description="Submitted work records will show up here."
             />
           ) : (
-            <div className="flex flex-col divide-y divide-slate-100">
+            <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
               {recentRecords.map((record) => (
                 <Link
                   key={record.id}
                   href={`/admin/records/${record.id}`}
-                  className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 hover:bg-slate-50"
+                  className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-slate-900">
+                    <div className="truncate font-medium text-slate-900 dark:text-slate-100">
                       Job #{record.jobNumber} — {record.customerName}
                     </div>
-                    <div className="text-sm text-slate-500">
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
                       {record.submittedBy.name} · {formatDate(record.date)} ·{" "}
                       {formatTime(record.arrivalTime)}
                     </div>
                   </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
+                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
                 </Link>
               ))}
             </div>

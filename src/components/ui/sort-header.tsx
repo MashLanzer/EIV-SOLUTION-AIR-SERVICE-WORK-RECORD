@@ -41,13 +41,13 @@ export function SortHeader({
       href={`${basePath}?${search.toString()}`}
       aria-label={`Sort by ${label}${active ? ` (${dir === "asc" ? "ascending" : "descending"})` : ""}`}
       className={cn(
-        "inline-flex items-center gap-1 whitespace-nowrap hover:text-slate-900",
+        "inline-flex items-center gap-1 whitespace-nowrap hover:text-slate-900 dark:hover:text-slate-100",
         align === "right" && "flex-row-reverse"
       )}
     >
       {label}
       <Icon
-        className={cn("h-3.5 w-3.5", active ? "text-primary" : "text-slate-400")}
+        className={cn("h-3.5 w-3.5", active ? "text-primary" : "text-slate-400 dark:text-slate-500")}
       />
     </Link>
   );

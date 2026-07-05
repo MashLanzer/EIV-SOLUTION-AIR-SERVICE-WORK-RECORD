@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -23,6 +23,9 @@ export function ConfirmDialog({
   onConfirm: () => void;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const id = useId();
+  const titleId = `${id}-title`;
+  const descriptionId = `${id}-description`;
 
   return (
     <>
@@ -34,14 +37,20 @@ export function ConfirmDialog({
       </span>
       <dialog
         ref={dialogRef}
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
         onClick={(e) => {
           // Clicks on the backdrop land on the dialog element itself
           if (e.target === e.currentTarget) e.currentTarget.close();
         }}
-        className="m-auto w-[calc(100vw-2rem)] max-w-sm animate-fade-up rounded-lg border border-slate-200 bg-white p-6 shadow-xl backdrop:bg-black/40"
+        className="m-auto w-[calc(100vw-2rem)] max-w-sm animate-fade-up rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl backdrop:bg-black/40"
       >
-        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-        <p className="mt-2 text-sm text-slate-500">{description}</p>
+        <h2 id={titleId} className="text-base font-semibold text-slate-900 dark:text-slate-100">
+          {title}
+        </h2>
+        <p id={descriptionId} className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          {description}
+        </p>
         <div className="mt-5 flex justify-end gap-2">
           <Button
             type="button"

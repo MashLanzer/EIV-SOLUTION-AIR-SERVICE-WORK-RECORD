@@ -67,7 +67,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
     return (
       <div className={cn("flex flex-col gap-2", className)}>
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-700">{label}</span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
           {mode === "draw" ? (
             <Button
               type="button"
@@ -93,7 +93,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
             </Button>
           )}
         </div>
-        <div className="relative rounded-md border-2 border-dashed border-slate-300 bg-white">
+        <div className="relative rounded-md border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
           {mode === "preview" ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -104,11 +104,17 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
           ) : (
             <>
               {isEmpty && (
-                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-300">
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-300 dark:text-slate-600"
+                >
                   <PenLine className="h-6 w-6" />
                   <span className="text-xs">Sign here</span>
                 </div>
               )}
+              {/* Freehand drawing has no meaningful screen-reader
+                  equivalent; the label at least identifies the control so
+                  it isn't announced as a blank, unlabeled canvas. */}
               <SignatureCanvas
                 ref={sigRef}
                 penColor="#0f172a"
@@ -117,6 +123,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
                 canvasProps={{
                   className: "w-full h-40 rounded-md",
                   style: { touchAction: "none" },
+                  "aria-label": `${label} - draw your signature with your finger, mouse, or stylus`,
                 }}
               />
             </>

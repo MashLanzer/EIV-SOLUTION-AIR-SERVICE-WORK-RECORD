@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { User } from "@prisma/client";
-import { Users, Settings } from "lucide-react";
+import { Users, SearchX, Settings } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,14 +20,32 @@ export function WorkersTable({
   workers,
   sort,
   dir,
+  query,
 }: {
   workers: User[];
   sort: string;
   dir: SortDir;
+  query?: string;
 }) {
-  const sortProps = { sort, dir, basePath: "/admin/workers" };
+  const sortProps = {
+    sort,
+    dir,
+    basePath: "/admin/workers",
+    params: { q: query },
+  };
   if (workers.length === 0) {
-    return (
+    return query ? (
+      <EmptyState
+        icon={SearchX}
+        title="No matches"
+        description={`Nothing found for "${query}".`}
+        action={
+          <Button asChild variant="outline" className="mt-2">
+            <Link href="/admin/workers">Clear search</Link>
+          </Button>
+        }
+      />
+    ) : (
       <EmptyState
         icon={Users}
         title="No worker accounts yet"

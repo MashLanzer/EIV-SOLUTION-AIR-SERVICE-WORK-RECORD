@@ -33,8 +33,11 @@ export function parsePayReportParams(searchParams: {
 // People are the free-text lead/helper names on records (a person can be
 // lead on one job and helper on another; both count toward the same row).
 // Grouping by submittedBy would misattribute helper pay entirely.
+//
+// Only APPROVED records count toward pay: SUBMITTED/NEEDS_CHANGES haven't
+// cleared review, so they shouldn't show up in what's owed to anyone yet.
 export async function buildPayReport({ dateFrom, dateTo }: PayReportParams) {
-  const where: Prisma.WorkRecordWhereInput = {};
+  const where: Prisma.WorkRecordWhereInput = { status: "APPROVED" };
   if (dateFrom || dateTo) {
     where.date = {};
     if (dateFrom) where.date.gte = new Date(dateFrom);

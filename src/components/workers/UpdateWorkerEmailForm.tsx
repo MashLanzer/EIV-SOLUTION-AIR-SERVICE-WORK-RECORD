@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { Pencil } from "lucide-react";
 
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/actions/workers";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 
 export function UpdateWorkerEmailForm({
@@ -22,20 +23,35 @@ export function UpdateWorkerEmailForm({
     UpdateWorkerEmailState,
     FormData
   >(updateWorkerEmailAction.bind(null, userId), undefined);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [email, setEmail] = useState(currentEmail);
 
   return (
-    <form action={formAction} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="flex flex-col gap-2 sm:flex-row sm:items-center"
+    >
       <Input
         name="email"
         type="email"
-        defaultValue={currentEmail}
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
         required
         className="sm:max-w-xs"
       />
-      <Button type="submit" variant="outline" size="sm" disabled={pending}>
-        <Pencil className="h-4 w-4" />
-        {pending ? "Saving..." : "Update email"}
-      </Button>
+      <ConfirmDialog
+        title="Change the authorized sign-in email?"
+        description={`Only ${email || "this address"} will be able to sign in to this account going forward. The previous email (${currentEmail}) immediately loses access.`}
+        confirmLabel="Update email"
+        trigger={
+          <Button type="button" variant="outline" size="sm" disabled={pending}>
+            <Pencil className="h-4 w-4" />
+            {pending ? "Saving..." : "Update email"}
+          </Button>
+        }
+        onConfirm={() => formRef.current?.requestSubmit()}
+      />
       {state?.error && <Alert variant="error">{state.error}</Alert>}
     </form>
   );

@@ -57,7 +57,7 @@ export default async function RecordsPage({
       {saved && <SuccessToast message="Record saved" />}
 
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">My Records</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">My Records</h1>
         <Button asChild className="hidden sm:inline-flex">
           <Link href="/records/new">
             <Plus className="h-4 w-4" />
@@ -67,7 +67,7 @@ export default async function RecordsPage({
       </div>
 
       <form method="get" className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
         <Input
           type="search"
           name="q"

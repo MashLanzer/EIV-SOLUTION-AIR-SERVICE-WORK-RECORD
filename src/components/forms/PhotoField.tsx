@@ -50,15 +50,41 @@ export function PhotoField({ defaultPhotos }: { defaultPhotos?: string[] }) {
     setBusy(true);
     try {
       const room = MAX_PHOTOS - photos.length;
-      const selected = Array.from(files).slice(0, room);
+      const all = Array.from(files);
+      const selected = all.slice(0, room);
+      const overflow = all.length - selected.length;
+
       const compressed: string[] = [];
+      let skippedNonImage = 0;
       for (const file of selected) {
-        if (!file.type.startsWith("image/")) continue;
+        if (!file.type.startsWith("image/")) {
+          skippedNonImage += 1;
+          continue;
+        }
         compressed.push(await compressToDataUrl(file));
       }
       if (compressed.length > 0) {
         setPhotos((prev) => [...prev, ...compressed].slice(0, MAX_PHOTOS));
       }
+
+      // Let the worker know why they have fewer photos than they picked,
+      // instead of silently dropping files that didn't fit or weren't images.
+      const notices: string[] = [];
+      if (overflow > 0) {
+        notices.push(
+          `Only ${MAX_PHOTOS} photos are allowed per record, so ${overflow} file${
+            overflow === 1 ? " was" : "s were"
+          } skipped.`
+        );
+      }
+      if (skippedNonImage > 0) {
+        notices.push(
+          `${skippedNonImage} file${
+            skippedNonImage === 1 ? " wasn't an image and was" : "s weren't images and were"
+          } skipped.`
+        );
+      }
+      if (notices.length > 0) setError(notices.join(" "));
     } catch {
       setError("Could not process that photo. Try a different one.");
     } finally {
@@ -81,7 +107,7 @@ export function PhotoField({ defaultPhotos }: { defaultPhotos?: string[] }) {
               <img
                 src={photo}
                 alt={`Work photo ${i + 1}`}
-                className="aspect-square w-full rounded-md border border-slate-200 object-cover"
+                className="aspect-square w-full rounded-md border border-slate-200 dark:border-slate-800 object-cover"
               />
               <button
                 type="button"
@@ -117,7 +143,7 @@ export function PhotoField({ defaultPhotos }: { defaultPhotos?: string[] }) {
           <Camera className="h-4 w-4" />
           {busy ? "Processing..." : "Add Photo"}
         </Button>
-        <span className="text-sm text-slate-500">
+        <span className="text-sm text-slate-500 dark:text-slate-400">
           {photos.length}/{MAX_PHOTOS}
         </span>
       </div>
