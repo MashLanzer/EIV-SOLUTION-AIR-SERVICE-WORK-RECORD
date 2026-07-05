@@ -1,12 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #fafafa;
+  --foreground: #171717;
 
-  /* HVAC-inspired "fresh air" palette */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
+  /* Professional ink palette: black/charcoal is the brand color, blue is
+     kept only as a minor functional accent (focus rings, info alerts). */
+  --color-primary: #171717;
+  --color-primary-hover: #262626;
   --color-primary-foreground: #ffffff;
   --color-accent: #0ea5e9;
   --color-accent-foreground: #ffffff;
@@ -26,14 +27,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0f172a;
-    --foreground: #e2e8f0;
+    --background: #0a0a0a;
+    --foreground: #e5e5e5;
 
-    --color-primary: #3b82f6;
-    --color-primary-hover: #60a5fa;
-    --color-primary-foreground: #ffffff;
+    /* Primary inverts in dark mode: a near-black chip would nearly
+       disappear against a near-black page, so "the brand color is ink"
+       renders as a light neutral chip with dark text here instead. */
+    --color-primary: #f5f5f5;
+    --color-primary-hover: #e5e5e5;
+    --color-primary-foreground: #171717;
     --color-accent: #38bdf8;
-    --color-accent-foreground: #0f172a;
+    --color-accent-foreground: #171717;
     --color-accent-soft: #0c4a6e;
     --color-accent-text: #7dd3fc;
     --color-success: #22c55e;
@@ -48,6 +52,27 @@
     --color-warning-text: #fcd34d;
   }
 }
+
+/* Design conventions (documented here, not new tokens - Tailwind's
+   built-in scales already cover all of these):
+
+   Radius   - rounded-lg (8px) for controls & surfaces: buttons, inputs,
+              selects, textareas, cards, dialogs, alerts, empty states.
+            - rounded-xl (12px) for an icon sitting inside a colored badge
+              next to a title (nav logo, form-section icon, login icon).
+            - rounded-full reserved for genuinely circular elements only:
+              pills/badges, the bottom-tab icons, empty-state icon bubble.
+
+   Type     - text-xl font-semibold: the one page title (<h1>) per screen.
+            - text-base font-semibold: section/card title (CardTitle).
+            - text-sm font-medium: field label (Label).
+            - text-sm: body/value text.
+            - text-xs: meta text (timestamps, uppercase eyebrow labels).
+
+   Spacing  - gap-2: inline icon + label.
+            - gap-3: within a field/filter stack.
+            - gap-4: card/grid content gaps.
+            - gap-6: rhythm between major page sections. */
 
 @theme inline {
   --color-background: var(--background);

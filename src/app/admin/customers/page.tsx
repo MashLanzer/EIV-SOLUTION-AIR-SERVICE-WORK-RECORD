@@ -16,6 +16,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SortHeader } from "@/components/ui/sort-header";
+import { DataField } from "@/components/ui/data-field";
+import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
@@ -82,10 +84,10 @@ export default async function AdminCustomersPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Customers</h1>
+      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Customers</h1>
 
       <form method="get" className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
         <Input
           type="search"
           name="q"
@@ -116,49 +118,78 @@ export default async function AdminCustomersPage({
           />
         )
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <SortHeader column="name" label="Name" {...sortProps} />
-                  </TableHead>
-                  <TableHead>
-                    <SortHeader column="address" label="Address" {...sortProps} />
-                  </TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>
-                    <SortHeader column="jobs" label="Jobs" {...sortProps} />
-                  </TableHead>
-                  <TableHead className="text-right">History</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {customers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell className="font-medium text-slate-900 dark:text-slate-100">
-                      {customer.name}
-                    </TableCell>
-                    <TableCell>{customer.address}</TableCell>
-                    <TableCell className="text-sm text-slate-500 dark:text-slate-400">
-                      {customer.phone || customer.email || "—"}
-                    </TableCell>
-                    <TableCell>{customer._count.records}</TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/admin/customers/${customer.id}`}>
-                          View
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        <>
+          <div className="hidden sm:block">
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>
+                        <SortHeader column="name" label="Name" {...sortProps} />
+                      </TableHead>
+                      <TableHead>
+                        <SortHeader column="address" label="Address" {...sortProps} />
+                      </TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>
+                        <SortHeader column="jobs" label="Jobs" {...sortProps} />
+                      </TableHead>
+                      <TableHead className="text-right">History</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customers.map((customer) => (
+                      <TableRow key={customer.id}>
+                        <TableCell className="font-medium text-neutral-900 dark:text-neutral-100">
+                          {customer.name}
+                        </TableCell>
+                        <TableCell>{customer.address}</TableCell>
+                        <TableCell className="text-sm text-neutral-500 dark:text-neutral-400">
+                          {customer.phone || customer.email || "—"}
+                        </TableCell>
+                        <TableCell>{customer._count.records}</TableCell>
+                        <TableCell className="text-right">
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/admin/customers/${customer.id}`}>
+                              View
+                              <ArrowRight className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </div>
+
+          <MobileCardList>
+            {customers.map((customer) => (
+              <MobileCardRow
+                key={customer.id}
+                actions={
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/admin/customers/${customer.id}`}>
+                      View
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                }
+              >
+                <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                  {customer.name}
+                </span>
+                <div className="grid grid-cols-2 gap-3">
+                  <DataField label="Address" value={customer.address} />
+                  <DataField label="Contact" value={customer.phone || customer.email} />
+                  <DataField label="Jobs" value={customer._count.records} />
+                </div>
+              </MobileCardRow>
+            ))}
+          </MobileCardList>
+        </>
       )}
 
       <Pagination

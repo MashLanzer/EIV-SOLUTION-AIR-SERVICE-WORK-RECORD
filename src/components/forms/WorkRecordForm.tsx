@@ -484,12 +484,12 @@ export function WorkRecordForm({
           </div>
         </FormSection>
 
-        <FormSection icon={Camera} title="Photos (optional)">
+        <FormSection icon={Camera} title="Photos (optional)" emphasis="subtle">
           <PhotoField defaultPhotos={values?.photos} />
           <FieldError id="photos-error" message={fieldError("photos")} />
         </FormSection>
 
-        <FormSection icon={PenTool} title="Signatures">
+        <FormSection icon={PenTool} title="Signatures" emphasis="critical">
           <SignaturePad
             ref={customerSigRef}
             label="Customer Signature"
@@ -516,7 +516,7 @@ export function WorkRecordForm({
         {/* Spacer so the fixed mobile action bar doesn't cover the last section */}
         <div className="h-[calc(4rem+env(safe-area-inset-bottom))] sm:hidden" />
 
-        <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0">
+        <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0">
           <Button type="submit" size="lg" disabled={pending || offline}>
             {offline ? (
               <WifiOff className="h-4 w-4" />

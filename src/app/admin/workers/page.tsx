@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Search, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { WorkersTable } from "@/components/workers/WorkersTable";
@@ -65,7 +64,7 @@ export default async function AdminWorkersPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Workers</h1>
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Workers</h1>
         <Button asChild>
           <Link href="/admin/workers/new">
             <UserPlus className="h-4 w-4" />
@@ -75,7 +74,7 @@ export default async function AdminWorkersPage({
       </div>
 
       <form method="get" className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
         <Input
           type="search"
           name="q"
@@ -86,11 +85,7 @@ export default async function AdminWorkersPage({
         />
       </form>
 
-      <Card>
-        <CardContent className="p-0">
-          <WorkersTable workers={workers} sort={sort} dir={dir} query={query} />
-        </CardContent>
-      </Card>
+      <WorkersTable workers={workers} sort={sort} dir={dir} query={query} />
 
       <Pagination
         page={page}

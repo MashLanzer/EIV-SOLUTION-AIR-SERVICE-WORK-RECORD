@@ -4,6 +4,7 @@ import { Users, SearchX, Settings } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
@@ -14,6 +15,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SortHeader } from "@/components/ui/sort-header";
+import { DataField } from "@/components/ui/data-field";
+import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import type { SortDir } from "@/lib/sort";
 
 export function WorkersTable({
@@ -55,50 +58,94 @@ export function WorkersTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>
-            <SortHeader column="name" label="Name" {...sortProps} />
-          </TableHead>
-          <TableHead>
-            <SortHeader column="email" label="Email" {...sortProps} />
-          </TableHead>
-          <TableHead>
-            <SortHeader column="role" label="Role" {...sortProps} />
-          </TableHead>
-          <TableHead>
-            <SortHeader column="status" label="Status" {...sortProps} />
-          </TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <>
+      <div className="hidden sm:block">
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <SortHeader column="name" label="Name" {...sortProps} />
+                  </TableHead>
+                  <TableHead>
+                    <SortHeader column="email" label="Email" {...sortProps} />
+                  </TableHead>
+                  <TableHead>
+                    <SortHeader column="role" label="Role" {...sortProps} />
+                  </TableHead>
+                  <TableHead>
+                    <SortHeader column="status" label="Status" {...sortProps} />
+                  </TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {workers.map((worker) => (
+                  <TableRow key={worker.id}>
+                    <TableCell>{worker.name}</TableCell>
+                    <TableCell>{worker.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={worker.role === "ADMIN" ? "default" : "secondary"}>
+                        {worker.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={worker.active ? "success" : "destructive"}>
+                        {worker.active ? "Active" : "Inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/admin/workers/${worker.id}`}>
+                          <Settings className="h-4 w-4" />
+                          Manage
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+      <MobileCardList>
         {workers.map((worker) => (
-          <TableRow key={worker.id}>
-            <TableCell>{worker.name}</TableCell>
-            <TableCell>{worker.email}</TableCell>
-            <TableCell>
-              <Badge variant={worker.role === "ADMIN" ? "default" : "secondary"}>
-                {worker.role}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              <Badge variant={worker.active ? "success" : "destructive"}>
-                {worker.active ? "Active" : "Inactive"}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-right">
+          <MobileCardRow
+            key={worker.id}
+            actions={
               <Button asChild variant="outline" size="sm">
                 <Link href={`/admin/workers/${worker.id}`}>
                   <Settings className="h-4 w-4" />
                   Manage
                 </Link>
               </Button>
-            </TableCell>
-          </TableRow>
+            }
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                {worker.name}
+              </span>
+              <Badge variant={worker.active ? "success" : "destructive"}>
+                {worker.active ? "Active" : "Inactive"}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <DataField label="Email" value={worker.email} />
+              <DataField
+                label="Role"
+                value={
+                  <Badge variant={worker.role === "ADMIN" ? "default" : "secondary"}>
+                    {worker.role}
+                  </Badge>
+                }
+              />
+            </div>
+          </MobileCardRow>
         ))}
-      </TableBody>
-    </Table>
+      </MobileCardList>
+    </>
   );
 }

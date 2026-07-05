@@ -43,12 +43,12 @@ export function ConfirmDialog({
           // Clicks on the backdrop land on the dialog element itself
           if (e.target === e.currentTarget) e.currentTarget.close();
         }}
-        className="m-auto w-[calc(100vw-2rem)] max-w-sm animate-fade-up rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-xl backdrop:bg-black/40"
+        className="m-auto w-[calc(100vw-2rem)] max-w-sm animate-fade-up rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-6 shadow-xl backdrop:bg-black/40"
       >
-        <h2 id={titleId} className="text-base font-semibold text-slate-900 dark:text-slate-100">
+        <h2 id={titleId} className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
           {title}
         </h2>
-        <p id={descriptionId} className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+        <p id={descriptionId} className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
           {description}
         </p>
         <div className="mt-5 flex justify-end gap-2">

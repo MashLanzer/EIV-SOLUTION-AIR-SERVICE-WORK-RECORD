@@ -39,11 +39,11 @@ export function BarList({
             className="grid items-center gap-3"
             style={{ gridTemplateColumns: `${labelWidth} 1fr auto` }}
           >
-            <span className="truncate text-sm text-slate-600 dark:text-slate-300" title={d.label}>
+            <span className="truncate text-sm text-neutral-600 dark:text-neutral-300" title={d.label}>
               {d.label}
             </span>
             <span
-              className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+              className="h-2.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800"
               role="img"
               aria-label={`${d.label}: ${formatValue(d.value)}`}
             >
@@ -53,7 +53,7 @@ export function BarList({
                 title={`${d.label}: ${formatValue(d.value)}`}
               />
             </span>
-            <span className="text-sm font-medium tabular-nums text-slate-900 dark:text-slate-100">
+            <span className="text-sm font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
               {formatValue(d.value)}
             </span>
           </li>

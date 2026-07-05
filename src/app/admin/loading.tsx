@@ -8,7 +8,7 @@ export default function AdminLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="flex flex-col gap-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4"
+            className="flex flex-col gap-3 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4"
           >
             <Skeleton className="h-9 w-9 rounded-lg" />
             <Skeleton className="h-7 w-16" />
@@ -16,7 +16,7 @@ export default function AdminLoading() {
           </div>
         ))}
       </div>
-      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
         <Skeleton className="mb-4 h-5 w-36" />
         <div className="flex flex-col gap-3">
           {Array.from({ length: 5 }).map((_, i) => (

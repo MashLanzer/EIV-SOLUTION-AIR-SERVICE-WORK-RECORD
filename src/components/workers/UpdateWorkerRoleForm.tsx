@@ -73,7 +73,7 @@ export function UpdateWorkerRoleForm({
         />
       )}
       {isLockedAdmin && (
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
           This is the last active admin, so their role can&apos;t be changed.
         </p>
       )}

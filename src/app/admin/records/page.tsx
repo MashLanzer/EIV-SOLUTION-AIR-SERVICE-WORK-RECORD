@@ -83,12 +83,12 @@ export default async function AdminRecordsPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">All Work Records</h1>
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">All Work Records</h1>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
+          <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
           <RecordsFilterBar filters={filters} workers={workers} />
@@ -127,30 +127,26 @@ export default async function AdminRecordsPage({
             Export to Excel
           </Button>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
           PDF exports of multiple records don&apos;t include work photos -
           open a record and download its PDF individually for those.
         </p>
       </form>
 
-      <Card>
-        <CardContent className="p-0">
-          <RecordsTable
-            records={records}
-            exportFormId={EXPORT_FORM_ID}
-            sort={sort}
-            dir={dir}
-            sortParams={{
-              dateFrom: filters.dateFrom,
-              dateTo: filters.dateTo,
-              workerId: filters.workerId,
-              customerName: filters.customerName,
-              jobNumber: filters.jobNumber,
-              status: filters.status,
-            }}
-          />
-        </CardContent>
-      </Card>
+      <RecordsTable
+        records={records}
+        exportFormId={EXPORT_FORM_ID}
+        sort={sort}
+        dir={dir}
+        sortParams={{
+          dateFrom: filters.dateFrom,
+          dateTo: filters.dateTo,
+          workerId: filters.workerId,
+          customerName: filters.customerName,
+          jobNumber: filters.jobNumber,
+          status: filters.status,
+        }}
+      />
 
       <Pagination
         page={page}

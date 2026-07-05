@@ -8,10 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DataField } from "@/components/ui/data-field";
 import { DatePresets } from "@/components/ui/date-presets";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterActions, FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import {
   Table,
   TableBody,
@@ -41,43 +43,44 @@ export default async function AdminReportsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Pay Report</h1>
+      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Pay Report</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Date Range</CardTitle>
+          <CardTitle>Date Range</CardTitle>
         </CardHeader>
         <CardContent>
-          <form method="get" className="flex flex-col gap-3">
-            <DatePresets />
-            <div className="flex flex-wrap items-end gap-3">
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="dateFrom">From</Label>
-                <Input id="dateFrom" name="dateFrom" type="date" defaultValue={dateFrom} />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="dateTo">To</Label>
-                <Input id="dateTo" name="dateTo" type="date" defaultValue={dateTo} />
-              </div>
-              <Button type="submit" variant="outline">
+          <FilterBar>
+            <div className="col-span-2 sm:col-span-6">
+              <DatePresets />
+            </div>
+            <FilterField label="From" htmlFor="dateFrom">
+              <Input id="dateFrom" name="dateFrom" type="date" defaultValue={dateFrom} />
+            </FilterField>
+            <FilterField label="To" htmlFor="dateTo">
+              <Input id="dateTo" name="dateTo" type="date" defaultValue={dateTo} />
+            </FilterField>
+            <FilterActions>
+              <Button type="submit" variant="outline" size="default">
                 Apply
               </Button>
               <Button
                 type="submit"
                 variant="outline"
+                size="default"
                 formAction="/admin/reports/export"
               >
                 <Sheet className="h-4 w-4" />
                 Export to Excel
               </Button>
-            </div>
-          </form>
+            </FilterActions>
+          </FilterBar>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
+          <CardTitle>
             Pay by Person ({report.recordCount} approved record
             {report.recordCount === 1 ? "" : "s"})
           </CardTitle>
@@ -94,53 +97,84 @@ export default async function AdminReportsPage({
               description="Adjust the date range to see pay totals."
             />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Person</TableHead>
-                  <TableHead>Jobs</TableHead>
-                  <TableHead className="text-right">Lead Pay</TableHead>
-                  <TableHead className="text-right">Helper Pay</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {report.rows.map((row) => (
-                  <TableRow key={row.name.toLowerCase()}>
-                    <TableCell className="font-medium text-slate-900 dark:text-slate-100">
-                      {row.name}
-                    </TableCell>
-                    <TableCell>{row.jobs}</TableCell>
-                    <TableCell className="text-right">
-                      {money(row.leadTotal)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {money(row.helperTotal)}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold text-slate-900 dark:text-slate-100">
-                      {money(row.total)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="bg-slate-50 dark:bg-slate-800">
-                  <TableCell className="font-semibold text-slate-900 dark:text-slate-100">
-                    Grand Total
-                  </TableCell>
-                  <TableCell className="font-semibold">
-                    {report.grand.jobs}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">
-                    {money(report.grand.leadTotal)}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">
-                    {money(report.grand.helperTotal)}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold text-slate-900 dark:text-slate-100">
+            <>
+              <div className="hidden sm:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Person</TableHead>
+                      <TableHead>Jobs</TableHead>
+                      <TableHead className="text-right">Lead Pay</TableHead>
+                      <TableHead className="text-right">Helper Pay</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {report.rows.map((row) => (
+                      <TableRow key={row.name.toLowerCase()}>
+                        <TableCell className="font-medium text-neutral-900 dark:text-neutral-100">
+                          {row.name}
+                        </TableCell>
+                        <TableCell>{row.jobs}</TableCell>
+                        <TableCell className="text-right">
+                          {money(row.leadTotal)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {money(row.helperTotal)}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-neutral-900 dark:text-neutral-100">
+                          {money(row.total)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-neutral-50 dark:bg-neutral-800">
+                      <TableCell className="font-semibold text-neutral-900 dark:text-neutral-100">
+                        Grand Total
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        {report.grand.jobs}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {money(report.grand.leadTotal)}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {money(report.grand.helperTotal)}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-neutral-900 dark:text-neutral-100">
+                        {money(report.grand.total)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex flex-col gap-3 p-4 sm:hidden">
+                <MobileCardList>
+                  {report.rows.map((row) => (
+                    <MobileCardRow key={row.name.toLowerCase()}>
+                      <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                        {row.name}
+                      </span>
+                      <div className="grid grid-cols-2 gap-3">
+                        <DataField label="Jobs" value={row.jobs} />
+                        <DataField label="Total" value={money(row.total)} />
+                        <DataField label="Lead Pay" value={money(row.leadTotal)} />
+                        <DataField label="Helper Pay" value={money(row.helperTotal)} />
+                      </div>
+                    </MobileCardRow>
+                  ))}
+                </MobileCardList>
+
+                <div className="flex items-center justify-between rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800 p-4">
+                  <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                    Grand Total ({report.grand.jobs} jobs)
+                  </span>
+                  <span className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
                     {money(report.grand.total)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+                  </span>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

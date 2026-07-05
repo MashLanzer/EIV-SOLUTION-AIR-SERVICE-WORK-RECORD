@@ -14,10 +14,10 @@ export function ReturnToApp({ deepLink }: { deepLink: string }) {
   }, [deepLink]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-800 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <span className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-success-soft text-green-700">
+          <span className="mb-2 flex h-14 w-14 items-center justify-center rounded-xl bg-success-soft text-green-700">
             <CheckCircle2 className="h-7 w-7" strokeWidth={2.25} />
           </span>
           <CardTitle className="text-xl">You&apos;re signed in</CardTitle>

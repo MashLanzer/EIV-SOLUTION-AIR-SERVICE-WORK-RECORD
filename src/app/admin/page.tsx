@@ -136,158 +136,178 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Dashboard</h1>
+      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Dashboard</h1>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-        <Link
-          href="/admin/records?status=SUBMITTED"
-          aria-label={`${pendingReview} records pending review`}
-        >
-          <Card className="h-full transition-shadow hover:shadow-md">
-            <CardContent className="flex items-center gap-3 p-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
-                <Clock3 className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                  {pendingReview}
-                </div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">Pending Review</div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="flex items-center gap-3 p-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
-                <stat.icon className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-slate-500 dark:text-slate-400">{stat.label}</div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex-row items-center gap-2 space-y-0">
-            <TrendingUp className="h-4 w-4 text-accent" />
-            <CardTitle className="text-base">
-              Records per week (last {WEEKS_BACK} weeks)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarList
-              data={weekBuckets}
-              emptyLabel="No records in this period"
-              labelWidth="4rem"
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex-row items-center gap-2 space-y-0">
-            <DollarSign className="h-4 w-4 text-accent" />
-            <CardTitle className="text-base">
-              Top approved pay this month
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarList
-              data={payData}
-              formatValue={(v) => money.format(v)}
-              emptyLabel="No pay recorded this month"
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex-row items-center gap-2 space-y-0">
-            <Wrench className="h-4 w-4 text-accent" />
-            <CardTitle className="text-base">
-              Work by type (last {TYPE_WINDOW_MONTHS} months)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarList data={typeData} emptyLabel="No records yet" />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div>
-              <CardTitle className="text-base">All Work Records</CardTitle>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                View and filter every submitted record
-              </p>
-            </div>
-            <Button asChild variant="outline" size="icon">
-              <Link href="/admin/records" aria-label="Go to records">
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div>
-              <CardTitle className="text-base">Manage Workers</CardTitle>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Authorize emails, set roles, deactivate accounts
-              </p>
-            </div>
-            <Button asChild variant="outline" size="icon">
-              <Link href="/admin/workers" aria-label="Go to workers">
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Recent Records</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recentRecords.length === 0 ? (
-            <EmptyState
-              icon={ClipboardList}
-              title="No records yet"
-              description="Submitted work records will show up here."
-            />
-          ) : (
-            <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
-              {recentRecords.map((record) => (
-                <Link
-                  key={record.id}
-                  href={`/admin/records/${record.id}`}
-                  className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 hover:bg-slate-50 dark:hover:bg-slate-800"
-                >
-                  <div className="min-w-0">
-                    <div className="truncate font-medium text-slate-900 dark:text-slate-100">
-                      Job #{record.jobNumber} — {record.customerName}
-                    </div>
-                    <div className="text-sm text-slate-500 dark:text-slate-400">
-                      {record.submittedBy.name} · {formatDate(record.date)} ·{" "}
-                      {formatTime(record.arrivalTime)}
-                    </div>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Overview
+        </h2>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <Link
+            href="/admin/records?status=SUBMITTED"
+            aria-label={`${pendingReview} records pending review`}
+          >
+            <Card className="h-full transition-shadow hover:shadow-md">
+              <CardContent className="flex items-center gap-3 p-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+                  <Clock3 className="h-5 w-5" />
+                </span>
+                <div>
+                  <div className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
+                    {pendingReview}
                   </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
+                  <div className="text-sm text-neutral-500 dark:text-neutral-400">Pending Review</div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          {stats.map((stat) => (
+            <Card key={stat.label}>
+              <CardContent className="flex items-center gap-3 p-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+                  <stat.icon className="h-5 w-5" />
+                </span>
+                <div>
+                  <div className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
+                    {stat.value}
+                  </div>
+                  <div className="text-sm text-neutral-500 dark:text-neutral-400">{stat.label}</div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Trends
+        </h2>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Card className="lg:col-span-2">
+            <CardHeader className="flex-row items-center gap-2 space-y-0">
+              <TrendingUp className="h-4 w-4 text-accent" />
+              <CardTitle>
+                Records per week (last {WEEKS_BACK} weeks)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BarList
+                data={weekBuckets}
+                emptyLabel="No records in this period"
+                labelWidth="4rem"
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center gap-2 space-y-0">
+              <DollarSign className="h-4 w-4 text-accent" />
+              <CardTitle>
+                Top approved pay this month
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BarList
+                data={payData}
+                formatValue={(v) => money.format(v)}
+                emptyLabel="No pay recorded this month"
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex-row items-center gap-2 space-y-0">
+              <Wrench className="h-4 w-4 text-accent" />
+              <CardTitle>
+                Work by type (last {TYPE_WINDOW_MONTHS} months)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BarList data={typeData} emptyLabel="No records yet" />
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Shortcuts
+        </h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Card>
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <CardTitle>All Work Records</CardTitle>
+                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                  View and filter every submitted record
+                </p>
+              </div>
+              <Button asChild variant="outline" size="icon">
+                <Link href="/admin/records" aria-label="Go to records">
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              </Button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center justify-between p-4">
+              <div>
+                <CardTitle>Manage Workers</CardTitle>
+                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                  Authorize emails, set roles, deactivate accounts
+                </p>
+              </div>
+              <Button asChild variant="outline" size="icon">
+                <Link href="/admin/workers" aria-label="Go to workers">
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Recent Activity
+        </h2>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Records</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentRecords.length === 0 ? (
+              <EmptyState
+                icon={ClipboardList}
+                title="No records yet"
+                description="Submitted work records will show up here."
+              />
+            ) : (
+              <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+                {recentRecords.map((record) => (
+                  <Link
+                    key={record.id}
+                    href={`/admin/records/${record.id}`}
+                    className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
+                        Job #{record.jobNumber} — {record.customerName}
+                      </div>
+                      <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                        {record.submittedBy.name} · {formatDate(record.date)} ·{" "}
+                        {formatTime(record.arrivalTime)}
+                      </div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }

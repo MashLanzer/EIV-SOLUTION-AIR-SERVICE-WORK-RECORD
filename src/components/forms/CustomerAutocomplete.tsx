@@ -142,7 +142,7 @@ export function CustomerAutocomplete({
           id={LISTBOX_ID}
           role="listbox"
           aria-label="Customer suggestions"
-          className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-lg"
+          className="absolute inset-x-0 top-full z-30 mt-1 max-h-64 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg"
         >
           {suggestions.map((s, index) => (
             <li key={s.id}>
@@ -156,14 +156,14 @@ export function CustomerAutocomplete({
                   e.preventDefault();
                   pick(s);
                 }}
-                className={`flex w-full flex-col gap-0.5 px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 ${
-                  index === activeIndex ? "bg-slate-50 dark:bg-slate-800" : ""
+                className={`flex w-full min-h-11 flex-col justify-center gap-0.5 px-3 py-2.5 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800 ${
+                  index === activeIndex ? "bg-neutral-50 dark:bg-neutral-800" : ""
                 }`}
               >
-                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                   {s.name}
                 </span>
-                <span className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
                   <MapPin className="h-3 w-3 shrink-0" />
                   {s.address}
                 </span>

@@ -67,12 +67,12 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
     return (
       <div className={cn("flex flex-col gap-2", className)}>
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
+          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{label}</span>
           {mode === "draw" ? (
             <Button
               type="button"
               variant="ghost"
-              size="sm"
+              size="default"
               onClick={() => {
                 sigRef.current?.clear();
                 setIsEmpty(true);
@@ -85,7 +85,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
             <Button
               type="button"
               variant="ghost"
-              size="sm"
+              size="default"
               onClick={() => setMode("draw")}
             >
               <PenLine className="h-3.5 w-3.5" />
@@ -93,7 +93,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
             </Button>
           )}
         </div>
-        <div className="relative rounded-md border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900">
+        <div className="relative rounded-md border-2 border-dashed border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900">
           {mode === "preview" ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -106,7 +106,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
               {isEmpty && (
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-300 dark:text-slate-600"
+                  className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-neutral-300 dark:text-neutral-600"
                 >
                   <PenLine className="h-6 w-6" />
                   <span className="text-xs">Sign here</span>

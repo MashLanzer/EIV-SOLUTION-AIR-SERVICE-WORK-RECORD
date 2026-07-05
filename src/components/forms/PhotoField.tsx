@@ -107,18 +107,20 @@ export function PhotoField({ defaultPhotos }: { defaultPhotos?: string[] }) {
               <img
                 src={photo}
                 alt={`Work photo ${i + 1}`}
-                className="aspect-square w-full rounded-md border border-slate-200 dark:border-slate-800 object-cover"
+                className="aspect-square w-full rounded-lg border border-neutral-200 dark:border-neutral-800 object-cover"
               />
-              <button
+              <Button
                 type="button"
+                variant="destructive"
+                size="icon"
                 aria-label={`Remove photo ${i + 1}`}
                 onClick={() =>
                   setPhotos((prev) => prev.filter((_, idx) => idx !== i))
                 }
-                className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-white shadow hover:bg-slate-700"
+                className="absolute -right-3 -top-3 rounded-full shadow"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -143,7 +145,7 @@ export function PhotoField({ defaultPhotos }: { defaultPhotos?: string[] }) {
           <Camera className="h-4 w-4" />
           {busy ? "Processing..." : "Add Photo"}
         </Button>
-        <span className="text-sm text-slate-500 dark:text-slate-400">
+        <span className="text-sm text-neutral-500 dark:text-neutral-400">
           {photos.length}/{MAX_PHOTOS}
         </span>
       </div>

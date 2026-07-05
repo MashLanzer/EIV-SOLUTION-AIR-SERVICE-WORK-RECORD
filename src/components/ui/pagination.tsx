@@ -29,9 +29,9 @@ export function Pagination({
   };
 
   const linkClass =
-    "inline-flex h-10 items-center justify-center gap-1 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 text-sm font-medium text-slate-900 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800";
+    "inline-flex h-11 items-center justify-center gap-1 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 text-sm font-medium text-neutral-900 dark:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-neutral-800";
   const disabledClass =
-    "pointer-events-none border-slate-200 dark:border-slate-800 text-slate-300 dark:text-slate-600";
+    "pointer-events-none border-neutral-200 dark:border-neutral-800 text-neutral-300 dark:text-neutral-600";
 
   return (
     <nav
@@ -46,7 +46,7 @@ export function Pagination({
         <ChevronLeft className="h-4 w-4" />
         Previous
       </Link>
-      <span className="text-sm text-slate-500 dark:text-slate-400">
+      <span className="text-sm text-neutral-500 dark:text-neutral-400">
         Page {page} of {pageCount}
       </span>
       <Link

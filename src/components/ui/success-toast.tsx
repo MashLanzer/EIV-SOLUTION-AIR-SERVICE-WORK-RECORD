@@ -38,7 +38,7 @@ export function SuccessToast({
         aboveMobileNav && "bottom-[calc(5rem+env(safe-area-inset-bottom))] sm:bottom-[calc(1.25rem+env(safe-area-inset-bottom))]"
       )}
     >
-      <div className="flex animate-fade-up items-center gap-2 rounded-full bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
+      <div className="flex animate-fade-up items-center gap-2 rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
         <CheckCircle2 className="h-4 w-4 text-success-soft" />
         {message}
       </div>

@@ -41,7 +41,7 @@ export function ToggleWorkerActiveButton({
           <Ban className="h-4 w-4" />
           Deactivate
         </Button>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
           This is the last active admin, so they can&apos;t be deactivated.
           Promote another worker to admin first.
         </p>

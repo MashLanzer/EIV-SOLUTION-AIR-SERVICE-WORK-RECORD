@@ -1,6 +1,7 @@
 import type { WorkPhoto, WorkRecord } from "@prisma/client";
 
 import { StatusBadge } from "@/components/records/StatusBadge";
+import { DataField } from "@/components/ui/data-field";
 import { formatTime } from "@/lib/format";
 
 function formatDate(date: Date) {
@@ -10,17 +11,6 @@ function formatDate(date: Date) {
     day: "numeric",
     timeZone: "UTC",
   }).format(date);
-}
-
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
-        {label}
-      </span>
-      <span className="text-sm text-slate-900 dark:text-slate-100">{value || "—"}</span>
-    </div>
-  );
 }
 
 export function RecordDetail({
@@ -34,33 +24,33 @@ export function RecordDetail({
         <StatusBadge status={record.status} />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Date" value={formatDate(record.date)} />
-        <Field label="Job #" value={record.jobNumber} />
-        <Field label="Lead Installer" value={record.leadInstallerName} />
-        <Field label="Helper" value={record.helperName} />
-        <Field label="Customer Name" value={record.customerName} />
-        <Field label="Customer Address" value={record.customerAddress} />
-        <Field label="Arrival Time" value={formatTime(record.arrivalTime)} />
-        <Field label="Departure Time" value={formatTime(record.departureTime)} />
-        <Field label="Type of Work" value={record.typeOfWork} />
-        <Field
+        <DataField label="Date" value={formatDate(record.date)} />
+        <DataField label="Job #" value={record.jobNumber} />
+        <DataField label="Lead Installer" value={record.leadInstallerName} />
+        <DataField label="Helper" value={record.helperName} />
+        <DataField label="Customer Name" value={record.customerName} />
+        <DataField label="Customer Address" value={record.customerAddress} />
+        <DataField label="Arrival Time" value={formatTime(record.arrivalTime)} />
+        <DataField label="Departure Time" value={formatTime(record.departureTime)} />
+        <DataField label="Type of Work" value={record.typeOfWork} />
+        <DataField
           label="Lead Installer Pay"
           value={`$${record.leadInstallerPay.toFixed(2)}`}
         />
-        <Field
+        <DataField
           label="Helper Pay"
           value={record.helperPay ? `$${record.helperPay.toFixed(2)}` : null}
         />
       </div>
 
-      <Field
+      <DataField
         label="Work Performed / Notes"
         value={<p className="whitespace-pre-wrap">{record.workPerformedNotes}</p>}
       />
 
       {record.photos && record.photos.length > 0 && (
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
             Photos
           </span>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -70,7 +60,7 @@ export function RecordDetail({
                 key={photo.id}
                 src={photo.dataUrl}
                 alt={`Work photo ${photo.position + 1}`}
-                className="aspect-square w-full rounded-md border border-slate-200 dark:border-slate-800 object-cover"
+                className="aspect-square w-full rounded-lg border border-neutral-200 dark:border-neutral-800 object-cover"
               />
             ))}
           </div>
@@ -79,25 +69,25 @@ export function RecordDetail({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
             Customer Signature
           </span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={record.customerSignature}
             alt="Customer signature"
-            className="h-32 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 object-contain"
+            className="h-32 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 object-contain"
           />
         </div>
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
             Installer Signature
           </span>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={record.installerSignature}
             alt="Installer signature"
-            className="h-32 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 object-contain"
+            className="h-32 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 object-contain"
           />
         </div>
       </div>

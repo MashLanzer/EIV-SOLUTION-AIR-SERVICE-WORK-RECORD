@@ -81,7 +81,7 @@ export function CustomerEditForm({
         </div>
       </div>
 
-      <label className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+      <label className="flex items-start gap-2 text-sm text-neutral-600 dark:text-neutral-300">
         <input
           type="checkbox"
           name="applyToExistingRecords"

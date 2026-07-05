@@ -88,10 +88,10 @@ export default async function AdminCustomerPage({
       )}
 
       <div>
-        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
           {customer.name}
         </h1>
-        <div className="mt-1 flex flex-col gap-1 text-sm text-slate-500 dark:text-slate-400">
+        <div className="mt-1 flex flex-col gap-1 text-sm text-neutral-500 dark:text-neutral-400">
           <span className="flex items-center gap-1.5">
             <MapPin className="h-4 w-4 shrink-0" />
             {customer.address}
@@ -119,7 +119,7 @@ export default async function AdminCustomerPage({
 
       <Card>
         <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-base">Customer details</CardTitle>
+          <CardTitle>Customer details</CardTitle>
           <div className="flex gap-2">
             <MergeCustomerForm sourceId={customer.id} others={others} />
             <DeleteCustomerButton customerId={customer.id} />
@@ -140,7 +140,7 @@ export default async function AdminCustomerPage({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
+          <CardTitle>
             Job History ({recordCount})
           </CardTitle>
         </CardHeader>
