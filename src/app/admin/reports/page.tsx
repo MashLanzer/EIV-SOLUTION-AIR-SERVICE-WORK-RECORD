@@ -2,6 +2,7 @@ import { BarChart3, Sheet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DatePresets } from "@/components/ui/date-presets";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,26 +42,29 @@ export default async function AdminReportsPage({
           <CardTitle className="text-base">Date Range</CardTitle>
         </CardHeader>
         <CardContent>
-          <form method="get" className="flex flex-wrap items-end gap-3">
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="dateFrom">From</Label>
-              <Input id="dateFrom" name="dateFrom" type="date" defaultValue={dateFrom} />
+          <form method="get" className="flex flex-col gap-3">
+            <DatePresets />
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="dateFrom">From</Label>
+                <Input id="dateFrom" name="dateFrom" type="date" defaultValue={dateFrom} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label htmlFor="dateTo">To</Label>
+                <Input id="dateTo" name="dateTo" type="date" defaultValue={dateTo} />
+              </div>
+              <Button type="submit" variant="outline">
+                Apply
+              </Button>
+              <Button
+                type="submit"
+                variant="outline"
+                formAction="/admin/reports/export"
+              >
+                <Sheet className="h-4 w-4" />
+                Export to Excel
+              </Button>
             </div>
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="dateTo">To</Label>
-              <Input id="dateTo" name="dateTo" type="date" defaultValue={dateTo} />
-            </div>
-            <Button type="submit" variant="outline">
-              Apply
-            </Button>
-            <Button
-              type="submit"
-              variant="outline"
-              formAction="/admin/reports/export"
-            >
-              <Sheet className="h-4 w-4" />
-              Export to Excel
-            </Button>
           </form>
         </CardContent>
       </Card>

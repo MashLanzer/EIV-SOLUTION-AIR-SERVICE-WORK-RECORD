@@ -15,16 +15,42 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortHeader } from "@/components/ui/sort-header";
+import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
+
+const CUSTOMER_SORTS = ["name", "address", "jobs"] as const;
+
+function customerOrderBy(
+  sort: (typeof CUSTOMER_SORTS)[number],
+  dir: "asc" | "desc"
+): Prisma.CustomerOrderByWithRelationInput {
+  switch (sort) {
+    case "address":
+      return { address: dir };
+    case "jobs":
+      return { records: { _count: dir } };
+    default:
+      return { name: dir };
+  }
+}
 
 export default async function AdminCustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { q, page: rawPage } = await searchParams;
-  const query = q?.trim() || undefined;
-  const page = parsePage(rawPage);
+  const rawParams = await searchParams;
+  const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;
+  const query = rawQ?.trim() || undefined;
+  const page = parsePage(rawParams.page);
+  const { sort, dir } = parseSort(
+    rawParams.sort,
+    rawParams.dir,
+    CUSTOMER_SORTS,
+    { sort: "name", dir: "asc" }
+  );
 
   const where = query
     ? {
@@ -40,11 +66,17 @@ export default async function AdminCustomersPage({
     prisma.customer.findMany({
       where,
       include: { _count: { select: { records: true } } },
-      orderBy: { name: "asc" },
+      orderBy: customerOrderBy(sort, dir),
       ...paginationArgs(page),
     }),
   ]);
   const pages = pageCount(total);
+  const sortProps = {
+    sort,
+    dir,
+    basePath: "/admin/customers",
+    params: { q: query },
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -87,10 +119,16 @@ export default async function AdminCustomersPage({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Address</TableHead>
+                  <TableHead>
+                    <SortHeader column="name" label="Name" {...sortProps} />
+                  </TableHead>
+                  <TableHead>
+                    <SortHeader column="address" label="Address" {...sortProps} />
+                  </TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Jobs</TableHead>
+                  <TableHead>
+                    <SortHeader column="jobs" label="Jobs" {...sortProps} />
+                  </TableHead>
                   <TableHead className="text-right">History</TableHead>
                 </TableRow>
               </TableHeader>
@@ -125,7 +163,7 @@ export default async function AdminCustomersPage({
         page={page}
         pageCount={pages}
         basePath="/admin/customers"
-        params={{ q: query }}
+        params={{ q: query, sort, dir }}
       />
     </div>
   );

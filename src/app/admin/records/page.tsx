@@ -8,8 +8,39 @@ import { RecordsTable } from "@/components/records/RecordsTable";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
+import { parseSort } from "@/lib/sort";
+import type { Prisma } from "@prisma/client";
 
 const EXPORT_FORM_ID = "export-form";
+
+const RECORD_SORTS = [
+  "date",
+  "jobNumber",
+  "customerName",
+  "status",
+  "typeOfWork",
+  "worker",
+] as const;
+
+function recordOrderBy(
+  sort: (typeof RECORD_SORTS)[number],
+  dir: "asc" | "desc"
+): Prisma.WorkRecordOrderByWithRelationInput {
+  switch (sort) {
+    case "jobNumber":
+      return { jobNumber: dir };
+    case "customerName":
+      return { customerName: dir };
+    case "status":
+      return { status: dir };
+    case "typeOfWork":
+      return { typeOfWork: dir };
+    case "worker":
+      return { submittedBy: { name: dir } };
+    default:
+      return { date: dir };
+  }
+}
 
 export default async function AdminRecordsPage({
   searchParams,
@@ -20,6 +51,10 @@ export default async function AdminRecordsPage({
   const filters = parseRecordFilterParams(rawParams);
   const where = buildRecordWhereClause(filters);
   const page = parsePage(rawParams.page);
+  const { sort, dir } = parseSort(rawParams.sort, rawParams.dir, RECORD_SORTS, {
+    sort: "date",
+    dir: "desc",
+  });
 
   const [total, records, workers] = await Promise.all([
     prisma.workRecord.count({ where }),
@@ -35,7 +70,7 @@ export default async function AdminRecordsPage({
         status: true,
         submittedBy: { select: { name: true } },
       },
-      orderBy: { date: "desc" },
+      orderBy: recordOrderBy(sort, dir),
       ...paginationArgs(page),
     }),
     prisma.user.findMany({
@@ -89,7 +124,20 @@ export default async function AdminRecordsPage({
 
       <Card>
         <CardContent className="p-0">
-          <RecordsTable records={records} exportFormId={EXPORT_FORM_ID} />
+          <RecordsTable
+            records={records}
+            exportFormId={EXPORT_FORM_ID}
+            sort={sort}
+            dir={dir}
+            sortParams={{
+              dateFrom: filters.dateFrom,
+              dateTo: filters.dateTo,
+              workerId: filters.workerId,
+              customerName: filters.customerName,
+              jobNumber: filters.jobNumber,
+              status: filters.status,
+            }}
+          />
         </CardContent>
       </Card>
 
@@ -104,6 +152,8 @@ export default async function AdminRecordsPage({
           customerName: filters.customerName,
           jobNumber: filters.jobNumber,
           status: filters.status,
+          sort,
+          dir,
         }}
       />
     </div>

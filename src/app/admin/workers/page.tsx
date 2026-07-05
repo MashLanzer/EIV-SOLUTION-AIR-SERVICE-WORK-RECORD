@@ -7,19 +7,43 @@ import { Pagination } from "@/components/ui/pagination";
 import { WorkersTable } from "@/components/workers/WorkersTable";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
+import { parseSort } from "@/lib/sort";
+import type { Prisma } from "@prisma/client";
+
+const WORKER_SORTS = ["name", "email", "role", "status"] as const;
+
+function workerOrderBy(
+  sort: (typeof WORKER_SORTS)[number],
+  dir: "asc" | "desc"
+): Prisma.UserOrderByWithRelationInput {
+  switch (sort) {
+    case "email":
+      return { email: dir };
+    case "role":
+      return { role: dir };
+    case "status":
+      return { active: dir };
+    default:
+      return { name: dir };
+  }
+}
 
 export default async function AdminWorkersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const { page: rawPage } = await searchParams;
-  const page = parsePage(rawPage);
+  const rawParams = await searchParams;
+  const page = parsePage(rawParams.page);
+  const { sort, dir } = parseSort(rawParams.sort, rawParams.dir, WORKER_SORTS, {
+    sort: "name",
+    dir: "asc",
+  });
 
   const [total, workers] = await Promise.all([
     prisma.user.count(),
     prisma.user.findMany({
-      orderBy: { name: "asc" },
+      orderBy: workerOrderBy(sort, dir),
       ...paginationArgs(page),
     }),
   ]);
@@ -39,11 +63,16 @@ export default async function AdminWorkersPage({
 
       <Card>
         <CardContent className="p-0">
-          <WorkersTable workers={workers} />
+          <WorkersTable workers={workers} sort={sort} dir={dir} />
         </CardContent>
       </Card>
 
-      <Pagination page={page} pageCount={pages} basePath="/admin/workers" />
+      <Pagination
+        page={page}
+        pageCount={pages}
+        basePath="/admin/workers"
+        params={{ sort, dir }}
+      />
     </div>
   );
 }

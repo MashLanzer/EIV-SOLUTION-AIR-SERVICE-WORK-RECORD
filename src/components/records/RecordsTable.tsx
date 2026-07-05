@@ -15,6 +15,8 @@ import {
 import { SelectAllCheckbox } from "@/components/records/SelectAllCheckbox";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
+import { SortHeader } from "@/components/ui/sort-header";
+import type { SortDir } from "@/lib/sort";
 
 type RecordWithWorker = Pick<
   WorkRecord,
@@ -33,10 +35,17 @@ function formatDate(date: Date) {
 export function RecordsTable({
   records,
   exportFormId,
+  sort,
+  dir,
+  sortParams,
 }: {
   records: RecordWithWorker[];
   exportFormId: string;
+  sort: string;
+  dir: SortDir;
+  sortParams?: Record<string, string | undefined>;
 }) {
+  const sortProps = { sort, dir, basePath: "/admin/records", params: sortParams };
   if (records.length === 0) {
     return (
       <EmptyState
@@ -54,12 +63,24 @@ export function RecordsTable({
           <TableHead>
             <SelectAllCheckbox formId={exportFormId} />
           </TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Job #</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Customer</TableHead>
-          <TableHead>Submitted By</TableHead>
-          <TableHead>Type of Work</TableHead>
+          <TableHead>
+            <SortHeader column="date" label="Date" {...sortProps} />
+          </TableHead>
+          <TableHead>
+            <SortHeader column="jobNumber" label="Job #" {...sortProps} />
+          </TableHead>
+          <TableHead>
+            <SortHeader column="status" label="Status" {...sortProps} />
+          </TableHead>
+          <TableHead>
+            <SortHeader column="customerName" label="Customer" {...sortProps} />
+          </TableHead>
+          <TableHead>
+            <SortHeader column="worker" label="Submitted By" {...sortProps} />
+          </TableHead>
+          <TableHead>
+            <SortHeader column="typeOfWork" label="Type of Work" {...sortProps} />
+          </TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>

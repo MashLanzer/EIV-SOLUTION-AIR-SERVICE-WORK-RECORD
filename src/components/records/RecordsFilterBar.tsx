@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { DatePresets } from "@/components/ui/date-presets";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -20,6 +21,9 @@ export function RecordsFilterBar({
 }) {
   return (
     <form method="GET" className="grid grid-cols-2 gap-3 sm:grid-cols-6">
+      <div className="col-span-2 sm:col-span-6">
+        <DatePresets />
+      </div>
       <div className="flex flex-col gap-1">
         <Label htmlFor="dateFrom">From</Label>
         <Input

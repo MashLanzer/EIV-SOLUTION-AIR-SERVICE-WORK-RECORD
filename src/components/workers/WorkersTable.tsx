@@ -13,8 +13,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SortHeader } from "@/components/ui/sort-header";
+import type { SortDir } from "@/lib/sort";
 
-export function WorkersTable({ workers }: { workers: User[] }) {
+export function WorkersTable({
+  workers,
+  sort,
+  dir,
+}: {
+  workers: User[];
+  sort: string;
+  dir: SortDir;
+}) {
+  const sortProps = { sort, dir, basePath: "/admin/workers" };
   if (workers.length === 0) {
     return (
       <EmptyState
@@ -29,10 +40,18 @@ export function WorkersTable({ workers }: { workers: User[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>
+            <SortHeader column="name" label="Name" {...sortProps} />
+          </TableHead>
+          <TableHead>
+            <SortHeader column="email" label="Email" {...sortProps} />
+          </TableHead>
+          <TableHead>
+            <SortHeader column="role" label="Role" {...sortProps} />
+          </TableHead>
+          <TableHead>
+            <SortHeader column="status" label="Status" {...sortProps} />
+          </TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
