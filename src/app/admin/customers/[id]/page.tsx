@@ -78,8 +78,8 @@ export default async function AdminCustomerPage({
 
   return (
     <div className="flex flex-col gap-6">
-      {saved && <SuccessToast message="Customer saved" />}
-      {merged && <SuccessToast message="Customers merged" />}
+      {saved && <SuccessToast message="Customer saved" aboveMobileNav />}
+      {merged && <SuccessToast message="Customers merged" aboveMobileNav />}
       {error === "merge" && (
         <Alert variant="error">
           Couldn&apos;t merge - pick a valid customer to merge into and try

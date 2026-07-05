@@ -42,7 +42,7 @@ export default async function AdminEditRecordPage({
 
   return (
     <Card>
-      {saved && <SuccessToast message="Record saved" />}
+      {saved && <SuccessToast message="Record saved" aboveMobileNav />}
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <div className="flex items-center gap-3">
           <CardTitle>Edit Job #{record.jobNumber}</CardTitle>
