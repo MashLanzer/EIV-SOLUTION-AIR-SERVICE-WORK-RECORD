@@ -6,20 +6,32 @@ import {
   Users,
   ArrowRight,
   Clock3,
+  TrendingUp,
+  DollarSign,
+  Wrench,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { BarList } from "@/components/charts/BarList";
 import { formatTime } from "@/lib/format";
+import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
 
-function startOfWeek() {
-  const now = new Date();
-  const day = now.getUTCDay();
+const WEEKS_BACK = 8;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function startOfWeek(base = new Date()) {
+  const day = base.getUTCDay();
   const diff = (day + 6) % 7; // days since Monday
-  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - diff));
-  return monday;
+  return new Date(
+    Date.UTC(
+      base.getUTCFullYear(),
+      base.getUTCMonth(),
+      base.getUTCDate() - diff
+    )
+  );
 }
 
 function startOfMonth() {
@@ -35,7 +47,17 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
+const money = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
 export default async function AdminDashboardPage() {
+  const thisWeekMonday = startOfWeek();
+  const windowStart = new Date(thisWeekMonday.getTime() - (WEEKS_BACK - 1) * 7 * DAY_MS);
+  const payParams = parsePayReportParams({});
+
   const [
     totalRecords,
     recordsThisWeek,
@@ -43,9 +65,12 @@ export default async function AdminDashboardPage() {
     activeWorkers,
     pendingReview,
     recentRecords,
+    weeklyRecords,
+    typeGroups,
+    payReport,
   ] = await Promise.all([
     prisma.workRecord.count(),
-    prisma.workRecord.count({ where: { date: { gte: startOfWeek() } } }),
+    prisma.workRecord.count({ where: { date: { gte: thisWeekMonday } } }),
     prisma.workRecord.count({ where: { date: { gte: startOfMonth() } } }),
     prisma.user.count({ where: { active: true } }),
     prisma.workRecord.count({ where: { status: "SUBMITTED" } }),
@@ -61,6 +86,15 @@ export default async function AdminDashboardPage() {
         submittedBy: { select: { name: true } },
       },
     }),
+    prisma.workRecord.findMany({
+      where: { date: { gte: windowStart } },
+      select: { date: true },
+    }),
+    prisma.workRecord.groupBy({
+      by: ["typeOfWork"],
+      _count: { _all: true },
+    }),
+    buildPayReport(payParams),
   ]);
 
   const stats = [
@@ -69,6 +103,27 @@ export default async function AdminDashboardPage() {
     { label: "This Month", value: recordsThisMonth, icon: CalendarRange },
     { label: "Active Workers", value: activeWorkers, icon: Users },
   ];
+
+  // Bucket records into WEEKS_BACK weekly columns ending this week.
+  const weekBuckets: { label: string; value: number }[] = Array.from(
+    { length: WEEKS_BACK },
+    (_, i) => {
+      const start = new Date(windowStart.getTime() + i * 7 * DAY_MS);
+      return { label: formatDate(start), value: 0 };
+    }
+  );
+  for (const r of weeklyRecords) {
+    const idx = Math.floor((r.date.getTime() - windowStart.getTime()) / (7 * DAY_MS));
+    if (idx >= 0 && idx < weekBuckets.length) weekBuckets[idx].value += 1;
+  }
+
+  const typeData = typeGroups
+    .map((g) => ({ label: g.typeOfWork, value: g._count._all }))
+    .sort((a, b) => b.value - a.value);
+
+  const payData = payReport.rows
+    .slice(0, 6)
+    .map((row) => ({ label: row.name, value: Math.round(row.total) }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -108,6 +163,48 @@ export default async function AdminDashboardPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card className="lg:col-span-2">
+          <CardHeader className="flex-row items-center gap-2 space-y-0">
+            <TrendingUp className="h-4 w-4 text-accent" />
+            <CardTitle className="text-base">
+              Records per week (last {WEEKS_BACK} weeks)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BarList
+              data={weekBuckets}
+              emptyLabel="No records in this period"
+              labelWidth="4rem"
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex-row items-center gap-2 space-y-0">
+            <DollarSign className="h-4 w-4 text-accent" />
+            <CardTitle className="text-base">Top pay this month</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BarList
+              data={payData}
+              formatValue={(v) => money.format(v)}
+              emptyLabel="No pay recorded this month"
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex-row items-center gap-2 space-y-0">
+            <Wrench className="h-4 w-4 text-accent" />
+            <CardTitle className="text-base">Work by type</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BarList data={typeData} emptyLabel="No records yet" />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
