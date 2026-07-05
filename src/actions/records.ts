@@ -112,8 +112,13 @@ export async function updateRecordAction(
 
   const record = await prisma.workRecord.findUnique({ where: { id: recordId } });
   if (!record) return { error: "Record not found" };
-  if (session.user.role !== "ADMIN" && record.submittedById !== session.user.id) {
+  const isAdmin = session.user.role === "ADMIN";
+  if (!isAdmin && record.submittedById !== session.user.id) {
     return { error: "You do not have permission to edit this record" };
+  }
+  // Approved records are locked to workers; only an admin can still amend them.
+  if (!isAdmin && record.status === "APPROVED") {
+    return { error: "This record was approved and can no longer be edited." };
   }
 
   const parsed = parseRecordForm(formData);
@@ -144,6 +149,10 @@ export async function updateRecordAction(
       helperPay: data.helperPay === "" || data.helperPay == null ? null : data.helperPay,
       customerSignature: data.customerSignature,
       installerSignature: data.installerSignature,
+      // A worker resubmitting (e.g. after "return for changes") sends the
+      // record back into the review queue and clears the reviewer's note.
+      // Admin edits leave the status/note untouched.
+      ...(isAdmin ? {} : { status: "SUBMITTED", reviewNote: null }),
       // The form always posts the record's current photo set, so a full
       // replace keeps order and removals correct.
       photos: {
@@ -173,12 +182,37 @@ export async function deleteRecordAction(recordId: string) {
 }
 
 export async function approveRecordAction(recordId: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
   await prisma.workRecord.update({
     where: { id: recordId },
-    data: { status: "APPROVED" },
+    data: {
+      status: "APPROVED",
+      approvedAt: new Date(),
+      approvedById: session.user.id,
+      reviewNote: null,
+    },
   });
   revalidatePath("/admin/records");
   revalidatePath(`/admin/records/${recordId}`);
+  revalidatePath("/admin");
+}
+
+// Send a record back to the worker with a note explaining what to fix.
+export async function requestChangesAction(recordId: string, formData: FormData) {
+  await requireAdmin();
+  const note = (formData.get("reviewNote") as string | null)?.trim() || null;
+  await prisma.workRecord.update({
+    where: { id: recordId },
+    data: {
+      status: "NEEDS_CHANGES",
+      reviewNote: note,
+      approvedAt: null,
+      approvedById: null,
+    },
+  });
+  revalidatePath("/admin/records");
+  revalidatePath(`/admin/records/${recordId}`);
+  revalidatePath("/records");
+  revalidatePath(`/records/${recordId}`);
   revalidatePath("/admin");
 }

@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, Info } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ const alertVariants = cva(
       variant: {
         error: "bg-destructive-soft text-destructive-text",
         success: "bg-success-soft text-success-text",
+        warning: "bg-warning-soft text-warning-text",
         info: "bg-accent-soft text-accent-text",
       },
     },
@@ -22,6 +23,7 @@ const alertVariants = cva(
 const ICONS = {
   error: AlertCircle,
   success: CheckCircle2,
+  warning: AlertTriangle,
   info: Info,
 } as const;
 

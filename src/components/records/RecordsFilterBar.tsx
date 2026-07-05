@@ -61,6 +61,7 @@ export function RecordsFilterBar({
         <Select id="status" name="status" defaultValue={filters.status ?? ""}>
           <option value="">All</option>
           <option value="SUBMITTED">Submitted</option>
+          <option value="NEEDS_CHANGES">Needs changes</option>
           <option value="APPROVED">Approved</option>
         </Select>
       </div>

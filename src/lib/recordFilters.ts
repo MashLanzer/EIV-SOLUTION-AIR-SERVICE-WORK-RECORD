@@ -10,7 +10,11 @@ export interface RecordFilterParams {
   ids?: string[];
 }
 
-const RECORD_STATUSES: RecordStatus[] = ["SUBMITTED", "APPROVED"];
+const RECORD_STATUSES: RecordStatus[] = [
+  "SUBMITTED",
+  "APPROVED",
+  "NEEDS_CHANGES",
+];
 
 export function parseRecordFilterParams(
   searchParams: Record<string, string | string[] | undefined>

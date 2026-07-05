@@ -11,6 +11,7 @@ const badgeVariants = cva(
         default: "bg-accent-soft text-accent-text",
         secondary: "bg-slate-100 text-slate-700",
         success: "bg-success-soft text-success-text",
+        warning: "bg-warning-soft text-warning-text",
         destructive: "bg-destructive-soft text-destructive-text",
       },
     },

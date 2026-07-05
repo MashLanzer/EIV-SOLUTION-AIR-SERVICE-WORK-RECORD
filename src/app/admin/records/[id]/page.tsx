@@ -1,14 +1,24 @@
 import { notFound } from "next/navigation";
 import { CheckCircle2, Download } from "lucide-react";
 
+import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
+import { RequestChangesButton } from "@/components/records/RequestChangesButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { approveRecordAction, updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
+
+function formatDateTime(date: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "UTC",
+  }).format(date);
+}
 
 export default async function AdminEditRecordPage({
   params,
@@ -21,7 +31,10 @@ export default async function AdminEditRecordPage({
   const { saved } = await searchParams;
   const record = await prisma.workRecord.findUnique({
     where: { id },
-    include: { photos: { orderBy: { position: "asc" } } },
+    include: {
+      photos: { orderBy: { position: "asc" } },
+      approvedBy: { select: { name: true } },
+    },
   });
   if (!record) notFound();
 
@@ -35,14 +48,17 @@ export default async function AdminEditRecordPage({
           <CardTitle>Edit Job #{record.jobNumber}</CardTitle>
           <StatusBadge status={record.status} />
         </div>
-        <div className="flex gap-2">
-          {record.status === "SUBMITTED" && (
+        <div className="flex flex-wrap justify-end gap-2">
+          {record.status !== "APPROVED" && (
             <form action={approveRecordAction.bind(null, record.id)}>
               <Button type="submit" size="sm">
                 <CheckCircle2 className="h-4 w-4" />
                 Approve
               </Button>
             </form>
+          )}
+          {record.status === "SUBMITTED" && (
+            <RequestChangesButton recordId={record.id} />
           )}
           <Button asChild variant="outline" size="sm">
             <a href={`/admin/records/${record.id}/pdf`}>
@@ -53,7 +69,19 @@ export default async function AdminEditRecordPage({
           <DeleteRecordButton recordId={record.id} />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
+        {record.status === "NEEDS_CHANGES" && record.reviewNote && (
+          <Alert variant="warning">
+            <span className="font-medium">Returned to worker:</span>{" "}
+            {record.reviewNote}
+          </Alert>
+        )}
+        {record.status === "APPROVED" && record.approvedAt && (
+          <Alert variant="success">
+            Approved{record.approvedBy ? ` by ${record.approvedBy.name}` : ""} on{" "}
+            {formatDateTime(record.approvedAt)}.
+          </Alert>
+        )}
         <WorkRecordForm
           action={boundAction}
           defaultValues={{

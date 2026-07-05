@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Download } from "lucide-react";
+import { Download, Pencil } from "lucide-react";
 
+import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SuccessToast } from "@/components/ui/success-toast";
@@ -29,19 +30,42 @@ export default async function RecordDetailPage({
     notFound();
   }
 
+  const canEdit = record.status !== "APPROVED";
+
   return (
     <Card>
       {saved && <SuccessToast message="Record saved" />}
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle>Job #{record.jobNumber}</CardTitle>
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/records/${record.id}/pdf`}>
-            <Download className="h-4 w-4" />
-            Download PDF
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          {canEdit && (
+            <Button asChild size="sm">
+              <Link href={`/records/${record.id}/edit`}>
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+          )}
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/records/${record.id}/pdf`}>
+              <Download className="h-4 w-4" />
+              Download PDF
+            </Link>
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
+        {record.status === "NEEDS_CHANGES" && (
+          <Alert variant="warning">
+            <span className="font-medium">
+              Your supervisor asked for changes.
+            </span>{" "}
+            {record.reviewNote
+              ? record.reviewNote
+              : "Please review and resubmit this record."}{" "}
+            Tap <span className="font-medium">Edit</span> to fix and resubmit.
+          </Alert>
+        )}
         <RecordDetail record={record} />
       </CardContent>
     </Card>

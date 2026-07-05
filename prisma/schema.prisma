@@ -15,6 +15,7 @@ enum Role {
 enum RecordStatus {
   SUBMITTED
   APPROVED
+  NEEDS_CHANGES
 }
 
 model User {
@@ -26,6 +27,7 @@ model User {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
   submittedRecords WorkRecord[] @relation("SubmittedBy")
+  approvedRecords  WorkRecord[] @relation("ApprovedBy")
 }
 
 model WorkPhoto {
@@ -69,6 +71,10 @@ model WorkRecord {
   customerSignature  String       @db.Text
   installerSignature String       @db.Text
   status             RecordStatus @default(SUBMITTED)
+  reviewNote         String?      @db.Text
+  approvedAt         DateTime?
+  approvedById       String?
+  approvedBy         User?        @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   customerId         String?
   customer           Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   photos             WorkPhoto[]
