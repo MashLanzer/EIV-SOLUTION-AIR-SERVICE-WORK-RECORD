@@ -16,6 +16,7 @@ export default async function NewRecordPage() {
           action={createRecordAction}
           defaultValues={{ leadInstallerName: session.user.name ?? "" }}
           submitLabel="Submit Record"
+          draftKey={`new-record:${session.user.id}`}
         />
       </CardContent>
     </Card>
