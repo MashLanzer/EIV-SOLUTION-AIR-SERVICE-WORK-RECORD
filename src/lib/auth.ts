@@ -7,7 +7,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
-  providers: [Google],
+  providers: [
+    Google({
+      // Force Google's account picker every time instead of silently
+      // continuing with whatever Google account already has an active
+      // session in the system browser - otherwise a device with multiple
+      // Google accounts can never switch, and an unauthorized account gets
+      // silently rejected with no visible chance to pick a different one.
+      authorization: { params: { prompt: "select_account" } },
+    }),
+  ],
   callbacks: {
     async signIn({ user }) {
       if (!user.email) return false;
