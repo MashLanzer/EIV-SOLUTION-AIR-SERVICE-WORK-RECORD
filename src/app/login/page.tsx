@@ -21,14 +21,14 @@ export default async function LoginPage({
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
-        <CardHeader className="items-center text-center">
-          <span className="mb-2 flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Wind className="h-7 w-7" strokeWidth={2.25} />
+        <CardHeader className="items-center gap-2 p-6 pb-0 text-center">
+          <span className="mb-1 flex h-16 w-16 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <Wind className="h-8 w-8" strokeWidth={2.25} />
           </span>
           <CardTitle className="text-xl">EIV Solution Air</CardTitle>
           <CardDescription>Installation / Service Work Record</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           {error === "AccessDenied" && (
             <Alert variant="error" className="mb-4">
               This Google account isn&apos;t authorized. Ask your

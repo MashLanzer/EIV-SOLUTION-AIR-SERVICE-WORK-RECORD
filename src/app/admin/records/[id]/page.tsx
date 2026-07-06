@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Download } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
@@ -41,14 +40,16 @@ export default async function AdminEditRecordPage({
   const boundAction = updateRecordAction.bind(null, record.id);
 
   return (
-    <Card>
+    <div className="flex flex-col gap-4">
       {saved && <SuccessToast message="Record saved" aboveMobileNav />}
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <div className="flex items-center gap-3">
-          <CardTitle>Edit Job #{record.jobNumber}</CardTitle>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+            Edit Job #{record.jobNumber}
+          </h1>
           <StatusBadge status={record.status} />
         </div>
-        <div className="flex flex-wrap justify-end gap-2">
+        <div className="flex flex-wrap gap-2 sm:justify-end">
           {record.status !== "APPROVED" && (
             <form action={approveRecordAction.bind(null, record.id)}>
               <Button type="submit" size="sm">
@@ -68,42 +69,42 @@ export default async function AdminEditRecordPage({
           </Button>
           <DeleteRecordButton recordId={record.id} />
         </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {record.status === "NEEDS_CHANGES" && record.reviewNote && (
-          <Alert variant="warning">
-            <span className="font-medium">Returned to worker:</span>{" "}
-            {record.reviewNote}
-          </Alert>
-        )}
-        {record.status === "APPROVED" && record.approvedAt && (
-          <Alert variant="success">
-            Approved{record.approvedBy ? ` by ${record.approvedBy.name}` : ""} on{" "}
-            {formatDateTime(record.approvedAt)}.
-          </Alert>
-        )}
-        <WorkRecordForm
-          action={boundAction}
-          defaultValues={{
-            date: record.date.toISOString().slice(0, 10),
-            jobNumber: record.jobNumber,
-            leadInstallerName: record.leadInstallerName,
-            helperName: record.helperName ?? "",
-            customerName: record.customerName,
-            customerAddress: record.customerAddress,
-            arrivalTime: record.arrivalTime,
-            departureTime: record.departureTime,
-            typeOfWork: record.typeOfWork,
-            workPerformedNotes: record.workPerformedNotes,
-            leadInstallerPay: record.leadInstallerPay.toString(),
-            helperPay: record.helperPay?.toString() ?? "",
-            customerSignature: record.customerSignature,
-            installerSignature: record.installerSignature,
-            photos: record.photos.map((p) => p.dataUrl),
-          }}
-          submitLabel="Save Changes"
-        />
-      </CardContent>
-    </Card>
+      </div>
+
+      {record.status === "NEEDS_CHANGES" && record.reviewNote && (
+        <Alert variant="warning">
+          <span className="font-medium">Returned to worker:</span>{" "}
+          {record.reviewNote}
+        </Alert>
+      )}
+      {record.status === "APPROVED" && record.approvedAt && (
+        <Alert variant="success">
+          Approved{record.approvedBy ? ` by ${record.approvedBy.name}` : ""} on{" "}
+          {formatDateTime(record.approvedAt)}.
+        </Alert>
+      )}
+
+      <WorkRecordForm
+        action={boundAction}
+        defaultValues={{
+          date: record.date.toISOString().slice(0, 10),
+          jobNumber: record.jobNumber,
+          leadInstallerName: record.leadInstallerName,
+          helperName: record.helperName ?? "",
+          customerName: record.customerName,
+          customerAddress: record.customerAddress,
+          arrivalTime: record.arrivalTime,
+          departureTime: record.departureTime,
+          typeOfWork: record.typeOfWork,
+          workPerformedNotes: record.workPerformedNotes,
+          leadInstallerPay: record.leadInstallerPay.toString(),
+          helperPay: record.helperPay?.toString() ?? "",
+          customerSignature: record.customerSignature,
+          installerSignature: record.installerSignature,
+          photos: record.photos.map((p) => p.dataUrl),
+        }}
+        submitLabel="Save Changes"
+      />
+    </div>
   );
 }
