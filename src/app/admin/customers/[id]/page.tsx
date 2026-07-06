@@ -5,7 +5,9 @@ import { ClipboardList, Mail, MapPin, Pencil, Phone } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataField } from "@/components/ui/data-field";
 import { EmptyState } from "@/components/ui/empty-state";
+import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
 import {
@@ -138,58 +140,96 @@ export default async function AdminCustomerPage({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            Job History ({recordCount})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {records.length === 0 ? (
-            <EmptyState
-              icon={ClipboardList}
-              title="No jobs yet"
-              description="Work records for this customer will show up here."
-            />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Job #</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Type of Work</TableHead>
-                  <TableHead>Submitted By</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {records.map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell>{formatDate(record.date)}</TableCell>
-                    <TableCell>{record.jobNumber}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={record.status} />
-                    </TableCell>
-                    <TableCell>{record.typeOfWork}</TableCell>
-                    <TableCell>{record.submittedBy.name}</TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="outline" size="icon">
-                        <Link
-                          href={`/admin/records/${record.id}`}
-                          aria-label={`Edit record ${record.jobNumber}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Job History ({recordCount})
+        </h2>
+        {records.length === 0 ? (
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState
+                icon={ClipboardList}
+                title="No jobs yet"
+                description="Work records for this customer will show up here."
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <div className="hidden sm:block">
+              <Card>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Job #</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Type of Work</TableHead>
+                        <TableHead>Submitted By</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {records.map((record) => (
+                        <TableRow key={record.id}>
+                          <TableCell>{formatDate(record.date)}</TableCell>
+                          <TableCell>{record.jobNumber}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={record.status} />
+                          </TableCell>
+                          <TableCell>{record.typeOfWork}</TableCell>
+                          <TableCell>{record.submittedBy.name}</TableCell>
+                          <TableCell className="text-right">
+                            <Button asChild variant="outline" size="icon">
+                              <Link
+                                href={`/admin/records/${record.id}`}
+                                aria-label={`Edit record ${record.jobNumber}`}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Link>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+
+            <MobileCardList>
+              {records.map((record) => (
+                <MobileCardRow
+                  key={record.id}
+                  actions={
+                    <Button asChild variant="outline" size="icon">
+                      <Link
+                        href={`/admin/records/${record.id}`}
+                        aria-label={`Edit record ${record.jobNumber}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  }
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                      Job #{record.jobNumber}
+                    </span>
+                    <StatusBadge status={record.status} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <DataField label="Date" value={formatDate(record.date)} />
+                    <DataField label="Type of Work" value={record.typeOfWork} />
+                    <DataField label="Submitted By" value={record.submittedBy.name} />
+                  </div>
+                </MobileCardRow>
+              ))}
+            </MobileCardList>
+          </>
+        )}
+      </section>
 
       <Pagination
         page={page}
