@@ -4,15 +4,18 @@
   --background: #fafafa;
   --foreground: #171717;
 
-  /* Professional ink palette: black/charcoal is the brand color, blue is
-     kept only as a minor functional accent (focus rings, info alerts). */
+  /* Strictly monochrome: ink (black/charcoal) is the only "brand" color and
+     the accent is neutral too, so color is reserved exclusively for state
+     (success / warning / destructive). The accent tokens stay as a named
+     hook, but resolve to neutral greys - an icon chip, focus ring or filled
+     accent surface reads as ink-on-grey, never blue. */
   --color-primary: #171717;
   --color-primary-hover: #262626;
   --color-primary-foreground: #ffffff;
-  --color-accent: #0ea5e9;
+  --color-accent: #171717;
   --color-accent-foreground: #ffffff;
-  --color-accent-soft: #e0f2fe;
-  --color-accent-text: #075985;
+  --color-accent-soft: #f5f5f5;
+  --color-accent-text: #404040;
   --color-success: #16a34a;
   --color-success-soft: #dcfce7;
   --color-success-text: #166534;
@@ -36,10 +39,10 @@
     --color-primary: #f5f5f5;
     --color-primary-hover: #e5e5e5;
     --color-primary-foreground: #171717;
-    --color-accent: #38bdf8;
+    --color-accent: #f5f5f5;
     --color-accent-foreground: #171717;
-    --color-accent-soft: #0c4a6e;
-    --color-accent-text: #7dd3fc;
+    --color-accent-soft: #262626;
+    --color-accent-text: #d4d4d4;
     --color-success: #22c55e;
     --color-success-soft: #14532d;
     --color-success-text: #86efac;
@@ -56,19 +59,31 @@
 /* Design conventions (documented here, not new tokens - Tailwind's
    built-in scales already cover all of these):
 
+   Color    - Strictly monochrome. Ink + greys for everything structural;
+              the `accent` tokens resolve to neutral, so they never add
+              color. Hue is reserved exclusively for state: success (green),
+              warning (amber), destructive (red). If it isn't a state, it's
+              greyscale.
+
+   Surface  - Flat: cards are a subtle 1px border on a slightly raised
+              background, no drop shadow (shadows are kept only for things
+              that truly float - dialogs). Hierarchy comes from type and
+              spacing, not boxes and shadows.
+
    Radius   - rounded-lg (8px) for controls: buttons, inputs, selects,
               textareas, dialogs, alerts, empty states.
             - rounded-xl (12px) for surfaces (cards) and an icon sitting
-              inside a colored badge next to a title (nav logo,
+              inside a neutral badge next to a title (nav logo,
               form-section icon, login icon).
             - rounded-full reserved for genuinely circular elements only:
               pills/badges, the bottom-tab icons, empty-state icon bubble.
 
-   Type     - text-xl font-semibold: the one page title (<h1>) per screen.
+   Type     - text-xl font-semibold tracking-tight: page title (<h1>).
             - text-base font-semibold: section/card title (CardTitle).
             - text-sm font-medium: field label (Label).
             - text-sm: body/value text.
             - text-xs: meta text (timestamps, uppercase eyebrow labels).
+            - tabular-nums on money, counts and dates so figures align.
 
    Spacing  - Compact/native-app density: cards pad with p-4 (16px), and
               major page sections are separated by gap-4, not gap-6 - the
@@ -118,6 +133,15 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* The single page title per screen reads tighter, the way a considered
+   product masthead does; body copy keeps its default tracking. */
+h1 {
+  letter-spacing: -0.02em;
 }
 
 /* Touch-only tap feedback: a subtle press-down on any button/link, the way
@@ -128,5 +152,17 @@ body {
   a:active {
     transform: scale(0.97);
     transition: transform 60ms ease;
+  }
+}
+
+/* Honour users who ask for less motion: drop entrance animations and the
+   tap press-scale, keep everything instant. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

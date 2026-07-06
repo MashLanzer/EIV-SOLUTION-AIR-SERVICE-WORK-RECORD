@@ -8,7 +8,10 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-accent-soft text-accent-text",
+        // Solid ink chip - in the monochrome system this is the emphatic
+        // badge (e.g. the ADMIN role), distinct from the quiet neutral
+        // `secondary` without reaching for a color.
+        default: "bg-primary text-primary-foreground",
         secondary: "bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300",
         success: "bg-success-soft text-success-text",
         warning: "bg-warning-soft text-warning-text",
