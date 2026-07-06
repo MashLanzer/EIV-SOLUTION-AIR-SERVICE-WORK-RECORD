@@ -147,11 +147,10 @@ public class MainActivity extends BridgeActivity {
     private void handleExchangeFailure(String reason) {
         Log.w(TAG, "Native sign-in handoff failed: " + reason);
         runOnUiThread(() -> {
-            Toast.makeText(
-                this,
-                "Sign-in didn't finish - please try again.",
-                Toast.LENGTH_LONG
-            ).show();
+            // Surfaces the actual reason on-device (truncated) so this is
+            // diagnosable without adb/logcat access.
+            String shown = reason.length() > 140 ? reason.substring(0, 140) + "..." : reason;
+            Toast.makeText(this, "Sign-in didn't finish: " + shown, Toast.LENGTH_LONG).show();
             bridge.getWebView().loadUrl(SITE + "/login");
         });
     }

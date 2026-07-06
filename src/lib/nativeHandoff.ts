@@ -2,7 +2,10 @@ import { randomBytes } from "node:crypto";
 
 import { prisma } from "@/lib/prisma";
 
-const CODE_TTL_MS = 60_000;
+// Single-use regardless of TTL (consumeNativeHandoffCode deletes it on
+// first use), so a generous window just protects against a slow browser
+// hop back to the app - it doesn't widen the actual attack surface.
+const CODE_TTL_MS = 5 * 60_000;
 
 export async function createNativeHandoffCode(token: string, cookieName: string) {
   const id = randomBytes(32).toString("base64url");
