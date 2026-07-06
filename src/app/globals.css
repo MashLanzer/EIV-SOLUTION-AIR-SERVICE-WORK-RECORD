@@ -70,10 +70,13 @@
             - text-sm: body/value text.
             - text-xs: meta text (timestamps, uppercase eyebrow labels).
 
-   Spacing  - gap-2: inline icon + label.
-            - gap-3: within a field/filter stack.
-            - gap-4: card/grid content gaps.
-            - gap-6: rhythm between major page sections. */
+   Spacing  - Compact/native-app density: cards pad with p-4 (16px), and
+              major page sections are separated by gap-4, not gap-6 - the
+              app should read tight, not airy.
+            - gap-2: inline icon + label.
+            - gap-3: within a field/filter stack, and between grid content.
+            - gap-4: card interior padding (p-4) and rhythm between major
+              page sections. */
 
 @theme inline {
   --color-background: var(--background);

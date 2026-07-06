@@ -62,7 +62,7 @@ export default async function AdminWorkersPage({
   const pages = pageCount(total);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Workers</h1>
         <Button asChild>

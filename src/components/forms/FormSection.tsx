@@ -26,22 +26,22 @@ export function FormSection({
         emphasis === "subtle" && "border-dashed shadow-none"
       )}
     >
-      <CardHeader className="flex-row items-center gap-3 space-y-0 pb-3">
+      <CardHeader className="flex-row items-center gap-2.5 space-y-0 pb-2">
         <span
           className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
             emphasis === "subtle"
               ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
               : "bg-accent-soft text-accent"
           )}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className="h-4 w-4" />
         </span>
         <CardTitle className={cn(emphasis === "critical" && "font-bold")}>
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {children}
       </CardContent>
     </Card>

@@ -83,7 +83,7 @@ export default async function AdminCustomersPage({
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Customers</h1>
 
       <form method="get" className="relative max-w-md">

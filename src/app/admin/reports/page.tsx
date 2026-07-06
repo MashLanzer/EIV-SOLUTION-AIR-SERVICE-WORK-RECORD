@@ -47,7 +47,7 @@ export default async function AdminReportsPage({
   const isCustomRange = dateFrom !== def.dateFrom || dateTo !== def.dateTo;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Pay Report</h1>
 
       <Card>
@@ -57,7 +57,7 @@ export default async function AdminReportsPage({
             open/closed signal; it opens instead when the range differs
             from that default. */}
         <details className="group" open={isCustomRange}>
-          <summary className="flex cursor-pointer list-none flex-col gap-1 p-6 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
+          <summary className="flex cursor-pointer list-none flex-col gap-1 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <div className="flex items-center justify-between gap-2">
               <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
                 Date Range
@@ -68,7 +68,7 @@ export default async function AdminReportsPage({
               {formatDate(dateFrom)} – {formatDate(dateTo)}
             </span>
           </summary>
-          <div className="px-6 pb-6">
+          <div className="px-4 pb-4">
             <FilterBar>
               <div className="col-span-2 sm:col-span-6">
                 <DatePresets />

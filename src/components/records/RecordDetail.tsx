@@ -19,7 +19,7 @@ export function RecordDetail({
   record: WorkRecord & { photos?: WorkPhoto[] };
 }) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div>
         <StatusBadge status={record.status} />
       </div>

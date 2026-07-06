@@ -77,7 +77,7 @@ export default async function AdminCustomerPage({
   });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {saved && <SuccessToast message="Customer saved" aboveMobileNav />}
       {merged && <SuccessToast message="Customers merged" aboveMobileNav />}
       {error === "merge" && (

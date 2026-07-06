@@ -138,7 +138,7 @@ export default async function AdminDashboardPage() {
     .map((row) => ({ label: row.name, value: Math.round(row.total) }));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <DashboardGreeting name={session.user.name} />
 
       <Link
