@@ -1,7 +1,8 @@
-import { FileText, Sheet } from "lucide-react";
+import { ChevronDown, FileText, Sheet } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
 import { RecordsFilterBar } from "@/components/records/RecordsFilterBar";
 import { RecordsTable } from "@/components/records/RecordsTable";
@@ -79,18 +80,35 @@ export default async function AdminRecordsPage({
     }),
   ]);
   const pages = pageCount(total);
+  const activeFilterCount = [
+    filters.dateFrom,
+    filters.dateTo,
+    filters.workerId,
+    filters.customerName,
+    filters.jobNumber,
+    filters.status,
+  ].filter(Boolean).length;
 
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">All Work Records</h1>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <RecordsFilterBar filters={filters} workers={workers} />
-        </CardContent>
+        {/* Collapsed by default (no JS needed) so the filter form doesn't
+            eat the screen before there's anything to filter; opens
+            automatically when the URL already carries active filters. */}
+        <details className="group" open={activeFilterCount > 0}>
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-6 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
+            <span className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-100">
+              Filters
+              {activeFilterCount > 0 && <Badge variant="secondary">{activeFilterCount}</Badge>}
+            </span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="px-6 pb-6">
+            <RecordsFilterBar filters={filters} workers={workers} />
+          </div>
+        </details>
       </Card>
 
       <section className="flex flex-col gap-3">
