@@ -20,6 +20,7 @@ import { DataField } from "@/components/ui/data-field";
 import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/session";
 import type { Prisma } from "@prisma/client";
 
 const CUSTOMER_SORTS = ["name", "address", "jobs"] as const;
@@ -43,6 +44,7 @@ export default async function AdminCustomersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requireAdmin();
   const rawParams = await searchParams;
   const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;
   const query = rawQ?.trim() || undefined;

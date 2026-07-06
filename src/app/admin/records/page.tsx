@@ -9,6 +9,7 @@ import { RecordsTable } from "@/components/records/RecordsTable";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
+import { requireAdmin } from "@/lib/session";
 import { parseSort } from "@/lib/sort";
 import type { Prisma } from "@prisma/client";
 
@@ -48,6 +49,7 @@ export default async function AdminRecordsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requireAdmin();
   const rawParams = await searchParams;
   const filters = parseRecordFilterParams(rawParams);
   const where = buildRecordWhereClause(filters);

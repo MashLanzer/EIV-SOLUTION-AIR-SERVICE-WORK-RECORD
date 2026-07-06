@@ -11,6 +11,7 @@ import { ToggleWorkerActiveButton } from "@/components/workers/ToggleWorkerActiv
 import { UpdateWorkerEmailForm } from "@/components/workers/UpdateWorkerEmailForm";
 import { UpdateWorkerRoleForm } from "@/components/workers/UpdateWorkerRoleForm";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/session";
 
 function formatJoined(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -25,6 +26,7 @@ export default async function WorkerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
 
   const worker = await prisma.user.findUnique({ where: { id } });

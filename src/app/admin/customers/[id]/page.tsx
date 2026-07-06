@@ -24,6 +24,7 @@ import { MergeCustomerForm } from "@/components/customers/MergeCustomerForm";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/session";
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -46,6 +47,7 @@ export default async function AdminCustomerPage({
     page?: string;
   }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const { saved, merged, error, page: rawPage } = await searchParams;
   const page = parsePage(rawPage);

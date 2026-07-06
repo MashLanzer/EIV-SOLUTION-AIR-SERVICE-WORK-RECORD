@@ -7,6 +7,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { WorkersTable } from "@/components/workers/WorkersTable";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/session";
 import { parseSort } from "@/lib/sort";
 import type { Prisma } from "@prisma/client";
 
@@ -33,6 +34,7 @@ export default async function AdminWorkersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  await requireAdmin();
   const rawParams = await searchParams;
   const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;
   const query = rawQ?.trim() || undefined;

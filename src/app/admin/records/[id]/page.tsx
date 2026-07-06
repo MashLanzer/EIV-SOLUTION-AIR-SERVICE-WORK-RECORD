@@ -10,6 +10,7 @@ import { RequestChangesButton } from "@/components/records/RequestChangesButton"
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { approveRecordAction, updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/session";
 
 function formatDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -26,6 +27,7 @@ export default async function AdminEditRecordPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ saved?: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const { saved } = await searchParams;
   const record = await prisma.workRecord.findUnique({
