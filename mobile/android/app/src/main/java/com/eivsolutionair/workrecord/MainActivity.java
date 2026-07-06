@@ -168,11 +168,16 @@ public class MainActivity extends BridgeActivity {
     private void installSessionCookie(String cookieName, String token) {
         // Install the session in the WebView's cookie jar and reload: the
         // app is now signed in without OAuth ever running inside it.
-        CookieManager cookieManager = CookieManager.getInstance();
-        String cookie = cookieName + "=" + token + "; Path=/; Max-Age=2592000; Secure";
-        cookieManager.setCookie(SITE, cookie, ok -> {
-            cookieManager.flush();
-            runOnUiThread(() -> bridge.getWebView().loadUrl(SITE + "/"));
+        // CookieManager requires a thread with a Looper (the UI thread) -
+        // this method runs from the background network executor, so every
+        // call here has to be posted over, not just the final WebView load.
+        runOnUiThread(() -> {
+            CookieManager cookieManager = CookieManager.getInstance();
+            String cookie = cookieName + "=" + token + "; Path=/; Max-Age=2592000; Secure";
+            cookieManager.setCookie(SITE, cookie, ok -> {
+                cookieManager.flush();
+                bridge.getWebView().loadUrl(SITE + "/");
+            });
         });
     }
 }
