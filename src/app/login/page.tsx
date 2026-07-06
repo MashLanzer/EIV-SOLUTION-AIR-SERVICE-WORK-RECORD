@@ -14,8 +14,15 @@ export default async function LoginPage({
   const { error, native } = await searchParams;
 
   const session = await auth();
-  if (session?.user) {
-    redirect(native ? "/native-handoff" : "/");
+  // For the native hand-off we must NOT reuse whatever account the system
+  // browser is already signed into: it may be a different account (e.g. an
+  // admin from an earlier sign-in) than the one the user is now switching
+  // to, and silently reusing it would hand the app the wrong session. Only
+  // the plain web flow reuses an existing session; the native flow always
+  // falls through to an explicit "Sign in with Google" pick below, which
+  // forces Google's account chooser (prompt=select_account).
+  if (session?.user && !native) {
+    redirect("/");
   }
 
   return (

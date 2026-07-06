@@ -133,6 +133,10 @@ public class MainActivity extends BridgeActivity {
                     // user backed out of the picker - fall back to the
                     // browser-based flow rather than dead-ending here.
                     Log.w(TAG, "Credential Manager sign-in unavailable: " + e);
+                    runOnUiThread(() -> Toast.makeText(
+                        MainActivity.this,
+                        "Using browser sign-in (native picker unavailable)",
+                        Toast.LENGTH_SHORT).show());
                     try {
                         openInBrowserTab(SITE + "/login?native=1");
                     } catch (ActivityNotFoundException ignored) {
@@ -206,7 +210,7 @@ public class MainActivity extends BridgeActivity {
                 JSONObject body = new JSONObject();
                 body.put("code", code);
                 JSONObject json = new JSONObject(postJson(SITE + "/api/native-handoff/exchange", body));
-                installSessionCookie(json.getString("cookieName"), json.getString("token"));
+                installSessionCookie(json.getString("cookieName"), json.getString("token"), json.optString("email", ""));
             } catch (Exception e) {
                 // Network hiccup or an already-expired/used code - surface it
                 // instead of leaving the WebView stuck on a stale page with
@@ -225,7 +229,7 @@ public class MainActivity extends BridgeActivity {
                 JSONObject body = new JSONObject();
                 body.put("idToken", idToken);
                 JSONObject json = new JSONObject(postJson(SITE + "/api/native-handoff/google-token", body));
-                installSessionCookie(json.getString("cookieName"), json.getString("token"));
+                installSessionCookie(json.getString("cookieName"), json.getString("token"), json.optString("email", ""));
             } catch (Exception e) {
                 handleExchangeFailure(e.toString());
             }
@@ -274,7 +278,7 @@ public class MainActivity extends BridgeActivity {
         return out.toString(StandardCharsets.UTF_8.name());
     }
 
-    private void installSessionCookie(String cookieName, String token) {
+    private void installSessionCookie(String cookieName, String token, String email) {
         // Install the session in the WebView's cookie jar and reload: the
         // app is now signed in without OAuth ever running inside it.
         // CookieManager requires a thread with a Looper (the UI thread) -
@@ -282,10 +286,21 @@ public class MainActivity extends BridgeActivity {
         // call here has to be posted over, not just the final WebView load.
         runOnUiThread(() -> {
             CookieManager cookieManager = CookieManager.getInstance();
-            String cookie = cookieName + "=" + token + "; Path=/; Max-Age=2592000; Secure";
-            cookieManager.setCookie(SITE, cookie, ok -> {
-                cookieManager.flush();
-                bridge.getWebView().loadUrl(SITE + "/");
+            // Wipe the jar first so a still-valid session from a previously
+            // signed-in account (e.g. an admin) can't linger alongside and
+            // win over the account the user is switching to now.
+            cookieManager.removeAllCookies(removed -> {
+                String cookie = cookieName + "=" + token + "; Path=/; Max-Age=2592000; Secure";
+                cookieManager.setCookie(SITE, cookie, ok -> {
+                    cookieManager.flush();
+                    // Confirm on-device which account actually got signed in,
+                    // so a wrong-account mix-up is visible immediately instead
+                    // of only after landing inside the app.
+                    if (email != null && !email.isEmpty()) {
+                        Toast.makeText(this, "Signed in as " + email, Toast.LENGTH_LONG).show();
+                    }
+                    bridge.getWebView().loadUrl(SITE + "/");
+                });
             });
         });
     }

@@ -41,5 +41,8 @@ export async function POST(request: Request) {
     name: dbUser.name ?? name,
     email: dbUser.email,
   });
-  return NextResponse.json(result);
+  // Echo the resolved account back so the app can confirm on-device which
+  // account it actually signed in as (the two-account mix-up is otherwise
+  // invisible until you land inside the app).
+  return NextResponse.json({ ...result, email: dbUser.email });
 }
