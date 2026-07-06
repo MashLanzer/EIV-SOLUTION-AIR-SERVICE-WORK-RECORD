@@ -17,16 +17,24 @@ export interface PayReportRow {
   total: number;
 }
 
+// Default to the current month (UTC, matching how record dates are stored)
+export function defaultPayReportRange(): Required<PayReportParams> {
+  const now = new Date();
+  const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  return {
+    dateFrom: first.toISOString().slice(0, 10),
+    dateTo: now.toISOString().slice(0, 10),
+  };
+}
+
 export function parsePayReportParams(searchParams: {
   dateFrom?: string;
   dateTo?: string;
 }): Required<PayReportParams> {
-  // Default to the current month (UTC, matching how record dates are stored)
-  const now = new Date();
-  const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const def = defaultPayReportRange();
   return {
-    dateFrom: searchParams.dateFrom || first.toISOString().slice(0, 10),
-    dateTo: searchParams.dateTo || now.toISOString().slice(0, 10),
+    dateFrom: searchParams.dateFrom || def.dateFrom,
+    dateTo: searchParams.dateTo || def.dateTo,
   };
 }
 

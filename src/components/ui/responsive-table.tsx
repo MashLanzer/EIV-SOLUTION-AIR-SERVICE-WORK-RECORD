@@ -15,14 +15,16 @@ export function MobileCardList({ children }: { children: ReactNode }) {
 export function MobileCardRow({
   children,
   actions,
+  className,
 }: {
   children: ReactNode;
   // Right-aligned action buttons (Edit/PDF/Delete, Manage, View, etc.),
   // shown in a footer row separated from the row's data.
   actions?: ReactNode;
+  className?: string;
 }) {
   return (
-    <Card>
+    <Card className={className}>
       <CardContent className="flex flex-col gap-3 p-4">
         {children}
         {actions && (
