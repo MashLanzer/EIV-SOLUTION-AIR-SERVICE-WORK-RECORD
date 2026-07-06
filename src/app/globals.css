@@ -56,10 +56,11 @@
 /* Design conventions (documented here, not new tokens - Tailwind's
    built-in scales already cover all of these):
 
-   Radius   - rounded-lg (8px) for controls & surfaces: buttons, inputs,
-              selects, textareas, cards, dialogs, alerts, empty states.
-            - rounded-xl (12px) for an icon sitting inside a colored badge
-              next to a title (nav logo, form-section icon, login icon).
+   Radius   - rounded-lg (8px) for controls: buttons, inputs, selects,
+              textareas, dialogs, alerts, empty states.
+            - rounded-xl (12px) for surfaces (cards) and an icon sitting
+              inside a colored badge next to a title (nav logo,
+              form-section icon, login icon).
             - rounded-full reserved for genuinely circular elements only:
               pills/badges, the bottom-tab icons, empty-state icon bubble.
 
@@ -114,4 +115,15 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Touch-only tap feedback: a subtle press-down on any button/link, the way
+   native Android/iOS controls acknowledge a tap. Scoped to coarse pointers
+   so it never fires on a mouse hover/click on desktop. */
+@media (hover: none) and (pointer: coarse) {
+  button:active:not(:disabled),
+  a:active {
+    transform: scale(0.97);
+    transition: transform 60ms ease;
+  }
 }

@@ -15,9 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BarList } from "@/components/charts/BarList";
+import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
 import { formatTime } from "@/lib/format";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/session";
 
 const WEEKS_BACK = 8;
 const TYPE_WINDOW_MONTHS = 12;
@@ -62,6 +64,7 @@ const money = new Intl.NumberFormat("en-US", {
 });
 
 export default async function AdminDashboardPage() {
+  const session = await requireAdmin();
   const thisWeekMonday = startOfWeek();
   const windowStart = new Date(thisWeekMonday.getTime() - (WEEKS_BACK - 1) * 7 * DAY_MS);
   const payParams = parsePayReportParams({});
@@ -136,31 +139,34 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Dashboard</h1>
+      <DashboardGreeting name={session.user.name} />
+
+      <Link
+        href="/admin/records?status=SUBMITTED"
+        aria-label={`${pendingReview} records pending review`}
+        className="block"
+      >
+        <Card className="border-accent/30 bg-accent-soft/40 transition-shadow hover:shadow-md dark:bg-accent-soft/20">
+          <CardContent className="flex items-center gap-4 p-5">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+              <Clock3 className="h-7 w-7" />
+            </span>
+            <div>
+              <div className="text-3xl font-semibold text-neutral-900 dark:text-neutral-100">
+                {pendingReview}
+              </div>
+              <div className="text-sm text-neutral-500 dark:text-neutral-400">Pending Review</div>
+            </div>
+            <ArrowRight className="ml-auto h-5 w-5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+          </CardContent>
+        </Card>
+      </Link>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Overview
         </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          <Link
-            href="/admin/records?status=SUBMITTED"
-            aria-label={`${pendingReview} records pending review`}
-          >
-            <Card className="h-full transition-shadow hover:shadow-md">
-              <CardContent className="flex items-center gap-3 p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
-                  <Clock3 className="h-5 w-5" />
-                </span>
-                <div>
-                  <div className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
-                    {pendingReview}
-                  </div>
-                  <div className="text-sm text-neutral-500 dark:text-neutral-400">Pending Review</div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stats.map((stat) => (
             <Card key={stat.label}>
               <CardContent className="flex items-center gap-3 p-4">

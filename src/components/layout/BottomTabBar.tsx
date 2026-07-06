@@ -37,7 +37,7 @@ export function BottomTabBar({
   return (
     <nav
       aria-label="Sections"
-      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 pb-[env(safe-area-inset-bottom)] sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-lg shadow-[0_-1px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_16px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)] sm:hidden"
     >
       {items.map((item) => {
         const isActive = isTabActive(pathname, item);
@@ -48,12 +48,22 @@ export function BottomTabBar({
             href={item.href}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium",
+              "relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors duration-200",
               isActive ? "text-primary" : "text-neutral-500 dark:text-neutral-400"
             )}
           >
-            <Icon className="h-5 w-5" strokeWidth={isActive ? 2.5 : 2} />
+            <Icon
+              className={cn("h-5 w-5 transition-transform duration-200", isActive && "scale-110")}
+              strokeWidth={isActive ? 2.5 : 2}
+            />
             <span className="truncate">{item.shortLabel}</span>
+            <span
+              aria-hidden="true"
+              className={cn(
+                "absolute bottom-0.5 h-[3px] w-4 origin-center rounded-full bg-primary transition-transform duration-200",
+                isActive ? "scale-x-100" : "scale-x-0"
+              )}
+            />
           </Link>
         );
       })}
