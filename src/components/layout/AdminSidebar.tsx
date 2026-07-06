@@ -12,7 +12,7 @@ import {
 
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import { Logo } from "@/components/layout/Logo";
-import { LogoutButton } from "@/components/layout/LogoutButton";
+import { SettingsLink } from "@/components/layout/SettingsLink";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS: TabItem[] = [
@@ -64,15 +64,15 @@ export function AdminSidebar({ name }: { name: string }) {
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-neutral-200 dark:border-neutral-800 p-3">
           <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{name}</span>
-          <LogoutButton />
+          <SettingsLink href="/admin/settings" />
         </div>
       </aside>
 
-      {/* Mobile top bar - just branding + sign out now that navigation
+      {/* Mobile top bar - just branding + settings now that navigation
           lives in the bottom tab bar instead of a hamburger drawer. */}
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 sm:hidden">
         <Logo />
-        <LogoutButton />
+        <SettingsLink href="/admin/settings" />
       </header>
 
       <BottomTabBar items={NAV_ITEMS} pathname={pathname} />

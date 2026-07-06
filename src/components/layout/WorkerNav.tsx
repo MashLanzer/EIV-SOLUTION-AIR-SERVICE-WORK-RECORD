@@ -6,7 +6,7 @@ import { ClipboardList, Plus } from "lucide-react";
 
 import { BottomTabBar, type TabItem } from "@/components/layout/BottomTabBar";
 import { Logo } from "@/components/layout/Logo";
-import { LogoutButton } from "@/components/layout/LogoutButton";
+import { SettingsLink } from "@/components/layout/SettingsLink";
 
 const TAB_ITEMS: TabItem[] = [
   { href: "/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: false },
@@ -31,7 +31,7 @@ export function WorkerNav({ name }: { name: string }) {
         </Link>
         <div className="flex items-center gap-4">
           <span className="hidden text-sm text-neutral-500 dark:text-neutral-400 sm:inline">{name}</span>
-          <LogoutButton />
+          <SettingsLink href="/records/settings" />
         </div>
       </header>
 
