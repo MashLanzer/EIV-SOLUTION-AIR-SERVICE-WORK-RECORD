@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.CancellationSignal;
+import android.util.Base64;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.widget.Toast;
@@ -28,6 +29,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.json.JSONObject;
@@ -96,9 +98,18 @@ public class MainActivity extends BridgeActivity {
     // then hands the resulting ID token to the backend directly over HTTPS -
     // no browser hop needed at all for this path.
     private void signInWithGoogleNatively() {
+        // A fresh random nonce per attempt forces Google to mint a NEW ID
+        // token bound to the account the user actually taps. Without it,
+        // Google Play Services can hand back a cached ID token from a prior
+        // sign-in (keyed only by serverClientId) - which is how choosing the
+        // worker account could silently return the admin's token, logging the
+        // user into the wrong account. autoSelect stays off so the picker is
+        // always shown rather than a remembered account being reused.
         GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
+            .setAutoSelectEnabled(false)
             .setServerClientId(WEB_CLIENT_ID)
+            .setNonce(newNonce())
             .build();
 
         GetCredentialRequest request = new GetCredentialRequest.Builder()
@@ -129,6 +140,15 @@ public class MainActivity extends BridgeActivity {
                 }
             }
         );
+    }
+
+    // A cryptographically random, URL-safe nonce. Its only job here is to be
+    // unpredictable and unique per sign-in so Google can't reuse a cached
+    // token; the backend doesn't need to echo/verify it for that guarantee.
+    private static String newNonce() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.encodeToString(bytes, Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING);
     }
 
     private void handleGoogleCredential(Credential credential) {
