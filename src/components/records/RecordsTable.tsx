@@ -24,7 +24,7 @@ import type { SortDir } from "@/lib/sort";
 type RecordWithWorker = Pick<
   WorkRecord,
   "id" | "date" | "jobNumber" | "customerName" | "typeOfWork" | "status"
-> & { submittedBy: { name: string } };
+> & { submittedBy: { name: string } | null };
 
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -114,7 +114,7 @@ export function RecordsTable({
                       <StatusBadge status={record.status} />
                     </TableCell>
                     <TableCell>{record.customerName}</TableCell>
-                    <TableCell>{record.submittedBy.name}</TableCell>
+                    <TableCell>{record.submittedBy?.name ?? "—"}</TableCell>
                     <TableCell>{record.typeOfWork}</TableCell>
                     <TableCell className="flex justify-end gap-2 text-right">
                       <Button asChild variant="outline" size="icon">
@@ -167,7 +167,7 @@ export function RecordsTable({
               <DataField label="Date" value={formatDate(record.date)} />
               <DataField label="Type of Work" value={record.typeOfWork} />
               <DataField label="Customer" value={record.customerName} />
-              <DataField label="Submitted By" value={record.submittedBy.name} />
+              <DataField label="Submitted By" value={record.submittedBy?.name ?? "—"} />
             </div>
           </MobileCardRow>
         ))}

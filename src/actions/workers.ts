@@ -97,6 +97,30 @@ export async function toggleWorkerActiveAction(userId: string) {
   revalidatePath(`/admin/workers/${userId}`);
 }
 
+export async function deleteWorkerAction(userId: string) {
+  await requireAdmin();
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return;
+
+  // Deletion is gated on deactivation: an account must be turned off before
+  // it can be permanently removed. The UI only offers Delete once inactive,
+  // but re-check here against a stale page or a replayed form post. Because
+  // the last active admin can never be deactivated, they can never reach a
+  // deletable (inactive) state either - no separate last-admin guard needed.
+  if (user.active) {
+    throw new Error(
+      "Deactivate this worker before deleting their account."
+    );
+  }
+
+  // The worker's submitted records are kept - submittedById is set null by
+  // the FK (ON DELETE SET NULL), so pay history and job records survive.
+  await prisma.user.delete({ where: { id: userId } });
+
+  revalidatePath("/admin/workers");
+  redirect("/admin/workers");
+}
+
 export type UpdateWorkerEmailState = { error?: string } | undefined;
 
 export async function updateWorkerEmailAction(

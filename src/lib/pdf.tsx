@@ -5,7 +5,7 @@ import type { WorkPhoto, WorkRecord } from "@prisma/client";
 import { WorkRecordPdfDocument } from "@/components/pdf/WorkRecordPdfDocument";
 import { prisma } from "@/lib/prisma";
 
-type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } };
+type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } | null };
 
 export async function renderRecordsPdf(records: RecordWithWorker[]) {
   return renderToBuffer(<WorkRecordPdfDocument records={records} />);

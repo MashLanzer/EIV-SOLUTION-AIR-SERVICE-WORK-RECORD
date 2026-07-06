@@ -179,7 +179,7 @@ export default async function AdminCustomerPage({
                             <StatusBadge status={record.status} />
                           </TableCell>
                           <TableCell>{record.typeOfWork}</TableCell>
-                          <TableCell>{record.submittedBy.name}</TableCell>
+                          <TableCell>{record.submittedBy?.name ?? "—"}</TableCell>
                           <TableCell className="text-right">
                             <Button asChild variant="outline" size="icon">
                               <Link
@@ -222,7 +222,7 @@ export default async function AdminCustomerPage({
                   <div className="grid grid-cols-2 gap-3">
                     <DataField label="Date" value={formatDate(record.date)} />
                     <DataField label="Type of Work" value={record.typeOfWork} />
-                    <DataField label="Submitted By" value={record.submittedBy.name} />
+                    <DataField label="Submitted By" value={record.submittedBy?.name ?? "—"} />
                   </div>
                 </MobileCardRow>
               ))}

@@ -94,8 +94,12 @@ model WorkRecord {
   customerId         String?
   customer           Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
   photos             WorkPhoto[]
-  submittedById      String
-  submittedBy        User         @relation("SubmittedBy", fields: [submittedById], references: [id])
+  // Nullable + SetNull so an admin can delete a worker's account without
+  // losing their records (the record keeps its denormalized installer
+  // names; only the "who entered it" link is cleared), mirroring how
+  // deleting a Customer detaches its records.
+  submittedById      String?
+  submittedBy        User?        @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 

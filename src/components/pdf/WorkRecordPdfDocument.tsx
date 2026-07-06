@@ -4,7 +4,7 @@ import type { WorkPhoto, WorkRecord } from "@prisma/client";
 import { formatTime } from "@/lib/format";
 
 type RecordWithWorker = WorkRecord & {
-  submittedBy?: { name: string };
+  submittedBy?: { name: string } | null;
   // Present only on single-record PDFs; bulk exports skip photos to keep
   // multi-record files small.
   photos?: WorkPhoto[];

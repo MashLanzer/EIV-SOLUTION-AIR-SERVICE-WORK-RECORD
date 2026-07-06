@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, CalendarDays, ClipboardList, Mail } from "lucide-react";
+import { ArrowRight, CalendarDays, ClipboardList, Mail, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { DeleteWorkerButton } from "@/components/workers/DeleteWorkerButton";
 import { ToggleWorkerActiveButton } from "@/components/workers/ToggleWorkerActiveButton";
 import { UpdateWorkerEmailForm } from "@/components/workers/UpdateWorkerEmailForm";
 import { UpdateWorkerRoleForm } from "@/components/workers/UpdateWorkerRoleForm";
@@ -116,13 +117,29 @@ export default async function WorkerDetailPage({
               />
             </div>
 
-            <div className="border-t border-neutral-200 dark:border-neutral-800 pt-4">
+            <div className="flex flex-col gap-3 border-t border-neutral-200 dark:border-neutral-800 pt-4">
               <ToggleWorkerActiveButton
                 workerId={worker.id}
                 active={worker.active}
                 name={worker.name}
                 disableDeactivate={isLastActiveAdmin}
               />
+              {/* Deleting an account is gated behind deactivation: turn the
+                  worker off first, then the permanent delete becomes
+                  available. Their work records are kept either way. */}
+              {worker.active ? (
+                <div className="flex flex-col gap-1">
+                  <Button type="button" variant="destructive" size="sm" disabled>
+                    <Trash2 className="h-4 w-4" />
+                    Delete account
+                  </Button>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Deactivate this worker first to permanently delete their account.
+                  </p>
+                </div>
+              ) : (
+                <DeleteWorkerButton workerId={worker.id} name={worker.name} />
+              )}
             </div>
           </CardContent>
         </Card>

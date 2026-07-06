@@ -302,7 +302,7 @@ export default async function AdminDashboardPage() {
                         Job #{record.jobNumber} — {record.customerName}
                       </div>
                       <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                        {record.submittedBy.name} · {formatDate(record.date)} ·{" "}
+                        {record.submittedBy?.name ?? "—"} · {formatDate(record.date)} ·{" "}
                         {formatTime(record.arrivalTime)}
                       </div>
                     </div>

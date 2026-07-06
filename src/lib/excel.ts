@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import type { WorkRecord } from "@prisma/client";
 
-type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } };
+type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } | null };
 
 export async function buildWorkbook(records: RecordWithWorker[]) {
   const workbook = new ExcelJS.Workbook();
