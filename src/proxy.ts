@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 const PUBLIC_PATHS = [
   "/login",
   "/api/auth",
-  "/api/native-handoff/exchange",
+  "/api/native-handoff",
   "/.well-known",
 ];
 

@@ -4,12 +4,23 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.CancellationSignal;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.widget.Toast;
 import androidx.browser.customtabs.CustomTabsClient;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.core.content.ContextCompat;
+import androidx.credentials.Credential;
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.CustomCredential;
+import androidx.credentials.GetCredentialRequest;
+import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.GetCredentialException;
 import com.getcapacitor.BridgeActivity;
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +37,12 @@ public class MainActivity extends BridgeActivity {
     private static final String TAG = "NativeHandoff";
     private static final String SITE = "https://eiv-solution-air-service-work-recor.vercel.app";
     private static final String SCHEME = "eivsolutionair";
+    // Public OAuth client identifier (not a secret - safe to embed), used as
+    // Credential Manager's serverClientId so the ID token it returns is
+    // audience-scoped to this app's backend, which verifies it against the
+    // same value (AUTH_GOOGLE_ID).
+    private static final String WEB_CLIENT_ID =
+        "337399331790-174ml85osblhorb88tm6e2jhhl8ee2l2.apps.googleusercontent.com";
     private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
 
     @Override
@@ -49,7 +66,9 @@ public class MainActivity extends BridgeActivity {
         if (data == null || !SCHEME.equals(data.getScheme())) return;
         intent.setData(null); // each link is handled exactly once
 
-        if ("open-login".equals(data.getHost())) {
+        if ("native-google-signin".equals(data.getHost())) {
+            signInWithGoogleNatively();
+        } else if ("open-login".equals(data.getHost())) {
             // Google blocks OAuth inside WebViews, so sign-in runs in a
             // browser tab instead. A plain ACTION_VIEW intent to our own
             // domain is an *implicit* intent, so Android's Digital Asset
@@ -69,6 +88,61 @@ public class MainActivity extends BridgeActivity {
             String code = data.getQueryParameter("code");
             if (code == null) return;
             exchangeCodeForSession(code);
+        }
+    }
+
+    // Shows the OS-level "choose a Google account" picker (every account on
+    // the device, not just whichever one Chrome happens to be signed into),
+    // then hands the resulting ID token to the backend directly over HTTPS -
+    // no browser hop needed at all for this path.
+    private void signInWithGoogleNatively() {
+        GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder()
+            .setFilterByAuthorizedAccounts(false)
+            .setServerClientId(WEB_CLIENT_ID)
+            .build();
+
+        GetCredentialRequest request = new GetCredentialRequest.Builder()
+            .addCredentialOption(googleIdOption)
+            .build();
+
+        CredentialManager.create(this).getCredentialAsync(
+            this,
+            request,
+            new CancellationSignal(),
+            ContextCompat.getMainExecutor(this),
+            new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
+                @Override
+                public void onResult(GetCredentialResponse result) {
+                    handleGoogleCredential(result.getCredential());
+                }
+
+                @Override
+                public void onError(GetCredentialException e) {
+                    // No Google Play services, no saved account, or the
+                    // user backed out of the picker - fall back to the
+                    // browser-based flow rather than dead-ending here.
+                    Log.w(TAG, "Credential Manager sign-in unavailable: " + e);
+                    try {
+                        openInBrowserTab(SITE + "/login?native=1");
+                    } catch (ActivityNotFoundException ignored) {
+                    }
+                }
+            }
+        );
+    }
+
+    private void handleGoogleCredential(Credential credential) {
+        if (!(credential instanceof CustomCredential)
+            || !GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL.equals(credential.getType())) {
+            handleExchangeFailure("Unexpected credential type from account picker");
+            return;
+        }
+        try {
+            GoogleIdTokenCredential googleIdTokenCredential =
+                GoogleIdTokenCredential.createFrom(((CustomCredential) credential).getData());
+            exchangeGoogleIdToken(googleIdTokenCredential.getIdToken());
+        } catch (Exception e) {
+            handleExchangeFailure("Could not read Google credential: " + e);
         }
     }
 
@@ -109,32 +183,10 @@ public class MainActivity extends BridgeActivity {
     private void exchangeCodeForSession(String code) {
         networkExecutor.execute(() -> {
             try {
-                URL url = new URL(SITE + "/api/native-handoff/exchange");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setDoOutput(true);
-                conn.setConnectTimeout(10_000);
-                conn.setReadTimeout(10_000);
-
                 JSONObject body = new JSONObject();
                 body.put("code", code);
-                try (OutputStream os = conn.getOutputStream()) {
-                    os.write(body.toString().getBytes(StandardCharsets.UTF_8));
-                }
-
-                int status = conn.getResponseCode();
-                InputStream stream = status == 200 ? conn.getInputStream() : conn.getErrorStream();
-                String responseBody = readAll(stream);
-                if (status != 200) {
-                    handleExchangeFailure("Sign-in exchange failed (HTTP " + status + "): " + responseBody);
-                    return;
-                }
-
-                JSONObject json = new JSONObject(responseBody);
-                String token = json.getString("token");
-                String cookieName = json.getString("cookieName");
-                installSessionCookie(cookieName, token);
+                JSONObject json = new JSONObject(postJson(SITE + "/api/native-handoff/exchange", body));
+                installSessionCookie(json.getString("cookieName"), json.getString("token"));
             } catch (Exception e) {
                 // Network hiccup or an already-expired/used code - surface it
                 // instead of leaving the WebView stuck on a stale page with
@@ -142,6 +194,43 @@ public class MainActivity extends BridgeActivity {
                 handleExchangeFailure(e.toString());
             }
         });
+    }
+
+    // Counterpart to exchangeCodeForSession for the Credential Manager path:
+    // the ID token itself is the proof of sign-in, so it goes straight to
+    // the backend instead of through a single-use code + deep link.
+    private void exchangeGoogleIdToken(String idToken) {
+        networkExecutor.execute(() -> {
+            try {
+                JSONObject body = new JSONObject();
+                body.put("idToken", idToken);
+                JSONObject json = new JSONObject(postJson(SITE + "/api/native-handoff/google-token", body));
+                installSessionCookie(json.getString("cookieName"), json.getString("token"));
+            } catch (Exception e) {
+                handleExchangeFailure(e.toString());
+            }
+        });
+    }
+
+    private static String postJson(String urlStr, JSONObject body) throws IOException {
+        URL url = new URL(urlStr);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "application/json");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(10_000);
+        conn.setReadTimeout(10_000);
+        try (OutputStream os = conn.getOutputStream()) {
+            os.write(body.toString().getBytes(StandardCharsets.UTF_8));
+        }
+
+        int status = conn.getResponseCode();
+        InputStream stream = status == 200 ? conn.getInputStream() : conn.getErrorStream();
+        String responseBody = readAll(stream);
+        if (status != 200) {
+            throw new IOException("Sign-in exchange failed (HTTP " + status + "): " + responseBody);
+        }
+        return responseBody;
     }
 
     private void handleExchangeFailure(String reason) {

@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 
 export function GoogleSignInButton() {
   const handleClick = async () => {
-    // Inside the Android app shell: Google's OAuth flow doesn't complete in
-    // the embedded WebView, so sign-in runs in the system browser instead.
-    // This custom-scheme navigation is caught natively (MainActivity), which
-    // opens /login?native=1 in the browser; that flow finishes at
-    // /native-handoff, which deep-links the session back into the app.
+    // Inside the Android app shell: MainActivity catches this custom-scheme
+    // navigation and shows the native Credential Manager account picker
+    // (every Google account on the device, not just whichever one Chrome
+    // happens to be signed into) - falling back to the browser-based OAuth
+    // dance (open-login -> /login?native=1 -> /native-handoff) only if
+    // Credential Manager itself isn't available on the device.
     if (window.Capacitor?.isNativePlatform?.()) {
-      window.location.href = "eivsolutionair://open-login";
+      window.location.href = "eivsolutionair://native-google-signin";
       return;
     }
 
