@@ -45,6 +45,18 @@
         </provider>
     </application>
 
+    <!-- Lets MainActivity see and explicitly target an installed browser
+         package when opening the Google sign-in tab (required on Android
+         11+ package visibility rules; without this, resolving a browser
+         package to launch can silently come back empty). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

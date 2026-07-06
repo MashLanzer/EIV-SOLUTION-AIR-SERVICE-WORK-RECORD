@@ -2,10 +2,13 @@ package com.eivsolutionair.workrecord;
 
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.widget.Toast;
+import androidx.browser.customtabs.CustomTabsClient;
+import androidx.browser.customtabs.CustomTabsIntent;
 import com.getcapacitor.BridgeActivity;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,11 +50,18 @@ public class MainActivity extends BridgeActivity {
         intent.setData(null); // each link is handled exactly once
 
         if ("open-login".equals(data.getHost())) {
-            // Google blocks OAuth inside WebViews, so sign-in runs in the
-            // real system browser. The web login page (?native=1) finishes
-            // at /native-handoff, which links back here via auth-callback.
+            // Google blocks OAuth inside WebViews, so sign-in runs in a
+            // browser tab instead. A plain ACTION_VIEW intent to our own
+            // domain is an *implicit* intent, so Android's Digital Asset
+            // Links verification can hand it straight back to this same
+            // app instead of a real browser (this app's package is the
+            // verified owner of this domain per assetlinks.json) - which
+            // looks like "the browser flashes open and instantly bounces
+            // back without ever showing Google's sign-in page." Explicitly
+            // targeting a resolved browser package makes this an *explicit*
+            // intent, which skips that verified-link resolution entirely.
             try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(SITE + "/login?native=1")));
+                openInBrowserTab(SITE + "/login?native=1");
             } catch (ActivityNotFoundException ignored) {
                 // No browser on the device; nothing we can do.
             }
@@ -60,6 +70,36 @@ public class MainActivity extends BridgeActivity {
             if (code == null) return;
             exchangeCodeForSession(code);
         }
+    }
+
+    // Resolves an installed browser package up front and pins the launch
+    // intent to it (an explicit intent), instead of leaving resolution up
+    // to the OS - which is what lets a verified App Link claim the URL
+    // right back into this app instead of a real browser.
+    private void openInBrowserTab(String url) {
+        Uri uri = Uri.parse(url);
+        String browserPackage = resolveBrowserPackage();
+        CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder().build();
+        if (browserPackage != null) {
+            customTabsIntent.intent.setPackage(browserPackage);
+        }
+        customTabsIntent.launchUrl(this, uri);
+    }
+
+    // Prefers a browser that supports Custom Tabs (nicer transition, no
+    // full app-switch); falls back to any other installed app that
+    // handles http(s) links, explicitly excluding this app itself so we
+    // can never resolve straight back to our own verified App Link.
+    private String resolveBrowserPackage() {
+        String customTabsPackage = CustomTabsClient.getPackageName(this, null, false);
+        if (customTabsPackage != null) return customTabsPackage;
+
+        Intent probe = new Intent(Intent.ACTION_VIEW, Uri.parse("https://example.com"));
+        for (ResolveInfo info : getPackageManager().queryIntentActivities(probe, 0)) {
+            String pkg = info.activityInfo.packageName;
+            if (!pkg.equals(getPackageName())) return pkg;
+        }
+        return null;
     }
 
     // The deep link only carries a short-lived, single-use code (not the
