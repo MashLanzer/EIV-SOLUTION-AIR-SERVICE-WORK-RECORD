@@ -82,9 +82,7 @@ export default async function AdminRecordsPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">All Work Records</h1>
-      </div>
+      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">All Work Records</h1>
 
       <Card>
         <CardHeader>
@@ -95,74 +93,71 @@ export default async function AdminRecordsPage({
         </CardContent>
       </Card>
 
-      <form
-        id={EXPORT_FORM_ID}
-        method="GET"
-        className="flex flex-col items-end gap-1"
-      >
-        <input type="hidden" name="dateFrom" value={filters.dateFrom ?? ""} />
-        <input type="hidden" name="dateTo" value={filters.dateTo ?? ""} />
-        <input type="hidden" name="workerId" value={filters.workerId ?? ""} />
-        <input type="hidden" name="customerName" value={filters.customerName ?? ""} />
-        <input type="hidden" name="jobNumber" value={filters.jobNumber ?? ""} />
-        <input type="hidden" name="status" value={filters.status ?? ""} />
-        <div className="flex gap-2">
-          <Button
-            type="submit"
-            variant="outline"
-            size="sm"
-            formAction="/admin/records/export/pdf"
-            title="Bulk PDF exports don't include work photos"
-          >
-            <FileText className="h-4 w-4" />
-            Export to PDF
-          </Button>
-          <Button
-            type="submit"
-            variant="outline"
-            size="sm"
-            formAction="/admin/records/export/excel"
-          >
-            <Sheet className="h-4 w-4" />
-            Export to Excel
-          </Button>
+      <section className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {total} Record{total === 1 ? "" : "s"}
+          </h2>
+          <form id={EXPORT_FORM_ID} method="GET" className="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="dateFrom" value={filters.dateFrom ?? ""} />
+            <input type="hidden" name="dateTo" value={filters.dateTo ?? ""} />
+            <input type="hidden" name="workerId" value={filters.workerId ?? ""} />
+            <input type="hidden" name="customerName" value={filters.customerName ?? ""} />
+            <input type="hidden" name="jobNumber" value={filters.jobNumber ?? ""} />
+            <input type="hidden" name="status" value={filters.status ?? ""} />
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              formAction="/admin/records/export/pdf"
+              title="Bulk PDF exports don't include work photos"
+            >
+              <FileText className="h-4 w-4" />
+              Export to PDF
+            </Button>
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              formAction="/admin/records/export/excel"
+            >
+              <Sheet className="h-4 w-4" />
+              Export to Excel
+            </Button>
+          </form>
         </div>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          PDF exports of multiple records don&apos;t include work photos -
-          open a record and download its PDF individually for those.
-        </p>
-      </form>
 
-      <RecordsTable
-        records={records}
-        exportFormId={EXPORT_FORM_ID}
-        sort={sort}
-        dir={dir}
-        sortParams={{
-          dateFrom: filters.dateFrom,
-          dateTo: filters.dateTo,
-          workerId: filters.workerId,
-          customerName: filters.customerName,
-          jobNumber: filters.jobNumber,
-          status: filters.status,
-        }}
-      />
+        <RecordsTable
+          records={records}
+          exportFormId={EXPORT_FORM_ID}
+          sort={sort}
+          dir={dir}
+          sortParams={{
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+            workerId: filters.workerId,
+            customerName: filters.customerName,
+            jobNumber: filters.jobNumber,
+            status: filters.status,
+          }}
+        />
 
-      <Pagination
-        page={page}
-        pageCount={pages}
-        basePath="/admin/records"
-        params={{
-          dateFrom: filters.dateFrom,
-          dateTo: filters.dateTo,
-          workerId: filters.workerId,
-          customerName: filters.customerName,
-          jobNumber: filters.jobNumber,
-          status: filters.status,
-          sort,
-          dir,
-        }}
-      />
+        <Pagination
+          page={page}
+          pageCount={pages}
+          basePath="/admin/records"
+          params={{
+            dateFrom: filters.dateFrom,
+            dateTo: filters.dateTo,
+            workerId: filters.workerId,
+            customerName: filters.customerName,
+            jobNumber: filters.jobNumber,
+            status: filters.status,
+            sort,
+            dir,
+          }}
+        />
+      </section>
     </div>
   );
 }

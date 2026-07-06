@@ -55,6 +55,11 @@ export function RecordsTable({
         icon={ClipboardList}
         title="No records match these filters"
         description="Try adjusting or clearing the filters above."
+        action={
+          <Button asChild variant="outline" className="mt-2">
+            <Link href="/admin/records">Clear filters</Link>
+          </Button>
+        }
       />
     );
   }
