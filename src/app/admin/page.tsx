@@ -11,7 +11,6 @@ import {
   Wrench,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BarList } from "@/components/charts/BarList";
@@ -139,42 +138,45 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <DashboardGreeting name={session.user.name} />
+      <div className="animate-fade-up" style={{ animationDelay: "0ms" }}>
+        <DashboardGreeting name={session.user.name} />
+      </div>
 
       <Link
         href="/admin/records?status=SUBMITTED"
         aria-label={`${pendingReview} records pending review`}
-        className="block"
+        className="group block animate-fade-up"
+        style={{ animationDelay: "40ms" }}
       >
-        <Card className="border-accent/30 bg-accent-soft/40 transition-shadow hover:shadow-md dark:bg-accent-soft/20">
+        <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
           <CardContent className="flex items-center gap-4 p-5">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
               <Clock3 className="h-7 w-7" />
             </span>
             <div>
-              <div className="text-3xl font-semibold text-neutral-900 dark:text-neutral-100">
+              <div className="text-3xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
                 {pendingReview}
               </div>
               <div className="text-sm text-neutral-500 dark:text-neutral-400">Pending Review</div>
             </div>
-            <ArrowRight className="ml-auto h-5 w-5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+            <ArrowRight className="ml-auto h-5 w-5 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
           </CardContent>
         </Card>
       </Link>
 
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Overview
         </h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {stats.map((stat) => (
-            <Card key={stat.label}>
+            <Card key={stat.label} className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
               <CardContent className="flex items-center gap-3 p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
                   <stat.icon className="h-5 w-5" />
                 </span>
                 <div>
-                  <div className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
+                  <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
                     {stat.value}
                   </div>
                   <div className="text-sm text-neutral-500 dark:text-neutral-400">{stat.label}</div>
@@ -185,14 +187,14 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "120ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Trends
         </h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <Card className="lg:col-span-2">
             <CardHeader className="flex-row items-center gap-2 space-y-0">
-              <TrendingUp className="h-4 w-4 text-accent" />
+              <TrendingUp className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               <CardTitle>
                 Records per week (last {WEEKS_BACK} weeks)
               </CardTitle>
@@ -208,7 +210,7 @@ export default async function AdminDashboardPage() {
 
           <Card>
             <CardHeader className="flex-row items-center gap-2 space-y-0">
-              <DollarSign className="h-4 w-4 text-accent" />
+              <DollarSign className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               <CardTitle>
                 Top approved pay this month
               </CardTitle>
@@ -224,7 +226,7 @@ export default async function AdminDashboardPage() {
 
           <Card>
             <CardHeader className="flex-row items-center gap-2 space-y-0">
-              <Wrench className="h-4 w-4 text-accent" />
+              <Wrench className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               <CardTitle>
                 Work by type (last {TYPE_WINDOW_MONTHS} months)
               </CardTitle>
@@ -236,45 +238,49 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "160ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Shortcuts
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <CardTitle>All Work Records</CardTitle>
-                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                  View and filter every submitted record
-                </p>
-              </div>
-              <Button asChild variant="outline" size="icon">
-                <Link href="/admin/records" aria-label="Go to records">
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <CardTitle>Manage Workers</CardTitle>
-                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                  Authorize emails, set roles, deactivate accounts
-                </p>
-              </div>
-              <Button asChild variant="outline" size="icon">
-                <Link href="/admin/workers" aria-label="Go to workers">
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <Link
+            href="/admin/records"
+            className="group block"
+            aria-label="Go to records"
+          >
+            <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
+              <CardContent className="flex items-center justify-between gap-3 p-4">
+                <div>
+                  <CardTitle>All Work Records</CardTitle>
+                  <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    View and filter every submitted record
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
+              </CardContent>
+            </Card>
+          </Link>
+          <Link
+            href="/admin/workers"
+            className="group block"
+            aria-label="Go to workers"
+          >
+            <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
+              <CardContent className="flex items-center justify-between gap-3 p-4">
+                <div>
+                  <CardTitle>Manage Workers</CardTitle>
+                  <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    Authorize emails, set roles, deactivate accounts
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </section>
 
-      <section className="flex flex-col gap-3">
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "200ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Recent Activity
         </h2>
@@ -295,18 +301,18 @@ export default async function AdminDashboardPage() {
                   <Link
                     key={record.id}
                     href={`/admin/records/${record.id}`}
-                    className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                    className="group -mx-3 flex items-center justify-between gap-4 rounded-lg px-3 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                   >
                     <div className="min-w-0">
                       <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
                         Job #{record.jobNumber} — {record.customerName}
                       </div>
-                      <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                      <div className="text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
                         {record.submittedBy?.name ?? "—"} · {formatDate(record.date)} ·{" "}
                         {formatTime(record.arrivalTime)}
                       </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                    <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
                   </Link>
                 ))}
               </div>
