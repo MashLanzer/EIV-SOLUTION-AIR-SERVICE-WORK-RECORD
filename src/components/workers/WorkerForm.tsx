@@ -46,6 +46,7 @@ export function WorkerForm() {
           title="Create an admin account?"
           description="Admins can manage every worker, customer, and record - including deactivating other admins. Only grant this to someone who needs full access."
           confirmLabel="Create admin account"
+          confirmVariant="default"
           trigger={
             <Button type="button" disabled={pending}>
               {pending ? "Creating..." : "Create account"}

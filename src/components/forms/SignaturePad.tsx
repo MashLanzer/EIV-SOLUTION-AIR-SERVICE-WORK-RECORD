@@ -21,10 +21,12 @@ interface SignaturePadProps {
   label: string;
   defaultValue?: string;
   className?: string;
+  error?: string;
+  id?: string;
 }
 
 export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
-  function SignaturePad({ label, defaultValue, className }, ref) {
+  function SignaturePad({ label, defaultValue, className, error, id }, ref) {
     const sigRef = useRef<SignatureCanvas>(null);
     const [mode, setMode] = useState<"preview" | "draw">(
       defaultValue ? "preview" : "draw"
@@ -65,7 +67,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
     }, [mode]);
 
     return (
-      <div className={cn("flex flex-col gap-2", className)}>
+      <div id={id} className={cn("flex flex-col gap-2 scroll-mt-4", className)}>
         <div className="flex items-center justify-between">
           <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{label}</span>
           {mode === "draw" ? (
@@ -93,7 +95,15 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
             </Button>
           )}
         </div>
-        <div className="relative rounded-md border-2 border-dashed border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900">
+        {/* The pad is always a white "sheet of paper" with dark ink, even in
+            dark mode - a dark pad would hide the near-black signature and is
+            what a signer expects to write on. */}
+        <div
+          className={cn(
+            "relative rounded-md border-2 border-dashed bg-white",
+            error ? "border-destructive" : "border-neutral-300 dark:border-neutral-700"
+          )}
+        >
           {mode === "preview" ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -106,7 +116,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
               {isEmpty && (
                 <div
                   aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-neutral-300 dark:text-neutral-600"
+                  className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-neutral-300"
                 >
                   <PenLine className="h-6 w-6" />
                   <span className="text-xs">Sign here</span>
@@ -117,7 +127,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
                   it isn't announced as a blank, unlabeled canvas. */}
               <SignatureCanvas
                 ref={sigRef}
-                penColor="#0f172a"
+                penColor="#171717"
                 clearOnResize={false}
                 onBegin={() => setIsEmpty(false)}
                 canvasProps={{
@@ -129,6 +139,11 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
             </>
           )}
         </div>
+        {error && (
+          <p className="text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     );
   }

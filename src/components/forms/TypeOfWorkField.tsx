@@ -24,7 +24,7 @@ export function TypeOfWorkField({
   return (
     <div className="flex flex-col gap-2">
       <Select
-        aria-label="Type of work"
+        id="typeOfWork"
         aria-invalid={invalid && selected !== "Other" ? true : undefined}
         value={selected}
         onChange={(e) => setSelected(e.target.value)}
@@ -41,6 +41,7 @@ export function TypeOfWorkField({
           name="typeOfWork"
           placeholder="Describe the type of work"
           defaultValue={isCustom ? defaultValue : ""}
+          aria-label="Describe the type of work"
           aria-invalid={invalid ? true : undefined}
           required
         />

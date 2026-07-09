@@ -99,6 +99,24 @@ function draftHasContent(d: Partial<WorkRecordFormValues>): boolean {
   );
 }
 
+// Friendly names for the error summary, keyed by field name / anchor id.
+const FIELD_LABELS: Record<string, string> = {
+  date: "Date",
+  jobNumber: "Job #",
+  leadInstallerName: "Lead Installer",
+  customerName: "Customer Name",
+  customerAddress: "Customer Address",
+  arrivalTime: "Arrival Time",
+  departureTime: "Departure Time",
+  typeOfWork: "Type of Work",
+  workPerformedNotes: "Work Performed / Notes",
+  leadInstallerPay: "Lead Installer Pay",
+  helperPay: "Helper Pay",
+  photos: "Photos",
+  "sig-customer": "Customer Signature",
+  "sig-installer": "Installer Signature",
+};
+
 export function WorkRecordForm({
   action,
   defaultValues,
@@ -115,7 +133,10 @@ export function WorkRecordForm({
   const formRef = useRef<HTMLFormElement>(null);
   const customerSigRef = useRef<SignaturePadHandle>(null);
   const installerSigRef = useRef<SignaturePadHandle>(null);
-  const [signatureError, setSignatureError] = useState<string | null>(null);
+  const [sigErrors, setSigErrors] = useState<{
+    customer?: string;
+    installer?: string;
+  }>({});
 
   // Field values seeded into the (remountable) form. Restoring a draft
   // swaps these in and bumps formKey to re-init the uncontrolled inputs,
@@ -133,6 +154,22 @@ export function WorkRecordForm({
   const invalid = (name: string) => (fieldError(name) ? true : undefined);
   const describedBy = (name: string) =>
     fieldError(name) ? `${name}-error` : undefined;
+
+  // Flat list of everything the worker needs to fix, for the summary at the
+  // top of the form: server-side field errors plus any missing signatures.
+  const errorSummary: { id: string; label: string }[] = [
+    ...Object.keys(state?.fieldErrors ?? {})
+      .filter((name) => state?.fieldErrors?.[name]?.length)
+      .map((name) => ({ id: name, label: FIELD_LABELS[name] ?? name })),
+    ...(sigErrors.customer ? [{ id: "sig-customer", label: FIELD_LABELS["sig-customer"] }] : []),
+    ...(sigErrors.installer ? [{ id: "sig-installer", label: FIELD_LABELS["sig-installer"] }] : []),
+  ];
+
+  function focusField(id: string) {
+    const el = document.getElementById(id);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (el instanceof HTMLElement) el.focus?.();
+  }
 
   // Offline awareness: block submitting while there's no connection (the
   // draft keeps the entry safe until the worker is back online).
@@ -217,24 +254,24 @@ export function WorkRecordForm({
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSignatureError(null);
+    setSigErrors({});
 
-    if (offline) {
-      setSignatureError(
-        "You're offline. Your entry is saved - it will submit once you're back online."
-      );
-      return;
-    }
+    // The offline banner and the disabled Save button already explain why a
+    // submit can't go through, so just bail out quietly here.
+    if (offline) return;
 
     const customerSignature = customerSigRef.current?.getDataUrl();
     const installerSignature = installerSigRef.current?.getDataUrl();
 
-    if (!customerSignature) {
-      setSignatureError("Customer signature is required.");
-      return;
-    }
-    if (!installerSignature) {
-      setSignatureError("Installer signature is required.");
+    if (!customerSignature || !installerSignature) {
+      const next = {
+        customer: customerSignature ? undefined : "Customer signature is required.",
+        installer: installerSignature ? undefined : "Installer signature is required.",
+      };
+      setSigErrors(next);
+      requestAnimationFrame(() =>
+        focusField(next.customer ? "sig-customer" : "sig-installer")
+      );
       return;
     }
 
@@ -282,6 +319,34 @@ export function WorkRecordForm({
         onPointerUp={scheduleSave}
         className="flex flex-col gap-4"
       >
+        {(errorSummary.length > 0 || state?.error) && (
+          <Alert variant="error">
+            <div className="flex flex-col gap-1">
+              <span className="font-medium">
+                {state?.error ?? "Please fix the following before submitting:"}
+              </span>
+              {errorSummary.length > 0 && (
+                <ul className="ml-4 list-disc">
+                  {errorSummary.map((item) => (
+                    <li key={item.id}>
+                      <a
+                        href={`#${item.id}`}
+                        className="underline underline-offset-2"
+                        onClick={(ev) => {
+                          ev.preventDefault();
+                          focusField(item.id);
+                        }}
+                      >
+                        {item.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </Alert>
+        )}
+
         <FormSection
           icon={Briefcase}
           title="Job Details"
@@ -289,7 +354,7 @@ export function WorkRecordForm({
           style={{ animationDelay: "0ms" }}
         >
           <div className="flex flex-col gap-2">
-            <Label htmlFor="date">Date</Label>
+            <Label htmlFor="date" required>Date</Label>
             <Input
               id="date"
               name="date"
@@ -302,7 +367,7 @@ export function WorkRecordForm({
             <FieldError id="date-error" message={fieldError("date")} />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="jobNumber">Job #</Label>
+            <Label htmlFor="jobNumber" required>Job #</Label>
             <Input
               id="jobNumber"
               name="jobNumber"
@@ -314,7 +379,7 @@ export function WorkRecordForm({
             <FieldError id="jobNumber-error" message={fieldError("jobNumber")} />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="leadInstallerName">Lead Installer</Label>
+            <Label htmlFor="leadInstallerName" required>Lead Installer</Label>
             <Input
               id="leadInstallerName"
               name="leadInstallerName"
@@ -329,7 +394,7 @@ export function WorkRecordForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="helperName">Helper</Label>
+            <Label htmlFor="helperName">Helper <span className="font-normal text-neutral-400 dark:text-neutral-500">(optional)</span></Label>
             <Input
               id="helperName"
               name="helperName"
@@ -348,7 +413,7 @@ export function WorkRecordForm({
           style={{ animationDelay: "60ms" }}
         >
           <div className="flex flex-col gap-2">
-            <Label htmlFor="customerName">Customer Name</Label>
+            <Label htmlFor="customerName" required>Customer Name</Label>
             <CustomerAutocomplete
               defaultValue={values?.customerName}
               addressInputId="customerAddress"
@@ -363,11 +428,12 @@ export function WorkRecordForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="customerAddress">Customer Address</Label>
+            <Label htmlFor="customerAddress" required>Customer Address</Label>
             <Input
               id="customerAddress"
               name="customerAddress"
               required
+              autoComplete="street-address"
               defaultValue={values?.customerAddress}
               aria-invalid={invalid("customerAddress")}
               aria-describedby={describedBy("customerAddress")}
@@ -383,6 +449,8 @@ export function WorkRecordForm({
               id="customerPhone"
               name="customerPhone"
               type="tel"
+              inputMode="tel"
+              autoComplete="tel"
               defaultValue={values?.customerPhone}
             />
           </div>
@@ -392,6 +460,8 @@ export function WorkRecordForm({
               id="customerEmail"
               name="customerEmail"
               type="email"
+              inputMode="email"
+              autoComplete="email"
               defaultValue={values?.customerEmail}
             />
           </div>
@@ -404,7 +474,7 @@ export function WorkRecordForm({
           style={{ animationDelay: "120ms" }}
         >
           <div className="flex flex-col gap-2">
-            <Label htmlFor="arrivalTime">Arrival Time</Label>
+            <Label htmlFor="arrivalTime" required>Arrival Time</Label>
             <Input
               id="arrivalTime"
               name="arrivalTime"
@@ -420,7 +490,7 @@ export function WorkRecordForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="departureTime">Departure Time</Label>
+            <Label htmlFor="departureTime" required>Departure Time</Label>
             <Input
               id="departureTime"
               name="departureTime"
@@ -436,7 +506,7 @@ export function WorkRecordForm({
             />
           </div>
           <div className="flex flex-col gap-2 sm:col-span-2">
-            <Label>Type of Work</Label>
+            <Label htmlFor="typeOfWork" required>Type of Work</Label>
             <TypeOfWorkField
               defaultValue={values?.typeOfWork}
               invalid={invalid("typeOfWork")}
@@ -447,7 +517,7 @@ export function WorkRecordForm({
             />
           </div>
           <div className="flex flex-col gap-2 sm:col-span-2">
-            <Label htmlFor="workPerformedNotes">Work Performed / Notes</Label>
+            <Label htmlFor="workPerformedNotes" required>Work Performed / Notes</Label>
             <Textarea
               id="workPerformedNotes"
               name="workPerformedNotes"
@@ -471,11 +541,12 @@ export function WorkRecordForm({
           style={{ animationDelay: "180ms" }}
         >
           <div className="flex flex-col gap-2">
-            <Label htmlFor="leadInstallerPay">Lead Installer Pay ($)</Label>
+            <Label htmlFor="leadInstallerPay" required>Lead Installer Pay ($)</Label>
             <Input
               id="leadInstallerPay"
               name="leadInstallerPay"
               type="number"
+              inputMode="decimal"
               step="0.01"
               min="0"
               required
@@ -489,11 +560,12 @@ export function WorkRecordForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="helperPay">Helper Pay ($)</Label>
+            <Label htmlFor="helperPay">Helper Pay ($) <span className="font-normal text-neutral-400 dark:text-neutral-500">(optional)</span></Label>
             <Input
               id="helperPay"
               name="helperPay"
               type="number"
+              inputMode="decimal"
               step="0.01"
               min="0"
               defaultValue={values?.helperPay}
@@ -523,14 +595,18 @@ export function WorkRecordForm({
           style={{ animationDelay: "300ms" }}
         >
           <SignaturePad
+            id="sig-customer"
             ref={customerSigRef}
             label="Customer Signature"
             defaultValue={values?.customerSignature}
+            error={sigErrors.customer}
           />
           <SignaturePad
+            id="sig-installer"
             ref={installerSigRef}
             label="Installer Signature"
             defaultValue={values?.installerSignature}
+            error={sigErrors.installer}
           />
         </FormSection>
 
@@ -539,10 +615,6 @@ export function WorkRecordForm({
             <span className="font-medium">You&apos;re offline.</span> Your entry
             is saved on this device. Reconnect to submit it.
           </Alert>
-        )}
-
-        {(signatureError || state?.error) && (
-          <Alert variant="error">{signatureError ?? state?.error}</Alert>
         )}
 
         {/* Spacer so the fixed mobile action bar doesn't cover the last section */}
