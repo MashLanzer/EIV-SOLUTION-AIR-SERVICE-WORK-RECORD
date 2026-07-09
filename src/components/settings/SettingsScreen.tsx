@@ -1,9 +1,18 @@
+"use client";
+
+import { useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 import { LogoutButton } from "@/components/layout/LogoutButton";
+import { ResetHistoryDialog } from "@/components/settings/ResetHistoryDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataField } from "@/components/ui/data-field";
+
+// Taps on the Role value needed to reveal the admin-only Danger zone -
+// deliberately obscure (like Android's "tap Build number 7 times"), so the
+// destructive reset never sits in plain view.
+const TAPS_TO_REVEAL = 7;
 
 export function SettingsScreen({
   name,
@@ -16,6 +25,16 @@ export function SettingsScreen({
   role: "ADMIN" | "WORKER";
   backHref: string;
 }) {
+  const isAdmin = role === "ADMIN";
+  const tapsRef = useRef(0);
+  const [revealed, setRevealed] = useState(false);
+
+  function bumpTaps() {
+    if (!isAdmin || revealed) return;
+    tapsRef.current += 1;
+    if (tapsRef.current >= TAPS_TO_REVEAL) setRevealed(true);
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -38,7 +57,17 @@ export function SettingsScreen({
         <CardContent className="flex flex-col gap-4">
           <DataField label="Name" value={name} />
           <DataField label="Email" value={email} />
-          <DataField label="Role" value={role === "ADMIN" ? "Admin" : "Worker"} />
+          <DataField
+            label="Role"
+            value={
+              <span
+                onClick={bumpTaps}
+                className="cursor-default select-none"
+              >
+                {isAdmin ? "Admin" : "Worker"}
+              </span>
+            }
+          />
         </CardContent>
       </Card>
 
@@ -47,6 +76,22 @@ export function SettingsScreen({
           <LogoutButton />
         </CardContent>
       </Card>
+
+      {revealed && isAdmin && (
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-destructive">Danger zone</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Permanently delete every work record, including its photos and
+              signatures, and hand the app back like new. Customers and all
+              accounts are kept. This can&apos;t be undone.
+            </p>
+            <ResetHistoryDialog />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -285,3 +285,23 @@ export async function requestChangesAction(recordId: string, formData: FormData)
   revalidatePath(`/records/${recordId}`);
   revalidatePath("/admin");
 }
+
+// Danger zone: wipe every work record - and, via ON DELETE CASCADE, its
+// photos - to hand the app back "like new". Customers and user accounts
+// (workers/admins) are deliberately kept. Admin-only, and double-gated: the
+// caller must type the exact confirmation phrase, re-checked here so a
+// stray/forged request can't trigger it.
+export async function resetHistoryAction(formData: FormData) {
+  await requireAdmin();
+  const confirm = (formData.get("confirm") as string | null)?.trim();
+  if (confirm !== "RESET") {
+    redirect("/admin/settings");
+  }
+  await prisma.workRecord.deleteMany({});
+  revalidatePath("/admin");
+  revalidatePath("/admin/records");
+  revalidatePath("/admin/reports");
+  revalidatePath("/admin/customers");
+  revalidatePath("/records");
+  redirect("/admin/settings?reset=1");
+}
