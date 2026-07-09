@@ -1,14 +1,16 @@
 import { notFound } from "next/navigation";
-import { CheckCircle2, Download } from "lucide-react";
+import Link from "next/link";
+import { Download, Pencil } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { SuccessToast } from "@/components/ui/success-toast";
-import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
+import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
+import { RecordDetail } from "@/components/records/RecordDetail";
 import { RequestChangesButton } from "@/components/records/RequestChangesButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
-import { approveRecordAction, updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
 
@@ -20,7 +22,7 @@ function formatDateTime(date: Date) {
   }).format(date);
 }
 
-export default async function AdminEditRecordPage({
+export default async function AdminReviewRecordPage({
   params,
   searchParams,
 }: {
@@ -39,30 +41,30 @@ export default async function AdminEditRecordPage({
   });
   if (!record) notFound();
 
-  const boundAction = updateRecordAction.bind(null, record.id);
-
   return (
     <div className="flex flex-col gap-4">
       {saved && <SuccessToast message="Record saved" aboveMobileNav />}
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-            Edit Job #{record.jobNumber}
+          <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+            Job #{record.jobNumber}
           </h1>
           <StatusBadge status={record.status} />
         </div>
         <div className="flex flex-wrap gap-2 sm:justify-end">
           {record.status !== "APPROVED" && (
-            <form action={approveRecordAction.bind(null, record.id)}>
-              <Button type="submit" size="sm">
-                <CheckCircle2 className="h-4 w-4" />
-                Approve
-              </Button>
-            </form>
+            <ApproveRecordButton recordId={record.id} />
           )}
           {record.status === "SUBMITTED" && (
             <RequestChangesButton recordId={record.id} />
           )}
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/admin/records/${record.id}/edit`}>
+              <Pencil className="h-4 w-4" />
+              Edit
+            </Link>
+          </Button>
           <Button asChild variant="outline" size="sm">
             <a href={`/admin/records/${record.id}/pdf`}>
               <Download className="h-4 w-4" />
@@ -86,27 +88,11 @@ export default async function AdminEditRecordPage({
         </Alert>
       )}
 
-      <WorkRecordForm
-        action={boundAction}
-        defaultValues={{
-          date: record.date.toISOString().slice(0, 10),
-          jobNumber: record.jobNumber,
-          leadInstallerName: record.leadInstallerName,
-          helperName: record.helperName ?? "",
-          customerName: record.customerName,
-          customerAddress: record.customerAddress,
-          arrivalTime: record.arrivalTime,
-          departureTime: record.departureTime,
-          typeOfWork: record.typeOfWork,
-          workPerformedNotes: record.workPerformedNotes,
-          leadInstallerPay: record.leadInstallerPay.toString(),
-          helperPay: record.helperPay?.toString() ?? "",
-          customerSignature: record.customerSignature,
-          installerSignature: record.installerSignature,
-          photos: record.photos.map((p) => p.dataUrl),
-        }}
-        submitLabel="Save Changes"
-      />
+      <Card>
+        <CardContent className="p-4">
+          <RecordDetail record={record} />
+        </CardContent>
+      </Card>
     </div>
   );
 }

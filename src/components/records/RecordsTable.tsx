@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { WorkRecord } from "@prisma/client";
-import { ClipboardList, Pencil, Download } from "lucide-react";
+import { ClipboardList, Eye, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +14,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SelectAllCheckbox } from "@/components/records/SelectAllCheckbox";
+import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
+import { RequestChangesButton } from "@/components/records/RequestChangesButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { DataField } from "@/components/ui/data-field";
 import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
@@ -118,10 +120,16 @@ export function RecordsTable({
                     <TableCell>{record.typeOfWork}</TableCell>
                     <TableCell className="flex justify-end gap-2 text-right">
                       <Button asChild variant="outline" size="icon">
-                        <Link href={`/admin/records/${record.id}`} aria-label="Edit record">
-                          <Pencil className="h-4 w-4" />
+                        <Link href={`/admin/records/${record.id}`} aria-label="Review record">
+                          <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
+                      {record.status === "SUBMITTED" && (
+                        <>
+                          <ApproveRecordButton recordId={record.id} iconOnly />
+                          <RequestChangesButton recordId={record.id} iconOnly />
+                        </>
+                      )}
                       <Button asChild variant="outline" size="icon">
                         <Link href={`/admin/records/${record.id}/pdf`} aria-label="Download PDF">
                           <Download className="h-4 w-4" />
@@ -144,10 +152,16 @@ export function RecordsTable({
             actions={
               <>
                 <Button asChild variant="outline" size="icon">
-                  <Link href={`/admin/records/${record.id}`} aria-label="Edit record">
-                    <Pencil className="h-4 w-4" />
+                  <Link href={`/admin/records/${record.id}`} aria-label="Review record">
+                    <Eye className="h-4 w-4" />
                   </Link>
                 </Button>
+                {record.status === "SUBMITTED" && (
+                  <>
+                    <ApproveRecordButton recordId={record.id} iconOnly />
+                    <RequestChangesButton recordId={record.id} iconOnly />
+                  </>
+                )}
                 <Button asChild variant="outline" size="icon">
                   <Link href={`/admin/records/${record.id}/pdf`} aria-label="Download PDF">
                     <Download className="h-4 w-4" />

@@ -10,7 +10,13 @@ import { requestChangesAction } from "@/actions/records";
 // Sends a record back to the worker with a required note explaining what
 // to fix. Uses a native <dialog> so the note can be typed inline - the
 // shared ConfirmDialog has no input slot.
-export function RequestChangesButton({ recordId }: { recordId: string }) {
+export function RequestChangesButton({
+  recordId,
+  iconOnly = false,
+}: {
+  recordId: string;
+  iconOnly?: boolean;
+}) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const action = requestChangesAction.bind(null, recordId);
   const id = useId();
@@ -19,15 +25,27 @@ export function RequestChangesButton({ recordId }: { recordId: string }) {
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => dialogRef.current?.showModal()}
-      >
-        <Undo2 className="h-4 w-4" />
-        Return for changes
-      </Button>
+      {iconOnly ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="Return for changes"
+          onClick={() => dialogRef.current?.showModal()}
+        >
+          <Undo2 className="h-4 w-4" />
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => dialogRef.current?.showModal()}
+        >
+          <Undo2 className="h-4 w-4" />
+          Return for changes
+        </Button>
+      )}
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}
