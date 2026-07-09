@@ -1,6 +1,5 @@
 import type { WorkPhoto, WorkRecord } from "@prisma/client";
 
-import { StatusBadge } from "@/components/records/StatusBadge";
 import { DataField } from "@/components/ui/data-field";
 import { formatTime } from "@/lib/format";
 
@@ -20,9 +19,6 @@ export function RecordDetail({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <StatusBadge status={record.status} />
-      </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <DataField label="Date" value={formatDate(record.date)} />
         <DataField label="Job #" value={record.jobNumber} />

@@ -27,11 +27,11 @@ export function RecordCard({
   href: string;
 }) {
   return (
-    <Link href={href}>
-      <Card className="transition-shadow hover:shadow-md">
+    <Link href={href} className="block">
+      <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
         <CardContent className="flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between gap-2">
-            <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+            <span className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
               Job #{record.jobNumber}
             </span>
             <StatusBadge status={record.status} />

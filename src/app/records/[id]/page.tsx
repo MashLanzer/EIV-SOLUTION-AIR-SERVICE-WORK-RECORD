@@ -3,10 +3,11 @@ import Link from "next/link";
 import { Download, Pencil } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { RecordDetail } from "@/components/records/RecordDetail";
+import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 
@@ -33,11 +34,17 @@ export default async function RecordDetailPage({
   const canEdit = record.status !== "APPROVED";
 
   return (
-    <Card>
+    <div className="flex flex-col gap-4">
       {saved && <SuccessToast message="Record saved" />}
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <CardTitle>Job #{record.jobNumber}</CardTitle>
-        <div className="flex gap-2">
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+            Job #{record.jobNumber}
+          </h1>
+          <StatusBadge status={record.status} />
+        </div>
+        <div className="flex flex-wrap gap-2 sm:justify-end">
           {canEdit && (
             <Button asChild size="sm">
               <Link href={`/records/${record.id}/edit`}>
@@ -53,21 +60,25 @@ export default async function RecordDetailPage({
             </Link>
           </Button>
         </div>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {record.status === "NEEDS_CHANGES" && (
-          <Alert variant="warning">
-            <span className="font-medium">
-              Your supervisor asked for changes.
-            </span>{" "}
-            {record.reviewNote
-              ? record.reviewNote
-              : "Please review and resubmit this record."}{" "}
-            Tap <span className="font-medium">Edit</span> to fix and resubmit.
-          </Alert>
-        )}
-        <RecordDetail record={record} />
-      </CardContent>
-    </Card>
+      </div>
+
+      {record.status === "NEEDS_CHANGES" && (
+        <Alert variant="warning">
+          <span className="font-medium">
+            Your supervisor asked for changes.
+          </span>{" "}
+          {record.reviewNote
+            ? record.reviewNote
+            : "Please review and resubmit this record."}{" "}
+          Tap <span className="font-medium">Edit</span> to fix and resubmit.
+        </Alert>
+      )}
+
+      <Card>
+        <CardContent className="p-4">
+          <RecordDetail record={record} />
+        </CardContent>
+      </Card>
+    </div>
   );
 }
