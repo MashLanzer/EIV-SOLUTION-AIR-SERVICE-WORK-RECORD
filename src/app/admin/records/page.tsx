@@ -96,10 +96,12 @@ export default async function AdminRecordsPage({
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">All Work Records</h1>
 
       <Card>
-        {/* Collapsed by default (no JS needed) so the filter form doesn't
-            eat the screen before there's anything to filter; opens
-            automatically when the URL already carries active filters. */}
-        <details className="group" open={activeFilterCount > 0}>
+        {/* Always collapsed by default so the filter form stays the compact
+            size of the rest of the app - even when the page is reached via a
+            filtered link (e.g. the dashboard's "Pending Review" ->
+            ?status=SUBMITTED). The count badge signals active filters
+            without expanding the whole form; tap to adjust. */}
+        <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <span className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-100">
               Filters
