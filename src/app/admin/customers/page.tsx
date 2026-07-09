@@ -120,7 +120,10 @@ export default async function AdminCustomersPage({
           />
         )
       ) : (
-        <>
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {total} Customer{total === 1 ? "" : "s"}
+          </h2>
           <div className="hidden sm:block">
             <Card>
               <CardContent className="p-0">
@@ -150,7 +153,7 @@ export default async function AdminCustomersPage({
                         <TableCell className="text-sm text-neutral-500 dark:text-neutral-400">
                           {customer.phone || customer.email || "—"}
                         </TableCell>
-                        <TableCell>{customer._count.records}</TableCell>
+                        <TableCell className="tabular-nums">{customer._count.records}</TableCell>
                         <TableCell className="text-right">
                           <Button asChild variant="outline" size="sm">
                             <Link href={`/admin/customers/${customer.id}`}>
@@ -186,12 +189,15 @@ export default async function AdminCustomersPage({
                 <div className="grid grid-cols-2 gap-3">
                   <DataField label="Address" value={customer.address} />
                   <DataField label="Contact" value={customer.phone || customer.email} />
-                  <DataField label="Jobs" value={customer._count.records} />
+                  <DataField
+                    label="Jobs"
+                    value={<span className="tabular-nums">{customer._count.records}</span>}
+                  />
                 </div>
               </MobileCardRow>
             ))}
           </MobileCardList>
-        </>
+        </section>
       )}
 
       <Pagination

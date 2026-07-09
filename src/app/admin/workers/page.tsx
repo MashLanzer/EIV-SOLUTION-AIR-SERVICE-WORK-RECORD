@@ -87,7 +87,7 @@ export default async function AdminWorkersPage({
         />
       </form>
 
-      <WorkersTable workers={workers} sort={sort} dir={dir} query={query} />
+      <WorkersTable workers={workers} total={total} sort={sort} dir={dir} query={query} />
 
       <Pagination
         page={page}

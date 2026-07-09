@@ -108,8 +108,8 @@ export function RecordsTable({
                         aria-label={`Select record ${record.jobNumber}`}
                       />
                     </TableCell>
-                    <TableCell>{formatDate(record.date)}</TableCell>
-                    <TableCell>{record.jobNumber}</TableCell>
+                    <TableCell className="tabular-nums">{formatDate(record.date)}</TableCell>
+                    <TableCell className="tabular-nums">{record.jobNumber}</TableCell>
                     <TableCell>
                       <StatusBadge status={record.status} />
                     </TableCell>
@@ -158,7 +158,7 @@ export function RecordsTable({
             }
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+              <span className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
                 Job #{record.jobNumber}
               </span>
               <StatusBadge status={record.status} />

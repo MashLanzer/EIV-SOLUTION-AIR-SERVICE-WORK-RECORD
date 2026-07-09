@@ -21,11 +21,13 @@ import type { SortDir } from "@/lib/sort";
 
 export function WorkersTable({
   workers,
+  total,
   sort,
   dir,
   query,
 }: {
   workers: User[];
+  total: number;
   sort: string;
   dir: SortDir;
   query?: string;
@@ -58,7 +60,10 @@ export function WorkersTable({
   }
 
   return (
-    <>
+    <section className="flex flex-col gap-3">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+        {total} Worker{total === 1 ? "" : "s"}
+      </h2>
       <div className="hidden sm:block">
         <Card>
           <CardContent className="p-0">
@@ -146,6 +151,6 @@ export function WorkersTable({
           </MobileCardRow>
         ))}
       </MobileCardList>
-    </>
+    </section>
   );
 }
