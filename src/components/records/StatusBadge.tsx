@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 export function StatusBadge({ status }: { status: RecordStatus }) {
   if (status === "APPROVED") {
     return (
-      <Badge variant="success" className="gap-1">
+      <Badge variant="success">
         <CheckCircle2 className="h-3 w-3" />
         Approved
       </Badge>
@@ -14,14 +14,14 @@ export function StatusBadge({ status }: { status: RecordStatus }) {
   }
   if (status === "NEEDS_CHANGES") {
     return (
-      <Badge variant="warning" className="gap-1">
+      <Badge variant="warning">
         <AlertTriangle className="h-3 w-3" />
         Needs changes
       </Badge>
     );
   }
   return (
-    <Badge variant="default" className="gap-1">
+    <Badge variant="default">
       <Clock3 className="h-3 w-3" />
       Submitted
     </Badge>

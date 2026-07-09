@@ -70,7 +70,7 @@ export function AdminSidebar({ name }: { name: string }) {
 
       {/* Mobile top bar - just branding + settings now that navigation
           lives in the bottom tab bar instead of a hamburger drawer. */}
-      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-4 sm:hidden">
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 px-4 backdrop-blur sm:hidden">
         <Logo />
         <SettingsLink href="/admin/settings" />
       </header>

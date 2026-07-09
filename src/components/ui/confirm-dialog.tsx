@@ -11,12 +11,17 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel = "Confirm",
+  confirmVariant = "destructive",
   trigger,
   onConfirm,
 }: {
   title: string;
   description: string;
   confirmLabel?: string;
+  // Defaults to the destructive (red) button so existing callers are
+  // unchanged; pass "default" for benign confirmations (e.g. create
+  // admin account, change email) where red is the wrong signal.
+  confirmVariant?: "default" | "destructive";
   // Any clickable content (e.g. a Button without its own onClick);
   // clicking it opens the dialog.
   trigger: ReactNode;
@@ -61,7 +66,7 @@ export function ConfirmDialog({
           </Button>
           <Button
             type="button"
-            variant="destructive"
+            variant={confirmVariant}
             onClick={(e) => {
               e.currentTarget.closest("dialog")?.close();
               onConfirm();
