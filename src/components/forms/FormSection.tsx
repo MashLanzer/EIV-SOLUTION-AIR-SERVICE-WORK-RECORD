@@ -11,6 +11,9 @@ interface FormSectionProps {
   // weight as "Signatures" (a legally required action) or an optional
   // "Photos" section - this lets a section signal how much it matters.
   emphasis?: "default" | "critical" | "subtle";
+  // Passthrough so callers can stagger an entrance animation per section.
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 export function FormSection({
@@ -18,12 +21,16 @@ export function FormSection({
   title,
   children,
   emphasis = "default",
+  className,
+  style,
 }: FormSectionProps) {
   return (
     <Card
+      style={style}
       className={cn(
         emphasis === "critical" && "border-l-4 border-l-primary shadow-none",
-        emphasis === "subtle" && "border-dashed shadow-none"
+        emphasis === "subtle" && "border-dashed shadow-none",
+        className
       )}
     >
       <CardHeader className="flex-row items-center gap-2.5 space-y-0 pb-2">
@@ -32,7 +39,7 @@ export function FormSection({
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
             emphasis === "subtle"
               ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
-              : "bg-accent-soft text-accent"
+              : "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
           )}
         >
           <Icon className="h-4 w-4" />

@@ -282,7 +282,12 @@ export function WorkRecordForm({
         onPointerUp={scheduleSave}
         className="flex flex-col gap-4"
       >
-        <FormSection icon={Briefcase} title="Job Details">
+        <FormSection
+          icon={Briefcase}
+          title="Job Details"
+          className="animate-fade-up"
+          style={{ animationDelay: "0ms" }}
+        >
           <div className="flex flex-col gap-2">
             <Label htmlFor="date">Date</Label>
             <Input
@@ -336,7 +341,12 @@ export function WorkRecordForm({
           </div>
         </FormSection>
 
-        <FormSection icon={User} title="Customer">
+        <FormSection
+          icon={User}
+          title="Customer"
+          className="animate-fade-up"
+          style={{ animationDelay: "60ms" }}
+        >
           <div className="flex flex-col gap-2">
             <Label htmlFor="customerName">Customer Name</Label>
             <CustomerAutocomplete
@@ -387,7 +397,12 @@ export function WorkRecordForm({
           </div>
         </FormSection>
 
-        <FormSection icon={Clock} title="Time & Work">
+        <FormSection
+          icon={Clock}
+          title="Time & Work"
+          className="animate-fade-up"
+          style={{ animationDelay: "120ms" }}
+        >
           <div className="flex flex-col gap-2">
             <Label htmlFor="arrivalTime">Arrival Time</Label>
             <Input
@@ -449,7 +464,12 @@ export function WorkRecordForm({
           </div>
         </FormSection>
 
-        <FormSection icon={DollarSign} title="Payment">
+        <FormSection
+          icon={DollarSign}
+          title="Payment"
+          className="animate-fade-up"
+          style={{ animationDelay: "180ms" }}
+        >
           <div className="flex flex-col gap-2">
             <Label htmlFor="leadInstallerPay">Lead Installer Pay ($)</Label>
             <Input
@@ -484,12 +504,24 @@ export function WorkRecordForm({
           </div>
         </FormSection>
 
-        <FormSection icon={Camera} title="Photos (optional)" emphasis="subtle">
+        <FormSection
+          icon={Camera}
+          title="Photos (optional)"
+          emphasis="subtle"
+          className="animate-fade-up"
+          style={{ animationDelay: "240ms" }}
+        >
           <PhotoField defaultPhotos={values?.photos} />
           <FieldError id="photos-error" message={fieldError("photos")} />
         </FormSection>
 
-        <FormSection icon={PenTool} title="Signatures" emphasis="critical">
+        <FormSection
+          icon={PenTool}
+          title="Signatures"
+          emphasis="critical"
+          className="animate-fade-up"
+          style={{ animationDelay: "300ms" }}
+        >
           <SignaturePad
             ref={customerSigRef}
             label="Customer Signature"
