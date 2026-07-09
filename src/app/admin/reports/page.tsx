@@ -20,10 +20,14 @@ import { buildPayReport, defaultPayReportRange, parsePayReportParams } from "@/l
 import { requireAdmin } from "@/lib/session";
 
 function money(value: number) {
-  return `$${value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return (
+    <span className="tabular-nums">
+      ${value.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}
+    </span>
+  );
 }
 
 function formatDate(iso: string) {
@@ -64,7 +68,7 @@ export default async function AdminReportsPage({
               </span>
               <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
             </div>
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">
+            <span className="text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
               {formatDate(dateFrom)} – {formatDate(dateTo)}
             </span>
           </summary>
@@ -137,7 +141,7 @@ export default async function AdminReportsPage({
                           <TableCell className="font-medium text-neutral-900 dark:text-neutral-100">
                             {row.name}
                           </TableCell>
-                          <TableCell>{row.jobs}</TableCell>
+                          <TableCell className="tabular-nums">{row.jobs}</TableCell>
                           <TableCell className="text-right">
                             {money(row.leadTotal)}
                           </TableCell>
@@ -153,7 +157,7 @@ export default async function AdminReportsPage({
                         <TableCell className="font-semibold text-neutral-900 dark:text-neutral-100">
                           Grand Total
                         </TableCell>
-                        <TableCell className="font-semibold">
+                        <TableCell className="font-semibold tabular-nums">
                           {report.grand.jobs}
                         </TableCell>
                         <TableCell className="text-right font-semibold">
@@ -178,7 +182,7 @@ export default async function AdminReportsPage({
                           {row.name}
                         </span>
                         <div className="grid grid-cols-2 gap-3">
-                          <DataField label="Jobs" value={row.jobs} />
+                          <DataField label="Jobs" value={<span className="tabular-nums">{row.jobs}</span>} />
                           <DataField label="Total" value={money(row.total)} />
                           <DataField label="Lead Pay" value={money(row.leadTotal)} />
                           <DataField label="Helper Pay" value={money(row.helperTotal)} />
@@ -190,7 +194,7 @@ export default async function AdminReportsPage({
                         Grand Total
                       </span>
                       <div className="grid grid-cols-2 gap-3">
-                        <DataField label="Jobs" value={report.grand.jobs} />
+                        <DataField label="Jobs" value={<span className="tabular-nums">{report.grand.jobs}</span>} />
                         <DataField
                           label="Total"
                           value={
