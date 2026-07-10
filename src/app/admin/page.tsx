@@ -4,12 +4,15 @@ import {
   CalendarDays,
   CalendarRange,
   Users,
+  Users2,
   ArrowRight,
   Clock3,
   CheckCircle2,
   TrendingUp,
   DollarSign,
   Wrench,
+  FolderKanban,
+  Images,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,6 +95,9 @@ export default async function AdminDashboardPage() {
     weeklyRecords,
     typeGroups,
     payReport,
+    activeProjects,
+    photoCount,
+    teamCount,
   ] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId } }),
     prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
@@ -135,6 +141,9 @@ export default async function AdminDashboardPage() {
       _count: { _all: true },
     }),
     buildPayReport(payParams, organizationId),
+    prisma.project.count({ where: { organizationId, status: { not: "COMPLETED" } } }),
+    prisma.photo.count({ where: { organizationId } }),
+    prisma.team.count({ where: { organizationId } }),
   ]);
 
   const stats = [
@@ -142,6 +151,13 @@ export default async function AdminDashboardPage() {
     { label: "This Week", value: recordsThisWeek, icon: CalendarDays },
     { label: "This Month", value: recordsThisMonth, icon: CalendarRange },
     { label: "Active Workers", value: activeWorkers, icon: Users },
+  ];
+
+  // Clickable tiles that double as stats + shortcuts into the newer sections.
+  const workspace = [
+    { label: "Active Projects", value: activeProjects, icon: FolderKanban, href: "/admin/projects" },
+    { label: "Photos", value: photoCount, icon: Images, href: "/admin/photos" },
+    { label: "Teams", value: teamCount, icon: Users2, href: "/admin/teams" },
   ];
 
   // Bucket records into WEEKS_BACK weekly columns ending this week.
@@ -252,6 +268,34 @@ export default async function AdminDashboardPage() {
                 </div>
               </CardContent>
             </Card>
+          ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Workspace
+        </h2>
+        <div className="grid grid-cols-3 gap-4">
+          {workspace.map((item) => (
+            <Link key={item.label} href={item.href}>
+              <Card className="h-full transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
+                <CardContent className="flex flex-col gap-2 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+                      <item.icon className="h-5 w-5" />
+                    </span>
+                    <ArrowRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+                      {item.value}
+                    </div>
+                    <div className="text-sm text-neutral-500 dark:text-neutral-400">{item.label}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       </section>
