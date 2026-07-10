@@ -92,9 +92,10 @@ export function SettingsScreen({
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Permanently delete every work record, including its photos and
-              signatures, and hand the app back like new. Customers and all
-              accounts are kept. This can&apos;t be undone.
+              Permanently delete <span className="font-medium">everything in
+              your company</span> — records, customers, projects, photos, teams,
+              checklists and comments — and hand the app back like new. User
+              accounts are kept, so you stay signed in. This can&apos;t be undone.
             </p>
             <ResetHistoryDialog />
           </CardContent>

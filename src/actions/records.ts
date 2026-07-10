@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { deleteProjectPhoto } from "@/lib/blob";
 import {
   notifyAdminsRecordForReview,
   notifyWorkerApproved,
@@ -345,6 +346,11 @@ export async function requestChangesAction(recordId: string, formData: FormData)
 // (workers/admins) are deliberately kept. Admin-only, and double-gated: the
 // caller must type the exact confirmation phrase, re-checked here so a
 // stray/forged request can't trigger it.
+// Test/reset button (hidden behind the 7-tap reveal). Wipes ALL of the
+// company's content - records, customers, projects, photos (+blobs), teams,
+// checklists, templates, tags, comments - so the app can be re-tested from
+// scratch. User accounts and the Organization itself are kept, so the admin
+// stays signed in. Strictly org-scoped: never touches another company.
 export async function resetHistoryAction(formData: FormData) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
@@ -352,11 +358,46 @@ export async function resetHistoryAction(formData: FormData) {
   if (confirm !== "RESET") {
     redirect("/admin/settings");
   }
-  await prisma.workRecord.deleteMany({ where: { organizationId } });
+
+  // Delete the blobs first (network, best-effort) before dropping the rows
+  // that point at them.
+  const photos = await prisma.photo.findMany({
+    where: { organizationId },
+    select: { url: true },
+  });
+  await Promise.all(
+    photos.map((p) => deleteProjectPhoto(p.url).catch(() => {}))
+  );
+
+  // Delete referencing rows before referenced ones; remaining FKs are
+  // Cascade/SetNull. Users and the Organization are intentionally untouched.
+  await prisma.$transaction([
+    prisma.comment.deleteMany({ where: { organizationId } }),
+    prisma.photoTag.deleteMany({ where: { photo: { organizationId } } }),
+    prisma.checklistItem.deleteMany({ where: { checklist: { organizationId } } }),
+    prisma.checklist.deleteMany({ where: { organizationId } }),
+    prisma.checklistTemplateItem.deleteMany({
+      where: { template: { organizationId } },
+    }),
+    prisma.checklistTemplate.deleteMany({ where: { organizationId } }),
+    prisma.photo.deleteMany({ where: { organizationId } }),
+    prisma.tag.deleteMany({ where: { organizationId } }),
+    prisma.workPhoto.deleteMany({ where: { record: { organizationId } } }),
+    prisma.workRecord.deleteMany({ where: { organizationId } }),
+    prisma.teamMembership.deleteMany({ where: { team: { organizationId } } }),
+    prisma.team.deleteMany({ where: { organizationId } }),
+    prisma.project.deleteMany({ where: { organizationId } }),
+    prisma.customer.deleteMany({ where: { organizationId } }),
+  ]);
+
   revalidatePath("/admin");
   revalidatePath("/admin/records");
   revalidatePath("/admin/reports");
   revalidatePath("/admin/customers");
+  revalidatePath("/admin/projects");
+  revalidatePath("/admin/photos");
+  revalidatePath("/admin/teams");
   revalidatePath("/records");
+  revalidatePath("/records/projects");
   redirect("/admin/settings?reset=1");
 }

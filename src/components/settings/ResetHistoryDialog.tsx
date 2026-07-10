@@ -34,7 +34,7 @@ export function ResetHistoryDialog() {
         onClick={() => dialogRef.current?.showModal()}
       >
         <Trash2 className="h-4 w-4" />
-        Reset all history
+        Reset all data
       </Button>
       <dialog
         ref={dialogRef}
@@ -47,12 +47,14 @@ export function ResetHistoryDialog() {
       >
         <form action={resetHistoryAction} onSubmit={close}>
           <h2 id={titleId} className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            Reset all history?
+            Reset all company data?
           </h2>
           <p id={descriptionId} className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-            This permanently deletes <span className="font-medium">every work record</span>, including
-            their photos and signatures. Customers and all accounts (workers and
-            admins) are kept. This cannot be undone.
+            This permanently deletes{" "}
+            <span className="font-medium">everything in your company</span> —
+            work records, customers, projects, photos, teams, checklists and
+            comments. Only the user accounts (workers and admins) are kept, so
+            you stay signed in. This cannot be undone.
           </p>
           <div className="mt-4 flex flex-col gap-1.5">
             <Label htmlFor={`${id}-confirm`}>
