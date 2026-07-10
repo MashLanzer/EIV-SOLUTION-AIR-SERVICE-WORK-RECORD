@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import {
   ArrowRight,
   CalendarDays,
-  Camera,
   ChevronDown,
   ClipboardList,
   MapPin,
@@ -26,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { DeleteProjectButton } from "@/components/projects/DeleteProjectButton";
 import { ProjectForm } from "@/components/projects/ProjectForm";
+import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { StatusBadge } from "@/components/records/StatusBadge";
@@ -67,7 +67,7 @@ export default async function AdminProjectPage({
   });
   if (!project) notFound();
 
-  const [statusGroups, records] = await Promise.all([
+  const [statusGroups, records, photoRows] = await Promise.all([
     prisma.workRecord.groupBy({
       by: ["status"],
       where: { organizationId, projectId: id },
@@ -86,7 +86,26 @@ export default async function AdminProjectPage({
         submittedBy: { select: { name: true } },
       },
     }),
+    prisma.photo.findMany({
+      where: { organizationId, projectId: id },
+      orderBy: { takenAt: "desc" },
+      take: 60,
+      select: {
+        id: true,
+        url: true,
+        takenAt: true,
+        latitude: true,
+        takenBy: { select: { name: true } },
+      },
+    }),
   ]);
+  const photos = photoRows.map((p) => ({
+    id: p.id,
+    url: p.url,
+    takenAt: p.takenAt.toISOString(),
+    takenByName: p.takenBy?.name ?? null,
+    hasGps: p.latitude != null,
+  }));
   const recordCount = records.length;
   const statusCount = (s: "APPROVED" | "SUBMITTED" | "NEEDS_CHANGES") =>
     statusGroups.find((g) => g.status === s)?._count._all ?? 0;
@@ -190,15 +209,7 @@ export default async function AdminProjectPage({
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Photos
         </h2>
-        <Card>
-          <CardContent className="p-0">
-            <EmptyState
-              icon={Camera}
-              title="Photos coming soon"
-              description="Snap and organize jobsite photos here once photo storage is enabled."
-            />
-          </CardContent>
-        </Card>
+        <ProjectPhotos projectId={project.id} initialPhotos={photos} />
       </section>
 
       {/* Job history */}

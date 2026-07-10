@@ -1,0 +1,23 @@
+import { del, put } from "@vercel/blob";
+
+// Object storage for jobsite photos (Vercel Blob). Keys are namespaced by
+// org + project so they're easy to reason about; access is public (the URL
+// is unguessable and only exposed to authorized users through the app).
+export async function uploadProjectPhoto(
+  organizationId: string,
+  projectId: string,
+  body: Blob | ArrayBuffer | Buffer,
+  contentType = "image/jpeg"
+): Promise<string> {
+  const key = `orgs/${organizationId}/projects/${projectId}/${crypto.randomUUID()}.jpg`;
+  const blob = await put(key, body, { access: "public", contentType });
+  return blob.url;
+}
+
+export async function deleteProjectPhoto(url: string): Promise<void> {
+  try {
+    await del(url);
+  } catch {
+    // Best-effort: if the blob is already gone, the DB row still gets removed.
+  }
+}

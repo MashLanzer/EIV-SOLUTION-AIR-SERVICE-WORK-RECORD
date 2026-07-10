@@ -32,6 +32,7 @@ model Organization {
   customers Customer[]
   records   WorkRecord[]
   projects  Project[]
+  photos    Photo[]
 }
 
 enum RecordStatus {
@@ -66,6 +67,31 @@ model Project {
 
   @@index([organizationId])
   @@index([customerId])
+  photos Photo[]
+}
+
+// A jobsite photo stored in object storage (Vercel Blob). Always belongs to a
+// Project; optionally also tied to a specific work record. Captures GPS +
+// who/when so it reads like a CompanyCam photo feed. Org-scoped.
+model Photo {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectId      String
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workRecordId   String?
+  workRecord     WorkRecord?  @relation(fields: [workRecordId], references: [id], onDelete: SetNull)
+  url            String       @db.Text
+  latitude       Float?
+  longitude      Float?
+  takenAt        DateTime     @default(now())
+  takenById      String?
+  takenBy        User?        @relation("PhotoTakenBy", fields: [takenById], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([workRecordId])
 }
 
 model User {
@@ -78,6 +104,7 @@ model User {
   updatedAt        DateTime      @updatedAt
   submittedRecords WorkRecord[]  @relation("SubmittedBy")
   approvedRecords  WorkRecord[]  @relation("ApprovedBy")
+  photosTaken      Photo[]       @relation("PhotoTakenBy")
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -162,6 +189,7 @@ model WorkRecord {
   organization       Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   projectId          String?
   project            Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectPhotos      Photo[]
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
