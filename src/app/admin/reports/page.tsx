@@ -1,4 +1,4 @@
-import { BarChart3, ChevronDown, Sheet } from "lucide-react";
+import { BarChart3, ChevronDown, DollarSign, Sheet, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -53,6 +53,57 @@ export default async function AdminReportsPage({
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Pay Report</h1>
+
+      {/* Headline totals for the selected range - the payout number an admin
+          actually cares about, up top instead of buried in the table's last
+          row. */}
+      <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
+        <Card className="col-span-3 sm:col-span-1">
+          <CardContent className="flex items-center gap-3 p-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+              <DollarSign className="h-5 w-5" />
+            </span>
+            <div>
+              <div className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
+                {money(report.grand.total)}
+              </div>
+              <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                Total to pay
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="col-span-3 sm:col-span-1">
+          <CardContent className="flex items-center gap-3 p-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+              <BarChart3 className="h-5 w-5" />
+            </span>
+            <div>
+              <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                {report.grand.jobs}
+              </div>
+              <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                Job payments
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="col-span-3 sm:col-span-1">
+          <CardContent className="flex items-center gap-3 p-4">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+              <Users className="h-5 w-5" />
+            </span>
+            <div>
+              <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                {report.rows.length}
+              </div>
+              <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                People paid
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         {/* Collapsed by default so the date form doesn't eat the screen -

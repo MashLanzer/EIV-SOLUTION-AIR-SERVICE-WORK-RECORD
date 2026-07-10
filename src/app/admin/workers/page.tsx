@@ -1,32 +1,41 @@
 import Link from "next/link";
-import { Search, UserPlus } from "lucide-react";
+import { Search, Shield, UserPlus, Users, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
-import { Pagination } from "@/components/ui/pagination";
-import { WorkersTable } from "@/components/workers/WorkersTable";
-import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
+import { WorkersSection, type WorkerStat } from "@/components/workers/WorkersTable";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/session";
-import { parseSort } from "@/lib/sort";
 import type { Prisma } from "@prisma/client";
 
-const WORKER_SORTS = ["name", "email", "role", "status"] as const;
-
-function workerOrderBy(
-  sort: (typeof WORKER_SORTS)[number],
-  dir: "asc" | "desc"
-): Prisma.UserOrderByWithRelationInput {
-  switch (sort) {
-    case "email":
-      return { email: dir };
-    case "role":
-      return { role: dir };
-    case "status":
-      return { active: dir };
-    default:
-      return { name: dir };
-  }
+function StatTile({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: typeof Users;
+  value: number;
+  label: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+        <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent sm:flex">
+          <Icon className="h-5 w-5" />
+        </span>
+        <div className="min-w-0">
+          <div className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 sm:text-2xl">
+            {value}
+          </div>
+          <div className="truncate text-xs text-neutral-500 dark:text-neutral-400 sm:text-sm">
+            {label}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default async function AdminWorkersPage({
@@ -38,11 +47,6 @@ export default async function AdminWorkersPage({
   const rawParams = await searchParams;
   const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;
   const query = rawQ?.trim() || undefined;
-  const page = parsePage(rawParams.page);
-  const { sort, dir } = parseSort(rawParams.sort, rawParams.dir, WORKER_SORTS, {
-    sort: "name",
-    dir: "asc",
-  });
 
   const where: Prisma.UserWhereInput | undefined = query
     ? {
@@ -53,20 +57,36 @@ export default async function AdminWorkersPage({
       }
     : undefined;
 
-  const [total, workers] = await Promise.all([
-    prisma.user.count({ where }),
-    prisma.user.findMany({
-      where,
-      orderBy: workerOrderBy(sort, dir),
-      ...paginationArgs(page),
+  const [users, recordStats] = await Promise.all([
+    prisma.user.findMany({ where, orderBy: { name: "asc" } }),
+    // Jobs submitted + last activity per person (submittedById is SetNull, so
+    // some records have no author - those don't attribute to anyone).
+    prisma.workRecord.groupBy({
+      by: ["submittedById"],
+      _count: { _all: true },
+      _max: { createdAt: true },
     }),
   ]);
-  const pages = pageCount(total);
+
+  const stats: Record<string, WorkerStat> = {};
+  for (const row of recordStats) {
+    if (!row.submittedById) continue;
+    stats[row.submittedById] = {
+      jobs: row._count._all,
+      lastActive: row._max.createdAt?.toISOString() ?? null,
+    };
+  }
+
+  const admins = users.filter((u) => u.role === "ADMIN");
+  const fieldWorkers = users.filter((u) => u.role !== "ADMIN");
+  const activeCount = users.filter((u) => u.active).length;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Workers</h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+          Team
+        </h1>
         <Button asChild>
           <Link href="/admin/workers/new">
             <UserPlus className="h-4 w-4" />
@@ -74,6 +94,16 @@ export default async function AdminWorkersPage({
           </Link>
         </Button>
       </div>
+
+      {/* Team summary - only when not searching, so the numbers reflect the
+          whole roster rather than the filtered subset. */}
+      {!query && users.length > 0 && (
+        <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
+          <StatTile icon={Users} value={users.length} label="Members" />
+          <StatTile icon={Users} value={activeCount} label="Active" />
+          <StatTile icon={Shield} value={admins.length} label="Admins" />
+        </div>
+      )}
 
       <form method="get" className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
@@ -83,18 +113,47 @@ export default async function AdminWorkersPage({
           placeholder="Search by name or email"
           defaultValue={query}
           className="pl-9"
-          aria-label="Search workers by name or email"
+          aria-label="Search team by name or email"
         />
       </form>
 
-      <WorkersTable workers={workers} total={total} sort={sort} dir={dir} query={query} />
-
-      <Pagination
-        page={page}
-        pageCount={pages}
-        basePath="/admin/workers"
-        params={{ q: query, sort, dir }}
-      />
+      {users.length === 0 ? (
+        query ? (
+          <EmptyState
+            icon={SearchX}
+            title="No matches"
+            description={`Nothing found for "${query}".`}
+            action={
+              <Button asChild variant="outline" className="mt-2">
+                <Link href="/admin/workers">Clear search</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={Users}
+            title="No accounts yet"
+            description="Create one to get your team started."
+          />
+        )
+      ) : (
+        <>
+          <WorkersSection
+            title="Administrators"
+            workers={admins}
+            stats={stats}
+            className="animate-fade-up"
+            style={{ animationDelay: "40ms", animationFillMode: "both" }}
+          />
+          <WorkersSection
+            title="Field workers"
+            workers={fieldWorkers}
+            stats={stats}
+            className="animate-fade-up"
+            style={{ animationDelay: "80ms", animationFillMode: "both" }}
+          />
+        </>
+      )}
     </div>
   );
 }
