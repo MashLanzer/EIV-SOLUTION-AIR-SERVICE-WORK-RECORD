@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
+import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
@@ -29,6 +30,15 @@ export default async function AdminProjectsPage() {
     include: { _count: { select: { records: true } } },
   });
 
+  const pins = projects
+    .filter((p) => p.latitude != null && p.longitude != null)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      latitude: p.latitude as number,
+      longitude: p.longitude as number,
+    }));
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
@@ -42,6 +52,8 @@ export default async function AdminProjectsPage() {
           </Link>
         </Button>
       </div>
+
+      {pins.length > 0 && <ProjectsMapCard pins={pins} />}
 
       {projects.length === 0 ? (
         <EmptyState

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { DeleteProjectButton } from "@/components/projects/DeleteProjectButton";
 import { ProjectForm } from "@/components/projects/ProjectForm";
+import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
@@ -117,6 +118,25 @@ export default async function AdminProjectPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Map - only when the address geocoded to coordinates */}
+      {project.latitude != null && project.longitude != null && (
+        <div
+          className="animate-fade-up"
+          style={{ animationDelay: "40ms", animationFillMode: "both" }}
+        >
+          <ProjectsMapCard
+            pins={[
+              {
+                id: project.id,
+                name: project.name,
+                latitude: project.latitude,
+                longitude: project.longitude,
+              },
+            ]}
+          />
+        </div>
+      )}
 
       {/* Snapshot */}
       <Card
