@@ -6,6 +6,7 @@ import {
   Users,
   ArrowRight,
   Clock3,
+  CheckCircle2,
   TrendingUp,
   DollarSign,
   Wrench,
@@ -56,6 +57,16 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
+// Coarse "how long has this been waiting" label for the review queue.
+function timeAgo(date: Date) {
+  const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  return `${Math.floor(hrs / 24)}d`;
+}
+
 const money = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -74,6 +85,7 @@ export default async function AdminDashboardPage() {
     recordsThisMonth,
     activeWorkers,
     pendingReview,
+    pendingQueue,
     recentRecords,
     weeklyRecords,
     typeGroups,
@@ -84,6 +96,20 @@ export default async function AdminDashboardPage() {
     prisma.workRecord.count({ where: { date: { gte: startOfMonth() } } }),
     prisma.user.count({ where: { active: true } }),
     prisma.workRecord.count({ where: { status: "SUBMITTED" } }),
+    // The oldest-waiting pending records - the dashboard leads with these as
+    // an actionable review queue.
+    prisma.workRecord.findMany({
+      where: { status: "SUBMITTED" },
+      orderBy: { createdAt: "asc" },
+      take: 3,
+      select: {
+        id: true,
+        jobNumber: true,
+        customerName: true,
+        createdAt: true,
+        submittedBy: { select: { name: true } },
+      },
+    }),
     prisma.workRecord.findMany({
       take: 5,
       orderBy: { createdAt: "desc" },
@@ -142,27 +168,67 @@ export default async function AdminDashboardPage() {
         <DashboardGreeting name={session.user.name} />
       </div>
 
-      <Link
-        href="/admin/records?status=SUBMITTED"
-        aria-label={`${pendingReview} records pending review`}
-        className="group block animate-fade-up"
-        style={{ animationDelay: "40ms" }}
-      >
-        <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
-          <CardContent className="flex items-center gap-4 p-5">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-              <Clock3 className="h-7 w-7" />
-            </span>
-            <div>
-              <div className="text-3xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-                {pendingReview}
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "40ms" }}>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            Needs your attention
+          </h2>
+          {pendingReview > 0 && (
+            <Link
+              href="/admin/records?status=SUBMITTED"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              Review all ({pendingReview})
+            </Link>
+          )}
+        </div>
+        {pendingQueue.length === 0 ? (
+          <Card>
+            <CardContent className="flex items-center gap-3 p-5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success-soft text-success-text">
+                <CheckCircle2 className="h-5 w-5" />
+              </span>
+              <div>
+                <div className="font-medium text-neutral-900 dark:text-neutral-100">All caught up</div>
+                <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                  No records are waiting for review.
+                </div>
               </div>
-              <div className="text-sm text-neutral-500 dark:text-neutral-400">Pending Review</div>
-            </div>
-            <ArrowRight className="ml-auto h-5 w-5 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
-          </CardContent>
-        </Card>
-      </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col divide-y divide-neutral-100 p-4 dark:divide-neutral-800">
+              {pendingQueue.map((record) => (
+                <Link
+                  key={record.id}
+                  href={`/admin/records/${record.id}`}
+                  className="group -mx-3 flex items-center justify-between gap-3 rounded-lg px-3 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+                      <Clock3 className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
+                        Job #{record.jobNumber} — {record.customerName}
+                      </div>
+                      <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                        {record.submittedBy?.name ?? "—"} · waiting {timeAgo(record.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="hidden shrink-0 items-center gap-1 text-sm font-medium text-neutral-500 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 sm:inline-flex">
+                    Review
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500 sm:hidden" />
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+      </section>
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
@@ -188,6 +254,47 @@ export default async function AdminDashboardPage() {
       </section>
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "120ms" }}>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Recent Activity
+        </h2>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Records</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentRecords.length === 0 ? (
+              <EmptyState
+                icon={ClipboardList}
+                title="No records yet"
+                description="Submitted work records will show up here."
+              />
+            ) : (
+              <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+                {recentRecords.map((record) => (
+                  <Link
+                    key={record.id}
+                    href={`/admin/records/${record.id}`}
+                    className="group -mx-3 flex items-center justify-between gap-4 rounded-lg px-3 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
+                        Job #{record.jobNumber} — {record.customerName}
+                      </div>
+                      <div className="text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
+                        {record.submittedBy?.name ?? "—"} · {formatDate(record.date)} ·{" "}
+                        {formatTime(record.arrivalTime)}
+                      </div>
+                    </div>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "160ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Trends
         </h2>
@@ -236,89 +343,6 @@ export default async function AdminDashboardPage() {
             </CardContent>
           </Card>
         </div>
-      </section>
-
-      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "160ms" }}>
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Shortcuts
-        </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Link
-            href="/admin/records"
-            className="group block"
-            aria-label="Go to records"
-          >
-            <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
-              <CardContent className="flex items-center justify-between gap-3 p-4">
-                <div>
-                  <CardTitle>All Work Records</CardTitle>
-                  <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                    View and filter every submitted record
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
-              </CardContent>
-            </Card>
-          </Link>
-          <Link
-            href="/admin/workers"
-            className="group block"
-            aria-label="Go to workers"
-          >
-            <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
-              <CardContent className="flex items-center justify-between gap-3 p-4">
-                <div>
-                  <CardTitle>Manage Workers</CardTitle>
-                  <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                    Authorize emails, set roles, deactivate accounts
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "200ms" }}>
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Recent Activity
-        </h2>
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Records</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentRecords.length === 0 ? (
-              <EmptyState
-                icon={ClipboardList}
-                title="No records yet"
-                description="Submitted work records will show up here."
-              />
-            ) : (
-              <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
-                {recentRecords.map((record) => (
-                  <Link
-                    key={record.id}
-                    href={`/admin/records/${record.id}`}
-                    className="group -mx-3 flex items-center justify-between gap-4 rounded-lg px-3 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  >
-                    <div className="min-w-0">
-                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
-                        Job #{record.jobNumber} — {record.customerName}
-                      </div>
-                      <div className="text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
-                        {record.submittedBy?.name ?? "—"} · {formatDate(record.date)} ·{" "}
-                        {formatTime(record.arrivalTime)}
-                      </div>
-                    </div>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </section>
     </div>
   );
