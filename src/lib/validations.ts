@@ -5,6 +5,8 @@ export const TYPE_OF_WORK_OPTIONS = [
   "Repair",
   "Maintenance",
   "Inspection",
+  "Ductos",
+  "Mini Split",
   "Other",
 ] as const;
 

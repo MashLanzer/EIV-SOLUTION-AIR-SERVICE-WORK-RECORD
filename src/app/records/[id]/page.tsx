@@ -54,10 +54,10 @@ export default async function RecordDetailPage({
             </Button>
           )}
           <Button asChild variant="outline" size="sm">
-            <Link href={`/records/${record.id}/pdf`}>
+            <a href={`/records/${record.id}/pdf`}>
               <Download className="h-4 w-4" />
               Download PDF
-            </Link>
+            </a>
           </Button>
         </div>
       </div>

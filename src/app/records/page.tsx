@@ -46,6 +46,7 @@ export default async function RecordsPage({
         customerName: true,
         typeOfWork: true,
         status: true,
+        reviewNote: true,
       },
       orderBy: { date: "desc" },
       ...paginationArgs(page),

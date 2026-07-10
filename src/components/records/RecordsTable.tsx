@@ -25,7 +25,7 @@ import type { SortDir } from "@/lib/sort";
 
 type RecordWithWorker = Pick<
   WorkRecord,
-  "id" | "date" | "jobNumber" | "customerName" | "typeOfWork" | "status"
+  "id" | "date" | "jobNumber" | "customerName" | "typeOfWork" | "status" | "reviewNote"
 > & { submittedBy: { name: string } | null };
 
 function formatDate(date: Date) {
@@ -115,7 +115,14 @@ export function RecordsTable({
                     <TableCell>
                       <StatusBadge status={record.status} />
                     </TableCell>
-                    <TableCell>{record.customerName}</TableCell>
+                    <TableCell>
+                      {record.customerName}
+                      {record.status === "NEEDS_CHANGES" && record.reviewNote && (
+                        <span className="mt-0.5 block max-w-[16rem] truncate text-xs text-warning-text" title={record.reviewNote}>
+                          Returned: {record.reviewNote}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>{record.submittedBy?.name ?? "—"}</TableCell>
                     <TableCell>{record.typeOfWork}</TableCell>
                     <TableCell className="flex justify-end gap-2 text-right">
@@ -163,9 +170,9 @@ export function RecordsTable({
                   </>
                 )}
                 <Button asChild variant="outline" size="icon">
-                  <Link href={`/admin/records/${record.id}/pdf`} aria-label="Download PDF">
+                  <a href={`/admin/records/${record.id}/pdf`} aria-label="Download PDF">
                     <Download className="h-4 w-4" />
-                  </Link>
+                  </a>
                 </Button>
                 <DeleteRecordButton recordId={record.id} />
               </>
@@ -183,6 +190,11 @@ export function RecordsTable({
               <DataField label="Customer" value={record.customerName} />
               <DataField label="Submitted By" value={record.submittedBy?.name ?? "—"} />
             </div>
+            {record.status === "NEEDS_CHANGES" && record.reviewNote && (
+              <p className="text-xs text-warning-text">
+                <span className="font-medium">Returned:</span> {record.reviewNote}
+              </p>
+            )}
           </MobileCardRow>
         ))}
       </MobileCardList>

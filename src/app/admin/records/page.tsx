@@ -71,6 +71,7 @@ export default async function AdminRecordsPage({
         customerName: true,
         typeOfWork: true,
         status: true,
+        reviewNote: true,
         submittedBy: { select: { name: true } },
       },
       orderBy: recordOrderBy(sort, dir),

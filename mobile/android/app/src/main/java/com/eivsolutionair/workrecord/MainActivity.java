@@ -1,13 +1,18 @@
 package com.eivsolutionair.workrecord;
 
+import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.os.Environment;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.CookieManager;
+import android.webkit.URLUtil;
+import android.webkit.WebView;
 import android.widget.Toast;
 import androidx.browser.customtabs.CustomTabsClient;
 import androidx.browser.customtabs.CustomTabsIntent;
@@ -46,6 +51,46 @@ public class MainActivity extends BridgeActivity {
     private static final String WEB_CLIENT_ID =
         "337399331790-174ml85osblhorb88tm6e2jhhl8ee2l2.apps.googleusercontent.com";
     private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // A WebView does nothing with a `Content-Disposition: attachment`
+        // response on its own, so tapping "Download PDF"/"Export to Excel"
+        // silently did nothing inside the app. Hand those off to the system
+        // DownloadManager, forwarding the session cookie (the PDF/Excel routes
+        // require auth) so the file actually downloads and opens.
+        setupDownloadListener();
+    }
+
+    private void setupDownloadListener() {
+        WebView webView = bridge.getWebView();
+        if (webView == null) return;
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
+            try {
+                String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                String cookie = CookieManager.getInstance().getCookie(url);
+                if (cookie != null) request.addRequestHeader("Cookie", cookie);
+                if (userAgent != null) request.addRequestHeader("User-Agent", userAgent);
+                request.setMimeType(mimeType);
+                request.setTitle(fileName);
+                request.setNotificationVisibility(
+                    DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                request.setDestinationInExternalPublicDir(
+                    Environment.DIRECTORY_DOWNLOADS, fileName);
+                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                if (dm != null) {
+                    dm.enqueue(request);
+                    Toast.makeText(this, "Downloading " + fileName, Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Download failed: " + e);
+                Toast.makeText(this, "Couldn't start the download: " + e.getMessage(),
+                    Toast.LENGTH_LONG).show();
+            }
+        });
+    }
 
     @Override
     protected void onNewIntent(Intent intent) {
