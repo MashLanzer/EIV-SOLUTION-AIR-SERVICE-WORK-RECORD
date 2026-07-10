@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
+import { canAccessProject, projectDetailPaths } from "@/lib/projectAccess";
 import { requireAdmin, requireAuth } from "@/lib/session";
 
 const MAX_ITEM_LEN = 200;
@@ -25,8 +26,8 @@ function parseItemLines(raw: string): string[] {
   return out;
 }
 
-function projectPath(projectId: string) {
-  return `/admin/projects/${projectId}`;
+function revalidateProject(projectId: string) {
+  for (const path of projectDetailPaths(projectId)) revalidatePath(path);
 }
 
 // ---- Templates (managed from /admin/checklists) ----------------------------
@@ -64,8 +65,9 @@ export async function deleteTemplateAction(templateId: string) {
 // ---- Project checklists ----------------------------------------------------
 
 // Add a checklist to a project - blank, or seeded from a template's items.
+// Admin-only: workers can check items off but not build checklists.
 export async function addChecklistAction(projectId: string, formData: FormData) {
-  const session = await requireAuth();
+  const session = await requireAdmin();
   const organizationId = requireOrgId(session);
 
   const project = await prisma.project.findFirst({
@@ -100,11 +102,11 @@ export async function addChecklistAction(projectId: string, formData: FormData) 
       },
     },
   });
-  revalidatePath(projectPath(projectId));
+  revalidateProject(projectId);
 }
 
 export async function deleteChecklistAction(checklistId: string) {
-  const session = await requireAuth();
+  const session = await requireAdmin();
   const organizationId = requireOrgId(session);
 
   const checklist = await prisma.checklist.findFirst({
@@ -114,7 +116,7 @@ export async function deleteChecklistAction(checklistId: string) {
   if (!checklist) return;
 
   await prisma.checklist.delete({ where: { id: checklist.id } });
-  revalidatePath(projectPath(checklist.projectId));
+  revalidateProject(checklist.projectId);
 }
 
 // Look up an item scoped to the caller's org, returning the project it lives
@@ -127,23 +129,26 @@ async function ownedItem(itemId: string, organizationId: string) {
   return item;
 }
 
+// Checking an item off is the one checklist mutation workers can do - but only
+// on a project their team is assigned to.
 export async function toggleChecklistItemAction(itemId: string) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
 
   const item = await ownedItem(itemId, organizationId);
   if (!item) return;
+  if (!(await canAccessProject(session, item.checklist.projectId))) return;
 
   const done = !item.done;
   await prisma.checklistItem.update({
     where: { id: item.id },
     data: { done, doneAt: done ? new Date() : null },
   });
-  revalidatePath(projectPath(item.checklist.projectId));
+  revalidateProject(item.checklist.projectId);
 }
 
 export async function addChecklistItemAction(checklistId: string, formData: FormData) {
-  const session = await requireAuth();
+  const session = await requireAdmin();
   const organizationId = requireOrgId(session);
 
   const checklist = await prisma.checklist.findFirst({
@@ -164,16 +169,16 @@ export async function addChecklistItemAction(checklistId: string, formData: Form
   await prisma.checklistItem.create({
     data: { checklistId, text, position: (last?.position ?? -1) + 1 },
   });
-  revalidatePath(projectPath(checklist.projectId));
+  revalidateProject(checklist.projectId);
 }
 
 export async function deleteChecklistItemAction(itemId: string) {
-  const session = await requireAuth();
+  const session = await requireAdmin();
   const organizationId = requireOrgId(session);
 
   const item = await ownedItem(itemId, organizationId);
   if (!item) return;
 
   await prisma.checklistItem.delete({ where: { id: item.id } });
-  revalidatePath(projectPath(item.checklist.projectId));
+  revalidateProject(item.checklist.projectId);
 }

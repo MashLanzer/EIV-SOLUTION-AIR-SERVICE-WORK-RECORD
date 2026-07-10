@@ -30,14 +30,19 @@ export function ProjectChecklists({
   projectId,
   checklists,
   templates,
+  canManage = true,
 }: {
   projectId: string;
   checklists: ChecklistView[];
   templates: { id: string; name: string }[];
+  // Admins manage checklists (add/delete lists + items); workers can only
+  // check items off.
+  canManage?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3">
       {/* Add checklist - collapsed disclosure so it stays out of the way */}
+      {canManage && (
       <Card>
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
@@ -94,6 +99,7 @@ export function ProjectChecklists({
           </form>
         </details>
       </Card>
+      )}
 
       {checklists.length === 0 ? (
         <Card>
@@ -101,7 +107,11 @@ export function ProjectChecklists({
             <EmptyState
               icon={ListChecks}
               title="No checklists yet"
-              description="Add a checklist to track the steps for this job - each item can be checked off on site."
+              description={
+                canManage
+                  ? "Add a checklist to track the steps for this job - each item can be checked off on site."
+                  : "Your admin hasn't added a checklist to this project yet."
+              }
             />
           </CardContent>
         </Card>
@@ -122,15 +132,17 @@ export function ProjectChecklists({
                       {done}/{total} done
                     </p>
                   </div>
-                  <form action={deleteChecklistAction.bind(null, checklist.id)}>
-                    <button
-                      type="submit"
-                      aria-label={`Delete checklist ${checklist.name}`}
-                      className="shrink-0 text-neutral-400 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </form>
+                  {canManage && (
+                    <form action={deleteChecklistAction.bind(null, checklist.id)}>
+                      <button
+                        type="submit"
+                        aria-label={`Delete checklist ${checklist.name}`}
+                        className="shrink-0 text-neutral-400 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </form>
+                  )}
                 </div>
 
                 {/* Progress bar */}
@@ -173,28 +185,32 @@ export function ProjectChecklists({
                       >
                         {item.text}
                       </span>
-                      <form action={deleteChecklistItemAction.bind(null, item.id)}>
-                        <button
-                          type="submit"
-                          aria-label={`Delete item ${item.text}`}
-                          className="shrink-0 text-neutral-300 dark:text-neutral-600 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </form>
+                      {canManage && (
+                        <form action={deleteChecklistItemAction.bind(null, item.id)}>
+                          <button
+                            type="submit"
+                            aria-label={`Delete item ${item.text}`}
+                            className="shrink-0 text-neutral-300 dark:text-neutral-600 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </form>
+                      )}
                     </li>
                   ))}
                 </ul>
 
-                <form
-                  action={addChecklistItemAction.bind(null, checklist.id)}
-                  className="flex gap-2"
-                >
-                  <Input name="text" placeholder="Add an item" maxLength={200} />
-                  <Button type="submit" variant="outline" size="sm">
-                    Add
-                  </Button>
-                </form>
+                {canManage && (
+                  <form
+                    action={addChecklistItemAction.bind(null, checklist.id)}
+                    className="flex gap-2"
+                  >
+                    <Input name="text" placeholder="Add an item" maxLength={200} />
+                    <Button type="submit" variant="outline" size="sm">
+                      Add
+                    </Button>
+                  </form>
+                )}
               </CardContent>
             </Card>
           );

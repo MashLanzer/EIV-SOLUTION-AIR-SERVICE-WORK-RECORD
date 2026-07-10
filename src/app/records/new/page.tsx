@@ -2,12 +2,21 @@ import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
 import { createRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
+import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
 
 export default async function NewRecordPage() {
   const session = await requireAuth();
+  const organizationId = requireOrgId(session);
+  // Workers can only tag a record to a project of one of their teams.
+  const isAdmin = session.user.role === "ADMIN";
+  const teamIds = isAdmin ? null : await getWorkerTeamIds(session.user.id);
   const projects = await prisma.project.findMany({
-    where: { organizationId: requireOrgId(session), status: { not: "COMPLETED" } },
+    where: {
+      organizationId,
+      status: { not: "COMPLETED" },
+      ...(isAdmin ? {} : { teamId: { in: teamIds ?? [] } }),
+    },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });

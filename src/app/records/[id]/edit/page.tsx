@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/records/StatusBadge";
 import { updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
+import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
 
 export default async function EditRecordPage({
@@ -29,8 +30,21 @@ export default async function EditRecordPage({
     redirect(`/records/${record.id}`);
   }
 
+  // Workers only pick from their teams' projects, but keep whatever project the
+  // record is already tagged to so the association isn't silently dropped.
+  const teamIds = isAdmin ? null : await getWorkerTeamIds(session.user.id);
   const projects = await prisma.project.findMany({
-    where: { organizationId: requireOrgId(session) },
+    where: {
+      organizationId: requireOrgId(session),
+      ...(isAdmin
+        ? {}
+        : {
+            OR: [
+              { teamId: { in: teamIds ?? [] } },
+              ...(record.projectId ? [{ id: record.projectId }] : []),
+            ],
+          }),
+    },
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });

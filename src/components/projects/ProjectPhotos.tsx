@@ -14,6 +14,7 @@ export interface ProjectPhoto {
   url: string;
   takenAt: string;
   takenByName?: string | null;
+  takenById?: string | null;
   hasGps?: boolean;
   tagCount?: number;
   commentCount?: number;
@@ -78,9 +79,18 @@ function timeAgo(iso: string): string {
 export function ProjectPhotos({
   projectId,
   initialPhotos,
+  currentUserId,
+  canDeleteAny = true,
+  basePath = "/admin/projects",
 }: {
   projectId: string;
   initialPhotos: ProjectPhoto[];
+  // Who is viewing - used to decide which photos they may delete.
+  currentUserId?: string;
+  // Admins can delete any photo; workers only the ones they took.
+  canDeleteAny?: boolean;
+  // Route prefix for the photo detail link (admin vs worker area).
+  basePath?: string;
 }) {
   const [photos, setPhotos] = useState<ProjectPhoto[]>(initialPhotos);
   const [busy, setBusy] = useState(false);
@@ -113,7 +123,10 @@ export function ProjectPhotos({
           throw new Error(body?.error ?? "Upload failed");
         }
         const { photo } = (await res.json()) as { photo: ProjectPhoto };
-        setPhotos((prev) => [{ ...photo, hasGps: Boolean(gps) }, ...prev]);
+        setPhotos((prev) => [
+          { ...photo, hasGps: Boolean(gps), takenById: currentUserId ?? photo.takenById },
+          ...prev,
+        ]);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't upload that photo.");
@@ -174,9 +187,12 @@ export function ProjectPhotos({
         </Card>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {photos.map((photo) => (
+          {photos.map((photo) => {
+            const canDelete =
+              canDeleteAny || (currentUserId != null && photo.takenById === currentUserId);
+            return (
             <div key={photo.id} className="group relative">
-              <Link href={`/admin/projects/${projectId}/photos/${photo.id}`}>
+              <Link href={`${basePath}/${projectId}/photos/${photo.id}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
@@ -202,18 +218,21 @@ export function ProjectPhotos({
                   {photo.hasGps && <MapPin className="h-3 w-3" />}
                 </span>
               </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                aria-label="Delete photo"
-                onClick={() => remove(photo.id)}
-                className="absolute -right-2 -top-2 h-7 w-7 rounded-full opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              {canDelete && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  aria-label="Delete photo"
+                  onClick={() => remove(photo.id)}
+                  className="absolute -right-2 -top-2 h-7 w-7 rounded-full opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

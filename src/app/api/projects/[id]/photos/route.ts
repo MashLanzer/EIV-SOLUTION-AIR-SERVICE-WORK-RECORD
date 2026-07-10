@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canAccessProject } from "@/lib/projectAccess";
 import { uploadProjectPhoto } from "@/lib/blob";
 
 export const runtime = "nodejs";
@@ -29,6 +30,10 @@ export async function POST(
   });
   if (!project) {
     return NextResponse.json({ error: "Project not found" }, { status: 404 });
+  }
+  // Workers may only add photos to a project their team is assigned to.
+  if (!(await canAccessProject(session, projectId))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const form = await request.formData();
@@ -64,7 +69,7 @@ export async function POST(
       longitude: Number.isFinite(lng) ? lng : null,
       takenById: session.user.id || null,
     },
-    select: { id: true, url: true, takenAt: true },
+    select: { id: true, url: true, takenAt: true, takenById: true },
   });
 
   return NextResponse.json({ photo });

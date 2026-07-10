@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, Plus } from "lucide-react";
+import { ClipboardList, FolderKanban, Plus } from "lucide-react";
 
 import { BottomTabBar, type TabItem } from "@/components/layout/BottomTabBar";
 import { Logo } from "@/components/layout/Logo";
 import { SettingsLink } from "@/components/layout/SettingsLink";
 
 const TAB_ITEMS: TabItem[] = [
-  { href: "/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: false },
+  { href: "/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: true },
+  { href: "/records/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban, exact: false },
   { href: "/records/new", label: "New Record", shortLabel: "New", icon: Plus, exact: true },
 ];
 
