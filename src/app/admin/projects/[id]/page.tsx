@@ -5,6 +5,7 @@ import {
   CalendarDays,
   ChevronDown,
   ClipboardList,
+  Download,
   MapPin,
   Pencil,
   Users2,
@@ -259,9 +260,19 @@ export default async function AdminProjectPage({
         className="flex animate-fade-up flex-col gap-3"
         style={{ animationDelay: "120ms", animationFillMode: "both" }}
       >
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Photos
-        </h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            Photos
+          </h2>
+          {photos.length > 0 && (
+            <Button asChild variant="outline" size="sm">
+              <a href={`/admin/projects/${project.id}/report`} target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4" />
+                Photo report
+              </a>
+            </Button>
+          )}
+        </div>
         <ProjectPhotos projectId={project.id} initialPhotos={photos} />
       </section>
 
