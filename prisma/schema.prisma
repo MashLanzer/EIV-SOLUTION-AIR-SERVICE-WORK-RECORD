@@ -12,6 +12,23 @@ enum Role {
   WORKER
 }
 
+// A tenant. Every company using the app is one Organization; all
+// company-scoped data (users, customers, records, and - later - projects,
+// photos, teams) carries an organizationId so one company can never see
+// another's data. organizationId is nullable for now to land the column
+// safely on the live single-tenant data; it is backfilled to the default
+// org in the same migration and becomes required in a later slice.
+model Organization {
+  id        String       @id @default(cuid())
+  name      String
+  slug      String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  users     User[]
+  customers Customer[]
+  records   WorkRecord[]
+}
+
 enum RecordStatus {
   SUBMITTED
   APPROVED
@@ -19,15 +36,19 @@ enum RecordStatus {
 }
 
 model User {
-  id               String       @id @default(cuid())
-  email            String       @unique
+  id               String        @id @default(cuid())
+  email            String        @unique
   name             String
-  role             Role         @default(WORKER)
-  active           Boolean      @default(true)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  submittedRecords WorkRecord[] @relation("SubmittedBy")
-  approvedRecords  WorkRecord[] @relation("ApprovedBy")
+  role             Role          @default(WORKER)
+  active           Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  submittedRecords WorkRecord[]  @relation("SubmittedBy")
+  approvedRecords  WorkRecord[]  @relation("ApprovedBy")
+  organizationId   String?
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
 
 model WorkPhoto {
@@ -42,18 +63,21 @@ model WorkPhoto {
 }
 
 model Customer {
-  id        String       @id @default(cuid())
-  name      String
-  address   String
-  phone     String?
-  email     String?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  records   WorkRecord[]
+  id             String        @id @default(cuid())
+  name           String
+  address        String
+  phone          String?
+  email          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  records        WorkRecord[]
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Uniqueness is enforced by a raw functional index in the migration:
   // UNIQUE (lower(name), lower(address))
   @@index([name])
+  @@index([organizationId])
 }
 
 // A short-lived, single-use code minted by /native-handoff and redeemed by
@@ -100,12 +124,15 @@ model WorkRecord {
   // deleting a Customer detaches its records.
   submittedById      String?
   submittedBy        User?        @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
+  organizationId     String?
+  organization       Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
   @@index([date])
   @@index([jobNumber])
   @@index([customerName])
+  @@index([organizationId])
   // Covers status-only lookups (e.g. pending-review counts) via the
   // leftmost column, plus the status+date range scans the pay report and
   // dashboard run - replaces the old standalone @@index([status]).

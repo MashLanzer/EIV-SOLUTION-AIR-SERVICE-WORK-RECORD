@@ -46,11 +46,13 @@ async function upsertCustomerId(
   name: string,
   address: string,
   phone?: string,
-  email?: string
+  email?: string,
+  organizationId?: string | null
 ) {
   const match = {
     name: { equals: name, mode: "insensitive" as const },
     address: { equals: address, mode: "insensitive" as const },
+    ...(organizationId ? { organizationId } : {}),
   };
   const contact = {
     ...(phone ? { phone } : {}),
@@ -65,7 +67,7 @@ async function upsertCustomerId(
   }
   try {
     const created = await prisma.customer.create({
-      data: { name, address, ...contact },
+      data: { name, address, ...contact, organizationId: organizationId ?? undefined },
     });
     return created.id;
   } catch {
@@ -133,11 +135,13 @@ export async function createRecordAction(
     data.customerName,
     data.customerAddress,
     contact.phone,
-    contact.email
+    contact.email,
+    session.user.organizationId
   );
   const created = await prisma.workRecord.create({
     data: {
       customerId,
+      organizationId: session.user.organizationId ?? undefined,
       date: new Date(data.date),
       jobNumber: data.jobNumber,
       leadInstallerName: data.leadInstallerName,
