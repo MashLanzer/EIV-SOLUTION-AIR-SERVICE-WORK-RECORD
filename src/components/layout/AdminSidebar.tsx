@@ -31,7 +31,6 @@ const NAV_ITEMS: TabItem[] = [
   { href: "/admin/customers", label: "Customers", shortLabel: "Customers", icon: Contact, exact: false },
   { href: "/admin/reports", label: "Pay Report", shortLabel: "Pay", icon: BarChart3, exact: false },
   { href: "/admin/workers", label: "Workers", shortLabel: "Workers", icon: Users, exact: false },
-  { href: "/admin/teams", label: "Teams", shortLabel: "Teams", icon: Users2, exact: false },
 ];
 
 // Native app bar (APK): four tabs, with everything else living under "More".

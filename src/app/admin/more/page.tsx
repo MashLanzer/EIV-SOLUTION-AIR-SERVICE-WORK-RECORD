@@ -7,7 +7,6 @@ import {
   ListChecks,
   Settings,
   Users,
-  Users2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,7 +35,6 @@ export default async function AdminMorePage() {
     { href: "/admin/customers", label: "Customers", icon: Contact },
     { href: "/admin/reports", label: "Pay Report", icon: BarChart3 },
     { href: "/admin/workers", label: "Workers", icon: Users },
-    { href: "/admin/teams", label: "Teams", icon: Users2 },
     { href: "/admin/checklists", label: "Checklist templates", icon: ListChecks },
     { href: "/admin/settings", label: "Settings", icon: Settings },
   ];

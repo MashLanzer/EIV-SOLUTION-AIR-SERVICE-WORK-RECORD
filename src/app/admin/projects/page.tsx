@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
+import { ProjectsTeamsTabs } from "@/components/projects/ProjectsTeamsTabs";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
@@ -42,9 +43,7 @@ export default async function AdminProjectsPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          Projects
-        </h1>
+        <ProjectsTeamsTabs />
         <Button asChild>
           <Link href="/admin/projects/new">
             <Plus className="h-4 w-4" />

@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ProjectsTeamsTabs } from "@/components/projects/ProjectsTeamsTabs";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
@@ -31,9 +32,7 @@ export default async function AdminTeamsPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          Teams
-        </h1>
+        <ProjectsTeamsTabs />
         <Button asChild>
           <Link href="/admin/teams/new">
             <Plus className="h-4 w-4" />
