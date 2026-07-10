@@ -107,6 +107,21 @@ async function findDuplicateJobNumber(
   });
 }
 
+// The picked project, but only if it belongs to the caller's org (so a
+// crafted projectId can't attach a record to another company's project).
+async function resolveProjectId(
+  formData: FormData,
+  organizationId: string
+): Promise<string | null> {
+  const raw = (formData.get("projectId") as string | null)?.trim();
+  if (!raw) return null;
+  const project = await prisma.project.findFirst({
+    where: { id: raw, organizationId },
+    select: { id: true },
+  });
+  return project?.id ?? null;
+}
+
 function jobNumberTakenError(dup: { customerName: string; date: Date }): RecordFormState {
   return {
     error: "Please fix the highlighted fields.",
@@ -145,10 +160,12 @@ export async function createRecordAction(
     contact.email,
     organizationId
   );
+  const projectId = await resolveProjectId(formData, organizationId);
   const created = await prisma.workRecord.create({
     data: {
       customerId,
       organizationId,
+      projectId,
       date: new Date(data.date),
       jobNumber: data.jobNumber,
       leadInstallerName: data.leadInstallerName,
@@ -223,9 +240,11 @@ export async function updateRecordAction(
     contact.email,
     organizationId
   );
+  const projectId = await resolveProjectId(formData, organizationId);
   await prisma.workRecord.update({
     where: { id: recordId },
     data: {
+      projectId,
       customerId,
       date: new Date(data.date),
       jobNumber: data.jobNumber,

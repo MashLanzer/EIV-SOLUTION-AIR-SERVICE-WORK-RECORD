@@ -29,6 +29,12 @@ export default async function EditRecordPage({
     redirect(`/records/${record.id}`);
   }
 
+  const projects = await prisma.project.findMany({
+    where: { organizationId: requireOrgId(session) },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+
   const boundAction = updateRecordAction.bind(null, record.id);
 
   return (
@@ -47,9 +53,11 @@ export default async function EditRecordPage({
       )}
       <WorkRecordForm
         action={boundAction}
+        projects={projects}
         defaultValues={{
           date: record.date.toISOString().slice(0, 10),
           jobNumber: record.jobNumber,
+          projectId: record.projectId ?? "",
           leadInstallerName: record.leadInstallerName,
           helperName: record.helperName ?? "",
           customerName: record.customerName,

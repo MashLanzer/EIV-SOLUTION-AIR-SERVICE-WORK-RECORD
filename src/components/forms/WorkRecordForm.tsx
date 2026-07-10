@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { CustomerAutocomplete } from "@/components/forms/CustomerAutocomplete";
 import { FormSection } from "@/components/forms/FormSection";
@@ -42,6 +43,7 @@ import type { RecordFormState } from "@/actions/records";
 export interface WorkRecordFormValues {
   date: string;
   jobNumber: string;
+  projectId?: string;
   leadInstallerName: string;
   helperName: string;
   customerName: string;
@@ -70,6 +72,8 @@ interface WorkRecordFormProps {
   // backgrounded/closed app doesn't lose work. Only the new-record form
   // passes it - editing an existing record should not spawn a draft.
   draftKey?: string;
+  // The org's projects, so a record can be filed under one (optional).
+  projects?: { id: string; name: string }[];
 }
 
 function todayIsoDate() {
@@ -122,6 +126,7 @@ export function WorkRecordForm({
   defaultValues,
   submitLabel = "Submit",
   draftKey,
+  projects = [],
 }: WorkRecordFormProps) {
   const router = useRouter();
   const [state, formAction, actionPending] = useActionState<
@@ -202,6 +207,7 @@ export function WorkRecordForm({
     const snap: WorkRecordFormValues = {
       date: (fd.get("date") as string) ?? "",
       jobNumber: (fd.get("jobNumber") as string) ?? "",
+      projectId: (fd.get("projectId") as string) ?? "",
       leadInstallerName: (fd.get("leadInstallerName") as string) ?? "",
       helperName: (fd.get("helperName") as string) ?? "",
       customerName: (fd.get("customerName") as string) ?? "",
@@ -404,6 +410,28 @@ export function WorkRecordForm({
             />
             <FieldError id="helperName-error" message={fieldError("helperName")} />
           </div>
+          {projects.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="projectId">
+                Project{" "}
+                <span className="font-normal text-neutral-400 dark:text-neutral-500">
+                  (optional)
+                </span>
+              </Label>
+              <Select
+                id="projectId"
+                name="projectId"
+                defaultValue={values?.projectId ?? ""}
+              >
+                <option value="">No project</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
         </FormSection>
 
         <FormSection
