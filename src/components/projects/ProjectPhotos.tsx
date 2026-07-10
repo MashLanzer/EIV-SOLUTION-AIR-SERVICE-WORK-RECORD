@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
-import { Camera, MapPin, X } from "lucide-react";
+import { Camera, MapPin, MessageSquare, Tag as TagIcon, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,6 +15,8 @@ export interface ProjectPhoto {
   takenAt: string;
   takenByName?: string | null;
   hasGps?: boolean;
+  tagCount?: number;
+  commentCount?: number;
 }
 
 // Compress a camera shot before upload: a 1600px JPEG (~250-400KB) is plenty
@@ -173,17 +176,31 @@ export function ProjectPhotos({
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {photos.map((photo) => (
             <div key={photo.id} className="group relative">
-              <a href={photo.url} target="_blank" rel="noopener noreferrer">
+              <Link href={`/admin/projects/${projectId}/photos/${photo.id}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
                   alt="Jobsite photo"
                   className="aspect-square w-full rounded-lg border border-neutral-200 dark:border-neutral-800 object-cover"
                 />
-              </a>
+              </Link>
               <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 rounded-b-lg bg-gradient-to-t from-black/60 to-transparent px-2 py-1 text-[10px] text-white">
                 <span className="tabular-nums">{timeAgo(photo.takenAt)}</span>
-                {photo.hasGps && <MapPin className="h-3 w-3" />}
+                <span className="flex items-center gap-1.5">
+                  {photo.tagCount ? (
+                    <span className="flex items-center gap-0.5">
+                      <TagIcon className="h-3 w-3" />
+                      {photo.tagCount}
+                    </span>
+                  ) : null}
+                  {photo.commentCount ? (
+                    <span className="flex items-center gap-0.5">
+                      <MessageSquare className="h-3 w-3" />
+                      {photo.commentCount}
+                    </span>
+                  ) : null}
+                  {photo.hasGps && <MapPin className="h-3 w-3" />}
+                </span>
               </div>
               <Button
                 type="button"

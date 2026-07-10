@@ -34,6 +34,8 @@ model Organization {
   projects  Project[]
   photos    Photo[]
   teams     Team[]
+  tags      Tag[]
+  comments  Comment[]
 }
 
 // A crew within a company. Members are Users (many-to-many via
@@ -116,11 +118,52 @@ model Photo {
   takenAt        DateTime     @default(now())
   takenById      String?
   takenBy        User?        @relation("PhotoTakenBy", fields: [takenById], references: [id], onDelete: SetNull)
+  photoTags      PhotoTag[]
+  comments       Comment[]
   createdAt      DateTime     @default(now())
 
   @@index([organizationId])
   @@index([projectId])
   @@index([workRecordId])
+}
+
+// A label applied to photos, to organize and search them. Unique per org.
+model Tag {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  photoTags      PhotoTag[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model PhotoTag {
+  photoId String
+  photo   Photo  @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  tagId   String
+  tag     Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([photoId, tagId])
+  @@index([tagId])
+}
+
+// A comment on a photo (jobsite collaboration).
+model Comment {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  photoId        String
+  photo          Photo        @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  authorId       String?
+  author         User?        @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  body           String       @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([photoId])
 }
 
 model User {
@@ -134,6 +177,7 @@ model User {
   submittedRecords WorkRecord[]  @relation("SubmittedBy")
   approvedRecords  WorkRecord[]  @relation("ApprovedBy")
   photosTaken      Photo[]       @relation("PhotoTakenBy")
+  comments         Comment[]     @relation("CommentAuthor")
   teamMemberships  TeamMembership[]
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)

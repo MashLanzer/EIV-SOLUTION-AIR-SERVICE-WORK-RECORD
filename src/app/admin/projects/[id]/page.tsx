@@ -104,6 +104,7 @@ export default async function AdminProjectPage({
         takenAt: true,
         latitude: true,
         takenBy: { select: { name: true } },
+        _count: { select: { photoTags: true, comments: true } },
       },
     }),
   ]);
@@ -113,6 +114,8 @@ export default async function AdminProjectPage({
     takenAt: p.takenAt.toISOString(),
     takenByName: p.takenBy?.name ?? null,
     hasGps: p.latitude != null,
+    tagCount: p._count.photoTags,
+    commentCount: p._count.comments,
   }));
   const recordCount = records.length;
   const statusCount = (s: "APPROVED" | "SUBMITTED" | "NEEDS_CHANGES") =>
