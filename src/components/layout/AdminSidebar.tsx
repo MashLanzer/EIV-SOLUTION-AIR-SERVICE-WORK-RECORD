@@ -10,6 +10,7 @@ import {
   Contact,
   BarChart3,
   FolderKanban,
+  Images,
 } from "lucide-react";
 
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS: TabItem[] = [
   { href: "/admin", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard, exact: true },
   { href: "/admin/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban, exact: false },
+  { href: "/admin/photos", label: "Photos", shortLabel: "Photos", icon: Images, exact: false },
   { href: "/admin/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: false },
   { href: "/admin/customers", label: "Customers", shortLabel: "Customers", icon: Contact, exact: false },
   { href: "/admin/reports", label: "Pay Report", shortLabel: "Pay", icon: BarChart3, exact: false },
