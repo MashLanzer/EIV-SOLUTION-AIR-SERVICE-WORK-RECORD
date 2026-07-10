@@ -84,6 +84,10 @@ export const projectSchema = z.object({
   status: z.enum(PROJECT_STATUSES).default("ACTIVE"),
 });
 
+export const teamSchema = z.object({
+  name: z.string().min(1, "Team name is required").max(80),
+});
+
 export const createWorkerSchema = z.object({
   email: z.string().email("Enter a valid email address"),
   name: z.string().min(1, "Name is required"),

@@ -14,11 +14,18 @@ export default async function EditProjectPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const { id } = await params;
   const project = await prisma.project.findFirst({
-    where: { id, organizationId: requireOrgId(session) },
+    where: { id, organizationId },
   });
   if (!project) notFound();
+
+  const teams = await prisma.team.findMany({
+    where: { organizationId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
@@ -38,10 +45,12 @@ export default async function EditProjectPage({
         <CardContent className="p-4">
           <ProjectForm
             projectId={project.id}
+            teams={teams}
             defaultValues={{
               name: project.name,
               address: project.address ?? "",
               status: project.status,
+              teamId: project.teamId ?? "",
             }}
           />
         </CardContent>

@@ -20,14 +20,17 @@ interface ProjectValues {
   name: string;
   address: string;
   status: string;
+  teamId?: string;
 }
 
 export function ProjectForm({
   projectId,
   defaultValues,
+  teams = [],
 }: {
   projectId?: string;
   defaultValues?: ProjectValues;
+  teams?: { id: string; name: string }[];
 }) {
   const action = projectId
     ? updateProjectAction.bind(null, projectId)
@@ -79,6 +82,25 @@ export function ProjectForm({
           ))}
         </Select>
       </div>
+
+      {teams.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="teamId">
+            Team{" "}
+            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+              (optional)
+            </span>
+          </Label>
+          <Select id="teamId" name="teamId" defaultValue={defaultValues?.teamId ?? ""}>
+            <option value="">No team</option>
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
 
       {state?.error && <Alert variant="error">{state.error}</Alert>}
 

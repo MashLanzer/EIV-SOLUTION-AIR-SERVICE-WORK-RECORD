@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   ClipboardList,
   Users,
+  Users2,
   Contact,
   BarChart3,
   FolderKanban,
@@ -23,6 +24,7 @@ const NAV_ITEMS: TabItem[] = [
   { href: "/admin/customers", label: "Customers", shortLabel: "Customers", icon: Contact, exact: false },
   { href: "/admin/reports", label: "Pay Report", shortLabel: "Pay", icon: BarChart3, exact: false },
   { href: "/admin/workers", label: "Workers", shortLabel: "Workers", icon: Users, exact: false },
+  { href: "/admin/teams", label: "Teams", shortLabel: "Teams", icon: Users2, exact: false },
 ];
 
 function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {

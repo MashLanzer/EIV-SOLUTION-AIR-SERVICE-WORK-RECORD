@@ -22,6 +22,20 @@ function parse(formData: FormData) {
   });
 }
 
+// The picked team, but only if it belongs to the caller's org.
+async function resolveTeamId(
+  formData: FormData,
+  organizationId: string
+): Promise<string | null> {
+  const raw = (formData.get("teamId") as string | null)?.trim();
+  if (!raw) return null;
+  const team = await prisma.team.findFirst({
+    where: { id: raw, organizationId },
+    select: { id: true },
+  });
+  return team?.id ?? null;
+}
+
 export async function createProjectAction(
   _prev: ProjectFormState,
   formData: FormData
@@ -38,6 +52,7 @@ export async function createProjectAction(
   }
   const { name, address, status } = parsed.data;
   const geo = address ? await geocodeAddress(address) : null;
+  const teamId = await resolveTeamId(formData, organizationId);
 
   const project = await prisma.project.create({
     data: {
@@ -47,6 +62,7 @@ export async function createProjectAction(
       latitude: geo?.latitude ?? null,
       longitude: geo?.longitude ?? null,
       status,
+      teamId,
     },
     select: { id: true },
   });
@@ -89,12 +105,14 @@ export async function updateProjectAction(
     coords = { latitude: geo?.latitude ?? null, longitude: geo?.longitude ?? null };
   }
 
+  const teamId = await resolveTeamId(formData, organizationId);
   await prisma.project.update({
     where: { id: projectId },
     data: {
       name,
       address: address ? address : null,
       status,
+      teamId,
       ...(coords ?? {}),
     },
   });

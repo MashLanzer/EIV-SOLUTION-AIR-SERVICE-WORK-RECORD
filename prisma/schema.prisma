@@ -33,6 +33,32 @@ model Organization {
   records   WorkRecord[]
   projects  Project[]
   photos    Photo[]
+  teams     Team[]
+}
+
+// A crew within a company. Members are Users (many-to-many via
+// TeamMembership); a team can be assigned to projects. Org-scoped.
+model Team {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  memberships    TeamMembership[]
+  projects       Project[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organizationId])
+}
+
+model TeamMembership {
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@index([userId])
 }
 
 enum RecordStatus {
@@ -61,12 +87,15 @@ model Project {
   status         ProjectStatus @default(ACTIVE)
   customerId     String?
   customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  teamId         String?
+  team           Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
   records        WorkRecord[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
   @@index([organizationId])
   @@index([customerId])
+  @@index([teamId])
   photos Photo[]
 }
 
@@ -105,6 +134,7 @@ model User {
   submittedRecords WorkRecord[]  @relation("SubmittedBy")
   approvedRecords  WorkRecord[]  @relation("ApprovedBy")
   photosTaken      Photo[]       @relation("PhotoTakenBy")
+  teamMemberships  TeamMembership[]
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 

@@ -7,6 +7,7 @@ import {
   ClipboardList,
   MapPin,
   Pencil,
+  Users2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -64,8 +65,15 @@ export default async function AdminProjectPage({
 
   const project = await prisma.project.findFirst({
     where: { id, organizationId },
+    include: { team: { select: { id: true, name: true } } },
   });
   if (!project) notFound();
+
+  const teams = await prisma.team.findMany({
+    where: { organizationId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
 
   const [statusGroups, records, photoRows] = await Promise.all([
     prisma.workRecord.groupBy({
@@ -129,6 +137,15 @@ export default async function AdminProjectPage({
                 <MapPin className="h-4 w-4 shrink-0" />
                 {project.address}
               </span>
+            )}
+            {project.team && (
+              <Link
+                href={`/admin/teams/${project.team.id}`}
+                className="flex w-fit items-center gap-1.5 hover:text-primary"
+              >
+                <Users2 className="h-4 w-4 shrink-0" />
+                {project.team.name}
+              </Link>
             )}
             <span className="flex items-center gap-1.5">
               <CalendarDays className="h-4 w-4 shrink-0" />
@@ -326,10 +343,12 @@ export default async function AdminProjectPage({
             <div className="flex flex-col gap-4 px-4 pb-4">
               <ProjectForm
                 projectId={project.id}
+                teams={teams}
                 defaultValues={{
                   name: project.name,
                   address: project.address ?? "",
                   status: project.status,
+                  teamId: project.teamId ?? "",
                 }}
               />
               <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
