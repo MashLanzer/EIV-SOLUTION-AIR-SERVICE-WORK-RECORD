@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { buildPayReport, defaultPayReportRange, parsePayReportParams } from "@/lib/payReport";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
 function money(value: number) {
@@ -44,9 +45,9 @@ export default async function AdminReportsPage({
 }: {
   searchParams: Promise<{ dateFrom?: string; dateTo?: string }>;
 }) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const { dateFrom, dateTo } = parsePayReportParams(await searchParams);
-  const report = await buildPayReport({ dateFrom, dateTo });
+  const report = await buildPayReport({ dateFrom, dateTo }, requireOrgId(session));
   const def = defaultPayReportRange();
   const isCustomRange = dateFrom !== def.dateFrom || dateTo !== def.dateTo;
 

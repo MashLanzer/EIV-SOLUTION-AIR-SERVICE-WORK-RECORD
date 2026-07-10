@@ -1,5 +1,6 @@
 import { WorkerNav } from "@/components/layout/WorkerNav";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 
 export default async function RecordsLayout({
@@ -11,7 +12,11 @@ export default async function RecordsLayout({
   // Badge on the worker's Records tab: how many of their records were
   // returned and are waiting to be fixed and resubmitted.
   const returnedCount = await prisma.workRecord.count({
-    where: { submittedById: session.user.id, status: "NEEDS_CHANGES" },
+    where: {
+      organizationId: requireOrgId(session),
+      submittedById: session.user.id,
+      status: "NEEDS_CHANGES",
+    },
   });
 
   return (

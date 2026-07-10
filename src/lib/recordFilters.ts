@@ -43,13 +43,16 @@ export function parseRecordFilterParams(
 }
 
 export function buildRecordWhereClause(
-  filters: RecordFilterParams
+  filters: RecordFilterParams,
+  organizationId: string
 ): Prisma.WorkRecordWhereInput {
+  // organizationId is applied in every branch - including the ids branch, so
+  // a crafted ?ids= list can never reach another company's records.
   if (filters.ids && filters.ids.length > 0) {
-    return { id: { in: filters.ids } };
+    return { organizationId, id: { in: filters.ids } };
   }
 
-  const where: Prisma.WorkRecordWhereInput = {};
+  const where: Prisma.WorkRecordWhereInput = { organizationId };
 
   if (filters.dateFrom || filters.dateTo) {
     where.date = {};

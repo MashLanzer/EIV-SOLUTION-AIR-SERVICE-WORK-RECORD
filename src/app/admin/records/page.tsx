@@ -9,6 +9,7 @@ import { RecordsTable } from "@/components/records/RecordsTable";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { parseSort } from "@/lib/sort";
 import type { Prisma } from "@prisma/client";
@@ -49,10 +50,11 @@ export default async function AdminRecordsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const rawParams = await searchParams;
   const filters = parseRecordFilterParams(rawParams);
-  const where = buildRecordWhereClause(filters);
+  const where = buildRecordWhereClause(filters, organizationId);
   const page = parsePage(rawParams.page);
   const { sort, dir } = parseSort(rawParams.sort, rawParams.dir, RECORD_SORTS, {
     sort: "date",
@@ -78,6 +80,7 @@ export default async function AdminRecordsPage({
       ...paginationArgs(page),
     }),
     prisma.user.findMany({
+      where: { organizationId },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),

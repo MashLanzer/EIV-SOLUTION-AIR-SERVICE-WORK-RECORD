@@ -19,6 +19,7 @@ import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
 import { formatTime } from "@/lib/format";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
 const WEEKS_BACK = 8;
@@ -75,6 +76,7 @@ const money = new Intl.NumberFormat("en-US", {
 
 export default async function AdminDashboardPage() {
   const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const thisWeekMonday = startOfWeek();
   const windowStart = new Date(thisWeekMonday.getTime() - (WEEKS_BACK - 1) * 7 * DAY_MS);
   const payParams = parsePayReportParams({});
@@ -91,15 +93,15 @@ export default async function AdminDashboardPage() {
     typeGroups,
     payReport,
   ] = await Promise.all([
-    prisma.workRecord.count(),
-    prisma.workRecord.count({ where: { date: { gte: thisWeekMonday } } }),
-    prisma.workRecord.count({ where: { date: { gte: startOfMonth() } } }),
-    prisma.user.count({ where: { active: true } }),
-    prisma.workRecord.count({ where: { status: "SUBMITTED" } }),
+    prisma.workRecord.count({ where: { organizationId } }),
+    prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
+    prisma.workRecord.count({ where: { organizationId, date: { gte: startOfMonth() } } }),
+    prisma.user.count({ where: { organizationId, active: true } }),
+    prisma.workRecord.count({ where: { organizationId, status: "SUBMITTED" } }),
     // The oldest-waiting pending records - the dashboard leads with these as
     // an actionable review queue.
     prisma.workRecord.findMany({
-      where: { status: "SUBMITTED" },
+      where: { organizationId, status: "SUBMITTED" },
       orderBy: { createdAt: "asc" },
       take: 3,
       select: {
@@ -111,6 +113,7 @@ export default async function AdminDashboardPage() {
       },
     }),
     prisma.workRecord.findMany({
+      where: { organizationId },
       take: 5,
       orderBy: { createdAt: "desc" },
       select: {
@@ -123,15 +126,15 @@ export default async function AdminDashboardPage() {
       },
     }),
     prisma.workRecord.findMany({
-      where: { date: { gte: windowStart } },
+      where: { organizationId, date: { gte: windowStart } },
       select: { date: true },
     }),
     prisma.workRecord.groupBy({
       by: ["typeOfWork"],
-      where: { date: { gte: monthsAgo(TYPE_WINDOW_MONTHS) } },
+      where: { organizationId, date: { gte: monthsAgo(TYPE_WINDOW_MONTHS) } },
       _count: { _all: true },
     }),
-    buildPayReport(payParams),
+    buildPayReport(payParams, organizationId),
   ]);
 
   const stats = [

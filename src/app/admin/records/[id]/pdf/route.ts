@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { fetchRecordWithPhotos, recordPdfResponse } from "@/lib/pdf";
 
@@ -10,9 +11,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  await requireAdmin();
+  const session = await requireAdmin();
 
-  const record = await fetchRecordWithPhotos(id);
+  const record = await fetchRecordWithPhotos(id, requireOrgId(session));
   if (!record) {
     return new NextResponse("Not found", { status: 404 });
   }

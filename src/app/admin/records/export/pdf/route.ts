@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { renderRecordsPdf } from "@/lib/pdf";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
@@ -11,7 +12,7 @@ export const runtime = "nodejs";
 const MAX_PDF_RECORDS = 300;
 
 export async function GET(request: Request) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const url = new URL(request.url);
   const filters = parseRecordFilterParams({
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
     status: url.searchParams.get("status") ?? undefined,
     ids: url.searchParams.getAll("ids"),
   });
-  const where = buildRecordWhereClause(filters);
+  const where = buildRecordWhereClause(filters, requireOrgId(session));
 
   const total = await prisma.workRecord.count({ where });
   if (total === 0) {

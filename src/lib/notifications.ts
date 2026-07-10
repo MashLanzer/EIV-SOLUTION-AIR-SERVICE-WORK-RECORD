@@ -5,9 +5,11 @@ import { appUrl, emailLayout, sendEmail } from "@/lib/email";
 // record id and is fully best-effort (the sender swallows errors), so a
 // notification can never break the save/approve/return action that fired it.
 
-async function activeAdminEmails(): Promise<string[]> {
+// Admins of a specific company only - never notify one company's admins
+// about another company's record.
+async function activeAdminEmails(organizationId: string | null): Promise<string[]> {
   const admins = await prisma.user.findMany({
-    where: { role: "ADMIN", active: true },
+    where: { organizationId, role: "ADMIN", active: true },
     select: { email: true },
   });
   return admins.map((a) => a.email).filter((e): e is string => Boolean(e));
@@ -23,11 +25,12 @@ export async function notifyAdminsRecordForReview(
     select: {
       jobNumber: true,
       customerName: true,
+      organizationId: true,
       submittedBy: { select: { name: true } },
     },
   });
   if (!record) return;
-  const emails = await activeAdminEmails();
+  const emails = await activeAdminEmails(record.organizationId);
   if (emails.length === 0) return;
 
   const who = record.submittedBy?.name ?? "A worker";

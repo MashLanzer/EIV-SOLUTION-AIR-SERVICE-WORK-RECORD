@@ -7,6 +7,7 @@ import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
 export default async function AdminEditRecordPage({
@@ -14,10 +15,10 @@ export default async function AdminEditRecordPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const { id } = await params;
-  const record = await prisma.workRecord.findUnique({
-    where: { id },
+  const record = await prisma.workRecord.findFirst({
+    where: { id, organizationId: requireOrgId(session) },
     include: { photos: { orderBy: { position: "asc" } } },
   });
   if (!record) notFound();

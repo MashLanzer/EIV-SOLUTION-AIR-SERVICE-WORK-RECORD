@@ -9,6 +9,7 @@ import { SuccessToast } from "@/components/ui/success-toast";
 import { RecordDetail } from "@/components/records/RecordDetail";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 
 export default async function RecordDetailPage({
@@ -22,8 +23,8 @@ export default async function RecordDetailPage({
   const { saved } = await searchParams;
   const session = await requireAuth();
 
-  const record = await prisma.workRecord.findUnique({
-    where: { id },
+  const record = await prisma.workRecord.findFirst({
+    where: { id, organizationId: requireOrgId(session) },
     include: { photos: { orderBy: { position: "asc" } } },
   });
   if (!record) notFound();

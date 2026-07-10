@@ -1,5 +1,6 @@
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
 export default async function AdminLayout({
@@ -10,7 +11,7 @@ export default async function AdminLayout({
   const session = await requireAdmin();
   // Badge on the Records tab: how many records are waiting for review.
   const pendingReviewCount = await prisma.workRecord.count({
-    where: { status: "SUBMITTED" },
+    where: { organizationId: requireOrgId(session), status: "SUBMITTED" },
   });
 
   return (

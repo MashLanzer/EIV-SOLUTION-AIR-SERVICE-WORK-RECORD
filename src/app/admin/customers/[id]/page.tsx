@@ -33,6 +33,7 @@ import { MergeCustomerForm } from "@/components/customers/MergeCustomerForm";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
 function formatDate(date: Date) {
@@ -64,24 +65,25 @@ export default async function AdminCustomerPage({
     page?: string;
   }>;
 }) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const { id } = await params;
   const { saved, merged, error, page: rawPage } = await searchParams;
   const page = parsePage(rawPage);
 
-  const customer = await prisma.customer.findUnique({ where: { id } });
+  const customer = await prisma.customer.findFirst({ where: { id, organizationId } });
   if (!customer) notFound();
 
   const [recordCount, statusGroups, records] = await Promise.all([
-    prisma.workRecord.count({ where: { customerId: id } }),
+    prisma.workRecord.count({ where: { organizationId, customerId: id } }),
     // Bounded to the 3 statuses - a tiny at-a-glance health breakdown.
     prisma.workRecord.groupBy({
       by: ["status"],
-      where: { customerId: id },
+      where: { organizationId, customerId: id },
       _count: { _all: true },
     }),
     prisma.workRecord.findMany({
-      where: { customerId: id },
+      where: { organizationId, customerId: id },
       orderBy: { date: "desc" },
       select: {
         id: true,
@@ -103,7 +105,7 @@ export default async function AdminCustomerPage({
   const needsChangesCount = statusCount("NEEDS_CHANGES");
 
   const others = await prisma.customer.findMany({
-    where: { id: { not: id } },
+    where: { organizationId, id: { not: id } },
     select: { id: true, name: true, address: true },
     orderBy: { name: "asc" },
     take: 100,

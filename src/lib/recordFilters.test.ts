@@ -31,18 +31,21 @@ describe("parseRecordFilterParams", () => {
   });
 });
 
+const ORG = "org-1";
+
 describe("buildRecordWhereClause", () => {
-  it("returns an id filter and ignores everything else when ids are set", () => {
+  it("scopes the ids branch to the org so a crafted ids list can't cross tenants", () => {
     expect(
-      buildRecordWhereClause({ ids: ["a", "b"], jobNumber: "123" })
-    ).toEqual({ id: { in: ["a", "b"] } });
+      buildRecordWhereClause({ ids: ["a", "b"], jobNumber: "123" }, ORG)
+    ).toEqual({ organizationId: ORG, id: { in: ["a", "b"] } });
   });
 
   it("builds a date range from dateFrom/dateTo", () => {
-    const where = buildRecordWhereClause({
-      dateFrom: "2026-01-01",
-      dateTo: "2026-01-31",
-    });
+    const where = buildRecordWhereClause(
+      { dateFrom: "2026-01-01", dateTo: "2026-01-31" },
+      ORG
+    );
+    expect(where.organizationId).toBe(ORG);
     expect(where.date).toEqual({
       gte: new Date("2026-01-01"),
       lte: new Date("2026-01-31"),
@@ -50,13 +53,17 @@ describe("buildRecordWhereClause", () => {
   });
 
   it("combines worker, customer, job number, and status filters", () => {
-    const where = buildRecordWhereClause({
-      workerId: "worker-1",
-      customerName: "Acme",
-      jobNumber: "42",
-      status: "SUBMITTED",
-    });
+    const where = buildRecordWhereClause(
+      {
+        workerId: "worker-1",
+        customerName: "Acme",
+        jobNumber: "42",
+        status: "SUBMITTED",
+      },
+      ORG
+    );
     expect(where).toEqual({
+      organizationId: ORG,
       submittedById: "worker-1",
       customerName: { contains: "Acme", mode: "insensitive" },
       jobNumber: { contains: "42", mode: "insensitive" },
@@ -64,7 +71,7 @@ describe("buildRecordWhereClause", () => {
     });
   });
 
-  it("returns an empty filter when nothing is set", () => {
-    expect(buildRecordWhereClause({})).toEqual({});
+  it("always scopes to the org even with no other filters", () => {
+    expect(buildRecordWhereClause({}, ORG)).toEqual({ organizationId: ORG });
   });
 });

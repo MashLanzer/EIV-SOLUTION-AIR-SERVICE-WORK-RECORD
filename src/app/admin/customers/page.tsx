@@ -20,6 +20,7 @@ import { DataField } from "@/components/ui/data-field";
 import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import type { Prisma } from "@prisma/client";
 
@@ -44,7 +45,8 @@ export default async function AdminCustomersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const rawParams = await searchParams;
   const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;
   const query = rawQ?.trim() || undefined;
@@ -56,16 +58,19 @@ export default async function AdminCustomersPage({
     { sort: "name", dir: "asc" }
   );
 
-  const where = query
-    ? {
-        OR: [
-          { name: { contains: query, mode: "insensitive" as const } },
-          { address: { contains: query, mode: "insensitive" as const } },
-          { phone: { contains: query, mode: "insensitive" as const } },
-          { email: { contains: query, mode: "insensitive" as const } },
-        ],
-      }
-    : undefined;
+  const where = {
+    organizationId,
+    ...(query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" as const } },
+            { address: { contains: query, mode: "insensitive" as const } },
+            { phone: { contains: query, mode: "insensitive" as const } },
+            { email: { contains: query, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
 
   const [total, customers] = await Promise.all([
     prisma.customer.count({ where }),

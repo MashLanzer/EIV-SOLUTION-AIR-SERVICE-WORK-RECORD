@@ -12,6 +12,7 @@ import { RecordDetail } from "@/components/records/RecordDetail";
 import { RequestChangesButton } from "@/components/records/RequestChangesButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
 function formatDateTime(date: Date) {
@@ -29,11 +30,11 @@ export default async function AdminReviewRecordPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ saved?: string }>;
 }) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const { id } = await params;
   const { saved } = await searchParams;
-  const record = await prisma.workRecord.findUnique({
-    where: { id },
+  const record = await prisma.workRecord.findFirst({
+    where: { id, organizationId: requireOrgId(session) },
     include: {
       photos: { orderBy: { position: "asc" } },
       approvedBy: { select: { name: true } },

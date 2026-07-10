@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { normalizeEmailForDuplicateCheck } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import {
   createWorkerSchema,
@@ -14,23 +15,30 @@ import {
 
 export type WorkerFormState = { error?: string } | undefined;
 
-// True if `userId` is currently the only active admin - demoting or
-// deactivating them would leave nobody able to manage the admin tools.
-async function isLastActiveAdmin(userId: string) {
+// True if `userId` is currently the only active admin in this org - demoting
+// or deactivating them would leave nobody able to manage the admin tools.
+async function isLastActiveAdmin(userId: string, organizationId: string) {
   const otherActiveAdmins = await prisma.user.count({
-    where: { role: "ADMIN", active: true, id: { not: userId } },
+    where: { organizationId, role: "ADMIN", active: true, id: { not: userId } },
   });
   return otherActiveAdmins === 0;
 }
 
-// Catches a Gmail dot/alias variant of an email that's already authorized
-// under a different, exact spelling (e.g. "j.doe@gmail.com" vs
+// Catches a Gmail dot/alias variant of an email that's already authorized in
+// this org under a different, exact spelling (e.g. "j.doe@gmail.com" vs
 // "jdoe@gmail.com" are the same inbox). The user table is small enough that
 // scanning it here is cheaper than maintaining a normalized column.
-async function findGmailDuplicate(email: string, excludeUserId?: string) {
+async function findGmailDuplicate(
+  email: string,
+  organizationId: string,
+  excludeUserId?: string
+) {
   const normalized = normalizeEmailForDuplicateCheck(email);
   const users = await prisma.user.findMany({
-    where: excludeUserId ? { id: { not: excludeUserId } } : undefined,
+    where: {
+      organizationId,
+      ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
+    },
     select: { id: true, name: true, email: true },
   });
   return users.find((u) => normalizeEmailForDuplicateCheck(u.email) === normalized);
@@ -40,7 +48,8 @@ export async function createWorkerAction(
   _prevState: WorkerFormState,
   formData: FormData
 ): Promise<WorkerFormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
 
   const parsed = createWorkerSchema.safeParse({
     email: formData.get("email"),
@@ -56,7 +65,7 @@ export async function createWorkerAction(
   if (existing) {
     return { error: "That email is already authorized" };
   }
-  const gmailDupe = await findGmailDuplicate(email);
+  const gmailDupe = await findGmailDuplicate(email, organizationId);
   if (gmailDupe) {
     return {
       error: `That's the same Gmail inbox as ${gmailDupe.name} (${gmailDupe.email}) once dots and aliases are ignored.`,
@@ -68,6 +77,7 @@ export async function createWorkerAction(
       email,
       name: parsed.data.name,
       role: parsed.data.role,
+      organizationId,
     },
   });
 
@@ -76,13 +86,18 @@ export async function createWorkerAction(
 }
 
 export async function toggleWorkerActiveAction(userId: string) {
-  await requireAdmin();
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const user = await prisma.user.findFirst({ where: { id: userId, organizationId } });
   if (!user) return;
 
   // The UI already hides the Deactivate control for the last active admin;
   // this is the server-side backstop against races or repeated form posts.
-  if (user.active && user.role === "ADMIN" && (await isLastActiveAdmin(userId))) {
+  if (
+    user.active &&
+    user.role === "ADMIN" &&
+    (await isLastActiveAdmin(userId, organizationId))
+  ) {
     throw new Error(
       "Can't deactivate the last active admin. Promote another worker to admin first."
     );
@@ -98,8 +113,9 @@ export async function toggleWorkerActiveAction(userId: string) {
 }
 
 export async function deleteWorkerAction(userId: string) {
-  await requireAdmin();
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const user = await prisma.user.findFirst({ where: { id: userId, organizationId } });
   if (!user) return;
 
   // Deletion is gated on deactivation: an account must be turned off before
@@ -128,7 +144,8 @@ export async function updateWorkerEmailAction(
   _prevState: UpdateWorkerEmailState,
   formData: FormData
 ): Promise<UpdateWorkerEmailState> {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
 
   const parsed = updateWorkerEmailSchema.safeParse({
     email: formData.get("email"),
@@ -137,12 +154,19 @@ export async function updateWorkerEmailAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
+  // The target must be a member of the caller's org.
+  const target = await prisma.user.findFirst({
+    where: { id: userId, organizationId },
+    select: { id: true },
+  });
+  if (!target) return { error: "Worker not found" };
+
   const email = parsed.data.email.trim().toLowerCase();
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing && existing.id !== userId) {
     return { error: "That email is already authorized" };
   }
-  const gmailDupe = await findGmailDuplicate(email, userId);
+  const gmailDupe = await findGmailDuplicate(email, organizationId, userId);
   if (gmailDupe) {
     return {
       error: `That's the same Gmail inbox as ${gmailDupe.name} (${gmailDupe.email}) once dots and aliases are ignored.`,
@@ -161,7 +185,8 @@ export async function updateWorkerRoleAction(
   _prevState: UpdateWorkerRoleState,
   formData: FormData
 ): Promise<UpdateWorkerRoleState> {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
 
   const parsed = updateWorkerRoleSchema.safeParse({
     role: formData.get("role"),
@@ -170,7 +195,7 @@ export async function updateWorkerRoleAction(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findFirst({ where: { id: userId, organizationId } });
   if (!user) return { error: "Worker not found" };
   if (user.role === parsed.data.role) return;
 
@@ -180,7 +205,7 @@ export async function updateWorkerRoleAction(
     user.active &&
     user.role === "ADMIN" &&
     parsed.data.role === "WORKER" &&
-    (await isLastActiveAdmin(userId))
+    (await isLastActiveAdmin(userId, organizationId))
   ) {
     return {
       error:

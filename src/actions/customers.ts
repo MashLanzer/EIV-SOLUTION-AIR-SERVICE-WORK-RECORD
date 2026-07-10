@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { customerSchema } from "@/lib/validations";
 
@@ -17,7 +18,8 @@ export async function updateCustomerAction(
   _prevState: CustomerFormState,
   formData: FormData
 ): Promise<CustomerFormState> {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
 
   const parsed = customerSchema.safeParse({
     name: formData.get("name"),
@@ -31,6 +33,13 @@ export async function updateCustomerAction(
       fieldErrors: z.flattenError(parsed.error).fieldErrors,
     };
   }
+
+  // The customer must belong to the caller's org before we touch it.
+  const owned = await prisma.customer.findFirst({
+    where: { id: customerId, organizationId },
+    select: { id: true },
+  });
+  if (!owned) return { error: "Customer not found" };
 
   const { name, address, phone, email } = parsed.data;
   // Off by default: existing records keep the customer name/address as it
@@ -73,22 +82,27 @@ export async function mergeCustomerAction(
   sourceId: string,
   formData: FormData
 ) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const targetId = (formData.get("targetId") as string | null)?.trim();
   if (!targetId || targetId === sourceId) {
     redirect(`/admin/customers/${sourceId}?error=merge`);
   }
 
   // Guard against a stale option (target deleted/merged elsewhere between
-  // page load and submit) before moving records and deleting the source.
-  const target = await prisma.customer.findUnique({ where: { id: targetId } });
-  if (!target) {
+  // page load and submit) and ensure both customers are in the caller's org
+  // before moving records and deleting the source.
+  const [source, target] = await Promise.all([
+    prisma.customer.findFirst({ where: { id: sourceId, organizationId }, select: { id: true } }),
+    prisma.customer.findFirst({ where: { id: targetId, organizationId }, select: { id: true } }),
+  ]);
+  if (!source || !target) {
     redirect(`/admin/customers/${sourceId}?error=merge`);
   }
 
   await prisma.$transaction([
     prisma.workRecord.updateMany({
-      where: { customerId: sourceId },
+      where: { customerId: sourceId, organizationId },
       data: { customerId: targetId },
     }),
     prisma.customer.delete({ where: { id: sourceId } }),
@@ -99,9 +113,12 @@ export async function mergeCustomerAction(
 }
 
 export async function deleteCustomerAction(customerId: string) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   // Records keep their denormalized name/address; the FK is set null.
-  await prisma.customer.delete({ where: { id: customerId } });
+  // deleteMany with the org filter is a no-op if the customer isn't in the
+  // caller's org, so an admin can never delete another company's customer.
+  await prisma.customer.deleteMany({ where: { id: customerId, organizationId } });
   revalidatePath("/admin/customers");
   redirect("/admin/customers");
 }

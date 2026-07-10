@@ -19,12 +19,15 @@ function record(overrides: Partial<Parameters<typeof findMany>[0]> = {}) {
 }
 
 describe("buildPayReport", () => {
-  it("only queries APPROVED records", async () => {
+  it("only queries this org's APPROVED records", async () => {
     findMany.mockResolvedValueOnce([]);
-    await buildPayReport({});
+    await buildPayReport({}, "org-1");
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ status: "APPROVED" }),
+        where: expect.objectContaining({
+          status: "APPROVED",
+          organizationId: "org-1",
+        }),
       })
     );
   });
@@ -38,7 +41,7 @@ describe("buildPayReport", () => {
         helperPay: 40,
       }),
     ]);
-    const report = await buildPayReport({});
+    const report = await buildPayReport({}, "org-1");
     const alex = report.rows.find((r) => r.name === "Alex");
     const sam = report.rows.find((r) => r.name === "Sam");
     expect(alex).toMatchObject({ jobs: 1, leadTotal: 100, total: 100 });
@@ -55,7 +58,7 @@ describe("buildPayReport", () => {
         helperPay: 30,
       }),
     ]);
-    const report = await buildPayReport({});
+    const report = await buildPayReport({}, "org-1");
     const alex = report.rows.find((r) => r.name === "Alex");
     expect(alex).toMatchObject({ jobs: 2, leadTotal: 100, helperTotal: 30, total: 130 });
   });
@@ -64,7 +67,7 @@ describe("buildPayReport", () => {
     findMany.mockResolvedValueOnce([
       record({ helperName: "Sam", helperPay: null }),
     ]);
-    const report = await buildPayReport({});
+    const report = await buildPayReport({}, "org-1");
     expect(report.rows.find((r) => r.name === "Sam")).toBeUndefined();
   });
 
@@ -73,7 +76,7 @@ describe("buildPayReport", () => {
       record({ leadInstallerName: "Alex", leadInstallerPay: 100 }),
       record({ leadInstallerName: "Sam", leadInstallerPay: 60 }),
     ]);
-    const report = await buildPayReport({});
+    const report = await buildPayReport({}, "org-1");
     expect(report.grand).toMatchObject({ jobs: 2, leadTotal: 160, total: 160 });
     expect(report.recordCount).toBe(2);
   });

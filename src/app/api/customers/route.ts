@@ -11,6 +11,10 @@ export async function GET(request: Request) {
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const organizationId = session.user.organizationId;
+  if (!organizationId) {
+    return NextResponse.json({ customers: [] });
+  }
 
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get("q") ?? "").trim();
@@ -20,6 +24,7 @@ export async function GET(request: Request) {
 
   const customers = await prisma.customer.findMany({
     where: {
+      organizationId,
       OR: [
         { name: { contains: q, mode: "insensitive" } },
         { address: { contains: q, mode: "insensitive" } },

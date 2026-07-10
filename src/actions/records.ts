@@ -10,6 +10,7 @@ import {
   notifyWorkerApproved,
   notifyWorkerReturned,
 } from "@/lib/notifications";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin, requireAuth } from "@/lib/session";
 import { workRecordSchema } from "@/lib/validations";
 
@@ -91,9 +92,14 @@ function parseCustomerContact(formData: FormData) {
 // jobNumber has no DB-level uniqueness constraint (a hard @unique could fail
 // to migrate against existing duplicate data), so this app-level check is
 // the only thing stopping two records from silently sharing a job number.
-async function findDuplicateJobNumber(jobNumber: string, excludeRecordId?: string) {
+async function findDuplicateJobNumber(
+  jobNumber: string,
+  organizationId: string,
+  excludeRecordId?: string
+) {
   return prisma.workRecord.findFirst({
     where: {
+      organizationId,
       jobNumber: { equals: jobNumber.trim(), mode: "insensitive" },
       ...(excludeRecordId ? { NOT: { id: excludeRecordId } } : {}),
     },
@@ -126,8 +132,9 @@ export async function createRecordAction(
     };
   }
 
+  const organizationId = requireOrgId(session);
   const data = parsed.data;
-  const dupJobNumber = await findDuplicateJobNumber(data.jobNumber);
+  const dupJobNumber = await findDuplicateJobNumber(data.jobNumber, organizationId);
   if (dupJobNumber) return jobNumberTakenError(dupJobNumber);
 
   const contact = parseCustomerContact(formData);
@@ -136,12 +143,12 @@ export async function createRecordAction(
     data.customerAddress,
     contact.phone,
     contact.email,
-    session.user.organizationId
+    organizationId
   );
   const created = await prisma.workRecord.create({
     data: {
       customerId,
-      organizationId: session.user.organizationId ?? undefined,
+      organizationId,
       date: new Date(data.date),
       jobNumber: data.jobNumber,
       leadInstallerName: data.leadInstallerName,
@@ -181,8 +188,11 @@ export async function updateRecordAction(
   formData: FormData
 ): Promise<RecordFormState> {
   const session = await requireAuth();
+  const organizationId = requireOrgId(session);
 
-  const record = await prisma.workRecord.findUnique({ where: { id: recordId } });
+  const record = await prisma.workRecord.findFirst({
+    where: { id: recordId, organizationId },
+  });
   if (!record) return { error: "Record not found" };
   const isAdmin = session.user.role === "ADMIN";
   if (!isAdmin && record.submittedById !== session.user.id) {
@@ -202,7 +212,7 @@ export async function updateRecordAction(
   }
 
   const data = parsed.data;
-  const dupJobNumber = await findDuplicateJobNumber(data.jobNumber, recordId);
+  const dupJobNumber = await findDuplicateJobNumber(data.jobNumber, organizationId, recordId);
   if (dupJobNumber) return jobNumberTakenError(dupJobNumber);
 
   const contact = parseCustomerContact(formData);
@@ -210,7 +220,8 @@ export async function updateRecordAction(
     data.customerName,
     data.customerAddress,
     contact.phone,
-    contact.email
+    contact.email,
+    organizationId
   );
   await prisma.workRecord.update({
     where: { id: recordId },
@@ -262,16 +273,19 @@ export async function updateRecordAction(
 }
 
 export async function deleteRecordAction(recordId: string) {
-  await requireAdmin();
-  await prisma.workRecord.delete({ where: { id: recordId } });
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  // Org-scoped delete: a no-op if the record belongs to another company.
+  await prisma.workRecord.deleteMany({ where: { id: recordId, organizationId } });
   revalidatePath("/admin/records");
   redirect("/admin/records");
 }
 
 export async function approveRecordAction(recordId: string) {
   const session = await requireAdmin();
-  await prisma.workRecord.update({
-    where: { id: recordId },
+  const organizationId = requireOrgId(session);
+  await prisma.workRecord.updateMany({
+    where: { id: recordId, organizationId },
     data: {
       status: "APPROVED",
       approvedAt: new Date(),
@@ -287,10 +301,11 @@ export async function approveRecordAction(recordId: string) {
 
 // Send a record back to the worker with a note explaining what to fix.
 export async function requestChangesAction(recordId: string, formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const note = (formData.get("reviewNote") as string | null)?.trim() || null;
-  await prisma.workRecord.update({
-    where: { id: recordId },
+  await prisma.workRecord.updateMany({
+    where: { id: recordId, organizationId },
     data: {
       status: "NEEDS_CHANGES",
       reviewNote: note,
@@ -312,12 +327,13 @@ export async function requestChangesAction(recordId: string, formData: FormData)
 // caller must type the exact confirmation phrase, re-checked here so a
 // stray/forged request can't trigger it.
 export async function resetHistoryAction(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const confirm = (formData.get("confirm") as string | null)?.trim();
   if (confirm !== "RESET") {
     redirect("/admin/settings");
   }
-  await prisma.workRecord.deleteMany({});
+  await prisma.workRecord.deleteMany({ where: { organizationId } });
   revalidatePath("/admin");
   revalidatePath("/admin/records");
   revalidatePath("/admin/reports");

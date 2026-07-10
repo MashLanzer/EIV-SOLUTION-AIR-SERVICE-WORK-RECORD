@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { WorkersSection, type WorkerStat } from "@/components/workers/WorkersTable";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import type { Prisma } from "@prisma/client";
 
@@ -43,19 +44,23 @@ export default async function AdminWorkersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const rawParams = await searchParams;
   const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;
   const query = rawQ?.trim() || undefined;
 
-  const where: Prisma.UserWhereInput | undefined = query
-    ? {
-        OR: [
-          { name: { contains: query, mode: "insensitive" } },
-          { email: { contains: query, mode: "insensitive" } },
-        ],
-      }
-    : undefined;
+  const where: Prisma.UserWhereInput = {
+    organizationId,
+    ...(query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" } },
+            { email: { contains: query, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
 
   const [users, recordStats] = await Promise.all([
     prisma.user.findMany({ where, orderBy: { name: "asc" } }),
@@ -63,6 +68,7 @@ export default async function AdminWorkersPage({
     // some records have no author - those don't attribute to anyone).
     prisma.workRecord.groupBy({
       by: ["submittedById"],
+      where: { organizationId },
       _count: { _all: true },
       _max: { createdAt: true },
     }),

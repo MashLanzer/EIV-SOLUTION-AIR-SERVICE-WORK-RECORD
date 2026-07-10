@@ -11,6 +11,7 @@ import { ToggleWorkerActiveButton } from "@/components/workers/ToggleWorkerActiv
 import { UpdateWorkerEmailForm } from "@/components/workers/UpdateWorkerEmailForm";
 import { UpdateWorkerRoleForm } from "@/components/workers/UpdateWorkerRoleForm";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
 function formatJoined(date: Date) {
@@ -26,17 +27,18 @@ export default async function WorkerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
   const { id } = await params;
 
-  const worker = await prisma.user.findUnique({ where: { id } });
+  const worker = await prisma.user.findFirst({ where: { id, organizationId } });
   if (!worker) notFound();
 
   const [otherActiveAdmins, recordCount] = await Promise.all([
     prisma.user.count({
-      where: { role: "ADMIN", active: true, id: { not: worker.id } },
+      where: { organizationId, role: "ADMIN", active: true, id: { not: worker.id } },
     }),
-    prisma.workRecord.count({ where: { submittedById: worker.id } }),
+    prisma.workRecord.count({ where: { organizationId, submittedById: worker.id } }),
   ]);
   const isLastActiveAdmin =
     worker.role === "ADMIN" && worker.active && otherActiveAdmins === 0;

@@ -2,19 +2,20 @@ import ExcelJS from "exceljs";
 import { NextResponse } from "next/server";
 
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  await requireAdmin();
+  const session = await requireAdmin();
 
   const { searchParams } = new URL(request.url);
   const { dateFrom, dateTo } = parsePayReportParams({
     dateFrom: searchParams.get("dateFrom") ?? undefined,
     dateTo: searchParams.get("dateTo") ?? undefined,
   });
-  const report = await buildPayReport({ dateFrom, dateTo });
+  const report = await buildPayReport({ dateFrom, dateTo }, requireOrgId(session));
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Pay Report");

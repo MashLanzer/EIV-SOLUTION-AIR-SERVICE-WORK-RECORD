@@ -12,10 +12,11 @@ export async function renderRecordsPdf(records: RecordWithWorker[]) {
 }
 
 // Shared by the admin and worker single-record PDF routes, which differ
-// only in their authorization check.
-export function fetchRecordWithPhotos(id: string) {
-  return prisma.workRecord.findUnique({
-    where: { id },
+// only in their authorization check. Scoped to the caller's org so one
+// company can't render another company's record as a PDF.
+export function fetchRecordWithPhotos(id: string, organizationId: string) {
+  return prisma.workRecord.findFirst({
+    where: { id, organizationId },
     include: { photos: { orderBy: { position: "asc" } } },
   });
 }

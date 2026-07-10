@@ -44,8 +44,11 @@ export function parsePayReportParams(searchParams: {
 //
 // Only APPROVED records count toward pay: SUBMITTED/NEEDS_CHANGES haven't
 // cleared review, so they shouldn't show up in what's owed to anyone yet.
-export async function buildPayReport({ dateFrom, dateTo }: PayReportParams) {
-  const where: Prisma.WorkRecordWhereInput = { status: "APPROVED" };
+export async function buildPayReport(
+  { dateFrom, dateTo }: PayReportParams,
+  organizationId: string
+) {
+  const where: Prisma.WorkRecordWhereInput = { status: "APPROVED", organizationId };
   if (dateFrom || dateTo) {
     where.date = {};
     if (dateFrom) where.date.gte = new Date(dateFrom);

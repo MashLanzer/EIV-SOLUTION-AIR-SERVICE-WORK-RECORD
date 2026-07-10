@@ -10,6 +10,7 @@ import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { RecordCard } from "@/components/records/RecordCard";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 
 export default async function RecordsPage({
@@ -23,6 +24,7 @@ export default async function RecordsPage({
   const page = parsePage(rawPage);
 
   const where = {
+    organizationId: requireOrgId(session),
     submittedById: session.user.id,
     ...(query
       ? {
