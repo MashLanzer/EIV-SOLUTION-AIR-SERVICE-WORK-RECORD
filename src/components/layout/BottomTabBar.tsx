@@ -40,7 +40,7 @@ export function BottomTabBar({
   return (
     <nav
       aria-label="Sections"
-      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-lg shadow-[0_-1px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_16px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)] sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-20 flex border-t border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-lg shadow-[0_-1px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_16px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)] sm:hidden native:hidden"
     >
       {items.map((item) => {
         const isActive = isTabActive(pathname, item);

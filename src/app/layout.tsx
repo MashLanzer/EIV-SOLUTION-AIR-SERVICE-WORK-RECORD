@@ -27,7 +27,18 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* Runs before paint: flags the <html> when we're inside the Capacitor
+            WebView (the APK) so the native app chrome (4-tab + FAB bar) shows
+            only there, never in a normal browser. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){document.documentElement.setAttribute('data-native','1')}}catch(e){}",
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

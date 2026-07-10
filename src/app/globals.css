@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* `native:` applies only inside the Capacitor WebView (the APK), where a
+   before-paint script sets data-native on <html>. Lets us swap in the native
+   app chrome (4-tab + FAB bar) without touching the browser experience. */
+@custom-variant native (html[data-native] &);
+
 :root {
   --background: #fafafa;
   --foreground: #171717;

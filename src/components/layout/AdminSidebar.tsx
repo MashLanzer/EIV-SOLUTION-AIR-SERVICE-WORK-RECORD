@@ -10,10 +10,15 @@ import {
   Contact,
   BarChart3,
   FolderKanban,
+  FolderPlus,
   Images,
+  MoreHorizontal,
+  UserPlus,
 } from "lucide-react";
 
+import { AppTabBar } from "@/components/layout/AppTabBar";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
+import type { CreateItem } from "@/components/layout/CreateSheet";
 import { Logo } from "@/components/layout/Logo";
 import { SettingsLink } from "@/components/layout/SettingsLink";
 import { cn } from "@/lib/utils";
@@ -27,6 +32,20 @@ const NAV_ITEMS: TabItem[] = [
   { href: "/admin/reports", label: "Pay Report", shortLabel: "Pay", icon: BarChart3, exact: false },
   { href: "/admin/workers", label: "Workers", shortLabel: "Workers", icon: Users, exact: false },
   { href: "/admin/teams", label: "Teams", shortLabel: "Teams", icon: Users2, exact: false },
+];
+
+// Native app bar (APK): four tabs, with everything else living under "More".
+const APP_TABS: TabItem[] = [
+  { href: "/admin", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard, exact: true },
+  { href: "/admin/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban, exact: false },
+  { href: "/admin/photos", label: "Photos", shortLabel: "Photos", icon: Images, exact: false },
+  { href: "/admin/more", label: "More", shortLabel: "More", icon: MoreHorizontal, exact: false },
+];
+
+const CREATE_ITEMS: CreateItem[] = [
+  { href: "/admin/projects/new", label: "New project", icon: FolderPlus },
+  { href: "/admin/workers/new", label: "New worker", icon: UserPlus },
+  { href: "/admin/teams/new", label: "New team", icon: Users2 },
 ];
 
 function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
@@ -71,6 +90,11 @@ export function AdminSidebar({
   const items = NAV_ITEMS.map((item) =>
     item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
   );
+  // Records lives under "More" in the native bar, so the review badge rides
+  // the More tab there.
+  const appTabs = APP_TABS.map((item) =>
+    item.href === "/admin/more" ? { ...item, badge: pendingReviewCount } : item
+  );
 
   return (
     <>
@@ -90,12 +114,13 @@ export function AdminSidebar({
 
       {/* Mobile top bar - just branding + settings now that navigation
           lives in the bottom tab bar instead of a hamburger drawer. */}
-      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 px-4 backdrop-blur sm:hidden">
+      <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 px-4 backdrop-blur sm:hidden native:h-auto native:min-h-14 native:pt-[env(safe-area-inset-top)]">
         <Logo />
         <SettingsLink href="/admin/settings" />
       </header>
 
       <BottomTabBar items={items} pathname={pathname} />
+      <AppTabBar items={appTabs} pathname={pathname} createItems={CREATE_ITEMS} />
     </>
   );
 }
