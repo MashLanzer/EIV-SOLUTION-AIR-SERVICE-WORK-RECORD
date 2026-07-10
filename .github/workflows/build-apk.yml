@@ -61,7 +61,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-apk-${{ github.run_number }}
-          name: EIV Solution Air - Android - build ${{ github.run_number }}
+          name: AeroTrack - Android - build ${{ github.run_number }}
           body: >
             Fullscreen app shell wrapping the live web app; Google Sign-In
             bounces to the system browser and returns automatically. Built

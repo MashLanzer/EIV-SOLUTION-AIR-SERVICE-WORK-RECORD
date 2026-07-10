@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
-import { Wind } from "lucide-react";
 
+import { AeroMark } from "@/components/brand/AeroMark";
+import { AeroWordmark } from "@/components/brand/AeroWordmark";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -29,10 +30,10 @@ export default async function LoginPage({
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center gap-2 p-6 pb-0 text-center">
-          <span className="mb-1 flex h-16 w-16 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Wind className="h-8 w-8" strokeWidth={2.25} />
-          </span>
-          <CardTitle className="text-xl">EIV Solution Air</CardTitle>
+          <AeroMark className="mb-1 h-16 w-16 text-neutral-900 dark:text-neutral-100" />
+          <CardTitle className="text-2xl">
+            <AeroWordmark />
+          </CardTitle>
           <CardDescription>Installation / Service Work Record</CardDescription>
         </CardHeader>
         <CardContent className="p-6">

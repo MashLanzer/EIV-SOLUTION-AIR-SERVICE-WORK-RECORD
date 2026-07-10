@@ -11,8 +11,18 @@ import { prisma } from "@/lib/prisma";
 
 type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } | null };
 
-export async function renderRecordsPdf(records: RecordWithWorker[]) {
-  return renderToBuffer(<WorkRecordPdfDocument records={records} />);
+// The tenant's own name for the PDF header (falls back to the product name if
+// somehow missing). Each company brands its own paperwork.
+export async function orgNameFor(organizationId: string): Promise<string> {
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { name: true },
+  });
+  return org?.name ?? "AeroTrack";
+}
+
+export async function renderRecordsPdf(records: RecordWithWorker[], orgName: string) {
+  return renderToBuffer(<WorkRecordPdfDocument records={records} orgName={orgName} />);
 }
 
 export async function renderPhotoReportPdf(data: PhotoReportData) {
@@ -30,9 +40,10 @@ export function fetchRecordWithPhotos(id: string, organizationId: string) {
 }
 
 export async function recordPdfResponse(
-  record: WorkRecord & { photos?: WorkPhoto[] }
+  record: WorkRecord & { photos?: WorkPhoto[] },
+  orgName: string
 ) {
-  const buffer = await renderRecordsPdf([record]);
+  const buffer = await renderRecordsPdf([record], orgName);
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",

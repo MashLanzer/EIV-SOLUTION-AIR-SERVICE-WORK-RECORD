@@ -22,7 +22,7 @@ export function ReturnToApp({ deepLink }: { deepLink: string }) {
           </span>
           <CardTitle className="text-xl">You&apos;re signed in</CardTitle>
           <CardDescription>
-            Returning to the EIV Solution Air app...
+            Returning to the AeroTrack app...
           </CardDescription>
         </CardHeader>
         <CardContent>

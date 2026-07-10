@@ -102,11 +102,11 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RecordPage({ record }: { record: RecordWithWorker }) {
+function RecordPage({ record, orgName }: { record: RecordWithWorker; orgName: string }) {
   return (
     <Page size="LETTER" style={styles.page}>
       <View style={styles.header}>
-        <Text style={styles.companyName}>EIV Solution Air</Text>
+        <Text style={styles.companyName}>{orgName}</Text>
         <Text style={styles.formTitle}>Installation / Service Work Record</Text>
       </View>
 
@@ -151,11 +151,11 @@ function RecordPage({ record }: { record: RecordWithWorker }) {
   );
 }
 
-function PhotosPage({ record }: { record: RecordWithWorker }) {
+function PhotosPage({ record, orgName }: { record: RecordWithWorker; orgName: string }) {
   return (
     <Page size="LETTER" style={styles.page}>
       <View style={styles.header}>
-        <Text style={styles.companyName}>EIV Solution Air</Text>
+        <Text style={styles.companyName}>{orgName}</Text>
         <Text style={styles.formTitle}>
           Job #{record.jobNumber} — Photos
         </Text>
@@ -188,18 +188,22 @@ const photoStyles = StyleSheet.create({
 
 export function WorkRecordPdfDocument({
   records,
+  orgName,
 }: {
   records: RecordWithWorker[];
+  // The company (tenant) name shown in the header - each org brands its own
+  // records; "AeroTrack" is the product, not what goes on the paperwork.
+  orgName: string;
 }) {
   return (
     <Document>
       {records.map((record) => (
-        <RecordPage key={record.id} record={record} />
+        <RecordPage key={record.id} record={record} orgName={orgName} />
       ))}
       {records
         .filter((record) => (record.photos?.length ?? 0) > 0)
         .map((record) => (
-          <PhotosPage key={`${record.id}-photos`} record={record} />
+          <PhotosPage key={`${record.id}-photos`} record={record} orgName={orgName} />
         ))}
     </Document>
   );

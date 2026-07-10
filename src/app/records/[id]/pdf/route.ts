@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
-import { fetchRecordWithPhotos, recordPdfResponse } from "@/lib/pdf";
+import { fetchRecordWithPhotos, orgNameFor, recordPdfResponse } from "@/lib/pdf";
 
 export const runtime = "nodejs";
 
@@ -12,8 +12,9 @@ export async function GET(
 ) {
   const { id } = await params;
   const session = await requireAuth();
+  const organizationId = requireOrgId(session);
 
-  const record = await fetchRecordWithPhotos(id, requireOrgId(session));
+  const record = await fetchRecordWithPhotos(id, organizationId);
   if (!record) {
     return new NextResponse("Not found", { status: 404 });
   }
@@ -21,5 +22,5 @@ export async function GET(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  return recordPdfResponse(record);
+  return recordPdfResponse(record, await orgNameFor(organizationId));
 }

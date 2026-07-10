@@ -98,7 +98,7 @@ export function OnboardingForms() {
                 name="name"
                 required
                 autoComplete="organization"
-                placeholder="e.g. EIV Solution Air"
+                placeholder="e.g. Acme HVAC"
               />
             </div>
             {createState?.error && (

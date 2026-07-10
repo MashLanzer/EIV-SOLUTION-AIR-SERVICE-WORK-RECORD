@@ -31,6 +31,11 @@
   --color-warning: #d97706;
   --color-warning-soft: #fef3c7;
   --color-warning-text: #92400e;
+
+  /* AeroTrack brand accent - used ONLY in the logo/wordmark, never in the
+     otherwise-monochrome UI. Navy resolves to the near-black ink via
+     currentColor; teal is the one fixed color. */
+  --brand-teal: #14cdbd;
 }
 
 @media (prefers-color-scheme: dark) {

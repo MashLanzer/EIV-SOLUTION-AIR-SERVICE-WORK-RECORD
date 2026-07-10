@@ -83,6 +83,6 @@ export function emailLayout(
     <h1 style="margin:0 0 16px;font-size:18px;color:#171717">${heading}</h1>
     ${paragraphs}
     ${button}
-    <p style="margin:24px 0 0;color:#a3a3a3;font-size:12px">EIV Solution Air — Service Work Record</p>
+    <p style="margin:24px 0 0;color:#a3a3a3;font-size:12px">AeroTrack — Service Work Record</p>
   </div>`;
 }

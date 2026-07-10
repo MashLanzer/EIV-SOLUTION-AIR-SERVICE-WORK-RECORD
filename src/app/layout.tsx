@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EIV Solution Air - Work Record",
+  title: "AeroTrack",
   description: "Installation / Service Work Record",
 };
 

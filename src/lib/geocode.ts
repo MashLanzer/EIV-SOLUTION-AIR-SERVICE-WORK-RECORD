@@ -21,7 +21,7 @@ export async function geocodeAddress(
     const url = `${ENDPOINT}?q=${encodeURIComponent(q)}&format=json&limit=1`;
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "EIV-Solution-Air-Work-Record/1.0 (project geocoding)",
+        "User-Agent": "AeroTrack-WorkRecord/1.0 (project geocoding)",
         Accept: "application/json",
       },
       // Don't let a slow geocoder hang the save.
