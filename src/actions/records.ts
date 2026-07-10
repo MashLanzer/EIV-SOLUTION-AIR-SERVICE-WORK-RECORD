@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import {
+  notifyAdminsRecordForReview,
+  notifyWorkerApproved,
+  notifyWorkerReturned,
+} from "@/lib/notifications";
 import { requireAdmin, requireAuth } from "@/lib/session";
 import { workRecordSchema } from "@/lib/validations";
 
@@ -130,7 +135,7 @@ export async function createRecordAction(
     contact.phone,
     contact.email
   );
-  await prisma.workRecord.create({
+  const created = await prisma.workRecord.create({
     data: {
       customerId,
       date: new Date(data.date),
@@ -157,7 +162,10 @@ export async function createRecordAction(
           }
         : undefined,
     },
+    select: { id: true },
   });
+
+  await notifyAdminsRecordForReview(created.id, "new");
 
   revalidatePath("/records");
   redirect("/records?saved=1");
@@ -234,6 +242,12 @@ export async function updateRecordAction(
     },
   });
 
+  // A worker resubmitting sends it back into the review queue - let the
+  // admins know. Admin edits don't change the status, so no notice.
+  if (!isAdmin) {
+    await notifyAdminsRecordForReview(recordId, "resubmitted");
+  }
+
   revalidatePath("/records");
   revalidatePath("/admin/records");
   redirect(
@@ -261,6 +275,7 @@ export async function approveRecordAction(recordId: string) {
       reviewNote: null,
     },
   });
+  await notifyWorkerApproved(recordId);
   revalidatePath("/admin/records");
   revalidatePath(`/admin/records/${recordId}`);
   revalidatePath("/admin");
@@ -279,6 +294,7 @@ export async function requestChangesAction(recordId: string, formData: FormData)
       approvedById: null,
     },
   });
+  await notifyWorkerReturned(recordId);
   revalidatePath("/admin/records");
   revalidatePath(`/admin/records/${recordId}`);
   revalidatePath("/records");

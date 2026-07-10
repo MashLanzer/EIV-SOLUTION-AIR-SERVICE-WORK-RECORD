@@ -20,8 +20,17 @@ function isFocusedRecordFlow(pathname: string) {
   return pathname === "/records/new" || /^\/records\/[^/]+\/edit$/.test(pathname);
 }
 
-export function WorkerNav({ name }: { name: string }) {
+export function WorkerNav({
+  name,
+  returnedCount = 0,
+}: {
+  name: string;
+  returnedCount?: number;
+}) {
   const pathname = usePathname();
+  const items = TAB_ITEMS.map((item) =>
+    item.href === "/records" ? { ...item, badge: returnedCount } : item
+  );
 
   return (
     <>
@@ -36,7 +45,7 @@ export function WorkerNav({ name }: { name: string }) {
       </header>
 
       <BottomTabBar
-        items={TAB_ITEMS}
+        items={items}
         pathname={pathname}
         hidden={isFocusedRecordFlow(pathname)}
       />

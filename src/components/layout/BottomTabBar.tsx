@@ -11,6 +11,9 @@ export interface TabItem {
   shortLabel: string;
   icon: LucideIcon;
   exact: boolean;
+  // Count shown as a small red badge on the icon (e.g. records pending
+  // review, or records returned to the worker). 0/undefined = no badge.
+  badge?: number;
 }
 
 export function isTabActive(pathname: string, item: TabItem) {
@@ -52,10 +55,17 @@ export function BottomTabBar({
               isActive ? "text-primary" : "text-neutral-500 dark:text-neutral-400"
             )}
           >
-            <Icon
-              className={cn("h-5 w-5 transition-transform duration-200", isActive && "scale-110")}
-              strokeWidth={isActive ? 2.5 : 2}
-            />
+            <span className="relative">
+              <Icon
+                className={cn("h-5 w-5 transition-transform duration-200", isActive && "scale-110")}
+                strokeWidth={isActive ? 2.5 : 2}
+              />
+              {item.badge ? (
+                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-white">
+                  {item.badge > 99 ? "99+" : item.badge}
+                </span>
+              ) : null}
+            </span>
             <span className="truncate">{item.shortLabel}</span>
             <span
               aria-hidden="true"

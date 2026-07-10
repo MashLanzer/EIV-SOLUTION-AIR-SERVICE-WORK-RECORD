@@ -23,10 +23,10 @@ const NAV_ITEMS: TabItem[] = [
   { href: "/admin/workers", label: "Workers", shortLabel: "Workers", icon: Users, exact: false },
 ];
 
-function NavLinks({ pathname }: { pathname: string }) {
+function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
   return (
     <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const isActive = isTabActive(pathname, item);
         const Icon = item.icon;
         return (
@@ -41,7 +41,12 @@ function NavLinks({ pathname }: { pathname: string }) {
             )}
           >
             <Icon className="h-4 w-4" />
-            {item.label}
+            <span className="flex-1">{item.label}</span>
+            {item.badge ? (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-white">
+                {item.badge > 99 ? "99+" : item.badge}
+              </span>
+            ) : null}
           </Link>
         );
       })}
@@ -49,8 +54,17 @@ function NavLinks({ pathname }: { pathname: string }) {
   );
 }
 
-export function AdminSidebar({ name }: { name: string }) {
+export function AdminSidebar({
+  name,
+  pendingReviewCount = 0,
+}: {
+  name: string;
+  pendingReviewCount?: number;
+}) {
   const pathname = usePathname();
+  const items = NAV_ITEMS.map((item) =>
+    item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
+  );
 
   return (
     <>
@@ -60,7 +74,7 @@ export function AdminSidebar({ name }: { name: string }) {
           <Logo />
         </div>
         <div className="flex-1 overflow-y-auto p-3">
-          <NavLinks pathname={pathname} />
+          <NavLinks items={items} pathname={pathname} />
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-neutral-200 dark:border-neutral-800 p-3">
           <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{name}</span>
@@ -75,7 +89,7 @@ export function AdminSidebar({ name }: { name: string }) {
         <SettingsLink href="/admin/settings" />
       </header>
 
-      <BottomTabBar items={NAV_ITEMS} pathname={pathname} />
+      <BottomTabBar items={items} pathname={pathname} />
     </>
   );
 }
