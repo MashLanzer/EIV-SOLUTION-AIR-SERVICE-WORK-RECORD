@@ -31,12 +31,41 @@ model Organization {
   users     User[]
   customers Customer[]
   records   WorkRecord[]
+  projects  Project[]
 }
 
 enum RecordStatus {
   SUBMITTED
   APPROVED
   NEEDS_CHANGES
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+}
+
+// A jobsite (CompanyCam-style): the container work records and - later -
+// photos hang off. Has an address geocoded to lat/lng so it can be pinned on
+// a map. Always scoped to one Organization.
+model Project {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  address        String?
+  latitude       Float?
+  longitude      Float?
+  status         ProjectStatus @default(ACTIVE)
+  customerId     String?
+  customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  records        WorkRecord[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([customerId])
 }
 
 model User {
@@ -75,6 +104,7 @@ model Customer {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   records        WorkRecord[]
+  projects       Project[]
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -130,6 +160,8 @@ model WorkRecord {
   submittedBy        User?        @relation("SubmittedBy", fields: [submittedById], references: [id], onDelete: SetNull)
   organizationId     String?
   organization       Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectId          String?
+  project            Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
@@ -137,6 +169,7 @@ model WorkRecord {
   @@index([jobNumber])
   @@index([customerName])
   @@index([organizationId])
+  @@index([projectId])
   // Covers status-only lookups (e.g. pending-review counts) via the
   // leftmost column, plus the status+date range scans the pay report and
   // dashboard run - replaces the old standalone @@index([status]).

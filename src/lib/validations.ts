@@ -69,6 +69,21 @@ export const customerSchema = z.object({
     .or(z.literal("")),
 });
 
+export const PROJECT_STATUSES = ["ACTIVE", "ON_HOLD", "COMPLETED"] as const;
+export type ProjectStatusValue = (typeof PROJECT_STATUSES)[number];
+
+export const PROJECT_STATUS_LABELS: Record<ProjectStatusValue, string> = {
+  ACTIVE: "Active",
+  ON_HOLD: "On hold",
+  COMPLETED: "Completed",
+};
+
+export const projectSchema = z.object({
+  name: z.string().min(1, "Project name is required").max(120),
+  address: z.string().max(200).optional().or(z.literal("")),
+  status: z.enum(PROJECT_STATUSES).default("ACTIVE"),
+});
+
 export const createWorkerSchema = z.object({
   email: z.string().email("Enter a valid email address"),
   name: z.string().min(1, "Name is required"),
