@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DeleteProjectButton } from "@/components/projects/DeleteProjectButton";
+import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
@@ -75,7 +76,7 @@ export default async function AdminProjectPage({
     select: { id: true, name: true },
   });
 
-  const [statusGroups, records, photoRows] = await Promise.all([
+  const [statusGroups, records, photoRows, checklists, templates] = await Promise.all([
     prisma.workRecord.groupBy({
       by: ["status"],
       where: { organizationId, projectId: id },
@@ -106,6 +107,23 @@ export default async function AdminProjectPage({
         takenBy: { select: { name: true } },
         _count: { select: { photoTags: true, comments: true } },
       },
+    }),
+    prisma.checklist.findMany({
+      where: { organizationId, projectId: id },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        name: true,
+        items: {
+          orderBy: { position: "asc" },
+          select: { id: true, text: true, done: true },
+        },
+      },
+    }),
+    prisma.checklistTemplate.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
     }),
   ]);
   const photos = photoRows.map((p) => ({
@@ -221,10 +239,25 @@ export default async function AdminProjectPage({
         </CardContent>
       </Card>
 
-      {/* Photos - coming with the Vercel Blob slice */}
+      {/* Checklists - track the steps for this job */}
       <section
         className="flex animate-fade-up flex-col gap-3"
         style={{ animationDelay: "80ms", animationFillMode: "both" }}
+      >
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Checklists
+        </h2>
+        <ProjectChecklists
+          projectId={project.id}
+          checklists={checklists}
+          templates={templates}
+        />
+      </section>
+
+      {/* Photos */}
+      <section
+        className="flex animate-fade-up flex-col gap-3"
+        style={{ animationDelay: "120ms", animationFillMode: "both" }}
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Photos
@@ -235,7 +268,7 @@ export default async function AdminProjectPage({
       {/* Job history */}
       <section
         className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "120ms", animationFillMode: "both" }}
+        style={{ animationDelay: "160ms", animationFillMode: "both" }}
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Work records ({recordCount})
@@ -330,7 +363,7 @@ export default async function AdminProjectPage({
       {/* Manage - edit collapsed + delete */}
       <section
         className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "160ms", animationFillMode: "both" }}
+        style={{ animationDelay: "200ms", animationFillMode: "both" }}
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Manage

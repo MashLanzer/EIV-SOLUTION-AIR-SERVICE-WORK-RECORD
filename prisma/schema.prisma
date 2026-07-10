@@ -36,6 +36,8 @@ model Organization {
   teams     Team[]
   tags      Tag[]
   comments  Comment[]
+  checklistTemplates ChecklistTemplate[]
+  checklists         Checklist[]
 }
 
 // A crew within a company. Members are Users (many-to-many via
@@ -98,7 +100,8 @@ model Project {
   @@index([organizationId])
   @@index([customerId])
   @@index([teamId])
-  photos Photo[]
+  photos     Photo[]
+  checklists Checklist[]
 }
 
 // A jobsite photo stored in object storage (Vercel Blob). Always belongs to a
@@ -120,6 +123,7 @@ model Photo {
   takenBy        User?        @relation("PhotoTakenBy", fields: [takenById], references: [id], onDelete: SetNull)
   photoTags      PhotoTag[]
   comments       Comment[]
+  checklistItems ChecklistItem[]
   createdAt      DateTime     @default(now())
 
   @@index([organizationId])
@@ -148,6 +152,63 @@ model PhotoTag {
 
   @@id([photoId, tagId])
   @@index([tagId])
+}
+
+// A reusable checklist template (e.g. "Furnace install", "Standard service").
+// Applied to a project to spawn a working Checklist with its own item states.
+// Org-scoped.
+model ChecklistTemplate {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  items          ChecklistTemplateItem[]
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+}
+
+model ChecklistTemplateItem {
+  id         String            @id @default(cuid())
+  templateId String
+  template   ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  text       String
+  position   Int
+
+  @@index([templateId])
+}
+
+// A working checklist attached to a project. Its items get checked off as the
+// crew works; an item can carry a photo as proof. Org-scoped.
+model Checklist {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectId      String
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  items          ChecklistItem[]
+  createdAt      DateTime        @default(now())
+
+  @@index([organizationId])
+  @@index([projectId])
+}
+
+model ChecklistItem {
+  id          String    @id @default(cuid())
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  text        String
+  position    Int
+  done        Boolean   @default(false)
+  doneAt      DateTime?
+  // Optional photo attached as proof the item was completed.
+  photoId     String?
+  photo       Photo?    @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+
+  @@index([checklistId])
+  @@index([photoId])
 }
 
 // A comment on a photo (jobsite collaboration).
