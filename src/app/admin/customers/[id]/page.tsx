@@ -120,40 +120,42 @@ export default async function AdminCustomerPage({
         </Alert>
       )}
 
-      {/* Header - name + tappable contact chips */}
-      <div className="animate-fade-up">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          {customer.name}
-        </h1>
-        <div className="mt-1 flex flex-col gap-1 text-sm text-neutral-500 dark:text-neutral-400">
-          <span className="flex items-center gap-1.5">
-            <MapPin className="h-4 w-4 shrink-0" />
-            {customer.address}
-          </span>
-          {customer.phone && (
-            <a
-              href={`tel:${customer.phone}`}
-              className="flex w-fit items-center gap-1.5 hover:text-primary"
-            >
-              <Phone className="h-4 w-4 shrink-0" />
-              {customer.phone}
-            </a>
-          )}
-          {customer.email && (
-            <a
-              href={`mailto:${customer.email}`}
-              className="flex w-fit items-center gap-1.5 hover:text-primary"
-            >
-              <Mail className="h-4 w-4 shrink-0" />
-              {customer.email}
-            </a>
-          )}
-          <span className="flex items-center gap-1.5">
-            <CalendarDays className="h-4 w-4 shrink-0" />
-            Customer since {formatSince(customer.createdAt)}
-          </span>
-        </div>
-      </div>
+      {/* Header - customer identity inside a card for a tidy, pro look */}
+      <Card className="animate-fade-up">
+        <CardContent className="p-4">
+          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+            {customer.name}
+          </h1>
+          <div className="mt-2 flex flex-col gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-4 w-4 shrink-0" />
+              {customer.address}
+            </span>
+            {customer.phone && (
+              <a
+                href={`tel:${customer.phone}`}
+                className="flex w-fit items-center gap-1.5 hover:text-primary"
+              >
+                <Phone className="h-4 w-4 shrink-0" />
+                {customer.phone}
+              </a>
+            )}
+            {customer.email && (
+              <a
+                href={`mailto:${customer.email}`}
+                className="flex w-fit items-center gap-1.5 hover:text-primary"
+              >
+                <Mail className="h-4 w-4 shrink-0" />
+                {customer.email}
+              </a>
+            )}
+            <span className="flex items-center gap-1.5">
+              <CalendarDays className="h-4 w-4 shrink-0" />
+              Customer since {formatSince(customer.createdAt)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Snapshot - total jobs + status breakdown */}
       <Card
