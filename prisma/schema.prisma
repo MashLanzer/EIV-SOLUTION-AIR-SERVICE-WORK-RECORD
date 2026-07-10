@@ -22,6 +22,10 @@ model Organization {
   id        String       @id @default(cuid())
   name      String
   slug      String       @unique
+  // Rotatable invite code: a person signs in with Google and enters this
+  // to join the company as a WORKER. Admins can regenerate it from Settings.
+  // Nullable so an org can have joining-by-code turned off.
+  joinCode  String?      @unique
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   users     User[]

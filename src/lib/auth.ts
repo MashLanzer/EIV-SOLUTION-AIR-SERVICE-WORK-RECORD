@@ -24,7 +24,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const dbUser = await prisma.user.findUnique({
         where: { email: user.email.toLowerCase() },
       });
-      return !!dbUser && dbUser.active;
+      // A pre-approved account that's been deactivated stays blocked. An
+      // unknown email is now allowed through so the person can create or join
+      // a company on the onboarding screen (they get no data access until
+      // they do - see the jwt callback and requireOrgId).
+      if (dbUser && !dbUser.active) return false;
+      return true;
     },
     async jwt({ token, user }) {
       // Runs on every request that reads the session (not just sign-in), so
@@ -33,27 +38,37 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // the session immediately - deactivating someone takes effect soon
       // after, not just their next sign-in.
       //
-      // Checking on literally every request means one Prisma round-trip per
-      // navigation for every signed-in user, which is unnecessary load for
-      // something that only needs to change within a few minutes of an
-      // admin flipping `active`. `checkedAt` lets a fresh-enough token skip
-      // the DB call; sign-in (`user` present) always checks regardless.
+      // `checkedAt` lets a fresh-enough, already-onboarded token skip the DB
+      // round-trip. A not-yet-onboarded token (no id) always re-checks, so a
+      // company created/joined on the onboarding screen is picked up on the
+      // very next request instead of after the staleness window.
       const email = (user?.email ?? (token.email as string | undefined))?.toLowerCase();
       if (!email) return token;
+      token.email = email;
 
       const STALE_AFTER_MS = 5 * 60 * 1000;
       const checkedAt = token.checkedAt as number | undefined;
-      if (!user && checkedAt && Date.now() - checkedAt < STALE_AFTER_MS) {
+      if (!user && token.id && checkedAt && Date.now() - checkedAt < STALE_AFTER_MS) {
         return token;
       }
 
       const dbUser = await prisma.user.findUnique({ where: { email } });
-      if (!dbUser || !dbUser.active) return null;
+      if (dbUser) {
+        if (!dbUser.active) return null;
+        token.id = dbUser.id;
+        token.role = dbUser.role;
+        token.name = dbUser.name;
+        token.organizationId = dbUser.organizationId;
+        token.checkedAt = Date.now();
+        return token;
+      }
 
-      token.id = dbUser.id;
-      token.role = dbUser.role;
-      token.name = dbUser.name;
-      token.organizationId = dbUser.organizationId;
+      // Signed in with Google but not part of any company yet: keep a minimal
+      // session so /onboarding can create or join one. Empty id + null org
+      // means every org-scoped page bounces them to onboarding.
+      token.id = "";
+      token.role = "WORKER";
+      token.organizationId = null;
       token.checkedAt = Date.now();
       return token;
     },

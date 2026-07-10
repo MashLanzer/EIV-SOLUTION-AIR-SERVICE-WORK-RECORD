@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 import { LogoutButton } from "@/components/layout/LogoutButton";
+import { InviteCodeCard } from "@/components/settings/InviteCodeCard";
 import { ResetHistoryDialog } from "@/components/settings/ResetHistoryDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataField } from "@/components/ui/data-field";
@@ -19,11 +20,14 @@ export function SettingsScreen({
   email,
   role,
   backHref,
+  inviteCode,
 }: {
   name: string;
   email: string;
   role: "ADMIN" | "WORKER";
   backHref: string;
+  // The company's invite code, shown to admins only.
+  inviteCode?: string | null;
 }) {
   const isAdmin = role === "ADMIN";
   const tapsRef = useRef(0);
@@ -70,6 +74,10 @@ export function SettingsScreen({
           />
         </CardContent>
       </Card>
+
+      {isAdmin && inviteCode !== undefined && (
+        <InviteCodeCard code={inviteCode} />
+      )}
 
       <Card>
         <CardContent className="p-0">
