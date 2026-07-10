@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAuth } from "@/lib/session";
+import { canAccessProject, photoDetailPaths } from "@/lib/projectAccess";
+import { requireAdmin, requireAuth } from "@/lib/session";
 
 function normalizeTag(raw: string): string {
   return raw.trim().replace(/\s+/g, " ").toLowerCase().slice(0, 30);
@@ -19,12 +20,14 @@ async function ownedPhoto(photoId: string, organizationId: string) {
   });
 }
 
-function photoPath(projectId: string, photoId: string) {
-  return `/admin/projects/${projectId}/photos/${photoId}`;
+function revalidatePhoto(projectId: string, photoId: string) {
+  for (const path of photoDetailPaths(projectId, photoId)) revalidatePath(path);
 }
 
+// Tags organize the whole company's photos, so only admins edit them; workers
+// see them read-only.
 export async function addTagAction(photoId: string, formData: FormData) {
-  const session = await requireAuth();
+  const session = await requireAdmin();
   const organizationId = requireOrgId(session);
   const photo = await ownedPhoto(photoId, organizationId);
   if (!photo) return;
@@ -46,24 +49,27 @@ export async function addTagAction(photoId: string, formData: FormData) {
     create: { photoId, tagId: tag.id },
   });
 
-  revalidatePath(photoPath(photo.projectId, photoId));
+  revalidatePhoto(photo.projectId, photoId);
 }
 
 export async function removeTagAction(photoId: string, tagId: string) {
-  const session = await requireAuth();
+  const session = await requireAdmin();
   const organizationId = requireOrgId(session);
   const photo = await ownedPhoto(photoId, organizationId);
   if (!photo) return;
 
   await prisma.photoTag.deleteMany({ where: { photoId, tagId } });
-  revalidatePath(photoPath(photo.projectId, photoId));
+  revalidatePhoto(photo.projectId, photoId);
 }
 
+// Commenting is collaboration - workers can comment, but only on a project
+// their team is assigned to.
 export async function addCommentAction(photoId: string, formData: FormData) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
   const photo = await ownedPhoto(photoId, organizationId);
   if (!photo) return;
+  if (!(await canAccessProject(session, photo.projectId))) return;
 
   const body = ((formData.get("body") as string | null) ?? "").trim().slice(0, 2000);
   if (!body) return;
@@ -76,7 +82,7 @@ export async function addCommentAction(photoId: string, formData: FormData) {
       body,
     },
   });
-  revalidatePath(photoPath(photo.projectId, photoId));
+  revalidatePhoto(photo.projectId, photoId);
 }
 
 // Delete a comment: its author or any admin, within the org.
@@ -94,5 +100,5 @@ export async function deleteCommentAction(commentId: string) {
   if (!isAdmin && comment.authorId !== session.user.id) return;
 
   await prisma.comment.delete({ where: { id: comment.id } });
-  revalidatePath(photoPath(comment.photo.projectId, comment.photoId));
+  revalidatePhoto(comment.photo.projectId, comment.photoId);
 }

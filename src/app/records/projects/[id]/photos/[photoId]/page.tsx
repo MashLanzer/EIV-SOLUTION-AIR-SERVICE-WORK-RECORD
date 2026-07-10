@@ -3,16 +3,19 @@ import { notFound } from "next/navigation";
 import { PhotoDetailView } from "@/components/photos/PhotoDetailView";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { canAccessProject } from "@/lib/projectAccess";
+import { requireAuth } from "@/lib/session";
 
-export default async function PhotoDetailPage({
+export default async function WorkerPhotoDetailPage({
   params,
 }: {
   params: Promise<{ id: string; photoId: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requireAuth();
   const organizationId = requireOrgId(session);
   const { id: projectId, photoId } = await params;
+
+  if (!(await canAccessProject(session, projectId))) notFound();
 
   const photo = await prisma.photo.findFirst({
     where: { id: photoId, projectId, organizationId },
@@ -28,20 +31,16 @@ export default async function PhotoDetailPage({
   });
   if (!photo) notFound();
 
-  const orgTags = await prisma.tag.findMany({
-    where: { organizationId },
-    orderBy: { name: "asc" },
-    select: { name: true },
-  });
+  const isAdmin = session.user.role === "ADMIN";
 
   return (
     <PhotoDetailView
       photo={photo}
-      orgTags={orgTags}
-      basePath="/admin/projects"
-      canManageTags
+      orgTags={[]}
+      basePath="/records/projects"
+      canManageTags={isAdmin}
       currentUserId={session.user.id}
-      isAdmin
+      isAdmin={isAdmin}
     />
   );
 }
