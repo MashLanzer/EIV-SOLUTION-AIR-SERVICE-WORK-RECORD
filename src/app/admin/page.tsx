@@ -15,11 +15,14 @@ import {
   Images,
 } from "lucide-react";
 
+import type { LucideIcon } from "lucide-react";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BarList } from "@/components/charts/BarList";
 import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
 import { formatTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -76,6 +79,55 @@ const money = new Intl.NumberFormat("en-US", {
   currency: "USD",
   maximumFractionDigits: 0,
 });
+
+// Uniform metric tile: small icon (with a chevron when it links somewhere),
+// then the number and its label stacked - the vertical layout keeps long
+// labels from crowding the figure the way the old side-by-side cards did.
+function StatTile({
+  icon: Icon,
+  value,
+  label,
+  href,
+}: {
+  icon: LucideIcon;
+  value: number;
+  label: string;
+  href?: string;
+}) {
+  const body = (
+    <CardContent className="flex h-full flex-col gap-3 p-4">
+      <div className="flex items-center justify-between">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+          <Icon className="h-5 w-5" />
+        </span>
+        {href && <ArrowRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />}
+      </div>
+      <div>
+        <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+          {value}
+        </div>
+        <div className="text-sm text-neutral-500 dark:text-neutral-400">{label}</div>
+      </div>
+    </CardContent>
+  );
+  const card = (
+    <Card
+      className={cn(
+        "h-full",
+        href && "transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
+      )}
+    >
+      {body}
+    </Card>
+  );
+  return href ? (
+    <Link href={href} className="block">
+      {card}
+    </Link>
+  ) : (
+    card
+  );
+}
 
 export default async function AdminDashboardPage() {
   const session = await requireAdmin();
@@ -146,15 +198,17 @@ export default async function AdminDashboardPage() {
     prisma.team.count({ where: { organizationId } }),
   ]);
 
-  const stats = [
-    { label: "Total Records", value: totalRecords, icon: ClipboardList },
+  // One unified metrics grid: a headline "Total Records" hero, then the
+  // remaining stats + the clickable workspace shortcuts as uniform tiles.
+  const tiles: {
+    label: string;
+    value: number;
+    icon: LucideIcon;
+    href?: string;
+  }[] = [
     { label: "This Week", value: recordsThisWeek, icon: CalendarDays },
     { label: "This Month", value: recordsThisMonth, icon: CalendarRange },
     { label: "Active Workers", value: activeWorkers, icon: Users },
-  ];
-
-  // Clickable tiles that double as stats + shortcuts into the newer sections.
-  const workspace = [
     { label: "Active Projects", value: activeProjects, icon: FolderKanban, href: "/admin/projects" },
     { label: "Photos", value: photoCount, icon: Images, href: "/admin/photos" },
     { label: "Teams", value: teamCount, icon: Users2, href: "/admin/teams" },
@@ -253,49 +307,23 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Overview
         </h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.label} className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
-              <CardContent className="flex items-center gap-3 p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-                  <stat.icon className="h-5 w-5" />
-                </span>
-                <div>
-                  <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-neutral-500 dark:text-neutral-400">{stat.label}</div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {/* Headline stat spans the full width, then uniform tiles below. */}
+          <Card className="col-span-2 sm:col-span-4">
+            <CardContent className="flex items-center gap-4 p-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+                <ClipboardList className="h-6 w-6" />
+              </span>
+              <div>
+                <div className="text-3xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+                  {totalRecords}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Workspace
-        </h2>
-        <div className="grid grid-cols-3 gap-4">
-          {workspace.map((item) => (
-            <Link key={item.label} href={item.href}>
-              <Card className="h-full transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
-                <CardContent className="flex flex-col gap-2 p-4">
-                  <div className="flex items-center justify-between">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-                      <item.icon className="h-5 w-5" />
-                    </span>
-                    <ArrowRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-                      {item.value}
-                    </div>
-                    <div className="text-sm text-neutral-500 dark:text-neutral-400">{item.label}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+                <div className="text-sm text-neutral-500 dark:text-neutral-400">Total records</div>
+              </div>
+            </CardContent>
+          </Card>
+          {tiles.map((tile) => (
+            <StatTile key={tile.label} {...tile} />
           ))}
         </div>
       </section>
