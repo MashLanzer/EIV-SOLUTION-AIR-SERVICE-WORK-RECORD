@@ -7,6 +7,7 @@ import { ClipboardList, FilePlus2, FolderKanban, Images, MoreHorizontal, Plus } 
 import { AppTabBar } from "@/components/layout/AppTabBar";
 import { BottomTabBar, type TabItem } from "@/components/layout/BottomTabBar";
 import type { CreateItem } from "@/components/layout/CreateSheet";
+import type { MoreItem } from "@/components/layout/MoreSheet";
 import { Logo } from "@/components/layout/Logo";
 import { SettingsLink } from "@/components/layout/SettingsLink";
 
@@ -27,6 +28,10 @@ const APP_TABS: TabItem[] = [
 const CREATE_ITEMS: CreateItem[] = [
   { href: "/records/new", label: "New record", icon: FilePlus2 },
 ];
+
+// Workers reach everything else from the four tabs; the "More" sheet is just
+// their account header (→ Settings) and Sign out.
+const MORE_ITEMS: MoreItem[] = [];
 
 // A record is "focused work" - creating or editing one already has its own
 // fixed Save/Cancel bar (WorkRecordForm), so the persistent tab bar steps
@@ -65,7 +70,15 @@ export function WorkerNav({
 
       <BottomTabBar items={items} pathname={pathname} hidden={focused} />
       {!focused && (
-        <AppTabBar items={appTabs} pathname={pathname} createItems={CREATE_ITEMS} />
+        <AppTabBar
+          items={appTabs}
+          pathname={pathname}
+          createItems={CREATE_ITEMS}
+          moreItems={MORE_ITEMS}
+          name={name}
+          roleLabel="Worker"
+          settingsHref="/records/settings"
+        />
       )}
     </>
   );

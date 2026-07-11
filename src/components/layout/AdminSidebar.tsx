@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   ClipboardList,
+  ListChecks,
   Users,
   Users2,
   Contact,
@@ -19,6 +20,7 @@ import {
 import { AppTabBar } from "@/components/layout/AppTabBar";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import type { CreateItem } from "@/components/layout/CreateSheet";
+import type { MoreItem } from "@/components/layout/MoreSheet";
 import { Logo } from "@/components/layout/Logo";
 import { SettingsLink } from "@/components/layout/SettingsLink";
 import { cn } from "@/lib/utils";
@@ -45,6 +47,16 @@ const CREATE_ITEMS: CreateItem[] = [
   { href: "/admin/projects/new", label: "New project", icon: FolderPlus },
   { href: "/admin/workers/new", label: "New worker", icon: UserPlus },
   { href: "/admin/teams/new", label: "New team", icon: Users2 },
+];
+
+// Everything that doesn't fit in the four native tabs, shown in the "More"
+// sheet. Settings is reached from the sheet's account header instead.
+const MORE_ITEMS: MoreItem[] = [
+  { href: "/admin/records", label: "Records", icon: ClipboardList },
+  { href: "/admin/customers", label: "Customers", icon: Contact },
+  { href: "/admin/reports", label: "Pay Report", icon: BarChart3 },
+  { href: "/admin/workers", label: "Workers", icon: Users },
+  { href: "/admin/checklists", label: "Checklist templates", icon: ListChecks },
 ];
 
 function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
@@ -90,9 +102,12 @@ export function AdminSidebar({
     item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
   );
   // Records lives under "More" in the native bar, so the review badge rides
-  // the More tab there.
+  // both the More tab and the Records row inside the sheet.
   const appTabs = APP_TABS.map((item) =>
     item.href === "/admin/more" ? { ...item, badge: pendingReviewCount } : item
+  );
+  const moreItems = MORE_ITEMS.map((item) =>
+    item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
   );
 
   return (
@@ -119,7 +134,15 @@ export function AdminSidebar({
       </header>
 
       <BottomTabBar items={items} pathname={pathname} />
-      <AppTabBar items={appTabs} pathname={pathname} createItems={CREATE_ITEMS} />
+      <AppTabBar
+        items={appTabs}
+        pathname={pathname}
+        createItems={CREATE_ITEMS}
+        moreItems={moreItems}
+        name={name}
+        roleLabel="Admin"
+        settingsHref="/admin/settings"
+      />
     </>
   );
 }
