@@ -6,12 +6,14 @@ import {
   Users,
   Users2,
   ArrowRight,
+  ChevronRight,
   Clock3,
   CheckCircle2,
   TrendingUp,
   DollarSign,
   Wrench,
   FolderKanban,
+  Image as ImageIcon,
   Images,
 } from "lucide-react";
 
@@ -21,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BarList } from "@/components/charts/BarList";
 import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
+import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
@@ -150,6 +153,8 @@ export default async function AdminDashboardPage() {
     activeProjects,
     photoCount,
     teamCount,
+    recentPhotos,
+    recentActiveProjects,
   ] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId } }),
     prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
@@ -196,6 +201,26 @@ export default async function AdminDashboardPage() {
     prisma.project.count({ where: { organizationId, status: { not: "COMPLETED" } } }),
     prisma.photo.count({ where: { organizationId } }),
     prisma.team.count({ where: { organizationId } }),
+    // A visual strip of the latest jobsite photos.
+    prisma.photo.findMany({
+      where: { organizationId },
+      orderBy: { takenAt: "desc" },
+      take: 12,
+      select: { id: true, url: true, project: { select: { id: true } } },
+    }),
+    // The most recently touched active projects, with checklist progress.
+    prisma.project.findMany({
+      where: { organizationId, status: "ACTIVE" },
+      orderBy: { updatedAt: "desc" },
+      take: 4,
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        _count: { select: { records: true, photos: true } },
+        checklists: { select: { items: { select: { done: true } } } },
+      },
+    }),
   ]);
 
   // One unified metrics grid: a headline "Total Records" hero, then the
@@ -308,8 +333,8 @@ export default async function AdminDashboardPage() {
           Overview
         </h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {/* Headline stat spans the full width, then uniform tiles below. */}
-          <Card className="col-span-2 sm:col-span-4">
+          {/* Two headline stats span the width, then uniform tiles below. */}
+          <Card className="col-span-2 sm:col-span-2">
             <CardContent className="flex items-center gap-4 p-4">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
                 <ClipboardList className="h-6 w-6" />
@@ -322,11 +347,134 @@ export default async function AdminDashboardPage() {
               </div>
             </CardContent>
           </Card>
+          <Link href="/admin/reports" className="col-span-2 block sm:col-span-2">
+            <Card className="h-full transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
+              <CardContent className="flex items-center gap-4 p-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+                  <DollarSign className="h-6 w-6" />
+                </span>
+                <div className="min-w-0">
+                  <div className="truncate text-3xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+                    {money.format(payReport.grand.total)}
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    To pay this month
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
           {tiles.map((tile) => (
             <StatTile key={tile.label} {...tile} />
           ))}
         </div>
       </section>
+
+      {recentActiveProjects.length > 0 && (
+        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              Active projects
+            </h2>
+            <Link
+              href="/admin/projects"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {recentActiveProjects.map((p) => {
+              let total = 0;
+              let done = 0;
+              for (const c of p.checklists)
+                for (const item of c.items) {
+                  total++;
+                  if (item.done) done++;
+                }
+              const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+              return (
+                <Card
+                  key={p.id}
+                  className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
+                >
+                  <Link
+                    href={`/admin/projects/${p.id}`}
+                    className="flex items-center gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                      <FolderKanban className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
+                          {p.name}
+                        </span>
+                        <ProjectStatusBadge status={p.status} />
+                      </div>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+                        {total > 0 && (
+                          <span className="flex items-center gap-1.5">
+                            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+                              <span
+                                className="block h-full rounded-full bg-neutral-800 dark:bg-neutral-200"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </span>
+                            <span className="tabular-nums">{pct}%</span>
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <ImageIcon className="h-3.5 w-3.5" />
+                          <span className="tabular-nums">{p._count.photos}</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <ClipboardList className="h-3.5 w-3.5" />
+                          <span className="tabular-nums">{p._count.records}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {recentPhotos.length > 0 && (
+        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "110ms" }}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              Recent photos
+            </h2>
+            <Link
+              href="/admin/photos"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {recentPhotos.map((photo) => (
+              <Link
+                key={photo.id}
+                href={`/admin/projects/${photo.project.id}/photos/${photo.id}`}
+                className="shrink-0"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photo.url}
+                  alt="Recent jobsite photo"
+                  className="h-24 w-24 rounded-lg border border-neutral-200 object-cover transition-opacity hover:opacity-90 dark:border-neutral-800"
+                />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "120ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
