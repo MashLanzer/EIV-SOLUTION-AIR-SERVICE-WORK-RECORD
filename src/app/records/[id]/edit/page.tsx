@@ -46,7 +46,11 @@ export default async function EditRecordPage({
           }),
     },
     orderBy: { name: "asc" },
-    select: { id: true, name: true },
+    select: {
+      id: true,
+      name: true,
+      customer: { select: { name: true, address: true, phone: true, email: true } },
+    },
   });
 
   const boundAction = updateRecordAction.bind(null, record.id);

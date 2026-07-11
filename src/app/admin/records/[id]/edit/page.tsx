@@ -26,7 +26,11 @@ export default async function AdminEditRecordPage({
   const projects = await prisma.project.findMany({
     where: { organizationId: requireOrgId(session) },
     orderBy: { name: "asc" },
-    select: { id: true, name: true },
+    select: {
+      id: true,
+      name: true,
+      customer: { select: { name: true, address: true, phone: true, email: true } },
+    },
   });
 
   const boundAction = updateRecordAction.bind(null, record.id);

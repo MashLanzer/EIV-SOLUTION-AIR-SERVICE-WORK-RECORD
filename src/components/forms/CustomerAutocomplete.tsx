@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { MapPin } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -16,26 +22,33 @@ interface CustomerSuggestion {
 const LISTBOX_ID = "customer-suggestions";
 const optionId = (index: number) => `customer-suggestion-${index}`;
 
+export interface CustomerAutocompleteHandle {
+  // Set the customer name field programmatically (e.g. when a project with an
+  // assigned customer is picked). Kept minimal on purpose.
+  setName: (name: string) => void;
+}
+
 // Customer-name input with a suggestions dropdown backed by
 // GET /api/customers. Picking a suggestion also fills the address input
 // (looked up by id, since both live in the same form). A plain <datalist>
 // can't fill two fields and is unreliable in the Android WebView.
-export function CustomerAutocomplete({
-  defaultValue,
-  addressInputId,
-  phoneInputId,
-  emailInputId,
-  invalid,
-  describedBy,
-}: {
-  defaultValue?: string;
-  addressInputId: string;
-  phoneInputId?: string;
-  emailInputId?: string;
-  invalid?: boolean;
-  describedBy?: string;
-}) {
+export const CustomerAutocomplete = forwardRef<
+  CustomerAutocompleteHandle,
+  {
+    defaultValue?: string;
+    addressInputId: string;
+    phoneInputId?: string;
+    emailInputId?: string;
+    invalid?: boolean;
+    describedBy?: string;
+  }
+>(function CustomerAutocomplete(
+  { defaultValue, addressInputId, phoneInputId, emailInputId, invalid, describedBy },
+  ref
+) {
   const [value, setValue] = useState(defaultValue ?? "");
+
+  useImperativeHandle(ref, () => ({ setName: (name: string) => setValue(name) }), []);
   const [suggestions, setSuggestions] = useState<CustomerSuggestion[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
@@ -174,4 +187,4 @@ export function CustomerAutocomplete({
       )}
     </div>
   );
-}
+});

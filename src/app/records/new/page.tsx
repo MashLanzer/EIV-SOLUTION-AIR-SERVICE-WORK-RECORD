@@ -18,7 +18,11 @@ export default async function NewRecordPage() {
       ...(isAdmin ? {} : { teamId: { in: teamIds ?? [] } }),
     },
     orderBy: { name: "asc" },
-    select: { id: true, name: true },
+    select: {
+      id: true,
+      name: true,
+      customer: { select: { name: true, address: true, phone: true, email: true } },
+    },
   });
 
   return (
