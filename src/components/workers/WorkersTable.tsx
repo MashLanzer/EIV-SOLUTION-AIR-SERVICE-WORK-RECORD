@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { User } from "@prisma/client";
-import { Settings } from "lucide-react";
+import { ChevronRight, Mail, Settings } from "lucide-react";
 
+import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,8 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DataField } from "@/components/ui/data-field";
-import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
+import { MobileCardList } from "@/components/ui/responsive-table";
 
 export interface WorkerStat {
   jobs: number;
@@ -127,49 +127,31 @@ export function WorkersSection({
             {workers.map((worker) => {
               const stat = stats[worker.id];
               return (
-                <MobileCardRow
-                  key={worker.id}
-                  actions={
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/admin/workers/${worker.id}`}>
-                        <Settings className="h-4 w-4" />
-                        Manage
-                      </Link>
-                    </Button>
-                  }
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                      {worker.name}
-                    </span>
-                    <StatusBadge active={worker.active} />
-                  </div>
-                  <DataField
-                    label="Email"
-                    value={
-                      <a
-                        href={`mailto:${worker.email}`}
-                        className="block break-all hover:text-primary"
-                      >
-                        {worker.email}
-                      </a>
-                    }
-                  />
-                  <div className="grid grid-cols-3 gap-3">
-                    <DataField
-                      label="Jobs"
-                      value={<span className="tabular-nums">{stat?.jobs ?? 0}</span>}
-                    />
-                    <DataField
-                      label="Last active"
-                      value={stat?.lastActive ? formatDate(stat.lastActive) : "—"}
-                    />
-                    <DataField
-                      label="Member since"
-                      value={formatDate(worker.createdAt.toISOString())}
-                    />
-                  </div>
-                </MobileCardRow>
+                <Card key={worker.id}>
+                  <Link
+                    href={`/admin/workers/${worker.id}`}
+                    className="flex items-start gap-3 p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+                  >
+                    <AvatarInitials name={worker.name} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
+                          {worker.name}
+                        </span>
+                        <StatusBadge active={worker.active} />
+                      </div>
+                      <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                        <Mail className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{worker.email}</span>
+                      </div>
+                      <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+                        {stat?.jobs ?? 0} job{(stat?.jobs ?? 0) === 1 ? "" : "s"}
+                        {stat?.lastActive ? ` · Last active ${formatDate(stat.lastActive)}` : ""}
+                      </div>
+                    </div>
+                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                </Card>
               );
             })}
           </MobileCardList>

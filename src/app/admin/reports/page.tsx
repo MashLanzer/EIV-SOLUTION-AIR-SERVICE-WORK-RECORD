@@ -1,13 +1,13 @@
 import { BarChart3, ChevronDown, DollarSign, Sheet, Users } from "lucide-react";
 
+import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { DataField } from "@/components/ui/data-field";
 import { DatePresets } from "@/components/ui/date-presets";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterActions, FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
-import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
+import { MobileCardList } from "@/components/ui/responsive-table";
 import {
   Table,
   TableBody,
@@ -229,36 +229,41 @@ export default async function AdminReportsPage({
                 <div className="p-4 sm:hidden">
                   <MobileCardList>
                     {report.rows.map((row) => (
-                      <MobileCardRow key={row.name.toLowerCase()}>
-                        <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                          {row.name}
-                        </span>
-                        <div className="grid grid-cols-2 gap-3">
-                          <DataField label="Jobs" value={<span className="tabular-nums">{row.jobs}</span>} />
-                          <DataField label="Total" value={money(row.total)} />
-                          <DataField label="Lead Pay" value={money(row.leadTotal)} />
-                          <DataField label="Helper Pay" value={money(row.helperTotal)} />
+                      <Card key={row.name.toLowerCase()}>
+                        <div className="flex items-center gap-3 p-4">
+                          <AvatarInitials name={row.name} />
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
+                              {row.name}
+                            </div>
+                            <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+                              {row.jobs} job{row.jobs === 1 ? "" : "s"} · Lead {money(row.leadTotal)} · Helper {money(row.helperTotal)}
+                            </div>
+                          </div>
+                          <div className="shrink-0 text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                            {money(row.total)}
+                          </div>
                         </div>
-                      </MobileCardRow>
+                      </Card>
                     ))}
-                    <MobileCardRow className="bg-neutral-50 dark:bg-neutral-800">
-                      <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                        Grand Total
-                      </span>
-                      <div className="grid grid-cols-2 gap-3">
-                        <DataField label="Jobs" value={<span className="tabular-nums">{report.grand.jobs}</span>} />
-                        <DataField
-                          label="Total"
-                          value={
-                            <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                              {money(report.grand.total)}
-                            </span>
-                          }
-                        />
-                        <DataField label="Lead Pay" value={money(report.grand.leadTotal)} />
-                        <DataField label="Helper Pay" value={money(report.grand.helperTotal)} />
+                    <Card className="border-primary/30 bg-accent-soft/40">
+                      <div className="flex items-center gap-3 p-4">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
+                          <DollarSign className="h-5 w-5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-neutral-900 dark:text-neutral-100">
+                            Grand Total
+                          </div>
+                          <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+                            {report.grand.jobs} job{report.grand.jobs === 1 ? "" : "s"} · Lead {money(report.grand.leadTotal)} · Helper {money(report.grand.helperTotal)}
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                          {money(report.grand.total)}
+                        </div>
                       </div>
-                    </MobileCardRow>
+                    </Card>
                   </MobileCardList>
                 </div>
               </>

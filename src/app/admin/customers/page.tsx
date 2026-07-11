@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Contact, Search, SearchX, ArrowRight } from "lucide-react";
+import { ChevronRight, Contact, Search, SearchX, ArrowRight, MapPin, Mail, Phone } from "lucide-react";
 
+import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -16,8 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SortHeader } from "@/components/ui/sort-header";
-import { DataField } from "@/components/ui/data-field";
-import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
+import { MobileCardList } from "@/components/ui/responsive-table";
 import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -177,29 +177,45 @@ export default async function AdminCustomersPage({
 
           <MobileCardList>
             {customers.map((customer) => (
-              <MobileCardRow
-                key={customer.id}
-                actions={
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin/customers/${customer.id}`}>
-                      View
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                }
-              >
-                <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                  {customer.name}
-                </span>
-                <div className="grid grid-cols-2 gap-3">
-                  <DataField label="Address" value={customer.address} />
-                  <DataField label="Contact" value={customer.phone || customer.email} />
-                  <DataField
-                    label="Jobs"
-                    value={<span className="tabular-nums">{customer._count.records}</span>}
-                  />
-                </div>
-              </MobileCardRow>
+              <Card key={customer.id}>
+                <Link
+                  href={`/admin/customers/${customer.id}`}
+                  className="flex items-start gap-3 p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+                >
+                  <AvatarInitials name={customer.name} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
+                        {customer.name}
+                      </span>
+                      <span className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+                        {customer._count.records} job{customer._count.records === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <div className="mt-0.5 flex items-start gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span className="min-w-0">{customer.address}</span>
+                    </div>
+                    {(customer.phone || customer.email) && (
+                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
+                        {customer.phone && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {customer.phone}
+                          </span>
+                        )}
+                        {customer.email && (
+                          <span className="flex min-w-0 items-center gap-1">
+                            <Mail className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{customer.email}</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                </Link>
+              </Card>
             ))}
           </MobileCardList>
         </section>
