@@ -1,20 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, Plus, Users2 } from "lucide-react";
+import { ChevronRight, FolderKanban, Plus, Users2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { DataField } from "@/components/ui/data-field";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { ProjectsTeamsTabs } from "@/components/projects/ProjectsTeamsTabs";
+import { TeamAvatar } from "@/components/teams/TeamColorDot";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
@@ -56,75 +47,39 @@ export default async function AdminTeamsPage() {
           }
         />
       ) : (
-        <>
-          <div className="hidden sm:block">
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Team</TableHead>
-                      <TableHead className="text-right">Members</TableHead>
-                      <TableHead className="text-right">Projects</TableHead>
-                      <TableHead className="text-right">Open</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {teams.map((t) => (
-                      <TableRow key={t.id}>
-                        <TableCell className="font-medium text-neutral-900 dark:text-neutral-100">
-                          {t.name}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {t._count.memberships}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {t._count.projects}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button asChild variant="outline" size="icon">
-                            <Link href={`/admin/teams/${t.id}`} aria-label={`Open ${t.name}`}>
-                              <ArrowRight className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-
-          <MobileCardList>
-            {teams.map((t) => (
-              <MobileCardRow
-                key={t.id}
-                actions={
-                  <Button asChild variant="outline" size="icon">
-                    <Link href={`/admin/teams/${t.id}`} aria-label={`Open ${t.name}`}>
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                }
+        <div className="grid gap-3 sm:grid-cols-2">
+          {teams.map((t) => (
+            <Card
+              key={t.id}
+              className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
+            >
+              <Link
+                href={`/admin/teams/${t.id}`}
+                className="flex items-center gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
               >
-                <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                  {t.name}
-                </span>
-                <div className="grid grid-cols-2 gap-3">
-                  <DataField
-                    label="Members"
-                    value={<span className="tabular-nums">{t._count.memberships}</span>}
-                  />
-                  <DataField
-                    label="Projects"
-                    value={<span className="tabular-nums">{t._count.projects}</span>}
-                  />
+                <TeamAvatar name={t.name} color={t.color} seed={t.id} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
+                    {t.name}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
+                    <span className="flex items-center gap-1.5">
+                      <Users2 className="h-3.5 w-3.5" />
+                      <span className="tabular-nums">{t._count.memberships}</span>
+                      member{t._count.memberships === 1 ? "" : "s"}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <FolderKanban className="h-3.5 w-3.5" />
+                      <span className="tabular-nums">{t._count.projects}</span>
+                      project{t._count.projects === 1 ? "" : "s"}
+                    </span>
+                  </div>
                 </div>
-              </MobileCardRow>
-            ))}
-          </MobileCardList>
-        </>
+                <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+              </Link>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );

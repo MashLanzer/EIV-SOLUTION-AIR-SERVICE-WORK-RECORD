@@ -86,6 +86,7 @@ export const projectSchema = z.object({
 
 export const teamSchema = z.object({
   name: z.string().min(1, "Team name is required").max(80),
+  color: z.string().max(20).optional(),
 });
 
 export const createWorkerSchema = z.object({

@@ -6,9 +6,18 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { TEAM_COLORS } from "@/lib/teamColors";
 import { teamSchema } from "@/lib/validations";
 
 export type TeamFormState = { error?: string } | undefined;
+
+const COLOR_KEYS = new Set(TEAM_COLORS.map((c) => c.key));
+
+// Keep only a known palette key; anything else stores as null (deterministic
+// fallback swatch takes over).
+function cleanColor(raw: unknown): string | null {
+  return typeof raw === "string" && COLOR_KEYS.has(raw) ? raw : null;
+}
 
 export async function createTeamAction(
   _prev: TeamFormState,
@@ -17,13 +26,20 @@ export async function createTeamAction(
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
 
-  const parsed = teamSchema.safeParse({ name: formData.get("name") });
+  const parsed = teamSchema.safeParse({
+    name: formData.get("name"),
+    color: formData.get("color") ?? undefined,
+  });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
 
   const team = await prisma.team.create({
-    data: { organizationId, name: parsed.data.name },
+    data: {
+      organizationId,
+      name: parsed.data.name,
+      color: cleanColor(parsed.data.color),
+    },
     select: { id: true },
   });
   revalidatePath("/admin/teams");
@@ -38,7 +54,10 @@ export async function updateTeamAction(
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
 
-  const parsed = teamSchema.safeParse({ name: formData.get("name") });
+  const parsed = teamSchema.safeParse({
+    name: formData.get("name"),
+    color: formData.get("color") ?? undefined,
+  });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
@@ -51,7 +70,7 @@ export async function updateTeamAction(
 
   await prisma.team.update({
     where: { id: teamId },
-    data: { name: parsed.data.name },
+    data: { name: parsed.data.name, color: cleanColor(parsed.data.color) },
   });
   revalidatePath("/admin/teams");
   revalidatePath(`/admin/teams/${teamId}`);
@@ -96,6 +115,49 @@ export async function setTeamMembersAction(teamId: string, formData: FormData) {
     }),
   ]);
 
+  revalidatePath(`/admin/teams/${teamId}`);
+  redirect(`/admin/teams/${teamId}?saved=1`);
+}
+
+// Assign this team to exactly the checked projects (and unassign the rest that
+// were previously on it). All updateMany calls are org-scoped, so a crafted
+// projectId from another org can't be moved onto the team.
+export async function setTeamProjectsAction(teamId: string, formData: FormData) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  const team = await prisma.team.findFirst({
+    where: { id: teamId, organizationId },
+    select: { id: true },
+  });
+  if (!team) return;
+
+  const requested = formData
+    .getAll("projectId")
+    .filter((v): v is string => typeof v === "string");
+  const validProjects = requested.length
+    ? await prisma.project.findMany({
+        where: { id: { in: requested }, organizationId },
+        select: { id: true },
+      })
+    : [];
+  const keepIds = validProjects.map((p) => p.id);
+
+  await prisma.$transaction([
+    // Drop this team from projects that are no longer checked.
+    prisma.project.updateMany({
+      where: { organizationId, teamId, id: { notIn: keepIds } },
+      data: { teamId: null },
+    }),
+    // Attach the checked projects to this team.
+    prisma.project.updateMany({
+      where: { organizationId, id: { in: keepIds } },
+      data: { teamId },
+    }),
+  ]);
+
+  revalidatePath("/admin/projects");
+  revalidatePath("/admin/teams");
   revalidatePath(`/admin/teams/${teamId}`);
   redirect(`/admin/teams/${teamId}?saved=1`);
 }

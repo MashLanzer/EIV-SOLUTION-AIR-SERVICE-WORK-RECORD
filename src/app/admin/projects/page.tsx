@@ -36,7 +36,7 @@ type ProjectRow = {
   status: ProjectStatus;
   latitude: number | null;
   longitude: number | null;
-  team: { id: string; name: string } | null;
+  team: { id: string; name: string; color: string | null } | null;
   _count: { records: number; photos: number };
   checklists: { items: { done: boolean }[] }[];
 };
@@ -92,7 +92,7 @@ function ProjectCard({ project }: { project: ProjectRow }) {
         {project.team && (
           <TeamChip
             name={project.team.name}
-            color={null}
+            color={project.team.color}
             seed={project.team.id}
             className="self-start"
           />
@@ -175,7 +175,7 @@ export default async function AdminProjectsPage({
       },
       orderBy: { updatedAt: "desc" },
       include: {
-        team: { select: { id: true, name: true } },
+        team: { select: { id: true, name: true, color: true } },
         _count: { select: { records: true, photos: true } },
         checklists: { select: { items: { select: { done: true } } } },
       },

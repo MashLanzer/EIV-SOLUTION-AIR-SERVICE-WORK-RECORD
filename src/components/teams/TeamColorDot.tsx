@@ -23,6 +23,35 @@ export function TeamColorDot({
   );
 }
 
+// A colored circle with the team's initial, used as the leading chip on team
+// list rows and the detail header (gives crews a visual identity).
+export function TeamAvatar({
+  name,
+  color,
+  seed,
+  className,
+}: {
+  name: string;
+  color: string | null | undefined;
+  seed: string;
+  className?: string;
+}) {
+  const c = teamColor(color, seed);
+  const initial = name.trim().charAt(0).toUpperCase() || "?";
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
+        c.chip,
+        className
+      )}
+    >
+      {initial}
+    </span>
+  );
+}
+
 // A soft pill showing the team's color + name, used on project cards to signal
 // crew ownership at a glance.
 export function TeamChip({

@@ -47,6 +47,7 @@ model Team {
   organizationId String
   organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
+  color          String?
   memberships    TeamMembership[]
   projects       Project[]
   createdAt      DateTime         @default(now())

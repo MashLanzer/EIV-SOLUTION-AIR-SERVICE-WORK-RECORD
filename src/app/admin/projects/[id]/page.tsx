@@ -72,7 +72,7 @@ export default async function AdminProjectPage({
   const project = await prisma.project.findFirst({
     where: { id, organizationId },
     include: {
-      team: { select: { id: true, name: true } },
+      team: { select: { id: true, name: true, color: true } },
       customer: { select: { id: true, name: true, phone: true, email: true } },
     },
   });
@@ -384,7 +384,7 @@ export default async function AdminProjectPage({
             )}
             {project.team && (
               <Link href={`/admin/teams/${project.team.id}`} className="hover:opacity-80">
-                <TeamChip name={project.team.name} color={null} seed={project.team.id} />
+                <TeamChip name={project.team.name} color={project.team.color} seed={project.team.id} />
               </Link>
             )}
           </div>
