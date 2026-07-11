@@ -27,6 +27,7 @@ import {
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -210,6 +211,12 @@ export function WorkRecordForm({
   const [offline, setOffline] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Editing an existing record (no draftKey) has no draft safety net, so guard
+  // against losing unsaved edits. The new-record form already autosaves a
+  // draft, so it opts out.
+  const guardUnsaved = !draftKey;
+  const [dirty, setDirty] = useState(false);
+
   // Wizard state: which step is visible, which steps are complete, and the
   // live "time on site" readout.
   const [step, setStep] = useState(0);
@@ -344,9 +351,22 @@ export function WorkRecordForm({
     saveTimer.current = setTimeout(snapshotDraft, 800);
   }
 
+  // Warn before a full page unload (reload / closing the app) when editing a
+  // record with unsaved edits. In-app cancel is guarded by the Cancel button.
+  useEffect(() => {
+    if (!guardUnsaved || !dirty || pending) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [guardUnsaved, dirty, pending]);
+
   // Cheap live updates on every input/tap: keep the step checks and the
   // duration readout fresh, and (debounced) persist the draft.
   function handleFormInput() {
+    if (guardUnsaved) setDirty(true);
     scheduleSave();
     recompute();
   }
@@ -864,15 +884,30 @@ export function WorkRecordForm({
 
         <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0">
           {step === 0 ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={() => router.back()}
-            >
-              <X className="h-4 w-4" />
-              Cancel
-            </Button>
+            guardUnsaved && dirty ? (
+              <ConfirmDialog
+                title="Discard changes?"
+                description="You have unsaved edits. Leaving now will lose them."
+                confirmLabel="Discard"
+                trigger={
+                  <Button type="button" variant="outline" size="lg">
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </Button>
+                }
+                onConfirm={() => router.back()}
+              />
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => router.back()}
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </Button>
+            )
           ) : (
             <Button
               type="button"

@@ -1,4 +1,6 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, ClipboardList } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
@@ -8,6 +10,12 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
+
+const editDateFmt = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
 
 export default async function EditRecordPage({
   params,
@@ -57,11 +65,34 @@ export default async function EditRecordPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          Edit Job #{record.jobNumber}
-        </h1>
-        <StatusBadge status={record.status} />
+      <div>
+        <Link
+          href={`/records/${record.id}`}
+          className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Link>
+        <div className="mt-2 flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+            <ClipboardList className="h-5 w-5" />
+          </span>
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+              Edit Job #{record.jobNumber}
+            </h1>
+            <div className="flex items-center gap-2">
+              <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">
+                {record.customerName}
+              </p>
+              <StatusBadge status={record.status} />
+            </div>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
+          Job date {editDateFmt.format(record.date)} · Updated{" "}
+          {editDateFmt.format(record.updatedAt)}
+        </p>
       </div>
       {record.status === "NEEDS_CHANGES" && record.reviewNote && (
         <Alert variant="warning">
