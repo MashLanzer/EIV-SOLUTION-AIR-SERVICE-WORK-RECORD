@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { PALETTE_FAMILIES } from "@/lib/palettes";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,7 +40,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html:
               "try{if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){document.documentElement.setAttribute('data-native','1')}}catch(e){}" +
-              "try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t)}if(localStorage.getItem('reduce-motion')==='1'){document.documentElement.setAttribute('data-reduce-motion','1')}}catch(e){}",
+              "try{var d=document.documentElement,t=localStorage.getItem('theme');" +
+              "if(t==='dark'||t==='light'){d.setAttribute('data-theme',t)}" +
+              "else if(t==='custom'){var F=" +
+              JSON.stringify(PALETTE_FAMILIES) +
+              ",p=localStorage.getItem('palette'),f=F[p];if(f){d.setAttribute('data-theme',f);d.setAttribute('data-palette',p)}}" +
+              "if(localStorage.getItem('reduce-motion')==='1'){d.setAttribute('data-reduce-motion','1')}}catch(e){}",
           }}
         />
         {children}

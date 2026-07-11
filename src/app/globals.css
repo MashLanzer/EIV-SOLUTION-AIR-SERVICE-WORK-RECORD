@@ -112,6 +112,53 @@
   }
 }
 
+/* ─── Custom palettes ──────────────────────────────────────────────────────
+   Selectable colour schemes (Appearance → Custom). Each palette is a
+   dark- or light-family theme: the client sets data-theme to the family (so
+   the `dark:` variant + base tokens resolve) AND data-palette to the id (this
+   block), which re-tints the whole app by remapping the neutral scale that
+   every component already uses, plus the semantic tokens. Adding a palette =
+   one block here + one entry in src/lib/palettes.ts. Placed after the dark
+   block so, at equal specificity, the palette wins.
+
+   Ocean — a deep-blue "ocean dark" scheme (dark-family). */
+:root[data-palette="ocean"] {
+  --background: #001d39;
+  --foreground: #cfe4f4;
+
+  --color-primary: #7bbde8;
+  --color-primary-hover: #93cbef;
+  --color-primary-foreground: #001d39;
+  --color-accent: #7bbde8;
+  --color-accent-foreground: #001d39;
+  --color-accent-soft: #0d3a63;
+  --color-accent-text: #bdd8e9;
+  --color-success: #34d399;
+  --color-success-soft: #0c3f4a;
+  --color-success-text: #99f6e4;
+  --color-destructive: #fb7185;
+  --color-destructive-hover: #fda4af;
+  --color-destructive-soft: #4c1130;
+  --color-destructive-text: #fecdd3;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #422b0a;
+  --color-warning-text: #fde68a;
+
+  /* Re-tint the neutral ramp blue (same light→dark ordering as the grey
+     scale, so every existing neutral-* utility keeps its intent). */
+  --color-neutral-50: #eef5fb;
+  --color-neutral-100: #d5e6f4;
+  --color-neutral-200: #b7d3ea;
+  --color-neutral-300: #8fb6d7;
+  --color-neutral-400: #6b97bb;
+  --color-neutral-500: #527ca1;
+  --color-neutral-600: #3c6188;
+  --color-neutral-700: #17456f;
+  --color-neutral-800: #0c3760;
+  --color-neutral-900: #0a2c4f;
+  --color-neutral-950: #04203f;
+}
+
 /* Design conventions (documented here, not new tokens - Tailwind's
    built-in scales already cover all of these):
 

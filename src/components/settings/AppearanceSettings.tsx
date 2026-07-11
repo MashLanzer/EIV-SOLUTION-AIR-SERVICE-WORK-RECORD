@@ -1,25 +1,29 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Monitor, Moon, Sun, Sparkles } from "lucide-react";
+import { Check, Monitor, Moon, Sun, Palette as PaletteIcon, Sparkles } from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
 import { SettingsCustomRow, SettingsRow } from "@/components/settings/SettingsList";
+import {
+  DEFAULT_PALETTE_ID,
+  PALETTES,
+  PALETTE_FAMILIES,
+} from "@/lib/palettes";
 import { cn } from "@/lib/utils";
 
-type ThemeChoice = "light" | "system" | "dark";
+type ThemeChoice = "light" | "system" | "dark" | "custom";
 
 const THEME_OPTIONS: { value: ThemeChoice; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "Light", icon: Sun },
   { value: "system", label: "System", icon: Monitor },
   { value: "dark", label: "Dark", icon: Moon },
+  { value: "custom", label: "Custom", icon: PaletteIcon },
 ];
 
-// A tiny same-tab store over the two localStorage prefs the before-paint script
-// reads. We use useSyncExternalStore (not an effect) so there's no hydration
-// mismatch and no state-in-effect: SSR renders the defaults, then the client
-// snapshot takes over. `emit` fans out our own writes (the native `storage`
-// event only fires for *other* tabs).
+// A tiny same-tab store over the Appearance prefs the before-paint script reads
+// (theme, palette, reduce-motion). useSyncExternalStore avoids hydration
+// mismatch and state-in-effect; `emit` fans out our own writes.
 const listeners = new Set<() => void>();
 function emit() {
   listeners.forEach((l) => l());
@@ -33,14 +37,26 @@ function subscribe(cb: () => void) {
   };
 }
 
-function setThemePref(choice: ThemeChoice) {
+// Apply light/dark/system/custom. Custom needs a palette id; its family decides
+// which base theme (data-theme) it rides on, then data-palette re-tints.
+function applyTheme(choice: ThemeChoice, paletteId?: string) {
   const root = document.documentElement;
+  root.removeAttribute("data-palette");
   if (choice === "system") {
     root.removeAttribute("data-theme");
     localStorage.removeItem("theme");
-  } else {
+    localStorage.removeItem("palette");
+  } else if (choice === "light" || choice === "dark") {
     root.setAttribute("data-theme", choice);
     localStorage.setItem("theme", choice);
+    localStorage.removeItem("palette");
+  } else {
+    const id = paletteId ?? DEFAULT_PALETTE_ID;
+    const family = PALETTE_FAMILIES[id] ?? "dark";
+    root.setAttribute("data-theme", family);
+    root.setAttribute("data-palette", id);
+    localStorage.setItem("theme", "custom");
+    localStorage.setItem("palette", id);
   }
   emit();
 }
@@ -62,9 +78,17 @@ function useThemeChoice(): ThemeChoice {
     subscribe,
     () => {
       const t = localStorage.getItem("theme");
-      return t === "dark" || t === "light" ? t : "system";
+      return t === "dark" || t === "light" || t === "custom" ? t : "system";
     },
     () => "system"
+  );
+}
+
+function usePaletteId(): string {
+  return useSyncExternalStore(
+    subscribe,
+    () => localStorage.getItem("palette") || DEFAULT_PALETTE_ID,
+    () => DEFAULT_PALETTE_ID
   );
 }
 
@@ -78,6 +102,7 @@ function useReduceMotion(): boolean {
 
 export function AppearanceSettings() {
   const theme = useThemeChoice();
+  const paletteId = usePaletteId();
   const reduceMotion = useReduceMotion();
 
   return (
@@ -89,7 +114,7 @@ export function AppearanceSettings() {
         <div
           role="radiogroup"
           aria-label="Theme"
-          className="grid grid-cols-3 gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900 p-1"
+          className="grid grid-cols-2 gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900 p-1"
         >
           {THEME_OPTIONS.map((opt) => {
             const active = theme === opt.value;
@@ -100,7 +125,7 @@ export function AppearanceSettings() {
                 type="button"
                 role="radio"
                 aria-checked={active}
-                onClick={() => setThemePref(opt.value)}
+                onClick={() => applyTheme(opt.value)}
                 className={cn(
                   "flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm font-medium transition-colors",
                   active
@@ -118,6 +143,47 @@ export function AppearanceSettings() {
           System follows your phone&apos;s light or dark setting.
         </p>
       </SettingsCustomRow>
+
+      {theme === "custom" && (
+        <SettingsCustomRow className="flex flex-col gap-2.5">
+          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+            Palette
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {PALETTES.map((p) => {
+              const active = paletteId === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => applyTheme("custom", p.id)}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-xl border px-2.5 py-2 text-sm font-medium transition-colors",
+                    active
+                      ? "border-primary text-neutral-900 dark:text-neutral-100"
+                      : "border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-700"
+                  )}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full ring-1 ring-black/10"
+                    style={{
+                      background: `linear-gradient(135deg, ${p.swatch[0]} 0%, ${p.swatch[1]} 50%, ${p.swatch[2]} 100%)`,
+                    }}
+                  >
+                    {active && <Check className="h-3.5 w-3.5 text-white drop-shadow" />}
+                  </span>
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            More palettes are on the way.
+          </p>
+        </SettingsCustomRow>
+      )}
 
       <SettingsRow
         icon={Sparkles}
