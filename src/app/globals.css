@@ -159,6 +159,108 @@
   --color-neutral-950: #04203f;
 }
 
+/* Forest — a deep-green dark scheme (dark-family). */
+:root[data-palette="forest"] {
+  --background: #07130d;
+  --foreground: #d7ecdb;
+  --color-primary: #6ee7a6;
+  --color-primary-hover: #8ff0bd;
+  --color-primary-foreground: #06130d;
+  --color-accent: #6ee7a6;
+  --color-accent-foreground: #06130d;
+  --color-accent-soft: #123524;
+  --color-accent-text: #bff0cf;
+  --color-success: #34d399;
+  --color-success-soft: #0c3a28;
+  --color-success-text: #a7f3d0;
+  --color-destructive: #fb7185;
+  --color-destructive-hover: #fda4af;
+  --color-destructive-soft: #45141f;
+  --color-destructive-text: #fecdd3;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #3a2c0a;
+  --color-warning-text: #fde68a;
+  --color-neutral-50: #eef6f0;
+  --color-neutral-100: #d7ecdb;
+  --color-neutral-200: #b7dcc0;
+  --color-neutral-300: #8fc59e;
+  --color-neutral-400: #6aa67d;
+  --color-neutral-500: #4f8863;
+  --color-neutral-600: #3a6b4b;
+  --color-neutral-700: #164a30;
+  --color-neutral-800: #0d3a25;
+  --color-neutral-900: #0c2e1e;
+  --color-neutral-950: #06170e;
+}
+
+/* Sunset — a warm amber-on-brown dark scheme (dark-family). */
+:root[data-palette="sunset"] {
+  --background: #1a0f0a;
+  --foreground: #f4e2d5;
+  --color-primary: #fb923c;
+  --color-primary-hover: #fdba74;
+  --color-primary-foreground: #1a0f0a;
+  --color-accent: #fb923c;
+  --color-accent-foreground: #1a0f0a;
+  --color-accent-soft: #3a1e12;
+  --color-accent-text: #fcd9b8;
+  --color-success: #4ade80;
+  --color-success-soft: #10331f;
+  --color-success-text: #bbf7d0;
+  --color-destructive: #f87171;
+  --color-destructive-hover: #fca5a5;
+  --color-destructive-soft: #4a1414;
+  --color-destructive-text: #fecaca;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #3f2c0a;
+  --color-warning-text: #fde68a;
+  --color-neutral-50: #fbf3ec;
+  --color-neutral-100: #f4e2d5;
+  --color-neutral-200: #ecccb6;
+  --color-neutral-300: #dca98a;
+  --color-neutral-400: #c08765;
+  --color-neutral-500: #a06a4c;
+  --color-neutral-600: #7f5138;
+  --color-neutral-700: #593524;
+  --color-neutral-800: #46281a;
+  --color-neutral-900: #351d12;
+  --color-neutral-950: #1c0f09;
+}
+
+/* Grape — a violet-on-black dark scheme (dark-family). */
+:root[data-palette="grape"] {
+  --background: #130a1f;
+  --foreground: #e6dcf5;
+  --color-primary: #c084fc;
+  --color-primary-hover: #d0a5fd;
+  --color-primary-foreground: #130a1f;
+  --color-accent: #c084fc;
+  --color-accent-foreground: #130a1f;
+  --color-accent-soft: #2e1a45;
+  --color-accent-text: #ddd0f5;
+  --color-success: #4ade80;
+  --color-success-soft: #12331f;
+  --color-success-text: #bbf7d0;
+  --color-destructive: #fb7185;
+  --color-destructive-hover: #fda4af;
+  --color-destructive-soft: #431627;
+  --color-destructive-text: #fecdd3;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #3a2b0e;
+  --color-warning-text: #fde68a;
+  --color-neutral-50: #f2eefa;
+  --color-neutral-100: #e6dcf5;
+  --color-neutral-200: #d2c1ec;
+  --color-neutral-300: #b298d9;
+  --color-neutral-400: #9070bd;
+  --color-neutral-500: #6f5299;
+  --color-neutral-600: #543c78;
+  --color-neutral-700: #392558;
+  --color-neutral-800: #2c1c46;
+  --color-neutral-900: #221537;
+  --color-neutral-950: #120a1e;
+}
+
 /* Design conventions (documented here, not new tokens - Tailwind's
    built-in scales already cover all of these):
 

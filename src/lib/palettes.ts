@@ -20,6 +20,24 @@ export const PALETTES: Palette[] = [
     family: "dark",
     swatch: ["#001d39", "#0a4174", "#7bbde8"],
   },
+  {
+    id: "forest",
+    label: "Forest",
+    family: "dark",
+    swatch: ["#07130d", "#164a30", "#6ee7a6"],
+  },
+  {
+    id: "sunset",
+    label: "Sunset",
+    family: "dark",
+    swatch: ["#1a0f0a", "#593524", "#fb923c"],
+  },
+  {
+    id: "grape",
+    label: "Grape",
+    family: "dark",
+    swatch: ["#130a1f", "#392558", "#c084fc"],
+  },
 ];
 
 // id → family map, small enough to inline into the before-paint script.
