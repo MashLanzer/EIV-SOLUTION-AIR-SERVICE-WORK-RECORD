@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ClipboardList, FilePlus2, FolderKanban, Images, Plus } from "lucide-react";
 
+import { ActivityBell } from "@/components/activity/ActivityBell";
 import { AppTabBar } from "@/components/layout/AppTabBar";
 import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, type TabItem } from "@/components/layout/BottomTabBar";
@@ -42,9 +43,11 @@ function isFocusedRecordFlow(pathname: string) {
 export function WorkerNav({
   name,
   returnedCount = 0,
+  latestActivityAt = null,
 }: {
   name: string;
   returnedCount?: number;
+  latestActivityAt?: number | null;
 }) {
   const pathname = usePathname();
   const items = TAB_ITEMS.map((item) =>
@@ -61,8 +64,9 @@ export function WorkerNav({
         <Link href="/records">
           <Logo />
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <span className="hidden text-sm text-neutral-500 dark:text-neutral-400 sm:inline">{name}</span>
+          <ActivityBell href="/records/activity" latestActivityAt={latestActivityAt} />
           <SettingsLink href="/records/settings" />
         </div>
       </header>

@@ -16,6 +16,7 @@ import {
   UserPlus,
 } from "lucide-react";
 
+import { ActivityBell } from "@/components/activity/ActivityBell";
 import { AppTabBar } from "@/components/layout/AppTabBar";
 import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
@@ -92,9 +93,11 @@ function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
 export function AdminSidebar({
   name,
   pendingReviewCount = 0,
+  latestActivityAt = null,
 }: {
   name: string;
   pendingReviewCount?: number;
+  latestActivityAt?: number | null;
 }) {
   const pathname = usePathname();
   const items = NAV_ITEMS.map((item) =>
@@ -117,7 +120,10 @@ export function AdminSidebar({
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-neutral-200 dark:border-neutral-800 p-3">
           <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{name}</span>
-          <SettingsLink href="/admin/settings" />
+          <div className="flex items-center gap-2">
+            <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
+            <SettingsLink href="/admin/settings" />
+          </div>
         </div>
       </aside>
 
@@ -125,7 +131,10 @@ export function AdminSidebar({
           lives in the bottom tab bar instead of a hamburger drawer. */}
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 px-4 backdrop-blur sm:hidden native:h-auto native:min-h-14 native:pt-[env(safe-area-inset-top)]">
         <Logo />
-        <SettingsLink href="/admin/settings" />
+        <div className="flex items-center gap-2">
+          <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
+          <SettingsLink href="/admin/settings" />
+        </div>
       </header>
 
       <BottomTabBar items={items} pathname={pathname} />
