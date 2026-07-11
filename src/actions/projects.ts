@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { geocodeAddress } from "@/lib/geocode";
-import { projectSchema } from "@/lib/validations";
+import { PROJECT_STATUSES, projectSchema } from "@/lib/validations";
 
 export type ProjectFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
@@ -120,6 +120,21 @@ export async function updateProjectAction(
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
   redirect(`/admin/projects/${projectId}?saved=1`);
+}
+
+// Quick status change from the list card / detail header. Org-scoped
+// updateMany so a bad id (or another org's) is a silent no-op, never a leak.
+export async function setProjectStatusAction(projectId: string, status: string) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const parsed = z.enum(PROJECT_STATUSES).safeParse(status);
+  if (!parsed.success) return;
+  await prisma.project.updateMany({
+    where: { id: projectId, organizationId },
+    data: { status: parsed.data },
+  });
+  revalidatePath("/admin/projects");
+  revalidatePath(`/admin/projects/${projectId}`);
 }
 
 export async function deleteProjectAction(projectId: string) {
