@@ -13,7 +13,7 @@ export default async function AdminSettingsPage({
   const { reset } = await searchParams;
   const org = await prisma.organization.findUnique({
     where: { id: requireOrgId(session) },
-    select: { joinCode: true },
+    select: { name: true, joinCode: true },
   });
   return (
     <>
@@ -23,6 +23,7 @@ export default async function AdminSettingsPage({
         email={session.user.email ?? ""}
         role="ADMIN"
         backHref="/admin"
+        companyName={org?.name ?? ""}
         inviteCode={org?.joinCode ?? null}
       />
     </>

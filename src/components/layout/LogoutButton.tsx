@@ -3,7 +3,6 @@
 import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 
-import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function LogoutButton() {
@@ -13,14 +12,17 @@ export function LogoutButton() {
       description="You'll need to sign in again to access your account."
       confirmLabel="Sign out"
       trigger={
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          className="w-full justify-start gap-3 rounded-none px-6 py-4 text-destructive hover:text-destructive"
+          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900 active:bg-neutral-100 dark:active:bg-neutral-800"
         >
-          <LogOut className="h-4 w-4" />
-          Sign out
-        </Button>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive-soft text-destructive-text">
+            <LogOut className="h-4.5 w-4.5" />
+          </span>
+          <span className="text-sm font-medium text-destructive-text">
+            Sign out
+          </span>
+        </button>
       }
       onConfirm={() => signOut({ redirectTo: "/login" })}
     />

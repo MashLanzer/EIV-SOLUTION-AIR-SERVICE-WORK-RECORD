@@ -1,14 +1,32 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  Info,
+  Mail,
+  ShieldCheck,
+  Trash2,
+  User as UserIcon,
+} from "lucide-react";
 import Link from "next/link";
 
 import { LogoutButton } from "@/components/layout/LogoutButton";
+import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
+import { InlineEditRow } from "@/components/settings/InlineEditRow";
 import { InviteCodeCard } from "@/components/settings/InviteCodeCard";
 import { ResetHistoryDialog } from "@/components/settings/ResetHistoryDialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataField } from "@/components/ui/data-field";
+import {
+  SettingsRow,
+  SettingsSection,
+} from "@/components/settings/SettingsList";
+import { updateOrganizationNameAction } from "@/actions/organization";
+import { updateProfileNameAction } from "@/actions/profile";
+
+// The product version shown in About. Product name is fixed (AeroTrack); the
+// per-company name lives in the Company section.
+const APP_VERSION = "AeroTrack 1.0";
 
 // Taps on the Role value needed to reveal the admin-only Danger zone -
 // deliberately obscure (like Android's "tap Build number 7 times"), so the
@@ -20,12 +38,15 @@ export function SettingsScreen({
   email,
   role,
   backHref,
+  companyName,
   inviteCode,
 }: {
   name: string;
   email: string;
   role: "ADMIN" | "WORKER";
   backHref: string;
+  // Company name, editable by admins only.
+  companyName?: string;
   // The company's invite code, shown to admins only.
   inviteCode?: string | null;
 }) {
@@ -40,7 +61,7 @@ export function SettingsScreen({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex max-w-lg flex-col gap-6">
       <div>
         <Link
           href={backHref}
@@ -54,52 +75,83 @@ export function SettingsScreen({
         </h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Account</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <DataField label="Name" value={name} />
-          <DataField label="Email" value={email} />
-          <DataField
-            label="Role"
-            value={
-              <span
-                onClick={bumpTaps}
-                className="cursor-default select-none"
-              >
-                {isAdmin ? "Admin" : "Worker"}
-              </span>
-            }
+      {/* Profile */}
+      <SettingsSection title="Profile">
+        <InlineEditRow
+          icon={UserIcon}
+          label="Display name"
+          value={name}
+          placeholder="Your name"
+          action={updateProfileNameAction}
+          helpWhenEditing="Shown on your submitted records, comments and team lists."
+        />
+        <SettingsRow
+          icon={Mail}
+          label={email}
+          sublabel="Signed in with Google"
+        />
+        <SettingsRow
+          icon={ShieldCheck}
+          label={isAdmin ? "Admin" : "Worker"}
+          sublabel="Your access level"
+          onClick={bumpTaps}
+        />
+      </SettingsSection>
+
+      {/* Appearance */}
+      <SettingsSection
+        title="Appearance"
+        description="Changes apply on this device only."
+      >
+        <AppearanceSettings />
+      </SettingsSection>
+
+      {/* Company (admin only) */}
+      {isAdmin && companyName !== undefined && (
+        <SettingsSection title="Company">
+          <InlineEditRow
+            icon={Building2}
+            label="Company name"
+            value={companyName}
+            placeholder="Company name"
+            action={updateOrganizationNameAction}
+            helpWhenEditing="Appears on the work record PDF header."
           />
-        </CardContent>
-      </Card>
+        </SettingsSection>
+      )}
 
       {isAdmin && inviteCode !== undefined && (
         <InviteCodeCard code={inviteCode} />
       )}
 
-      <Card>
-        <CardContent className="p-0">
-          <LogoutButton />
-        </CardContent>
-      </Card>
+      {/* About */}
+      <SettingsSection title="About">
+        <SettingsRow icon={Info} label="Version" trailing={APP_VERSION} />
+      </SettingsSection>
 
+      {/* Account actions */}
+      <SettingsSection>
+        <LogoutButton />
+      </SettingsSection>
+
+      {/* Danger zone - admin only, hidden behind the 7-tap reveal */}
       {revealed && isAdmin && (
-        <Card className="border-destructive/40">
-          <CardHeader>
-            <CardTitle className="text-destructive">Danger zone</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Permanently delete <span className="font-medium">everything in
-              your company</span> — records, customers, projects, photos, teams,
-              checklists and comments — and hand the app back like new. User
-              accounts are kept, so you stay signed in. This can&apos;t be undone.
-            </p>
+        <SettingsSection
+          title="Danger zone"
+          description="Permanently deletes everything in your company — records, customers, projects, photos, teams, checklists and comments. User accounts are kept, so you stay signed in. This can't be undone."
+        >
+          <div className="flex items-center gap-3 px-4 py-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive-soft text-destructive-text">
+              <Trash2 className="h-4.5 w-4.5" />
+            </span>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                Reset all company data
+              </p>
+            </div>
             <ResetHistoryDialog />
-          </CardContent>
-        </Card>
+          </div>
+        </SettingsSection>
       )}
     </div>
   );

@@ -5,6 +5,22 @@
    app chrome (4-tab + FAB bar) without touching the browser experience. */
 @custom-variant native (html[data-native] &);
 
+/* Manual theme override. `dark:` utilities respond to BOTH the OS setting
+   (System, when no data-theme attribute is present) AND an explicit user
+   choice (data-theme="dark"), so the Appearance setting can force a theme
+   regardless of the phone. Keeping the System path means existing users who
+   never open Settings see no change. Mirrors the CSS-variable rules below. */
+@custom-variant dark {
+  html[data-theme="dark"] & {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    html:not([data-theme]) & {
+      @slot;
+    }
+  }
+}
+
 :root {
   --background: #fafafa;
   --foreground: #171717;
@@ -38,14 +54,44 @@
   --brand-teal: #14cdbd;
 }
 
+/* Dark palette. Declared as a mixin-like block applied in two places so the
+   manual Appearance override and the OS setting both resolve correctly:
+     - :root[data-theme="dark"]        → user forced Dark (any OS setting)
+     - :root:not([data-theme]) + media → System, and the OS is dark
+   A forced Light (data-theme="light") matches neither, so the base :root
+   light palette above stays in effect even on a dark phone. Specificity:
+   both dark selectors are (0,2,0), beating the base :root (0,1,0). */
+:root[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #e5e5e5;
+
+  /* Primary inverts in dark mode: a near-black chip would nearly
+     disappear against a near-black page, so "the brand color is ink"
+     renders as a light neutral chip with dark text here instead. */
+  --color-primary: #f5f5f5;
+  --color-primary-hover: #e5e5e5;
+  --color-primary-foreground: #171717;
+  --color-accent: #f5f5f5;
+  --color-accent-foreground: #171717;
+  --color-accent-soft: #262626;
+  --color-accent-text: #d4d4d4;
+  --color-success: #22c55e;
+  --color-success-soft: #14532d;
+  --color-success-text: #86efac;
+  --color-destructive: #ef4444;
+  --color-destructive-hover: #f87171;
+  --color-destructive-soft: #7f1d1d;
+  --color-destructive-text: #fca5a5;
+  --color-warning: #f59e0b;
+  --color-warning-soft: #78350f;
+  --color-warning-text: #fcd34d;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --background: #0a0a0a;
     --foreground: #e5e5e5;
 
-    /* Primary inverts in dark mode: a near-black chip would nearly
-       disappear against a near-black page, so "the brand color is ink"
-       renders as a light neutral chip with dark text here instead. */
     --color-primary: #f5f5f5;
     --color-primary-hover: #e5e5e5;
     --color-primary-foreground: #171717;
@@ -168,7 +214,9 @@ h1 {
 }
 
 /* Honour users who ask for less motion: drop entrance animations and the
-   tap press-scale, keep everything instant. */
+   tap press-scale, keep everything instant. Two triggers: the OS setting
+   (prefers-reduced-motion) and a manual Appearance toggle that sets
+   data-reduce-motion on <html> before paint. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -177,4 +225,12 @@ h1 {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+html[data-reduce-motion] *,
+html[data-reduce-motion] *::before,
+html[data-reduce-motion] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }

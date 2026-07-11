@@ -102,3 +102,15 @@ export const updateWorkerEmailSchema = z.object({
 export const updateWorkerRoleSchema = z.object({
   role: z.enum(["ADMIN", "WORKER"]),
 });
+
+export const updateProfileNameSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(80, "Name is too long"),
+});
+
+export const updateOrganizationNameSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Company name is required")
+    .max(120, "Company name is too long"),
+});
