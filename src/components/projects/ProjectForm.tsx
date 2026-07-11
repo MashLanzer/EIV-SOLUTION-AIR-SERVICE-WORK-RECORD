@@ -1,10 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,12 +32,16 @@ export function ProjectForm({
   defaultValues,
   teams = [],
   customers = [],
+  cancelHref,
 }: {
   projectId?: string;
   defaultValues?: ProjectValues;
   teams?: { id: string; name: string }[];
   customers?: { id: string; name: string }[];
+  // When set, shows a Cancel button; leaving with unsaved edits is guarded.
+  cancelHref?: string;
 }) {
+  const router = useRouter();
   const action = projectId
     ? updateProjectAction.bind(null, projectId)
     : createProjectAction;
@@ -42,10 +49,28 @@ export function ProjectForm({
     action,
     undefined
   );
+  const [dirty, setDirty] = useState(false);
   const err = (name: string) => state?.fieldErrors?.[name]?.[0];
 
+  // Warn before a full page unload (reload / closing the app) when there are
+  // unsaved edits. In-app navigation is guarded by the Cancel button below.
+  // Submitting clears the guard so the post-save redirect isn't blocked.
+  useEffect(() => {
+    if (!dirty || pending) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty, pending]);
+
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      action={formAction}
+      onChange={() => setDirty(true)}
+      className="flex flex-col gap-4"
+    >
       <div className="flex flex-col gap-2">
         <Label htmlFor="name" required>
           Project name
@@ -130,11 +155,29 @@ export function ProjectForm({
 
       {state?.error && <Alert variant="error">{state.error}</Alert>}
 
-      <div>
+      <div className="flex items-center gap-2">
         <Button type="submit" disabled={pending}>
           <Save className="h-4 w-4" />
           {pending ? "Saving..." : projectId ? "Save project" : "Create project"}
         </Button>
+        {cancelHref &&
+          (dirty ? (
+            <ConfirmDialog
+              title="Discard changes?"
+              description="You have unsaved edits. Leaving now will lose them."
+              confirmLabel="Discard"
+              trigger={
+                <Button type="button" variant="outline" disabled={pending}>
+                  Cancel
+                </Button>
+              }
+              onConfirm={() => router.push(cancelHref)}
+            />
+          ) : (
+            <Button type="button" variant="outline" asChild>
+              <Link href={cancelHref}>Cancel</Link>
+            </Button>
+          ))}
       </div>
     </form>
   );
