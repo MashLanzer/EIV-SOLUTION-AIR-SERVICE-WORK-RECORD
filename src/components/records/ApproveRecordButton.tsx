@@ -13,14 +13,22 @@ import { approveRecordAction } from "@/actions/records";
 export function ApproveRecordButton({
   recordId,
   iconOnly = false,
+  size = "sm",
+  className,
 }: {
   recordId: string;
   iconOnly?: boolean;
+  size?: "sm" | "lg";
+  className?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
-    <form ref={formRef} action={approveRecordAction.bind(null, recordId)}>
+    <form
+      ref={formRef}
+      action={approveRecordAction.bind(null, recordId)}
+      className={className}
+    >
       <ConfirmDialog
         title="Approve this record?"
         description="This marks the job as approved and counts it toward pay totals. You can still return it for changes afterwards."
@@ -32,7 +40,7 @@ export function ApproveRecordButton({
               <CheckCircle2 className="h-4 w-4" />
             </Button>
           ) : (
-            <Button type="button" size="sm">
+            <Button type="button" size={size} className="w-full">
               <CheckCircle2 className="h-4 w-4" />
               Approve
             </Button>

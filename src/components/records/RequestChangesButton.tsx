@@ -13,9 +13,13 @@ import { requestChangesAction } from "@/actions/records";
 export function RequestChangesButton({
   recordId,
   iconOnly = false,
+  size = "sm",
+  className,
 }: {
   recordId: string;
   iconOnly?: boolean;
+  size?: "sm" | "lg";
+  className?: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const action = requestChangesAction.bind(null, recordId);
@@ -39,7 +43,8 @@ export function RequestChangesButton({
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size={size}
+          className={className}
           onClick={() => dialogRef.current?.showModal()}
         >
           <Undo2 className="h-4 w-4" />

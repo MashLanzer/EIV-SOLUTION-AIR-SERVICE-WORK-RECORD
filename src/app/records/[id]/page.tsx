@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Download, Pencil } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { RecordDetail } from "@/components/records/RecordDetail";
@@ -75,11 +74,7 @@ export default async function RecordDetailPage({
         </Alert>
       )}
 
-      <Card>
-        <CardContent className="p-4">
-          <RecordDetail record={record} />
-        </CardContent>
-      </Card>
+      <RecordDetail record={record} />
     </div>
   );
 }
