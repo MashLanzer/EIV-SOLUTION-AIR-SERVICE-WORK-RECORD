@@ -52,6 +52,58 @@ export async function createTemplateAction(formData: FormData) {
   revalidatePath("/admin/checklists");
 }
 
+// Rename a template and replace its whole item list (delete + recreate from
+// the parsed lines), org-scoped so another org's id is a no-op.
+export async function updateTemplateAction(templateId: string, formData: FormData) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  const owned = await prisma.checklistTemplate.findFirst({
+    where: { id: templateId, organizationId },
+    select: { id: true },
+  });
+  if (!owned) return;
+
+  const name = ((formData.get("name") as string | null) ?? "").trim().slice(0, MAX_NAME_LEN);
+  const items = parseItemLines((formData.get("items") as string | null) ?? "");
+  if (!name || items.length === 0) return;
+
+  await prisma.$transaction([
+    prisma.checklistTemplateItem.deleteMany({ where: { templateId } }),
+    prisma.checklistTemplate.update({
+      where: { id: templateId },
+      data: {
+        name,
+        items: { create: items.map((text, position) => ({ text, position })) },
+      },
+    }),
+  ]);
+  revalidatePath("/admin/checklists");
+}
+
+// Clone a template (and its items) as a starting point for a similar one.
+export async function duplicateTemplateAction(templateId: string) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  const src = await prisma.checklistTemplate.findFirst({
+    where: { id: templateId, organizationId },
+    include: { items: { orderBy: { position: "asc" } } },
+  });
+  if (!src) return;
+
+  await prisma.checklistTemplate.create({
+    data: {
+      organizationId,
+      name: `${src.name} (copy)`.slice(0, MAX_NAME_LEN),
+      items: {
+        create: src.items.map((i, position) => ({ text: i.text, position })),
+      },
+    },
+  });
+  revalidatePath("/admin/checklists");
+}
+
 export async function deleteTemplateAction(templateId: string) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
