@@ -25,7 +25,7 @@ export default async function RecordsLayout({
         name={session.user.name ?? session.user.email ?? ""}
         returnedCount={returnedCount}
       />
-      <main className="mx-auto max-w-3xl px-4 py-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:pb-6">
+      <main className="mx-auto max-w-3xl px-4 py-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] native:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-6">
         {children}
       </main>
     </div>

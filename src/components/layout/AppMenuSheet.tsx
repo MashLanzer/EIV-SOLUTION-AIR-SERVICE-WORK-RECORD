@@ -127,6 +127,9 @@ export function AppMenuSheet({
           <LogoutButton />
         </div>
       </div>
+      {/* Clearance so the floating tab bar (which rides above the sheet while
+          open, to keep the × close button visible) doesn't cover this row. */}
+      <div aria-hidden="true" className="h-20" />
     </BottomSheet>
   );
 }
