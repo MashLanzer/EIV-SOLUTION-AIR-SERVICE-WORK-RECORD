@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, FilePlus2, FolderKanban, Images, MoreHorizontal, Plus } from "lucide-react";
+import { ClipboardList, FilePlus2, FolderKanban, Images, Plus } from "lucide-react";
 
 import { AppTabBar } from "@/components/layout/AppTabBar";
+import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, type TabItem } from "@/components/layout/BottomTabBar";
-import type { CreateItem } from "@/components/layout/CreateSheet";
-import type { MoreItem } from "@/components/layout/MoreSheet";
 import { Logo } from "@/components/layout/Logo";
 import { SettingsLink } from "@/components/layout/SettingsLink";
 
@@ -17,12 +16,12 @@ const TAB_ITEMS: TabItem[] = [
   { href: "/records/new", label: "New Record", shortLabel: "New", icon: Plus, exact: true },
 ];
 
-// Native app bar (APK): four tabs + center FAB.
+// Native app bar (APK): three real destination tabs + the center menu button.
+// Settings and Sign out live in the menu sheet's account section.
 const APP_TABS: TabItem[] = [
   { href: "/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: true },
   { href: "/records/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban, exact: false },
   { href: "/records/photos", label: "Photos", shortLabel: "Photos", icon: Images, exact: false },
-  { href: "/records/more", label: "More", shortLabel: "More", icon: MoreHorizontal, exact: false },
 ];
 
 const CREATE_ITEMS: CreateItem[] = [

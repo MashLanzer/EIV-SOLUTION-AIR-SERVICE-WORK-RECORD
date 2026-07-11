@@ -4,15 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 
+import { AppMenuSheet, type CreateItem, type MoreItem } from "@/components/layout/AppMenuSheet";
 import { isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
-import { CreateSheet, type CreateItem } from "@/components/layout/CreateSheet";
-import { MoreSheet, type MoreItem } from "@/components/layout/MoreSheet";
 import { cn } from "@/lib/utils";
 
-// Native (APK-only) bottom navigation: three destination tabs + a "More" tab
-// that opens a bottom sheet, with a raised center FAB that opens a role-aware
-// "create" sheet. Shown only inside the Capacitor WebView (html[data-native]);
-// the browser keeps the plain BottomTabBar.
+// Native (APK-only) bottom navigation: real destination tabs split around a
+// raised center button that opens a single menu sheet (Create + More). Shown
+// only inside the Capacitor WebView (html[data-native]); the browser keeps the
+// plain BottomTabBar.
 export function AppTabBar({
   items,
   pathname,
@@ -22,8 +21,8 @@ export function AppTabBar({
   roleLabel,
   settingsHref,
 }: {
-  // Exactly four tabs; the last is the "More" tab and opens the sheet instead
-  // of navigating.
+  // The real destination tabs (3 or 4). They split evenly around the center
+  // button - e.g. 4 → 2 left / 2 right, 3 → 2 left / 1 right.
   items: TabItem[];
   pathname: string;
   createItems: CreateItem[];
@@ -32,11 +31,10 @@ export function AppTabBar({
   roleLabel: string;
   settingsHref: string;
 }) {
-  const [createOpen, setCreateOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const left = items.slice(0, 2);
-  const photos = items[2];
-  const more = items[3];
+  const [menuOpen, setMenuOpen] = useState(false);
+  const split = Math.ceil(items.length / 2);
+  const left = items.slice(0, split);
+  const right = items.slice(split);
 
   return (
     <>
@@ -48,33 +46,30 @@ export function AppTabBar({
           <Tab key={item.href} item={item} active={isTabActive(pathname, item)} />
         ))}
 
-        {/* Center FAB */}
+        {/* Center button: opens the Create + More menu. */}
         <div className="flex w-16 shrink-0 items-start justify-center">
           <button
             type="button"
-            onClick={() => setCreateOpen(true)}
-            aria-label="Create"
+            onClick={() => setMenuOpen(true)}
+            aria-label="Menu"
+            aria-haspopup="dialog"
+            aria-expanded={menuOpen}
             className="-mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 active:scale-95 transition-transform"
           >
             <Plus className="h-6 w-6" />
           </button>
         </div>
 
-        {photos && <Tab item={photos} active={isTabActive(pathname, photos)} />}
-        {more && (
-          <MoreTab
-            item={more}
-            active={moreOpen}
-            onClick={() => setMoreOpen(true)}
-          />
-        )}
+        {right.map((item) => (
+          <Tab key={item.href} item={item} active={isTabActive(pathname, item)} />
+        ))}
       </nav>
 
-      <CreateSheet open={createOpen} onClose={() => setCreateOpen(false)} items={createItems} />
-      <MoreSheet
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-        items={moreItems}
+      <AppMenuSheet
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        createItems={createItems}
+        moreItems={moreItems}
         name={name}
         roleLabel={roleLabel}
         settingsHref={settingsHref}
@@ -83,10 +78,17 @@ export function AppTabBar({
   );
 }
 
-function TabInner({ item, active }: { item: TabItem; active: boolean }) {
+function Tab({ item, active }: { item: TabItem; active: boolean }) {
   const Icon = item.icon;
   return (
-    <>
+    <Link
+      href={item.href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors duration-200",
+        active ? "text-primary" : "text-neutral-500 dark:text-neutral-400"
+      )}
+    >
       <span className="relative">
         <Icon
           className={cn("h-5 w-5 transition-transform duration-200", active && "scale-110")}
@@ -106,43 +108,6 @@ function TabInner({ item, active }: { item: TabItem; active: boolean }) {
           active ? "scale-x-100" : "scale-x-0"
         )}
       />
-    </>
-  );
-}
-
-const tabClass =
-  "relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors duration-200";
-
-function Tab({ item, active }: { item: TabItem; active: boolean }) {
-  return (
-    <Link
-      href={item.href}
-      aria-current={active ? "page" : undefined}
-      className={cn(tabClass, active ? "text-primary" : "text-neutral-500 dark:text-neutral-400")}
-    >
-      <TabInner item={item} active={active} />
     </Link>
-  );
-}
-
-function MoreTab({
-  item,
-  active,
-  onClick,
-}: {
-  item: TabItem;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-haspopup="dialog"
-      aria-expanded={active}
-      className={cn(tabClass, active ? "text-primary" : "text-neutral-500 dark:text-neutral-400")}
-    >
-      <TabInner item={item} active={active} />
-    </button>
   );
 }

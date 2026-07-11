@@ -13,14 +13,12 @@ import {
   FolderKanban,
   FolderPlus,
   Images,
-  MoreHorizontal,
   UserPlus,
 } from "lucide-react";
 
 import { AppTabBar } from "@/components/layout/AppTabBar";
+import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
-import type { CreateItem } from "@/components/layout/CreateSheet";
-import type { MoreItem } from "@/components/layout/MoreSheet";
 import { Logo } from "@/components/layout/Logo";
 import { SettingsLink } from "@/components/layout/SettingsLink";
 import { cn } from "@/lib/utils";
@@ -35,12 +33,13 @@ const NAV_ITEMS: TabItem[] = [
   { href: "/admin/workers", label: "Workers", shortLabel: "Workers", icon: Users, exact: false },
 ];
 
-// Native app bar (APK): four tabs, with everything else living under "More".
+// Native app bar (APK): four real destination tabs. Everything else (create
+// actions, secondary nav, settings, sign out) lives in the center menu sheet.
 const APP_TABS: TabItem[] = [
   { href: "/admin", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard, exact: true },
   { href: "/admin/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban, exact: false },
   { href: "/admin/photos", label: "Photos", shortLabel: "Photos", icon: Images, exact: false },
-  { href: "/admin/more", label: "More", shortLabel: "More", icon: MoreHorizontal, exact: false },
+  { href: "/admin/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: false },
 ];
 
 const CREATE_ITEMS: CreateItem[] = [
@@ -50,9 +49,9 @@ const CREATE_ITEMS: CreateItem[] = [
 ];
 
 // Everything that doesn't fit in the four native tabs, shown in the "More"
-// sheet. Settings is reached from the sheet's account header instead.
+// section of the menu sheet. Records is now a tab; Settings is reached from
+// the sheet's account header.
 const MORE_ITEMS: MoreItem[] = [
-  { href: "/admin/records", label: "Records", icon: ClipboardList },
   { href: "/admin/customers", label: "Customers", icon: Contact },
   { href: "/admin/reports", label: "Pay Report", icon: BarChart3 },
   { href: "/admin/workers", label: "Workers", icon: Users },
@@ -101,12 +100,8 @@ export function AdminSidebar({
   const items = NAV_ITEMS.map((item) =>
     item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
   );
-  // Records lives under "More" in the native bar, so the review badge rides
-  // both the More tab and the Records row inside the sheet.
+  // Records is a native tab, so the review badge rides that tab.
   const appTabs = APP_TABS.map((item) =>
-    item.href === "/admin/more" ? { ...item, badge: pendingReviewCount } : item
-  );
-  const moreItems = MORE_ITEMS.map((item) =>
     item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
   );
 
@@ -138,7 +133,7 @@ export function AdminSidebar({
         items={appTabs}
         pathname={pathname}
         createItems={CREATE_ITEMS}
-        moreItems={moreItems}
+        moreItems={MORE_ITEMS}
         name={name}
         roleLabel="Admin"
         settingsHref="/admin/settings"
