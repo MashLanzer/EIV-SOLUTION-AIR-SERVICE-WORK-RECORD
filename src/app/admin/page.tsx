@@ -98,18 +98,18 @@ function StatTile({
   href?: string;
 }) {
   const body = (
-    <CardContent className="flex h-full flex-col gap-3 p-4">
+    <CardContent className="flex h-full flex-col gap-2 p-3">
       <div className="flex items-center justify-between">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-          <Icon className="h-5 w-5" />
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+          <Icon className="h-4 w-4" />
         </span>
-        {href && <ArrowRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />}
+        {href && <ArrowRight className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />}
       </div>
       <div>
-        <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+        <div className="text-xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
           {value}
         </div>
-        <div className="text-sm text-neutral-500 dark:text-neutral-400">{label}</div>
+        <div className="text-xs text-neutral-500 dark:text-neutral-400">{label}</div>
       </div>
     </CardContent>
   );
@@ -332,39 +332,42 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Overview
         </h2>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {/* Two headline stats span the width, then uniform tiles below. */}
-          <Card className="col-span-2 sm:col-span-2">
-            <CardContent className="flex items-center gap-4 p-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-                <ClipboardList className="h-6 w-6" />
+        {/* Two headline totals side by side... */}
+        <div className="grid grid-cols-2 gap-3">
+          <Card>
+            <CardContent className="flex flex-col gap-2 p-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+                <ClipboardList className="h-5 w-5" />
               </span>
               <div>
-                <div className="text-3xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+                <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
                   {totalRecords}
                 </div>
                 <div className="text-sm text-neutral-500 dark:text-neutral-400">Total records</div>
               </div>
             </CardContent>
           </Card>
-          <Link href="/admin/reports" className="col-span-2 block sm:col-span-2">
+          <Link href="/admin/reports" className="block">
             <Card className="h-full transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
-              <CardContent className="flex items-center gap-4 p-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-                  <DollarSign className="h-6 w-6" />
-                </span>
+              <CardContent className="flex flex-col gap-2 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+                    <DollarSign className="h-5 w-5" />
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+                </div>
                 <div className="min-w-0">
-                  <div className="truncate text-3xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+                  <div className="truncate text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
                     {money.format(payReport.grand.total)}
                   </div>
-                  <div className="flex items-center gap-1 text-sm text-neutral-500 dark:text-neutral-400">
-                    To pay this month
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </div>
+                  <div className="text-sm text-neutral-500 dark:text-neutral-400">To pay this month</div>
                 </div>
               </CardContent>
             </Card>
           </Link>
+        </div>
+        {/* ...then the compact stat tiles, three across. */}
+        <div className="grid grid-cols-3 gap-3">
           {tiles.map((tile) => (
             <StatTile key={tile.label} {...tile} />
           ))}
