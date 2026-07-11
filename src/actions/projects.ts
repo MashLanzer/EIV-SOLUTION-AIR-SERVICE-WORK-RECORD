@@ -36,6 +36,20 @@ async function resolveTeamId(
   return team?.id ?? null;
 }
 
+// The picked customer, but only if it belongs to the caller's org.
+async function resolveCustomerId(
+  formData: FormData,
+  organizationId: string
+): Promise<string | null> {
+  const raw = (formData.get("customerId") as string | null)?.trim();
+  if (!raw) return null;
+  const customer = await prisma.customer.findFirst({
+    where: { id: raw, organizationId },
+    select: { id: true },
+  });
+  return customer?.id ?? null;
+}
+
 export async function createProjectAction(
   _prev: ProjectFormState,
   formData: FormData
@@ -53,6 +67,7 @@ export async function createProjectAction(
   const { name, address, status } = parsed.data;
   const geo = address ? await geocodeAddress(address) : null;
   const teamId = await resolveTeamId(formData, organizationId);
+  const customerId = await resolveCustomerId(formData, organizationId);
 
   const project = await prisma.project.create({
     data: {
@@ -63,6 +78,7 @@ export async function createProjectAction(
       longitude: geo?.longitude ?? null,
       status,
       teamId,
+      customerId,
     },
     select: { id: true },
   });
@@ -106,6 +122,7 @@ export async function updateProjectAction(
   }
 
   const teamId = await resolveTeamId(formData, organizationId);
+  const customerId = await resolveCustomerId(formData, organizationId);
   await prisma.project.update({
     where: { id: projectId },
     data: {
@@ -113,6 +130,7 @@ export async function updateProjectAction(
       address: address ? address : null,
       status,
       teamId,
+      customerId,
       ...(coords ?? {}),
     },
   });

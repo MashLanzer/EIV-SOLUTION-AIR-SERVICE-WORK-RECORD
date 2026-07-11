@@ -21,16 +21,19 @@ interface ProjectValues {
   address: string;
   status: string;
   teamId?: string;
+  customerId?: string;
 }
 
 export function ProjectForm({
   projectId,
   defaultValues,
   teams = [],
+  customers = [],
 }: {
   projectId?: string;
   defaultValues?: ProjectValues;
   teams?: { id: string; name: string }[];
+  customers?: { id: string; name: string }[];
 }) {
   const action = projectId
     ? updateProjectAction.bind(null, projectId)
@@ -68,9 +71,32 @@ export function ProjectForm({
           placeholder="Street, city, state"
         />
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          Used to pin the project on the map (coming soon).
+          Used to pin the project on the map.
         </p>
       </div>
+
+      {customers.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="customerId">
+            Customer{" "}
+            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+              (optional)
+            </span>
+          </Label>
+          <Select
+            id="customerId"
+            name="customerId"
+            defaultValue={defaultValues?.customerId ?? ""}
+          >
+            <option value="">No customer</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="status">Status</Label>

@@ -9,11 +9,19 @@ import { requireAdmin } from "@/lib/session";
 
 export default async function NewProjectPage() {
   const session = await requireAdmin();
-  const teams = await prisma.team.findMany({
-    where: { organizationId: requireOrgId(session) },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const organizationId = requireOrgId(session);
+  const [teams, customers] = await Promise.all([
+    prisma.team.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.customer.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
       <div>
@@ -30,7 +38,7 @@ export default async function NewProjectPage() {
       </div>
       <Card>
         <CardContent className="p-4">
-          <ProjectForm teams={teams} />
+          <ProjectForm teams={teams} customers={customers} />
         </CardContent>
       </Card>
     </div>

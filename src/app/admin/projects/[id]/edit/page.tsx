@@ -21,11 +21,18 @@ export default async function EditProjectPage({
   });
   if (!project) notFound();
 
-  const teams = await prisma.team.findMany({
-    where: { organizationId },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const [teams, customers] = await Promise.all([
+    prisma.team.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.customer.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
@@ -46,11 +53,13 @@ export default async function EditProjectPage({
           <ProjectForm
             projectId={project.id}
             teams={teams}
+            customers={customers}
             defaultValues={{
               name: project.name,
               address: project.address ?? "",
               status: project.status,
               teamId: project.teamId ?? "",
+              customerId: project.customerId ?? "",
             }}
           />
         </CardContent>

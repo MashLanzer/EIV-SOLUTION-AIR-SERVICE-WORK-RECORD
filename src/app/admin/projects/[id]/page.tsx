@@ -6,9 +6,11 @@ import {
   ChevronDown,
   ClipboardList,
   Download,
+  Mail,
   MapPin,
   Pencil,
-  Users2,
+  Phone,
+  User,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,7 @@ import { DataField } from "@/components/ui/data-field";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import { SuccessToast } from "@/components/ui/success-toast";
+import { Tabs } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -29,8 +32,9 @@ import { DeleteProjectButton } from "@/components/projects/DeleteProjectButton";
 import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
+import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
-import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
+import { TeamChip } from "@/components/teams/TeamColorDot";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -67,66 +71,75 @@ export default async function AdminProjectPage({
 
   const project = await prisma.project.findFirst({
     where: { id, organizationId },
-    include: { team: { select: { id: true, name: true } } },
+    include: {
+      team: { select: { id: true, name: true } },
+      customer: { select: { id: true, name: true, phone: true, email: true } },
+    },
   });
   if (!project) notFound();
 
-  const teams = await prisma.team.findMany({
-    where: { organizationId },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
-
-  const [statusGroups, records, photoRows, checklists, templates] = await Promise.all([
-    prisma.workRecord.groupBy({
-      by: ["status"],
-      where: { organizationId, projectId: id },
-      _count: { _all: true },
-    }),
-    prisma.workRecord.findMany({
-      where: { organizationId, projectId: id },
-      orderBy: { date: "desc" },
-      take: 50,
-      select: {
-        id: true,
-        date: true,
-        jobNumber: true,
-        status: true,
-        typeOfWork: true,
-        submittedBy: { select: { name: true } },
-      },
-    }),
-    prisma.photo.findMany({
-      where: { organizationId, projectId: id },
-      orderBy: { takenAt: "desc" },
-      take: 60,
-      select: {
-        id: true,
-        url: true,
-        takenAt: true,
-        latitude: true,
-        takenBy: { select: { name: true } },
-        _count: { select: { photoTags: true, comments: true } },
-      },
-    }),
-    prisma.checklist.findMany({
-      where: { organizationId, projectId: id },
-      orderBy: { createdAt: "asc" },
-      select: {
-        id: true,
-        name: true,
-        items: {
-          orderBy: { position: "asc" },
-          select: { id: true, text: true, done: true },
+  const [teams, customers, statusGroups, records, photoRows, checklists, templates] =
+    await Promise.all([
+      prisma.team.findMany({
+        where: { organizationId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.customer.findMany({
+        where: { organizationId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.workRecord.groupBy({
+        by: ["status"],
+        where: { organizationId, projectId: id },
+        _count: { _all: true },
+      }),
+      prisma.workRecord.findMany({
+        where: { organizationId, projectId: id },
+        orderBy: { date: "desc" },
+        take: 50,
+        select: {
+          id: true,
+          date: true,
+          jobNumber: true,
+          status: true,
+          typeOfWork: true,
+          submittedBy: { select: { name: true } },
         },
-      },
-    }),
-    prisma.checklistTemplate.findMany({
-      where: { organizationId },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-  ]);
+      }),
+      prisma.photo.findMany({
+        where: { organizationId, projectId: id },
+        orderBy: { takenAt: "desc" },
+        take: 60,
+        select: {
+          id: true,
+          url: true,
+          takenAt: true,
+          latitude: true,
+          takenBy: { select: { name: true } },
+          _count: { select: { photoTags: true, comments: true } },
+        },
+      }),
+      prisma.checklist.findMany({
+        where: { organizationId, projectId: id },
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          name: true,
+          items: {
+            orderBy: { position: "asc" },
+            select: { id: true, text: true, done: true },
+          },
+        },
+      }),
+      prisma.checklistTemplate.findMany({
+        where: { organizationId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+    ]);
+
   const photos = photoRows.map((p) => ({
     id: p.id,
     url: p.url,
@@ -137,70 +150,26 @@ export default async function AdminProjectPage({
     commentCount: p._count.comments,
   }));
   const recordCount = records.length;
+  const checklistItemCount = checklists.reduce((n, c) => n + c.items.length, 0);
   const statusCount = (s: "APPROVED" | "SUBMITTED" | "NEEDS_CHANGES") =>
     statusGroups.find((g) => g.status === s)?._count._all ?? 0;
 
-  return (
+  const overviewPanel = (
     <div className="flex flex-col gap-4">
-      {saved && <SuccessToast message="Project saved" aboveMobileNav />}
-
-      {/* Header - project identity */}
-      <Card className="animate-fade-up">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-              {project.name}
-            </h1>
-            <ProjectStatusBadge status={project.status} />
-          </div>
-          <div className="mt-2 flex flex-col gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-            {project.address && (
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 shrink-0" />
-                {project.address}
-              </span>
-            )}
-            {project.team && (
-              <Link
-                href={`/admin/teams/${project.team.id}`}
-                className="flex w-fit items-center gap-1.5 hover:text-primary"
-              >
-                <Users2 className="h-4 w-4 shrink-0" />
-                {project.team.name}
-              </Link>
-            )}
-            <span className="flex items-center gap-1.5">
-              <CalendarDays className="h-4 w-4 shrink-0" />
-              Created {formatSince(project.createdAt)}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Map - only when the address geocoded to coordinates */}
       {project.latitude != null && project.longitude != null && (
-        <div
-          className="animate-fade-up"
-          style={{ animationDelay: "40ms", animationFillMode: "both" }}
-        >
-          <ProjectsMapCard
-            pins={[
-              {
-                id: project.id,
-                name: project.name,
-                latitude: project.latitude,
-                longitude: project.longitude,
-              },
-            ]}
-          />
-        </div>
+        <ProjectsMapCard
+          pins={[
+            {
+              id: project.id,
+              name: project.name,
+              latitude: project.latitude,
+              longitude: project.longitude,
+            },
+          ]}
+        />
       )}
 
-      {/* Snapshot */}
-      <Card
-        className="animate-fade-up"
-        style={{ animationDelay: "40ms", animationFillMode: "both" }}
-      >
+      <Card>
         <CardContent className="flex flex-col gap-4 p-4">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
@@ -237,180 +206,247 @@ export default async function AdminProjectPage({
               </div>
             </div>
           )}
+          <div className="flex items-center gap-1.5 border-t border-neutral-200 dark:border-neutral-800 pt-4 text-sm text-neutral-500 dark:text-neutral-400">
+            <CalendarDays className="h-4 w-4 shrink-0" />
+            Created {formatSince(project.createdAt)}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Checklists - track the steps for this job */}
-      <section
-        className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "80ms", animationFillMode: "both" }}
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Checklists
-        </h2>
-        <ProjectChecklists
-          projectId={project.id}
-          checklists={checklists}
-          templates={templates}
-        />
-      </section>
+      {/* Manage - edit collapsed + delete */}
+      <Card>
+        <details className="group">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
+            <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
+              Manage project
+            </span>
+            <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="flex flex-col gap-4 px-4 pb-4">
+            <ProjectForm
+              projectId={project.id}
+              teams={teams}
+              customers={customers}
+              defaultValues={{
+                name: project.name,
+                address: project.address ?? "",
+                status: project.status,
+                teamId: project.teamId ?? "",
+                customerId: project.customerId ?? "",
+              }}
+            />
+            <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/admin/projects/${project.id}/edit`}>
+                  <Pencil className="h-4 w-4" />
+                  Full edit page
+                </Link>
+              </Button>
+              <DeleteProjectButton projectId={project.id} />
+            </div>
+          </div>
+        </details>
+      </Card>
+    </div>
+  );
 
-      {/* Photos */}
-      <section
-        className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "120ms", animationFillMode: "both" }}
-      >
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            Photos
-          </h2>
-          {photos.length > 0 && (
-            <Button asChild variant="outline" size="sm">
-              <a href={`/admin/projects/${project.id}/report`} target="_blank" rel="noopener noreferrer">
-                <Download className="h-4 w-4" />
-                Photo report
-              </a>
-            </Button>
-          )}
+  const photosPanel = (
+    <div className="flex flex-col gap-3">
+      {photos.length > 0 && (
+        <div className="flex justify-end">
+          <Button asChild variant="outline" size="sm">
+            <a
+              href={`/admin/projects/${project.id}/report`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Download className="h-4 w-4" />
+              Photo report
+            </a>
+          </Button>
         </div>
-        <ProjectPhotos projectId={project.id} initialPhotos={photos} />
-      </section>
+      )}
+      <ProjectPhotos projectId={project.id} initialPhotos={photos} />
+    </div>
+  );
 
-      {/* Job history */}
-      <section
-        className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "160ms", animationFillMode: "both" }}
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Work records ({recordCount})
-        </h2>
-        {records.length === 0 ? (
+  const checklistsPanel = (
+    <ProjectChecklists projectId={project.id} checklists={checklists} templates={templates} />
+  );
+
+  const recordsPanel =
+    records.length === 0 ? (
+      <Card>
+        <CardContent className="p-0">
+          <EmptyState
+            icon={ClipboardList}
+            title="No work records yet"
+            description="Records assigned to this project will show up here."
+          />
+        </CardContent>
+      </Card>
+    ) : (
+      <>
+        <div className="hidden sm:block">
           <Card>
             <CardContent className="p-0">
-              <EmptyState
-                icon={ClipboardList}
-                title="No work records yet"
-                description="Records assigned to this project will show up here."
-              />
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Job #</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Type of Work</TableHead>
+                    <TableHead>Submitted By</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {records.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell>{formatDate(record.date)}</TableCell>
+                      <TableCell>{record.jobNumber}</TableCell>
+                      <TableCell>
+                        <StatusBadge status={record.status} />
+                      </TableCell>
+                      <TableCell>{record.typeOfWork}</TableCell>
+                      <TableCell>{record.submittedBy?.name ?? "—"}</TableCell>
+                      <TableCell className="text-right">
+                        <Button asChild variant="outline" size="icon">
+                          <Link
+                            href={`/admin/records/${record.id}`}
+                            aria-label={`Open record ${record.jobNumber}`}
+                          >
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
-        ) : (
-          <>
-            <div className="hidden sm:block">
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Job #</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Type of Work</TableHead>
-                        <TableHead>Submitted By</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {records.map((record) => (
-                        <TableRow key={record.id}>
-                          <TableCell>{formatDate(record.date)}</TableCell>
-                          <TableCell>{record.jobNumber}</TableCell>
-                          <TableCell>
-                            <StatusBadge status={record.status} />
-                          </TableCell>
-                          <TableCell>{record.typeOfWork}</TableCell>
-                          <TableCell>{record.submittedBy?.name ?? "—"}</TableCell>
-                          <TableCell className="text-right">
-                            <Button asChild variant="outline" size="icon">
-                              <Link
-                                href={`/admin/records/${record.id}`}
-                                aria-label={`Open record ${record.jobNumber}`}
-                              >
-                                <ArrowRight className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
+        </div>
 
-            <MobileCardList>
-              {records.map((record) => (
-                <MobileCardRow
-                  key={record.id}
-                  actions={
-                    <Button asChild variant="outline" size="icon">
-                      <Link
-                        href={`/admin/records/${record.id}`}
-                        aria-label={`Open record ${record.jobNumber}`}
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  }
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                      Job #{record.jobNumber}
-                    </span>
-                    <StatusBadge status={record.status} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <DataField label="Date" value={formatDate(record.date)} />
-                    <DataField label="Type of Work" value={record.typeOfWork} />
-                    <DataField label="Submitted By" value={record.submittedBy?.name ?? "—"} />
-                  </div>
-                </MobileCardRow>
-              ))}
-            </MobileCardList>
-          </>
-        )}
-      </section>
-
-      {/* Manage - edit collapsed + delete */}
-      <section
-        className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "200ms", animationFillMode: "both" }}
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Manage
-        </h2>
-        <Card>
-          <details className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
-              <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                Project details
-              </span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="flex flex-col gap-4 px-4 pb-4">
-              <ProjectForm
-                projectId={project.id}
-                teams={teams}
-                defaultValues={{
-                  name: project.name,
-                  address: project.address ?? "",
-                  status: project.status,
-                  teamId: project.teamId ?? "",
-                }}
-              />
-              <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/projects/${project.id}/edit`}>
-                    <Pencil className="h-4 w-4" />
-                    Full edit page
+        <MobileCardList>
+          {records.map((record) => (
+            <MobileCardRow
+              key={record.id}
+              actions={
+                <Button asChild variant="outline" size="icon">
+                  <Link
+                    href={`/admin/records/${record.id}`}
+                    aria-label={`Open record ${record.jobNumber}`}
+                  >
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <DeleteProjectButton projectId={project.id} />
+              }
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                  Job #{record.jobNumber}
+                </span>
+                <StatusBadge status={record.status} />
               </div>
-            </div>
-          </details>
-        </Card>
-      </section>
+              <div className="grid grid-cols-2 gap-3">
+                <DataField label="Date" value={formatDate(record.date)} />
+                <DataField label="Type of Work" value={record.typeOfWork} />
+                <DataField label="Submitted By" value={record.submittedBy?.name ?? "—"} />
+              </div>
+            </MobileCardRow>
+          ))}
+        </MobileCardList>
+      </>
+    );
+
+  return (
+    <div className="flex flex-col gap-4">
+      {saved && <SuccessToast message="Project saved" aboveMobileNav />}
+
+      {/* Compact header: identity + quick status + team + customer contact */}
+      <Card className="animate-fade-up">
+        <CardContent className="flex flex-col gap-3 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+              {project.name}
+            </h1>
+            <ProjectStatusMenu projectId={project.id} status={project.status} />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+            {project.address && (
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 shrink-0" />
+                {project.address}
+              </span>
+            )}
+            {project.team && (
+              <Link href={`/admin/teams/${project.team.id}`} className="hover:opacity-80">
+                <TeamChip name={project.team.name} color={null} seed={project.team.id} />
+              </Link>
+            )}
+          </div>
+
+          {/* Customer + contact shortcuts */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-neutral-200 dark:border-neutral-800 pt-3 text-sm">
+            {project.customer ? (
+              <>
+                <Link
+                  href={`/admin/customers/${project.customer.id}`}
+                  className="flex items-center gap-1.5 font-medium text-neutral-900 dark:text-neutral-100 hover:text-primary"
+                >
+                  <User className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  {project.customer.name}
+                </Link>
+                {project.customer.phone && (
+                  <a
+                    href={`tel:${project.customer.phone}`}
+                    className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                  >
+                    <Phone className="h-3.5 w-3.5 shrink-0" />
+                    {project.customer.phone}
+                  </a>
+                )}
+                {project.customer.email && (
+                  <a
+                    href={`mailto:${project.customer.email}`}
+                    className="flex min-w-0 items-center gap-1.5 text-neutral-500 dark:text-neutral-400 hover:text-primary"
+                  >
+                    <Mail className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{project.customer.email}</span>
+                  </a>
+                )}
+              </>
+            ) : (
+              <span className="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
+                <User className="h-4 w-4 shrink-0" />
+                No customer assigned
+              </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div
+        className="animate-fade-up"
+        style={{ animationDelay: "40ms", animationFillMode: "both" }}
+      >
+        <Tabs
+          tabs={[
+            { key: "overview", label: "Overview", content: overviewPanel },
+            { key: "photos", label: "Photos", count: photos.length, content: photosPanel },
+            {
+              key: "checklists",
+              label: "Checklists",
+              count: checklistItemCount,
+              content: checklistsPanel,
+            },
+            { key: "records", label: "Records", count: recordCount, content: recordsPanel },
+          ]}
+        />
+      </div>
     </div>
   );
 }
