@@ -57,15 +57,17 @@ export default async function AdminReportsPage({
 
       {/* Headline totals for the selected range - the payout number an admin
           actually cares about, up top instead of buried in the table's last
-          row. */}
-      <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
-        <Card className="col-span-3 sm:col-span-1">
+          row. On mobile the money "Total to pay" gets its own full-width row
+          (so the figure has room), with the two count tiles side by side
+          under it; on desktop all three sit in a row. */}
+      <div className="grid animate-fade-up grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        <Card className="col-span-2 sm:col-span-1">
           <CardContent className="flex items-center gap-3 p-4">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
               <DollarSign className="h-5 w-5" />
             </span>
-            <div>
-              <div className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
+            <div className="min-w-0">
+              <div className="truncate text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
                 {money(report.grand.total)}
               </div>
               <div className="text-sm text-neutral-500 dark:text-neutral-400">
@@ -74,31 +76,31 @@ export default async function AdminReportsPage({
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3 sm:col-span-1">
-          <CardContent className="flex items-center gap-3 p-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+        <Card>
+          <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+            <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent sm:flex">
               <BarChart3 className="h-5 w-5" />
             </span>
-            <div>
-              <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+            <div className="min-w-0">
+              <div className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 sm:text-2xl">
                 {report.grand.jobs}
               </div>
-              <div className="text-sm text-neutral-500 dark:text-neutral-400">
+              <div className="truncate text-xs text-neutral-500 dark:text-neutral-400 sm:text-sm">
                 Job payments
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3 sm:col-span-1">
-          <CardContent className="flex items-center gap-3 p-4">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+        <Card>
+          <CardContent className="flex items-center gap-3 p-3 sm:p-4">
+            <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent sm:flex">
               <Users className="h-5 w-5" />
             </span>
-            <div>
-              <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+            <div className="min-w-0">
+              <div className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 sm:text-2xl">
                 {report.rows.length}
               </div>
-              <div className="text-sm text-neutral-500 dark:text-neutral-400">
+              <div className="truncate text-xs text-neutral-500 dark:text-neutral-400 sm:text-sm">
                 People paid
               </div>
             </div>
