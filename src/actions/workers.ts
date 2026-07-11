@@ -81,6 +81,23 @@ export async function createWorkerAction(
     },
   });
 
+  // Optionally drop the new person straight onto one or more teams (only teams
+  // in this org are accepted).
+  const requestedTeams = formData
+    .getAll("teamId")
+    .filter((v): v is string => typeof v === "string" && v.length > 0);
+  if (requestedTeams.length) {
+    const validTeams = await prisma.team.findMany({
+      where: { id: { in: requestedTeams }, organizationId },
+      select: { id: true },
+    });
+    if (validTeams.length) {
+      await prisma.teamMembership.createMany({
+        data: validTeams.map((t) => ({ teamId: t.id, userId: user.id })),
+      });
+    }
+  }
+
   revalidatePath("/admin/workers");
   redirect(`/admin/workers/${user.id}`);
 }

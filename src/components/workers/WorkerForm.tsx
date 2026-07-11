@@ -1,16 +1,21 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
+import { Shield, User } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { createWorkerAction, type WorkerFormState } from "@/actions/workers";
+import { cn } from "@/lib/utils";
 
-export function WorkerForm() {
+export function WorkerForm({
+  teams = [],
+}: {
+  teams?: { id: string; name: string }[];
+}) {
   const [state, formAction, pending] = useActionState<WorkerFormState, FormData>(
     createWorkerAction,
     undefined
@@ -28,18 +33,65 @@ export function WorkerForm() {
         <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" placeholder="name@gmail.com" required />
       </div>
+
+      {/* Role as a segmented toggle - clearer than a dropdown for two options */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor="role">Role</Label>
-        <Select
-          id="role"
-          name="role"
-          value={role}
-          onChange={(e) => setRole(e.target.value as "WORKER" | "ADMIN")}
-        >
-          <option value="WORKER">Worker</option>
-          <option value="ADMIN">Admin</option>
-        </Select>
+        <Label>Role</Label>
+        <input type="hidden" name="role" value={role} />
+        <div className="grid grid-cols-2 gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900 p-1">
+          {([
+            { value: "WORKER", label: "Worker", icon: User, hint: "Submits records" },
+            { value: "ADMIN", label: "Admin", icon: Shield, hint: "Full access" },
+          ] as const).map((opt) => {
+            const active = role === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setRole(opt.value)}
+                aria-pressed={active}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                  active
+                    ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-sm"
+                    : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
+                )}
+              >
+                <span className="flex items-center gap-1.5">
+                  <opt.icon className="h-4 w-4" />
+                  {opt.label}
+                </span>
+                <span className="text-xs font-normal text-neutral-400 dark:text-neutral-500">
+                  {opt.hint}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {teams.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <Label>
+            Teams{" "}
+            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+              (optional)
+            </span>
+          </Label>
+          <div className="flex flex-col divide-y divide-neutral-200 dark:divide-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-800">
+            {teams.map((t) => (
+              <label
+                key={t.id}
+                className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm"
+              >
+                <input type="checkbox" name="teamId" value={t.id} className="h-4 w-4 shrink-0" />
+                <span className="text-neutral-800 dark:text-neutral-200">{t.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
       {state?.error && <Alert variant="error">{state.error}</Alert>}
       {role === "ADMIN" ? (
         <ConfirmDialog

@@ -1,17 +1,48 @@
+import Link from "next/link";
+import { ArrowLeft, UserPlus } from "lucide-react";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { WorkerForm } from "@/components/workers/WorkerForm";
+import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
 export default async function NewWorkerPage() {
-  await requireAdmin();
+  const session = await requireAdmin();
+  const teams = await prisma.team.findMany({
+    where: { organizationId: requireOrgId(session) },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-        New Worker
-      </h1>
-      <Card className="max-w-md">
-        <CardContent className="pt-4">
-          <WorkerForm />
+    <div className="mx-auto flex max-w-lg flex-col gap-4">
+      <div>
+        <Link
+          href="/admin/workers"
+          className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Workers
+        </Link>
+        <div className="mt-2 flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+            <UserPlus className="h-5 w-5" />
+          </span>
+          <div>
+            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+              New worker
+            </h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Pre-authorize a Google account. They join your company when they
+              first sign in.
+            </p>
+          </div>
+        </div>
+      </div>
+      <Card>
+        <CardContent className="p-4">
+          <WorkerForm teams={teams} />
         </CardContent>
       </Card>
     </div>

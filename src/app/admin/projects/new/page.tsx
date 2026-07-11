@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FolderKanban } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { ProjectForm } from "@/components/projects/ProjectForm";
@@ -32,9 +32,19 @@ export default async function NewProjectPage() {
           <ArrowLeft className="h-4 w-4" />
           Projects
         </Link>
-        <h1 className="mt-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          New project
-        </h1>
+        <div className="mt-2 flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+            <FolderKanban className="h-5 w-5" />
+          </span>
+          <div>
+            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+              New project
+            </h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              A jobsite that groups its work records, photos and checklists.
+            </p>
+          </div>
+        </div>
       </div>
       <Card>
         <CardContent className="p-4">

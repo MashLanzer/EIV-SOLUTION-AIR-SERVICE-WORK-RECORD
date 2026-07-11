@@ -19,10 +19,16 @@ export function TeamForm({
   teamId,
   defaultName,
   defaultColor,
+  users = [],
+  projects = [],
 }: {
   teamId?: string;
   defaultName?: string;
   defaultColor?: string | null;
+  // Only used when creating - seed members/projects up front. On the edit page
+  // these are managed by dedicated forms instead.
+  users?: { id: string; name: string }[];
+  projects?: { id: string; name: string }[];
 }) {
   const action = teamId ? updateTeamAction.bind(null, teamId) : createTeamAction;
   const [state, formAction, pending] = useActionState<TeamFormState, FormData>(
@@ -74,6 +80,51 @@ export function TeamForm({
           Shown as a dot next to the team and on its project cards.
         </p>
       </div>
+
+      {/* On create only: seed members and projects right away. */}
+      {!teamId && users.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <Label>
+            Members{" "}
+            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+              (optional)
+            </span>
+          </Label>
+          <div className="flex max-h-56 flex-col divide-y divide-neutral-200 dark:divide-neutral-800 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+            {users.map((u) => (
+              <label
+                key={u.id}
+                className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm"
+              >
+                <input type="checkbox" name="userId" value={u.id} className="h-4 w-4 shrink-0" />
+                <span className="text-neutral-800 dark:text-neutral-200">{u.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!teamId && projects.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <Label>
+            Projects{" "}
+            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+              (optional)
+            </span>
+          </Label>
+          <div className="flex max-h-56 flex-col divide-y divide-neutral-200 dark:divide-neutral-800 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+            {projects.map((p) => (
+              <label
+                key={p.id}
+                className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm"
+              >
+                <input type="checkbox" name="projectId" value={p.id} className="h-4 w-4 shrink-0" />
+                <span className="text-neutral-800 dark:text-neutral-200">{p.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {state?.error && <Alert variant="error">{state.error}</Alert>}
       <div>

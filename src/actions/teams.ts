@@ -42,6 +42,34 @@ export async function createTeamAction(
     },
     select: { id: true },
   });
+
+  // Optionally seed the team with members and/or projects right away, both
+  // validated against this org so crafted ids can't slip in.
+  const userIds = formData
+    .getAll("userId")
+    .filter((v): v is string => typeof v === "string" && v.length > 0);
+  if (userIds.length) {
+    const validUsers = await prisma.user.findMany({
+      where: { id: { in: userIds }, organizationId },
+      select: { id: true },
+    });
+    if (validUsers.length) {
+      await prisma.teamMembership.createMany({
+        data: validUsers.map((u) => ({ teamId: team.id, userId: u.id })),
+      });
+    }
+  }
+  const projectIds = formData
+    .getAll("projectId")
+    .filter((v): v is string => typeof v === "string" && v.length > 0);
+  if (projectIds.length) {
+    await prisma.project.updateMany({
+      where: { id: { in: projectIds }, organizationId },
+      data: { teamId: team.id },
+    });
+    revalidatePath("/admin/projects");
+  }
+
   revalidatePath("/admin/teams");
   redirect(`/admin/teams/${team.id}`);
 }
