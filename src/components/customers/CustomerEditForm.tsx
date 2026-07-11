@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Save } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
@@ -12,6 +12,7 @@ import {
   updateCustomerAction,
   type CustomerFormState,
 } from "@/actions/customers";
+import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 
 interface CustomerValues {
   name: string;
@@ -31,11 +32,17 @@ export function CustomerEditForm({
     CustomerFormState,
     FormData
   >(updateCustomerAction.bind(null, customerId), undefined);
+  const [dirty, setDirty] = useState(false);
+  useBeforeUnloadGuard(dirty && !pending);
 
   const err = (name: string) => state?.fieldErrors?.[name]?.[0];
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      action={formAction}
+      onChange={() => setDirty(true)}
+      className="flex flex-col gap-4"
+    >
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <Label htmlFor="name">Name</Label>

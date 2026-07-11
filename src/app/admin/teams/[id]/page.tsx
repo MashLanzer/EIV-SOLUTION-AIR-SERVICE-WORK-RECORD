@@ -27,6 +27,12 @@ import { requireAdmin } from "@/lib/session";
 
 const SECTION_ORDER: ProjectStatus[] = ["ACTIVE", "ON_HOLD", "COMPLETED"];
 
+const teamDateFmt = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
+
 function StatTile({
   icon: Icon,
   value,
@@ -110,9 +116,14 @@ export default async function AdminTeamPage({
           </Link>
           <div className="flex items-center gap-3">
             <TeamAvatar name={team.name} color={team.color} seed={team.id} />
-            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-              {team.name}
-            </h1>
+            <div className="min-w-0">
+              <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+                {team.name}
+              </h1>
+              <p className="text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
+                Created {teamDateFmt.format(team.createdAt)}
+              </p>
+            </div>
           </div>
           <div className="grid grid-cols-4 gap-2">
             <StatTile icon={Users2} value={memberIds.length} label="Members" />

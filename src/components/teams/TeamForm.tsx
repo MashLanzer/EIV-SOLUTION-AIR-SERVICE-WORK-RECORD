@@ -13,6 +13,7 @@ import {
   type TeamFormState,
 } from "@/actions/teams";
 import { TEAM_COLORS } from "@/lib/teamColors";
+import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { cn } from "@/lib/utils";
 
 export function TeamForm({
@@ -36,9 +37,15 @@ export function TeamForm({
     undefined
   );
   const [color, setColor] = useState<string>(defaultColor ?? "");
+  const [dirty, setDirty] = useState(false);
+  useBeforeUnloadGuard(dirty && !pending);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      action={formAction}
+      onChange={() => setDirty(true)}
+      className="flex flex-col gap-4"
+    >
       <div className="flex flex-col gap-2">
         <Label htmlFor="name" required>
           Team name
@@ -62,7 +69,10 @@ export function TeamForm({
               <button
                 key={c.key}
                 type="button"
-                onClick={() => setColor(selected ? "" : c.key)}
+                onClick={() => {
+                  setColor(selected ? "" : c.key);
+                  setDirty(true);
+                }}
                 aria-label={c.label}
                 aria-pressed={selected}
                 className={cn(

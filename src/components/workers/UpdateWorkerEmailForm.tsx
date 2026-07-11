@@ -11,6 +11,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 
 export function UpdateWorkerEmailForm({
   userId,
@@ -25,6 +26,8 @@ export function UpdateWorkerEmailForm({
   >(updateWorkerEmailAction.bind(null, userId), undefined);
   const formRef = useRef<HTMLFormElement>(null);
   const [email, setEmail] = useState(currentEmail);
+  // Guard against losing an edited (but not yet saved) email on reload/close.
+  useBeforeUnloadGuard(email.trim() !== currentEmail && !pending);
 
   return (
     <form
