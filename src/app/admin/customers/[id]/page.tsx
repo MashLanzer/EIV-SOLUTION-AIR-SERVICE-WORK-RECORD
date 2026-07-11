@@ -4,19 +4,22 @@ import {
   ArrowRight,
   CalendarDays,
   ChevronDown,
+  ChevronRight,
   ClipboardList,
+  FolderKanban,
+  Image as ImageIcon,
   Mail,
   MapPin,
-  Pencil,
+  Navigation,
   Phone,
 } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
+import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { DataField } from "@/components/ui/data-field";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
+import { MobileCardList } from "@/components/ui/responsive-table";
 import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
 import {
@@ -30,6 +33,7 @@ import {
 import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
 import { DeleteCustomerButton } from "@/components/customers/DeleteCustomerButton";
 import { MergeCustomerForm } from "@/components/customers/MergeCustomerForm";
+import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
@@ -74,7 +78,7 @@ export default async function AdminCustomerPage({
   const customer = await prisma.customer.findFirst({ where: { id, organizationId } });
   if (!customer) notFound();
 
-  const [recordCount, statusGroups, records] = await Promise.all([
+  const [recordCount, statusGroups, records, projects] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId, customerId: id } }),
     // Bounded to the 3 statuses - a tiny at-a-glance health breakdown.
     prisma.workRecord.groupBy({
@@ -95,6 +99,16 @@ export default async function AdminCustomerPage({
       },
       ...paginationArgs(page),
     }),
+    prisma.project.findMany({
+      where: { organizationId, customerId: id },
+      orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        _count: { select: { records: true, photos: true } },
+      },
+    }),
   ]);
   const pages = pageCount(recordCount);
 
@@ -111,6 +125,13 @@ export default async function AdminCustomerPage({
     take: 100,
   });
 
+  const mapsSearch = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    customer.address
+  )}`;
+  const mapsDir = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+    customer.address
+  )}`;
+
   return (
     <div className="flex flex-col gap-4">
       {saved && <SuccessToast message="Customer saved" aboveMobileNav />}
@@ -122,39 +143,56 @@ export default async function AdminCustomerPage({
         </Alert>
       )}
 
-      {/* Header - customer identity inside a card for a tidy, pro look */}
+      {/* Header - identity, address, and one-tap contact actions */}
       <Card className="animate-fade-up">
-        <CardContent className="p-4">
-          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-            {customer.name}
-          </h1>
-          <div className="mt-2 flex flex-col gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-4 w-4 shrink-0" />
-              {customer.address}
-            </span>
+        <CardContent className="flex flex-col gap-4 p-4">
+          <div className="flex items-start gap-3">
+            <AvatarInitials name={customer.name} className="h-12 w-12 text-base" />
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+                {customer.name}
+              </h1>
+              <div className="mt-0.5 flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+                Customer since {formatSince(customer.createdAt)}
+              </div>
+            </div>
+          </div>
+
+          <a
+            href={mapsSearch}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-fit items-start gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-primary"
+          >
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{customer.address}</span>
+          </a>
+
+          {/* One-tap contact - only the actions that have a value */}
+          <div className="flex gap-2">
             {customer.phone && (
-              <a
-                href={`tel:${customer.phone}`}
-                className="flex w-fit items-center gap-1.5 hover:text-primary"
-              >
-                <Phone className="h-4 w-4 shrink-0" />
-                {customer.phone}
-              </a>
+              <Button asChild variant="outline" className="flex-1">
+                <a href={`tel:${customer.phone}`}>
+                  <Phone className="h-4 w-4" />
+                  Call
+                </a>
+              </Button>
             )}
             {customer.email && (
-              <a
-                href={`mailto:${customer.email}`}
-                className="flex w-fit items-center gap-1.5 hover:text-primary"
-              >
-                <Mail className="h-4 w-4 shrink-0" />
-                {customer.email}
-              </a>
+              <Button asChild variant="outline" className="flex-1">
+                <a href={`mailto:${customer.email}`}>
+                  <Mail className="h-4 w-4" />
+                  Email
+                </a>
+              </Button>
             )}
-            <span className="flex items-center gap-1.5">
-              <CalendarDays className="h-4 w-4 shrink-0" />
-              Customer since {formatSince(customer.createdAt)}
-            </span>
+            <Button asChild variant="outline" className="flex-1">
+              <a href={mapsDir} target="_blank" rel="noopener noreferrer">
+                <Navigation className="h-4 w-4" />
+                Directions
+              </a>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -222,10 +260,58 @@ export default async function AdminCustomerPage({
         </CardContent>
       </Card>
 
+      {/* Projects (jobsites) for this customer */}
+      {projects.length > 0 && (
+        <section
+          className="flex animate-fade-up flex-col gap-3"
+          style={{ animationDelay: "80ms", animationFillMode: "both" }}
+        >
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            Projects ({projects.length})
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {projects.map((p) => (
+              <Card
+                key={p.id}
+                className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
+              >
+                <Link
+                  href={`/admin/projects/${p.id}`}
+                  className="flex items-center gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
+                    <FolderKanban className="h-5 w-5" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
+                        {p.name}
+                      </span>
+                      <ProjectStatusBadge status={p.status} />
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
+                      <span className="flex items-center gap-1.5">
+                        <ImageIcon className="h-3.5 w-3.5" />
+                        <span className="tabular-nums">{p._count.photos}</span>
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <ClipboardList className="h-3.5 w-3.5" />
+                        <span className="tabular-nums">{p._count.records}</span>
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                </Link>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Job history - primary content, moved above editing */}
       <section
         className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "80ms", animationFillMode: "both" }}
+        style={{ animationDelay: "120ms", animationFillMode: "both" }}
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Job history ({recordCount})
@@ -253,7 +339,7 @@ export default async function AdminCustomerPage({
                         <TableHead>Status</TableHead>
                         <TableHead>Type of Work</TableHead>
                         <TableHead>Submitted By</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="text-right">Open</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -270,9 +356,9 @@ export default async function AdminCustomerPage({
                             <Button asChild variant="outline" size="icon">
                               <Link
                                 href={`/admin/records/${record.id}`}
-                                aria-label={`Edit record ${record.jobNumber}`}
+                                aria-label={`Open record ${record.jobNumber}`}
                               >
-                                <Pencil className="h-4 w-4" />
+                                <ArrowRight className="h-4 w-4" />
                               </Link>
                             </Button>
                           </TableCell>
@@ -286,31 +372,31 @@ export default async function AdminCustomerPage({
 
             <MobileCardList>
               {records.map((record) => (
-                <MobileCardRow
-                  key={record.id}
-                  actions={
-                    <Button asChild variant="outline" size="icon">
-                      <Link
-                        href={`/admin/records/${record.id}`}
-                        aria-label={`Edit record ${record.jobNumber}`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  }
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                      Job #{record.jobNumber}
+                <Card key={record.id}>
+                  <Link
+                    href={`/admin/records/${record.id}`}
+                    className="flex items-start gap-3 p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
+                      <ClipboardList className="h-5 w-5" />
                     </span>
-                    <StatusBadge status={record.status} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <DataField label="Date" value={formatDate(record.date)} />
-                    <DataField label="Type of Work" value={record.typeOfWork} />
-                    <DataField label="Submitted By" value={record.submittedBy?.name ?? "—"} />
-                  </div>
-                </MobileCardRow>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                          Job #{record.jobNumber}
+                        </span>
+                        <StatusBadge status={record.status} />
+                      </div>
+                      <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                        {formatDate(record.date)} · {record.typeOfWork}
+                      </div>
+                      <div className="text-xs text-neutral-400 dark:text-neutral-500">
+                        {record.submittedBy?.name ?? "—"}
+                      </div>
+                    </div>
+                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                </Card>
               ))}
             </MobileCardList>
 
@@ -326,7 +412,7 @@ export default async function AdminCustomerPage({
       {/* Manage - editing collapsed by default, secondary to viewing */}
       <section
         className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "120ms", animationFillMode: "both" }}
+        style={{ animationDelay: "160ms", animationFillMode: "both" }}
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           Manage
