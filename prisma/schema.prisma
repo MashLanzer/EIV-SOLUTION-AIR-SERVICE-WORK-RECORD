@@ -35,6 +35,11 @@ model Organization {
   currencySymbol   String   @default("$")
   // When true, a work record can't be submitted without at least one photo.
   requirePhoto     Boolean  @default(false)
+  // When true, a work record requires a helper name to be submitted.
+  requireHelper    Boolean  @default(false)
+  // When true (the default, matching prior behaviour), a work record requires
+  // the customer's signature; turn off for unattended jobs.
+  requireCustomerSignature Boolean @default(true)
   // When true, an approved record is locked for everyone (admins included);
   // it must be reopened (set back to needs-changes) before it can be edited.
   lockApprovedRecords Boolean @default(false)

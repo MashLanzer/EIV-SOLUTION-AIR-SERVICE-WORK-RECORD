@@ -43,6 +43,10 @@ export default async function AdminEditRecordPage({
 
   const workTypeGroups = await getWorkTypeGroups(requireOrgId(session));
   const currency = await getCurrencySymbol(requireOrgId(session));
+  const policy = await prisma.organization.findUnique({
+    where: { id: requireOrgId(session) },
+    select: { requireHelper: true, requireCustomerSignature: true },
+  });
   const boundAction = updateRecordAction.bind(null, record.id);
 
   return (
@@ -89,6 +93,8 @@ export default async function AdminEditRecordPage({
         projects={projects}
         workTypeGroups={workTypeGroups}
         currency={currency}
+        requireHelper={policy?.requireHelper ?? false}
+        requireCustomerSignature={policy?.requireCustomerSignature ?? true}
         defaultValues={{
           date: record.date.toISOString().slice(0, 10),
           jobNumber: record.jobNumber,

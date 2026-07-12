@@ -134,6 +134,39 @@ function jobNumberTakenError(dup: { customerName: string; date: Date }): RecordF
   };
 }
 
+// Company required-field policies (Settings) enforced on submit: photo,
+// helper name and customer signature. Returns a field-error state to surface
+// on the offending step, or undefined when everything passes.
+async function checkRecordPolicies(
+  organizationId: string,
+  data: { photos?: string[]; helperName?: string; customerSignature?: string }
+): Promise<RecordFormState> {
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: {
+      requirePhoto: true,
+      requireHelper: true,
+      requireCustomerSignature: true,
+    },
+  });
+  if (!org) return undefined;
+
+  const fieldErrors: Record<string, string[]> = {};
+  if (org.requirePhoto && !data.photos?.length) {
+    fieldErrors.photos = ["Your company requires at least one photo on every record."];
+  }
+  if (org.requireHelper && !data.helperName?.trim()) {
+    fieldErrors.helperName = ["Your company requires a helper on every record."];
+  }
+  if (org.requireCustomerSignature && !data.customerSignature?.trim()) {
+    fieldErrors.customerSignature = ["The customer's signature is required."];
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    return { error: "Please fix the highlighted fields.", fieldErrors };
+  }
+  return undefined;
+}
+
 export async function createRecordAction(
   _prevState: RecordFormState,
   formData: FormData
@@ -151,21 +184,8 @@ export async function createRecordAction(
   const organizationId = requireOrgId(session);
   const data = parsed.data;
 
-  // Company policy (Settings): a record can't be submitted without a photo.
-  if (!data.photos?.length) {
-    const org = await prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { requirePhoto: true },
-    });
-    if (org?.requirePhoto) {
-      return {
-        error: "Please fix the highlighted fields.",
-        fieldErrors: {
-          photos: ["Your company requires at least one photo on every record."],
-        },
-      };
-    }
-  }
+  const policyError = await checkRecordPolicies(organizationId, data);
+  if (policyError) return policyError;
 
   const dupJobNumber = await findDuplicateJobNumber(data.jobNumber, organizationId);
   if (dupJobNumber) return jobNumberTakenError(dupJobNumber);
@@ -261,6 +281,10 @@ export async function updateRecordAction(
   }
 
   const data = parsed.data;
+
+  const policyError = await checkRecordPolicies(organizationId, data);
+  if (policyError) return policyError;
+
   const dupJobNumber = await findDuplicateJobNumber(data.jobNumber, organizationId, recordId);
   if (dupJobNumber) return jobNumberTakenError(dupJobNumber);
 

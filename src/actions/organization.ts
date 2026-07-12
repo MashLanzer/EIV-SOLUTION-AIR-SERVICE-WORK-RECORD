@@ -153,6 +153,28 @@ export async function setRequirePhotoAction(enabled: boolean) {
   revalidatePath("/admin/settings");
 }
 
+// Toggle the "require a helper" policy (admin only).
+export async function setRequireHelperAction(enabled: boolean) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { requireHelper: enabled },
+  });
+  revalidatePath("/admin/settings");
+}
+
+// Toggle the "require the customer's signature" policy (admin only).
+export async function setRequireCustomerSignatureAction(enabled: boolean) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { requireCustomerSignature: enabled },
+  });
+  revalidatePath("/admin/settings");
+}
+
 // Toggle the "lock approved records" policy (admin only). When on, an approved
 // record can't be edited by anyone until it's returned to Needs changes.
 export async function setLockApprovedRecordsAction(enabled: boolean) {

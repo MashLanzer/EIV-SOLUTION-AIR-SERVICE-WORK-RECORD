@@ -102,6 +102,10 @@ interface WorkRecordFormProps {
   workTypeGroups?: WorkTypeGroup[];
   // The company's currency symbol, used only in the pay field labels.
   currency?: string;
+  // Company required-field policies (Settings). Server-enforced; these reflect
+  // them in the UI. Customer signature defaults to required.
+  requireHelper?: boolean;
+  requireCustomerSignature?: boolean;
 }
 
 // The wizard steps, in order. Each carries its icon + the field ids that live
@@ -193,6 +197,8 @@ export function WorkRecordForm({
   requirePhoto = false,
   workTypeGroups,
   currency = "$",
+  requireHelper = false,
+  requireCustomerSignature = true,
 }: WorkRecordFormProps) {
   const router = useRouter();
   const [state, formAction, actionPending] = useActionState<
@@ -267,9 +273,9 @@ export function WorkRecordForm({
   // step's container must be valid; the signature step needs both pads drawn.
   const isStepComplete = useCallback((index: number): boolean => {
     if (index === LAST_STEP) {
-      return Boolean(
-        customerSigRef.current?.getDataUrl() && installerSigRef.current?.getDataUrl()
-      );
+      const customerOk =
+        !requireCustomerSignature || Boolean(customerSigRef.current?.getDataUrl());
+      return Boolean(customerOk && installerSigRef.current?.getDataUrl());
     }
     const container = stepRefs.current[index];
     if (!container) return false;
@@ -280,7 +286,7 @@ export function WorkRecordForm({
       if (!c.value.trim() || !c.checkValidity()) return false;
     }
     return true;
-  }, []);
+  }, [requireCustomerSignature]);
 
   const recompute = useCallback(() => {
     setCompleted(STEPS.map((_, i) => isStepComplete(i)));
@@ -466,9 +472,12 @@ export function WorkRecordForm({
     const customerSignature = customerSigRef.current?.getDataUrl();
     const installerSignature = installerSigRef.current?.getDataUrl();
 
-    if (!customerSignature || !installerSignature) {
+    // The installer always signs; the customer's signature is required unless
+    // the company turned that policy off (e.g. unattended jobs).
+    const customerMissing = requireCustomerSignature && !customerSignature;
+    if (customerMissing || !installerSignature) {
       const next = {
-        customer: customerSignature ? undefined : "Customer signature is required.",
+        customer: customerMissing ? "Customer signature is required." : undefined,
         installer: installerSignature ? undefined : "Installer signature is required.",
       };
       setSigErrors(next);
@@ -477,7 +486,7 @@ export function WorkRecordForm({
     }
 
     const formData = new FormData(formRef.current!);
-    formData.set("customerSignature", customerSignature);
+    formData.set("customerSignature", customerSignature ?? "");
     formData.set("installerSignature", installerSignature);
     // The draft is deliberately NOT cleared here: if the request never
     // reaches the server (offline flip mid-submit, server error, timeout),
@@ -645,10 +654,16 @@ export function WorkRecordForm({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="helperName">Helper <span className="font-normal text-neutral-400 dark:text-neutral-500">(optional)</span></Label>
+              <Label htmlFor="helperName" required={requireHelper}>
+                Helper
+                {!requireHelper && (
+                  <span className="font-normal text-neutral-400 dark:text-neutral-500"> (optional)</span>
+                )}
+              </Label>
               <Input
                 id="helperName"
                 name="helperName"
+                required={requireHelper}
                 defaultValue={values?.helperName}
                 aria-invalid={invalid("helperName")}
                 aria-describedby={describedBy("helperName")}
@@ -880,7 +895,11 @@ export function WorkRecordForm({
             <SignaturePad
               id="sig-customer"
               ref={customerSigRef}
-              label="Customer Signature"
+              label={
+                requireCustomerSignature
+                  ? "Customer Signature"
+                  : "Customer Signature (optional)"
+              }
               defaultValue={values?.customerSignature}
               error={sigErrors.customer}
             />

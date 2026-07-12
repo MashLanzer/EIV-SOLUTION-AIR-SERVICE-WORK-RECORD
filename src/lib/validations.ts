@@ -32,9 +32,11 @@ export const workRecordSchema = z
     workPerformedNotes: z.string().min(1, "Please describe the work performed"),
     leadInstallerPay: z.coerce.number().min(0, "Must be 0 or greater"),
     helperPay: z.coerce.number().min(0).optional().or(z.literal("")),
+    // Required-ness is enforced per-org at the app level (see
+    // requireCustomerSignature) so it can be turned off for unattended jobs;
+    // the schema only bounds the size.
     customerSignature: z
       .string()
-      .min(1, "Customer signature is required")
       .max(300_000, "Signature image is too large"),
     installerSignature: z
       .string()

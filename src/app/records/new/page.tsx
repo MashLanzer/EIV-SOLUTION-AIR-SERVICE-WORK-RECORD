@@ -33,6 +33,8 @@ export default async function NewRecordPage() {
         defaultLeadPay: true,
         defaultHelperPay: true,
         requirePhoto: true,
+        requireHelper: true,
+        requireCustomerSignature: true,
         defaultWorkNotes: true,
         currencySymbol: true,
       },
@@ -67,6 +69,8 @@ export default async function NewRecordPage() {
         draftKey={`new-record:${session.user.id}`}
         projects={projects}
         requirePhoto={org?.requirePhoto ?? false}
+        requireHelper={org?.requireHelper ?? false}
+        requireCustomerSignature={org?.requireCustomerSignature ?? true}
         workTypeGroups={workTypeGroups}
         currency={org?.currencySymbol || "$"}
       />

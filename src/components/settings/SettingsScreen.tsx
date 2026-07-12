@@ -11,10 +11,12 @@ import {
   Info,
   Lock,
   MapPin,
+  PenLine,
   Phone,
   ShieldCheck,
   Tag,
   Trash2,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -32,6 +34,8 @@ import {
 } from "@/components/settings/SettingsList";
 import {
   setLockApprovedRecordsAction,
+  setRequireCustomerSignatureAction,
+  setRequireHelperAction,
   setRequirePhotoAction,
   updateCompanyFieldAction,
   updateOrganizationNameAction,
@@ -57,6 +61,8 @@ export interface CompanySettings {
   helperPay: string;
   currency: string;
   requirePhoto: boolean;
+  requireHelper: boolean;
+  requireCustomerSignature: boolean;
   lockApprovedRecords: boolean;
   logoUrl: string | null;
   defaultWorkNotes: string;
@@ -167,6 +173,20 @@ export function SettingsScreen({
             initial={company.requirePhoto}
             action={setRequirePhotoAction}
             ariaLabel="Require a photo to submit a record"
+          />
+          <PolicyToggle
+            icon={Users}
+            label="Require a helper"
+            sublabel="A helper name must be entered on every record"
+            initial={company.requireHelper}
+            action={setRequireHelperAction}
+          />
+          <PolicyToggle
+            icon={PenLine}
+            label="Require customer signature"
+            sublabel="Turn off for unattended jobs where the customer can't sign"
+            initial={company.requireCustomerSignature}
+            action={setRequireCustomerSignatureAction}
           />
           <PolicyToggle
             icon={Lock}
