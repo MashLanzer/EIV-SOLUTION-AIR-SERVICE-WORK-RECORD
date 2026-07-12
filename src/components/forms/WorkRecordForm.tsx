@@ -46,6 +46,7 @@ import {
 import { TypeOfWorkField } from "@/components/forms/TypeOfWorkField";
 import { clearDraft, getDraft, setDraft } from "@/lib/draftStore";
 import { cn } from "@/lib/utils";
+import type { WorkTypeGroup } from "@/lib/workTypes";
 import type { RecordFormState } from "@/actions/records";
 
 interface ProjectOption {
@@ -96,6 +97,9 @@ interface WorkRecordFormProps {
   // Company policy (Settings): when true at least one photo is required to
   // submit. The server enforces it; this just reflects it in the UI.
   requirePhoto?: boolean;
+  // The org's predefined work types (Settings → Work types), grouped by
+  // category. When present they drive the Type of Work picker.
+  workTypeGroups?: WorkTypeGroup[];
 }
 
 // The wizard steps, in order. Each carries its icon + the field ids that live
@@ -185,6 +189,7 @@ export function WorkRecordForm({
   draftKey,
   projects = [],
   requirePhoto = false,
+  workTypeGroups,
 }: WorkRecordFormProps) {
   const router = useRouter();
   const [state, formAction, actionPending] = useActionState<
@@ -783,6 +788,7 @@ export function WorkRecordForm({
               <TypeOfWorkField
                 defaultValue={values?.typeOfWork}
                 invalid={invalid("typeOfWork")}
+                groups={workTypeGroups}
               />
               <FieldError
                 id="typeOfWork-error"

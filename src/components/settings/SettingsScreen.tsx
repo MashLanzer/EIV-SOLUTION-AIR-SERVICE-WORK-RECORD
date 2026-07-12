@@ -12,6 +12,7 @@ import {
   MapPin,
   Phone,
   ShieldCheck,
+  Tag,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -177,6 +178,12 @@ export function SettingsScreen({
             placeholder="0.00"
             action={updateCompanyFieldAction.bind(null, "helperPay")}
             helpWhenEditing="Pre-fills the helper pay on a new record; workers can still change it."
+          />
+          <SettingsRow
+            icon={Tag}
+            label="Work types"
+            sublabel="Predefined types of work the crew can pick, by category"
+            href="/admin/settings/work-types"
           />
         </SettingsSection>
       )}

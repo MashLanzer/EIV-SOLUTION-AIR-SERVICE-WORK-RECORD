@@ -2,6 +2,7 @@ import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
 import { createRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
 import { suggestNextJobNumber } from "@/lib/jobNumber";
+import { getWorkTypeGroups } from "@/lib/workTypes";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
@@ -36,6 +37,7 @@ export default async function NewRecordPage() {
     }),
   ]);
   const suggestedJobNumber = await suggestNextJobNumber(organizationId);
+  const workTypeGroups = await getWorkTypeGroups(organizationId);
 
   return (
     <div className="flex flex-col gap-4">
@@ -60,6 +62,7 @@ export default async function NewRecordPage() {
         draftKey={`new-record:${session.user.id}`}
         projects={projects}
         requirePhoto={org?.requirePhoto ?? false}
+        workTypeGroups={workTypeGroups}
       />
     </div>
   );

@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/records/StatusBadge";
 import { updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
+import { getWorkTypeGroups } from "@/lib/workTypes";
 import { requireAdmin } from "@/lib/session";
 
 const editDateFmt = new Intl.DateTimeFormat("en-US", {
@@ -39,6 +40,7 @@ export default async function AdminEditRecordPage({
     },
   });
 
+  const workTypeGroups = await getWorkTypeGroups(requireOrgId(session));
   const boundAction = updateRecordAction.bind(null, record.id);
 
   return (
@@ -83,6 +85,7 @@ export default async function AdminEditRecordPage({
       <WorkRecordForm
         action={boundAction}
         projects={projects}
+        workTypeGroups={workTypeGroups}
         defaultValues={{
           date: record.date.toISOString().slice(0, 10),
           jobNumber: record.jobNumber,

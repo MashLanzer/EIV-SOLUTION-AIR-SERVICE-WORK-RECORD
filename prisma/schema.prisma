@@ -54,6 +54,40 @@ model Organization {
   comments  Comment[]
   checklistTemplates ChecklistTemplate[]
   checklists         Checklist[]
+  workTypeCategories WorkTypeCategory[]
+  workTypes          WorkType[]
+}
+
+// A predefined "type of work" taxonomy, org-managed so the app fits any
+// trade, not just HVAC. Two levels: a Category (e.g. "Installation") holds
+// WorkTypes (e.g. "Furnace install"). The chosen value is still saved as the
+// record's plain typeOfWork string, so records/reports/PDF are unchanged.
+model WorkTypeCategory {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  position       Int          @default(0)
+  workTypes      WorkType[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model WorkType {
+  id             String            @id @default(cuid())
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  categoryId     String
+  category       WorkTypeCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name           String
+  position       Int               @default(0)
+  createdAt      DateTime          @default(now())
+
+  @@unique([categoryId, name])
+  @@index([organizationId])
+  @@index([categoryId])
 }
 
 // A crew within a company. Members are Users (many-to-many via
