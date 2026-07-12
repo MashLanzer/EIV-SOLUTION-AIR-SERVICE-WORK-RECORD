@@ -294,6 +294,7 @@ model User {
   name             String
   phone            String?
   storedSignature  String?       @db.Text
+  payRate          Decimal?      @db.Decimal(10, 2)
   role             Role          @default(WORKER)
   active           Boolean       @default(true)
   createdAt        DateTime      @default(now())
@@ -303,10 +304,22 @@ model User {
   photosTaken      Photo[]       @relation("PhotoTakenBy")
   comments         Comment[]     @relation("CommentAuthor")
   teamMemberships  TeamMembership[]
+  skills           UserSkill[]
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+}
+
+model UserSkill {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  createdAt      DateTime     @default(now())
+
+  @@unique([userId, name])
+  @@index([userId])
 }
 
 model WorkPhoto {

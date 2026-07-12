@@ -121,6 +121,14 @@ export const saveStoredSignatureSchema = z.object({
   signature: z.string().min(1, "Signature is required").max(300_000, "Signature image is too large"),
 });
 
+export const updatePayRateSchema = z.object({
+  payRate: z.coerce.number().min(0, "Must be 0 or greater").max(99999.99).optional().or(z.literal("")),
+});
+
+export const addSkillSchema = z.object({
+  name: z.string().trim().min(1, "Skill name is required").max(60, "Skill name is too long"),
+});
+
 export const updateOrganizationNameSchema = z.object({
   name: z
     .string()

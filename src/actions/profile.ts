@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { updateProfileNameSchema, updateProfilePhoneSchema, saveStoredSignatureSchema } from "@/lib/validations";
+import { updateProfileNameSchema, updateProfilePhoneSchema, saveStoredSignatureSchema, updatePayRateSchema, addSkillSchema } from "@/lib/validations";
 
 export type ProfileFormState = { error?: string; ok?: boolean } | undefined;
 
@@ -84,6 +84,67 @@ export async function clearStoredSignatureAction(): Promise<ProfileFormState> {
   await prisma.user.update({
     where: { id: session.user.id },
     data: { storedSignature: null },
+  });
+
+  revalidatePath("/records/profile");
+  return { ok: true };
+}
+
+export async function updatePayRateAction(
+  _prev: ProfileFormState,
+  formData: FormData
+): Promise<ProfileFormState> {
+  const session = await requireAuth();
+
+  const parsed = updatePayRateSchema.safeParse({
+    payRate: formData.get("payRate"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { payRate: parsed.data.payRate ? parsed.data.payRate : null },
+  });
+
+  revalidatePath("/records/profile");
+  return { ok: true };
+}
+
+export async function addSkillAction(
+  _prev: ProfileFormState,
+  formData: FormData
+): Promise<ProfileFormState> {
+  const session = await requireAuth();
+
+  const parsed = addSkillSchema.safeParse({
+    name: formData.get("name"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  try {
+    await prisma.userSkill.create({
+      data: { userId: session.user.id, name: parsed.data.name },
+    });
+  } catch (e: unknown) {
+    if ((e as { code?: string })?.code === "P2002") {
+      return { error: "You already have this skill." };
+    }
+    return { error: "Failed to save skill." };
+  }
+
+  revalidatePath("/records/profile");
+  return { ok: true };
+}
+
+export async function removeSkillAction(skillId: string): Promise<ProfileFormState> {
+  const session = await requireAuth();
+
+  await prisma.userSkill.deleteMany({
+    where: { id: skillId, userId: session.user.id },
   });
 
   revalidatePath("/records/profile");
