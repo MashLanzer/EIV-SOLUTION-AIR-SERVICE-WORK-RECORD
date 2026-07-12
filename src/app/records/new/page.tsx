@@ -1,6 +1,7 @@
 import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
 import { createRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
+import { suggestNextJobNumber } from "@/lib/jobNumber";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
@@ -34,6 +35,7 @@ export default async function NewRecordPage() {
       },
     }),
   ]);
+  const suggestedJobNumber = await suggestNextJobNumber(organizationId);
 
   return (
     <div className="flex flex-col gap-4">
@@ -44,6 +46,9 @@ export default async function NewRecordPage() {
         action={createRecordAction}
         defaultValues={{
           leadInstallerName: session.user.name ?? "",
+          // Suggested next sequential job number (blank if the org doesn't
+          // use numeric ones); a saved draft still wins.
+          jobNumber: suggestedJobNumber || undefined,
           // Company defaults from Settings pre-fill the pay fields; a saved
           // draft (loaded in the form) still wins over these.
           leadInstallerPay:
