@@ -20,8 +20,8 @@ import { ActivityBell } from "@/components/activity/ActivityBell";
 import { AppTabBar } from "@/components/layout/AppTabBar";
 import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
+import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { Logo } from "@/components/layout/Logo";
-import { SettingsLink } from "@/components/layout/SettingsLink";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS: TabItem[] = [
@@ -122,7 +122,11 @@ export function AdminSidebar({
           <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{name}</span>
           <div className="flex items-center gap-2">
             <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
-            <SettingsLink href="/admin/settings" />
+            <HeaderAccountMenu
+              name={name}
+              profileHref="/admin/profile"
+              settingsHref="/admin/settings"
+            />
           </div>
         </div>
       </aside>
@@ -133,7 +137,11 @@ export function AdminSidebar({
         <Logo />
         <div className="flex items-center gap-2">
           <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
-          <SettingsLink href="/admin/settings" />
+          <HeaderAccountMenu
+            name={name}
+            profileHref="/admin/profile"
+            settingsHref="/admin/settings"
+          />
         </div>
       </header>
 
@@ -143,9 +151,6 @@ export function AdminSidebar({
         pathname={pathname}
         createItems={CREATE_ITEMS}
         moreItems={MORE_ITEMS}
-        name={name}
-        roleLabel="Admin"
-        settingsHref="/admin/settings"
       />
     </>
   );

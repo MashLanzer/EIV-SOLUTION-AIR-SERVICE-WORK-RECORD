@@ -23,9 +23,6 @@ export function AppTabBar({
   pathname,
   createItems,
   moreItems,
-  name,
-  roleLabel,
-  settingsHref,
 }: {
   // The real destination tabs (3 or 4), split into balanced left/right groups
   // so the centre FAB always lines up with the notch.
@@ -33,9 +30,6 @@ export function AppTabBar({
   pathname: string;
   createItems: CreateItem[];
   moreItems: MoreItem[];
-  name: string;
-  roleLabel: string;
-  settingsHref: string;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const split = Math.ceil(items.length / 2);
@@ -100,9 +94,6 @@ export function AppTabBar({
         onClose={() => setMenuOpen(false)}
         createItems={createItems}
         moreItems={moreItems}
-        name={name}
-        roleLabel={roleLabel}
-        settingsHref={settingsHref}
       />
     </>
   );

@@ -1,15 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  ArrowLeft,
-  Building2,
-  Info,
-  Mail,
-  ShieldCheck,
-  Trash2,
-  User as UserIcon,
-} from "lucide-react";
+import { ArrowLeft, Building2, Info, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import { LogoutButton } from "@/components/layout/LogoutButton";
@@ -22,27 +14,22 @@ import {
   SettingsSection,
 } from "@/components/settings/SettingsList";
 import { updateOrganizationNameAction } from "@/actions/organization";
-import { updateProfileNameAction } from "@/actions/profile";
 
 // The product version shown in About. Product name is fixed (AeroTrack); the
 // per-company name lives in the Company section.
 const APP_VERSION = "AeroTrack 1.0";
 
-// Taps on the Role value needed to reveal the admin-only Danger zone -
+// Taps on the About version row needed to reveal the admin-only Danger zone -
 // deliberately obscure (like Android's "tap Build number 7 times"), so the
 // destructive reset never sits in plain view.
 const TAPS_TO_REVEAL = 7;
 
 export function SettingsScreen({
-  name,
-  email,
   role,
   backHref,
   companyName,
   inviteCode,
 }: {
-  name: string;
-  email: string;
   role: "ADMIN" | "WORKER";
   backHref: string;
   // Company name, editable by admins only.
@@ -75,29 +62,6 @@ export function SettingsScreen({
         </h1>
       </div>
 
-      {/* Profile */}
-      <SettingsSection title="Profile">
-        <InlineEditRow
-          icon={UserIcon}
-          label="Display name"
-          value={name}
-          placeholder="Your name"
-          action={updateProfileNameAction}
-          helpWhenEditing="Shown on your submitted records, comments and team lists."
-        />
-        <SettingsRow
-          icon={Mail}
-          label={email}
-          sublabel="Signed in with Google"
-        />
-        <SettingsRow
-          icon={ShieldCheck}
-          label={isAdmin ? "Admin" : "Worker"}
-          sublabel="Your access level"
-          onClick={bumpTaps}
-        />
-      </SettingsSection>
-
       {/* Appearance */}
       <SettingsSection
         title="Appearance"
@@ -126,7 +90,12 @@ export function SettingsScreen({
 
       {/* About */}
       <SettingsSection title="About">
-        <SettingsRow icon={Info} label="Version" trailing={APP_VERSION} />
+        <SettingsRow
+          icon={Info}
+          label="Version"
+          trailing={APP_VERSION}
+          onClick={bumpTaps}
+        />
       </SettingsSection>
 
       {/* Account actions */}

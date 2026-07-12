@@ -19,8 +19,6 @@ export default async function AdminSettingsPage({
     <>
       {reset && <SuccessToast message="All history was reset" />}
       <SettingsScreen
-        name={session.user.name ?? ""}
-        email={session.user.email ?? ""}
         role="ADMIN"
         backHref="/admin"
         companyName={org?.name ?? ""}

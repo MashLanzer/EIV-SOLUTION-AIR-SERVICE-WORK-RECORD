@@ -6,10 +6,10 @@ import { ClipboardList, FilePlus2, FolderKanban, Images, Plus } from "lucide-rea
 
 import { ActivityBell } from "@/components/activity/ActivityBell";
 import { AppTabBar } from "@/components/layout/AppTabBar";
+import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, type TabItem } from "@/components/layout/BottomTabBar";
 import { Logo } from "@/components/layout/Logo";
-import { SettingsLink } from "@/components/layout/SettingsLink";
 
 const TAB_ITEMS: TabItem[] = [
   { href: "/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: true },
@@ -65,9 +65,12 @@ export function WorkerNav({
           <Logo />
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">
-          <span className="hidden text-sm text-neutral-500 dark:text-neutral-400 sm:inline">{name}</span>
           <ActivityBell href="/records/activity" latestActivityAt={latestActivityAt} />
-          <SettingsLink href="/records/settings" />
+          <HeaderAccountMenu
+            name={name}
+            profileHref="/records/profile"
+            settingsHref="/records/settings"
+          />
         </div>
       </header>
 
@@ -78,9 +81,6 @@ export function WorkerNav({
           pathname={pathname}
           createItems={CREATE_ITEMS}
           moreItems={MORE_ITEMS}
-          name={name}
-          roleLabel="Worker"
-          settingsHref="/records/settings"
         />
       )}
     </>
