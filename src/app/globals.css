@@ -383,3 +383,44 @@ html[data-reduce-motion] *::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
 }
+
+/* Leaflet map chrome, themed via the app's own tokens so popups and controls
+   match light/dark/custom palettes instead of Leaflet's fixed white. The
+   basemap tiles themselves swap light↔dark in ProjectsMap. */
+.leaflet-container {
+  /* The blank/loading backdrop behind tiles follows the theme, so a dark map
+     never flashes Leaflet's default light-grey while tiles load. !important
+     beats leaflet.css's own `.leaflet-container { background:#ddd }`, which is
+     bundled after this file. */
+  background: var(--background) !important;
+}
+/* !important throughout beats leaflet.css's own fixed colours (bundled after
+   this file), so popups and controls fully follow the theme. */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 0.75rem !important;
+}
+.leaflet-popup-content a {
+  color: var(--color-primary);
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--color-neutral-400) !important;
+}
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+  border-color: var(--color-neutral-200) !important;
+}
+.leaflet-control-attribution {
+  background: color-mix(in srgb, var(--background) 80%, transparent) !important;
+  color: var(--color-neutral-500) !important;
+}
+.leaflet-control-attribution a {
+  color: var(--color-neutral-500) !important;
+}

@@ -189,6 +189,7 @@ export default async function AdminProjectsPage({
       name: p.name,
       latitude: p.latitude as number,
       longitude: p.longitude as number,
+      href: `/admin/projects/${p.id}`,
     }));
 
   const byStatus = SECTION_ORDER.map((status) => ({
