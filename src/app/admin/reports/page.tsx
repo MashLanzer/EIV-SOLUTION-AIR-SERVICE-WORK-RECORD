@@ -1,6 +1,7 @@
 import { BarChart3, ChevronDown, DollarSign, Sheet, Users } from "lucide-react";
 
 import { AvatarInitials } from "@/components/ui/avatar-initials";
+import { BarList } from "@/components/charts/BarList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DatePresets } from "@/components/ui/date-presets";
@@ -19,6 +20,13 @@ import {
 import { buildPayReport, defaultPayReportRange, parsePayReportParams } from "@/lib/payReport";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+
+function moneyString(value: number) {
+  return `$${value.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
 
 function money(value: number) {
   return (
@@ -50,6 +58,11 @@ export default async function AdminReportsPage({
   const report = await buildPayReport({ dateFrom, dateTo }, requireOrgId(session));
   const def = defaultPayReportRange();
   const isCustomRange = dateFrom !== def.dateFrom || dateTo !== def.dateTo;
+
+  // Pay per person, biggest first, for the at-a-glance bar chart above the table.
+  const chartData = [...report.rows]
+    .sort((a, b) => b.total - a.total)
+    .map((row) => ({ label: row.name, value: row.total }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -167,6 +180,17 @@ export default async function AdminReportsPage({
             </Button>
           </form>
         </div>
+
+        {report.rows.length > 1 && (
+          <Card>
+            <CardContent className="flex flex-col gap-3 p-4">
+              <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                Pay by person
+              </h3>
+              <BarList data={chartData} formatValue={moneyString} labelWidth="7rem" />
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardContent className="p-0">
