@@ -24,6 +24,7 @@ import {
 
 import { globalSearchAction } from "@/actions/search";
 import type { SearchGroup, SearchGroupType } from "@/lib/globalSearch";
+import { cn } from "@/lib/utils";
 
 const GROUP_ICON: Record<SearchGroupType, LucideIcon> = {
   records: ClipboardList,
@@ -70,6 +71,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [groups, setGroups] = useState<SearchGroup[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [pending, startTransition] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
   const seqRef = useRef(0);
@@ -94,6 +96,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
     if (q.length < 2) {
       seqRef.current += 1; // cancel any in-flight result
       setGroups([]);
+      setActiveIndex(0);
       return;
     }
     timerRef.current = setTimeout(() => {
@@ -101,19 +104,41 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
       startTransition(async () => {
         const res = await globalSearchAction(q);
         // Ignore stale responses that resolved after a newer keystroke.
-        if (seq === seqRef.current) setGroups(res);
+        if (seq === seqRef.current) {
+          setGroups(res);
+          setActiveIndex(0); // reset the cursor to the top on new results
+        }
       });
     }, 250);
   }, []);
 
   const trimmed = query.trim();
-  const firstHref = groups[0]?.items[0]?.href;
+
+  // Flatten the grouped results into one ordered list so the arrow keys can
+  // walk across group boundaries. Each entry carries a stable key (type:id)
+  // used to highlight the active row.
+  const flat = groups.flatMap((g) =>
+    g.items.map((it) => ({ href: it.href, key: `${g.type}:${it.id}` }))
+  );
+  const activeKey = flat[activeIndex]?.key;
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (flat.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(flat.length - 1, i + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(0, i - 1));
+    }
+  }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (firstHref) {
+    const href = flat[activeIndex]?.href ?? flat[0]?.href;
+    if (href) {
       onClose();
-      router.push(firstHref);
+      router.push(href);
     }
   }
 
@@ -135,6 +160,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
               ref={inputRef}
               value={query}
               onChange={(e) => run(e.target.value)}
+              onKeyDown={onKeyDown}
               type="text"
               placeholder="Search records, customers, projects…"
               aria-label="Search"
@@ -161,7 +187,11 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
                 </p>
               </div>
             ) : (
-              <SearchResultsList groups={groups} onSelect={onClose} />
+              <SearchResultsList
+                groups={groups}
+                onSelect={onClose}
+                activeKey={activeKey}
+              />
             )}
           </div>
         </div>
@@ -175,9 +205,12 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
 export function SearchResultsList({
   groups,
   onSelect,
+  activeKey,
 }: {
   groups: SearchGroup[];
   onSelect?: () => void;
+  // Stable key (`type:id`) of the arrow-key-highlighted row, if any.
+  activeKey?: string;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -188,12 +221,23 @@ export function SearchResultsList({
             <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
               {group.label}
             </p>
-            {group.items.map((item) => (
+            {group.items.map((item) => {
+              const active = `${group.type}:${item.id}` === activeKey;
+              return (
               <Link
                 key={item.id}
                 href={item.href}
                 onClick={onSelect}
-                className="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                aria-selected={active}
+                ref={
+                  active
+                    ? (el) => el?.scrollIntoView({ block: "nearest" })
+                    : undefined
+                }
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-neutral-100 dark:hover:bg-neutral-800",
+                  active && "bg-neutral-100 dark:bg-neutral-800"
+                )}
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
                   <Icon className="h-4 w-4" />
@@ -209,7 +253,8 @@ export function SearchResultsList({
                   )}
                 </span>
               </Link>
-            ))}
+              );
+            })}
           </div>
         );
       })}
