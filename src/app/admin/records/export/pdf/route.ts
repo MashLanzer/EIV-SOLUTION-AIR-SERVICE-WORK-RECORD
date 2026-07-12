@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
-import { orgNameFor, renderRecordsPdf } from "@/lib/pdf";
+import { companyForPdf, renderRecordsPdf } from "@/lib/pdf";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
 
 export const runtime = "nodejs";
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
     orderBy: { date: "desc" },
   });
 
-  const buffer = await renderRecordsPdf(records, await orgNameFor(organizationId));
+  const buffer = await renderRecordsPdf(records, await companyForPdf(organizationId));
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {

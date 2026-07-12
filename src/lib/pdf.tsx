@@ -6,23 +6,37 @@ import {
   PhotoReportPdfDocument,
   type PhotoReportData,
 } from "@/components/pdf/PhotoReportPdfDocument";
-import { WorkRecordPdfDocument } from "@/components/pdf/WorkRecordPdfDocument";
+import {
+  WorkRecordPdfDocument,
+  type PdfCompany,
+} from "@/components/pdf/WorkRecordPdfDocument";
 import { prisma } from "@/lib/prisma";
 
 type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } | null };
 
-// The tenant's own name for the PDF header (falls back to the product name if
-// somehow missing). Each company brands its own paperwork.
-export async function orgNameFor(organizationId: string): Promise<string> {
+// The tenant's own header block for the PDF: name plus any company details
+// (phone, address, license) set in Settings. Name falls back to the product
+// name if somehow missing. Each company brands its own paperwork.
+export async function companyForPdf(organizationId: string): Promise<PdfCompany> {
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
-    select: { name: true },
+    select: {
+      name: true,
+      companyPhone: true,
+      companyAddress: true,
+      licenseNumber: true,
+    },
   });
-  return org?.name ?? "AeroTrack";
+  return {
+    name: org?.name ?? "AeroTrack",
+    phone: org?.companyPhone ?? null,
+    address: org?.companyAddress ?? null,
+    license: org?.licenseNumber ?? null,
+  };
 }
 
-export async function renderRecordsPdf(records: RecordWithWorker[], orgName: string) {
-  return renderToBuffer(<WorkRecordPdfDocument records={records} orgName={orgName} />);
+export async function renderRecordsPdf(records: RecordWithWorker[], company: PdfCompany) {
+  return renderToBuffer(<WorkRecordPdfDocument records={records} company={company} />);
 }
 
 export async function renderPhotoReportPdf(data: PhotoReportData) {
@@ -41,9 +55,9 @@ export function fetchRecordWithPhotos(id: string, organizationId: string) {
 
 export async function recordPdfResponse(
   record: WorkRecord & { photos?: WorkPhoto[] },
-  orgName: string
+  company: PdfCompany
 ) {
-  const buffer = await renderRecordsPdf([record], orgName);
+  const buffer = await renderRecordsPdf([record], company);
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",

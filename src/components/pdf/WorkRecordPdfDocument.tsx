@@ -10,6 +10,15 @@ type RecordWithWorker = WorkRecord & {
   photos?: WorkPhoto[];
 };
 
+// The tenant's header block: name plus optional contact/license details set
+// in Settings. Only the fields a company fills in are printed.
+export type PdfCompany = {
+  name: string;
+  phone?: string | null;
+  address?: string | null;
+  license?: string | null;
+};
+
 const styles = StyleSheet.create({
   page: {
     padding: 32,
@@ -22,6 +31,11 @@ const styles = StyleSheet.create({
   companyName: {
     fontSize: 18,
     fontWeight: 700,
+  },
+  companyDetails: {
+    fontSize: 9,
+    color: "#64748b",
+    marginTop: 3,
   },
   formTitle: {
     fontSize: 11,
@@ -102,13 +116,29 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RecordPage({ record, orgName }: { record: RecordWithWorker; orgName: string }) {
+// The tenant header on every page: name, an optional detail line (only the
+// filled-in fields), then the page's subtitle.
+function CompanyHeader({ company, subtitle }: { company: PdfCompany; subtitle: string }) {
+  const details = [
+    company.phone?.trim(),
+    company.address?.trim(),
+    company.license?.trim() ? `License ${company.license.trim()}` : null,
+  ]
+    .filter(Boolean)
+    .join("  ·  ");
+  return (
+    <View style={styles.header}>
+      <Text style={styles.companyName}>{company.name}</Text>
+      {details ? <Text style={styles.companyDetails}>{details}</Text> : null}
+      <Text style={styles.formTitle}>{subtitle}</Text>
+    </View>
+  );
+}
+
+function RecordPage({ record, company }: { record: RecordWithWorker; company: PdfCompany }) {
   return (
     <Page size="LETTER" style={styles.page}>
-      <View style={styles.header}>
-        <Text style={styles.companyName}>{orgName}</Text>
-        <Text style={styles.formTitle}>Installation / Service Work Record</Text>
-      </View>
+      <CompanyHeader company={company} subtitle="Installation / Service Work Record" />
 
       <View style={styles.grid}>
         <Field label="Date" value={formatDate(record.date)} />
@@ -151,15 +181,10 @@ function RecordPage({ record, orgName }: { record: RecordWithWorker; orgName: st
   );
 }
 
-function PhotosPage({ record, orgName }: { record: RecordWithWorker; orgName: string }) {
+function PhotosPage({ record, company }: { record: RecordWithWorker; company: PdfCompany }) {
   return (
     <Page size="LETTER" style={styles.page}>
-      <View style={styles.header}>
-        <Text style={styles.companyName}>{orgName}</Text>
-        <Text style={styles.formTitle}>
-          Job #{record.jobNumber} — Photos
-        </Text>
-      </View>
+      <CompanyHeader company={company} subtitle={`Job #${record.jobNumber} — Photos`} />
       <View style={photoStyles.grid}>
         {(record.photos ?? []).map((photo) => (
           // eslint-disable-next-line jsx-a11y/alt-text -- react-pdf's Image is not an HTML img
@@ -188,22 +213,22 @@ const photoStyles = StyleSheet.create({
 
 export function WorkRecordPdfDocument({
   records,
-  orgName,
+  company,
 }: {
   records: RecordWithWorker[];
-  // The company (tenant) name shown in the header - each org brands its own
+  // The company (tenant) header shown on each page - each org brands its own
   // records; "AeroTrack" is the product, not what goes on the paperwork.
-  orgName: string;
+  company: PdfCompany;
 }) {
   return (
     <Document>
       {records.map((record) => (
-        <RecordPage key={record.id} record={record} orgName={orgName} />
+        <RecordPage key={record.id} record={record} company={company} />
       ))}
       {records
         .filter((record) => (record.photos?.length ?? 0) > 0)
         .map((record) => (
-          <PhotosPage key={`${record.id}-photos`} record={record} orgName={orgName} />
+          <PhotosPage key={`${record.id}-photos`} record={record} company={company} />
         ))}
     </Document>
   );
