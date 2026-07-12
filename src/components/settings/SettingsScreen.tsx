@@ -18,6 +18,7 @@ import Link from "next/link";
 
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
+import { CompanyLogoRow } from "@/components/settings/CompanyLogoRow";
 import { InlineEditRow } from "@/components/settings/InlineEditRow";
 import { InviteCodeCard } from "@/components/settings/InviteCodeCard";
 import { PolicyToggle } from "@/components/settings/PolicyToggle";
@@ -53,6 +54,7 @@ export interface CompanySettings {
   helperPay: string;
   requirePhoto: boolean;
   lockApprovedRecords: boolean;
+  logoUrl: string | null;
 }
 
 export function SettingsScreen({
@@ -135,6 +137,7 @@ export function SettingsScreen({
             placeholder="e.g. LIC-000000"
             action={updateCompanyFieldAction.bind(null, "license")}
           />
+          <CompanyLogoRow url={company.logoUrl} />
         </SettingsSection>
       )}
 

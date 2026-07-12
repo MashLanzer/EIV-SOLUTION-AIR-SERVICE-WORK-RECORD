@@ -21,3 +21,15 @@ export async function deleteProjectPhoto(url: string): Promise<void> {
     // Best-effort: if the blob is already gone, the DB row still gets removed.
   }
 }
+
+// The company logo shown on the work-record PDF. One per org, so the key is
+// stable-ish (still randomized to bust CDN caches on replace).
+export async function uploadCompanyLogo(
+  organizationId: string,
+  body: Blob | ArrayBuffer | Buffer,
+  contentType = "image/png"
+): Promise<string> {
+  const key = `orgs/${organizationId}/logo/${crypto.randomUUID()}`;
+  const blob = await put(key, body, { access: "public", contentType });
+  return blob.url;
+}

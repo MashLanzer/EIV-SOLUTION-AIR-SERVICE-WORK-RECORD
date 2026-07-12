@@ -40,6 +40,8 @@ model Organization {
   companyPhone     String?
   companyAddress   String?
   licenseNumber    String?
+  // Company logo (Vercel Blob URL) shown on the work-record PDF header.
+  logoUrl          String?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   users     User[]

@@ -17,6 +17,7 @@ export type PdfCompany = {
   phone?: string | null;
   address?: string | null;
   license?: string | null;
+  logoUrl?: string | null;
 };
 
 const styles = StyleSheet.create({
@@ -27,6 +28,16 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: 16,
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  logo: {
+    height: 44,
+    maxWidth: 120,
+    objectFit: "contain",
   },
   companyName: {
     fontSize: 18,
@@ -126,11 +137,24 @@ function CompanyHeader({ company, subtitle }: { company: PdfCompany; subtitle: s
   ]
     .filter(Boolean)
     .join("  ·  ");
-  return (
-    <View style={styles.header}>
+  const textBlock = (
+    <View>
       <Text style={styles.companyName}>{company.name}</Text>
       {details ? <Text style={styles.companyDetails}>{details}</Text> : null}
       <Text style={styles.formTitle}>{subtitle}</Text>
+    </View>
+  );
+  return (
+    <View style={styles.header}>
+      {company.logoUrl ? (
+        <View style={styles.headerRow}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf's Image is not an HTML img */}
+          <Image src={company.logoUrl} style={styles.logo} />
+          {textBlock}
+        </View>
+      ) : (
+        textBlock
+      )}
     </View>
   );
 }

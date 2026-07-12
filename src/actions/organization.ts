@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
+import { deleteProjectPhoto, uploadCompanyLogo } from "@/lib/blob";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { generateJoinCode } from "@/lib/joinCode";
@@ -156,5 +157,66 @@ export async function setLockApprovedRecordsAction(enabled: boolean) {
     where: { id: organizationId },
     data: { lockApprovedRecords: enabled },
   });
+  revalidatePath("/admin/settings");
+}
+
+export type LogoState = { error?: string; ok?: boolean } | undefined;
+
+const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2 MB
+
+// Upload/replace the company logo (admin only). Stores it in Blob and swaps
+// the URL on the org, deleting the previous logo best-effort.
+export async function updateCompanyLogoAction(
+  _prev: LogoState,
+  formData: FormData
+): Promise<LogoState> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  const file = formData.get("logo");
+  if (!(file instanceof Blob) || file.size === 0) {
+    return { error: "Choose an image to upload." };
+  }
+  if (!file.type.startsWith("image/")) {
+    return { error: "That file isn't an image." };
+  }
+  if (file.size > MAX_LOGO_BYTES) {
+    return { error: "Logo must be 2 MB or smaller." };
+  }
+
+  let url: string;
+  try {
+    url = await uploadCompanyLogo(organizationId, file, file.type);
+  } catch {
+    return { error: "Image storage isn't configured. Ask your provider to enable it." };
+  }
+
+  const prev = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { logoUrl: true },
+  });
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { logoUrl: url },
+  });
+  if (prev?.logoUrl) await deleteProjectPhoto(prev.logoUrl);
+
+  revalidatePath("/admin/settings");
+  return { ok: true };
+}
+
+// Remove the company logo (admin only).
+export async function removeCompanyLogoAction() {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { logoUrl: true },
+  });
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { logoUrl: null },
+  });
+  if (org?.logoUrl) await deleteProjectPhoto(org.logoUrl);
   revalidatePath("/admin/settings");
 }

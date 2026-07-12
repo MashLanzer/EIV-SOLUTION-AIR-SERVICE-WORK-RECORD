@@ -23,6 +23,7 @@ export default async function AdminSettingsPage({
       defaultHelperPay: true,
       requirePhoto: true,
       lockApprovedRecords: true,
+      logoUrl: true,
     },
   });
   return (
@@ -42,6 +43,7 @@ export default async function AdminSettingsPage({
             org?.defaultHelperPay != null ? String(org.defaultHelperPay) : "",
           requirePhoto: org?.requirePhoto ?? false,
           lockApprovedRecords: org?.lockApprovedRecords ?? false,
+          logoUrl: org?.logoUrl ?? null,
         }}
       />
     </>

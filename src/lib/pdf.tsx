@@ -25,6 +25,7 @@ export async function companyForPdf(organizationId: string): Promise<PdfCompany>
       companyPhone: true,
       companyAddress: true,
       licenseNumber: true,
+      logoUrl: true,
     },
   });
   return {
@@ -32,6 +33,7 @@ export async function companyForPdf(organizationId: string): Promise<PdfCompany>
     phone: org?.companyPhone ?? null,
     address: org?.companyAddress ?? null,
     license: org?.licenseNumber ?? null,
+    logoUrl: org?.logoUrl ?? null,
   };
 }
 
