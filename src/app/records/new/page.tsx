@@ -11,19 +11,25 @@ export default async function NewRecordPage() {
   // Workers can only tag a record to a project of one of their teams.
   const isAdmin = session.user.role === "ADMIN";
   const teamIds = isAdmin ? null : await getWorkerTeamIds(session.user.id);
-  const projects = await prisma.project.findMany({
-    where: {
-      organizationId,
-      status: { not: "COMPLETED" },
-      ...(isAdmin ? {} : { teamId: { in: teamIds ?? [] } }),
-    },
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      customer: { select: { name: true, address: true, phone: true, email: true } },
-    },
-  });
+  const [projects, org] = await Promise.all([
+    prisma.project.findMany({
+      where: {
+        organizationId,
+        status: { not: "COMPLETED" },
+        ...(isAdmin ? {} : { teamId: { in: teamIds ?? [] } }),
+      },
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        customer: { select: { name: true, address: true, phone: true, email: true } },
+      },
+    }),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { defaultLeadPay: true, defaultHelperPay: true },
+    }),
+  ]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -32,7 +38,15 @@ export default async function NewRecordPage() {
       </h1>
       <WorkRecordForm
         action={createRecordAction}
-        defaultValues={{ leadInstallerName: session.user.name ?? "" }}
+        defaultValues={{
+          leadInstallerName: session.user.name ?? "",
+          // Company defaults from Settings pre-fill the pay fields; a saved
+          // draft (loaded in the form) still wins over these.
+          leadInstallerPay:
+            org?.defaultLeadPay != null ? String(org.defaultLeadPay) : undefined,
+          helperPay:
+            org?.defaultHelperPay != null ? String(org.defaultHelperPay) : undefined,
+        }}
         submitLabel="Submit Record"
         draftKey={`new-record:${session.user.id}`}
         projects={projects}
