@@ -26,6 +26,17 @@ model Organization {
   // to join the company as a WORKER. Admins can regenerate it from Settings.
   // Nullable so an org can have joining-by-code turned off.
   joinCode  String?      @unique
+  // Company-wide settings (admin-editable in Settings). All optional so
+  // existing orgs keep working; the app falls back to its old behaviour when
+  // a value is unset.
+  defaultLeadPay   Decimal? @db.Decimal(10, 2)
+  defaultHelperPay Decimal? @db.Decimal(10, 2)
+  // When true, a work record can't be submitted without at least one photo.
+  requirePhoto     Boolean  @default(false)
+  // Extra company details printed on the work-record PDF header.
+  companyPhone     String?
+  companyAddress   String?
+  licenseNumber    String?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   users     User[]

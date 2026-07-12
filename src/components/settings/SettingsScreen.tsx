@@ -1,19 +1,33 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ArrowLeft, Building2, Info, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  DollarSign,
+  FileText,
+  Info,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { InlineEditRow } from "@/components/settings/InlineEditRow";
 import { InviteCodeCard } from "@/components/settings/InviteCodeCard";
+import { RequirePhotoToggle } from "@/components/settings/RequirePhotoToggle";
 import { ResetHistoryDialog } from "@/components/settings/ResetHistoryDialog";
 import {
   SettingsRow,
   SettingsSection,
 } from "@/components/settings/SettingsList";
-import { updateOrganizationNameAction } from "@/actions/organization";
+import {
+  updateCompanyFieldAction,
+  updateOrganizationNameAction,
+} from "@/actions/organization";
 
 // The product version shown in About. Product name is fixed (AeroTrack); the
 // per-company name lives in the Company section.
@@ -24,16 +38,28 @@ const APP_VERSION = "AeroTrack 1.0";
 // destructive reset never sits in plain view.
 const TAPS_TO_REVEAL = 7;
 
+// Company-wide settings, all as strings for the inline editors (pay is the
+// plain number, e.g. "25" or "25.00").
+export interface CompanySettings {
+  name: string;
+  phone: string;
+  address: string;
+  license: string;
+  leadPay: string;
+  helperPay: string;
+  requirePhoto: boolean;
+}
+
 export function SettingsScreen({
   role,
   backHref,
-  companyName,
+  company,
   inviteCode,
 }: {
   role: "ADMIN" | "WORKER";
   backHref: string;
-  // Company name, editable by admins only.
-  companyName?: string;
+  // Present for admins only.
+  company?: CompanySettings;
   // The company's invite code, shown to admins only.
   inviteCode?: string | null;
 }) {
@@ -71,15 +97,64 @@ export function SettingsScreen({
       </SettingsSection>
 
       {/* Company (admin only) */}
-      {isAdmin && companyName !== undefined && (
-        <SettingsSection title="Company">
+      {isAdmin && company && (
+        <SettingsSection
+          title="Company"
+          description="Company name, phone, address and license appear on the work record PDF."
+        >
           <InlineEditRow
             icon={Building2}
             label="Company name"
-            value={companyName}
+            value={company.name}
             placeholder="Company name"
             action={updateOrganizationNameAction}
-            helpWhenEditing="Appears on the work record PDF header."
+          />
+          <InlineEditRow
+            icon={Phone}
+            label="Phone"
+            value={company.phone}
+            placeholder="(555) 123-4567"
+            action={updateCompanyFieldAction.bind(null, "phone")}
+          />
+          <InlineEditRow
+            icon={MapPin}
+            label="Address"
+            value={company.address}
+            placeholder="123 Main St, City, ST"
+            action={updateCompanyFieldAction.bind(null, "address")}
+          />
+          <InlineEditRow
+            icon={FileText}
+            label="License number"
+            value={company.license}
+            placeholder="e.g. LIC-000000"
+            action={updateCompanyFieldAction.bind(null, "license")}
+          />
+        </SettingsSection>
+      )}
+
+      {/* Work record policy + defaults (admin only) */}
+      {isAdmin && company && (
+        <SettingsSection
+          title="Work records"
+          description="Defaults and rules applied when workers submit records."
+        >
+          <RequirePhotoToggle initial={company.requirePhoto} />
+          <InlineEditRow
+            icon={DollarSign}
+            label="Default lead pay ($)"
+            value={company.leadPay}
+            placeholder="0.00"
+            action={updateCompanyFieldAction.bind(null, "leadPay")}
+            helpWhenEditing="Pre-fills the lead pay on a new record; workers can still change it."
+          />
+          <InlineEditRow
+            icon={DollarSign}
+            label="Default helper pay ($)"
+            value={company.helperPay}
+            placeholder="0.00"
+            action={updateCompanyFieldAction.bind(null, "helperPay")}
+            helpWhenEditing="Pre-fills the helper pay on a new record; workers can still change it."
           />
         </SettingsSection>
       )}
@@ -88,8 +163,13 @@ export function SettingsScreen({
         <InviteCodeCard code={inviteCode} />
       )}
 
-      {/* About */}
+      {/* Access level (read-only, everyone) */}
       <SettingsSection title="About">
+        <SettingsRow
+          icon={ShieldCheck}
+          label={isAdmin ? "Admin" : "Worker"}
+          sublabel="Your access level"
+        />
         <SettingsRow
           icon={Info}
           label="Version"

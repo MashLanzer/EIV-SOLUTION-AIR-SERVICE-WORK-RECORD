@@ -95,3 +95,54 @@ export async function updateOrganizationNameAction(
   revalidatePath("/admin/settings");
   return { ok: true };
 }
+
+// One company text/number field, edited inline in Settings. The InlineEditRow
+// always posts its value as `name`; the field is bound by the caller so a
+// single action backs every company field. Admin + org-scoped.
+export type CompanyField =
+  | "phone"
+  | "address"
+  | "license"
+  | "leadPay"
+  | "helperPay";
+
+type CompanyFieldState = { error?: string; ok?: boolean } | undefined;
+
+export async function updateCompanyFieldAction(
+  field: CompanyField,
+  _prev: CompanyFieldState,
+  formData: FormData
+): Promise<CompanyFieldState> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const raw = ((formData.get("name") as string | null) ?? "").trim();
+
+  let data: Record<string, unknown>;
+  if (field === "phone") data = { companyPhone: raw || null };
+  else if (field === "address") data = { companyAddress: raw || null };
+  else if (field === "license") data = { licenseNumber: raw || null };
+  else {
+    // Pay defaults: blank clears; otherwise a non-negative amount.
+    const amount = Number(raw);
+    if (raw && (!Number.isFinite(amount) || amount < 0)) {
+      return { error: "Enter a valid amount (0 or more)." };
+    }
+    const value = raw ? amount : null;
+    data = field === "leadPay" ? { defaultLeadPay: value } : { defaultHelperPay: value };
+  }
+
+  await prisma.organization.update({ where: { id: organizationId }, data });
+  revalidatePath("/admin/settings");
+  return { ok: true };
+}
+
+// Toggle the "a record needs a photo to be submitted" policy (admin only).
+export async function setRequirePhotoAction(enabled: boolean) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { requirePhoto: enabled },
+  });
+  revalidatePath("/admin/settings");
+}
