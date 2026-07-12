@@ -7,12 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { SettingsCustomRow } from "@/components/settings/SettingsList";
 import { setDefaultWorkNotesAction } from "@/actions/organization";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 // The default "work performed" notes template. Shows the current text (or a
 // placeholder) with a pencil; expands into a textarea + Save/Cancel. Unlike a
 // single-line field this can be cleared to empty. The value comes from the
 // `value` prop, refreshed by the action's revalidate.
 export function DefaultNotesRow({ value }: { value: string }) {
+  const t = useT();
+  const w = t.settings.workRecords;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [pending, startTransition] = useTransition();
@@ -40,7 +43,7 @@ export function DefaultNotesRow({ value }: { value: string }) {
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-            Default work notes
+            {w.defaultNotes}
           </span>
           <span className="whitespace-pre-wrap break-words text-sm text-neutral-900 dark:text-neutral-100">
             {value || "—"}
@@ -49,11 +52,11 @@ export function DefaultNotesRow({ value }: { value: string }) {
         <button
           type="button"
           onClick={open}
-          aria-label="Edit default work notes"
+          aria-label={w.defaultNotes}
           className="flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-neutral-500 dark:text-neutral-400 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100"
         >
           <Pencil className="h-3.5 w-3.5" />
-          Edit
+          {t.common.edit}
         </button>
       </SettingsCustomRow>
     );
@@ -66,20 +69,20 @@ export function DefaultNotesRow({ value }: { value: string }) {
           htmlFor="default-work-notes"
           className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
         >
-          Default work notes
+          {w.defaultNotes}
         </label>
         <Textarea
           id="default-work-notes"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="e.g. Performed standard maintenance. Checked filters, refrigerant and connections."
+          placeholder={w.defaultNotesPlaceholder}
           rows={4}
           autoFocus
         />
         <div className="flex items-center gap-2">
           <Button type="submit" size="sm" disabled={pending}>
             <Check className="h-4 w-4" />
-            Save
+            {t.common.save}
           </Button>
           <Button
             type="button"
@@ -88,11 +91,11 @@ export function DefaultNotesRow({ value }: { value: string }) {
             onClick={() => setEditing(false)}
           >
             <X className="h-4 w-4" />
-            Cancel
+            {t.common.cancel}
           </Button>
         </div>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          Pre-fills the work-performed notes on a new record; leave blank for none.
+          {w.defaultNotesHelp}
         </p>
       </form>
     </SettingsCustomRow>

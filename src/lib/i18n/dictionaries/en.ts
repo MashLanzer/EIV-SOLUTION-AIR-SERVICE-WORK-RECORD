@@ -82,8 +82,15 @@ export const en = {
       section: "Team invite code",
       allow: "Allow joining by code",
       rotate: "Rotate code",
+      rotating: "Rotating…",
+      copyCode: "Copy code",
       description:
         "Share this code so someone can join your company. They sign in with Google and enter it.",
+      descriptionOff:
+        "Joining by code is off. No one can join with a code until you turn this on.",
+      rotateTitle: "Rotate invite code?",
+      rotateDescription:
+        "The current code stops working immediately. Anyone you shared it with will need the new one.",
     },
     about: {
       section: "About",
@@ -93,6 +100,8 @@ export const en = {
       version: "Version",
     },
     signOut: "Sign out",
+    signOutTitle: "Sign out?",
+    signOutDescription: "You'll need to sign in again to access your account.",
     danger: {
       section: "Danger zone",
       description:

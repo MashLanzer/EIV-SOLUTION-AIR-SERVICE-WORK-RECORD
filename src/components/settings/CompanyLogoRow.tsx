@@ -9,11 +9,13 @@ import {
   removeCompanyLogoAction,
   updateCompanyLogoAction,
 } from "@/actions/organization";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 // The company logo shown on the work-record PDF. Upload/replace via a hidden
 // file input; the current logo comes from the `url` prop (the action's
 // revalidate refreshes it). Remove clears it. Admin-only, org-scoped.
 export function CompanyLogoRow({ url }: { url: string | null }) {
+  const c = useT().settings.company;
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -27,7 +29,7 @@ export function CompanyLogoRow({ url }: { url: string | null }) {
     fd.set("logo", file);
     startTransition(async () => {
       const result = await updateCompanyLogoAction(undefined, fd);
-      if (!result?.ok) setError(result?.error ?? "Couldn't upload. Try again.");
+      if (!result?.ok) setError(result?.error ?? c.logoGenericError);
     });
   }
 
@@ -44,17 +46,17 @@ export function CompanyLogoRow({ url }: { url: string | null }) {
         <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={url} alt="Company logo" className="h-full w-full object-contain" />
+            <img src={url} alt={c.logo} className="h-full w-full object-contain" />
           ) : (
             <ImageIcon className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
           )}
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
           <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-            Company logo
+            {c.logo}
           </span>
           <span className="truncate text-xs text-neutral-500 dark:text-neutral-400">
-            Shown on the work record PDF · PNG or JPG, up to 2 MB
+            {c.logoHint}
           </span>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -66,7 +68,7 @@ export function CompanyLogoRow({ url }: { url: string | null }) {
             disabled={pending}
           >
             <Upload className="h-3.5 w-3.5" />
-            {url ? "Replace" : "Upload"}
+            {url ? c.replace : c.upload}
           </Button>
           {url && (
             <Button
@@ -75,7 +77,7 @@ export function CompanyLogoRow({ url }: { url: string | null }) {
               variant="outline"
               onClick={onRemove}
               disabled={pending}
-              aria-label="Remove logo"
+              aria-label={c.removeLogo}
             >
               <Trash2 className="h-4 w-4" />
             </Button>

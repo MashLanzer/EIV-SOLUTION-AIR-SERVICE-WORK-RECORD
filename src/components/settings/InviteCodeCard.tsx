@@ -15,8 +15,11 @@ import {
   rotateJoinCodeAction,
   setJoinCodeEnabledAction,
 } from "@/actions/organization";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function InviteCodeCard({ code }: { code: string | null }) {
+  const t = useT();
+  const inv = t.settings.invite;
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
   const enabled = code != null;
@@ -34,17 +37,13 @@ export function InviteCodeCard({ code }: { code: string | null }) {
 
   return (
     <SettingsSection
-      title="Team invite code"
-      description={
-        enabled
-          ? "Share this code so someone can join your company. They sign in with Google and enter it."
-          : "Joining by code is off. No one can join with a code until you turn this on."
-      }
+      title={inv.section}
+      description={enabled ? inv.description : inv.descriptionOff}
     >
       <SettingsRow
         icon={KeyRound}
-        label="Allow joining by code"
-        sublabel={enabled ? "On" : "Off"}
+        label={inv.allow}
+        sublabel={enabled ? t.common.on : t.common.off}
         trailing={
           <Switch
             checked={enabled}
@@ -52,7 +51,7 @@ export function InviteCodeCard({ code }: { code: string | null }) {
             onCheckedChange={(next) =>
               startTransition(() => setJoinCodeEnabledAction(next))
             }
-            aria-label="Allow joining by code"
+            aria-label={inv.allow}
           />
         }
       />
@@ -68,7 +67,7 @@ export function InviteCodeCard({ code }: { code: string | null }) {
               variant="outline"
               size="icon"
               onClick={copy}
-              aria-label="Copy code"
+              aria-label={inv.copyCode}
             >
               {copied ? (
                 <Check className="h-4 w-4 text-success-text" />
@@ -78,13 +77,13 @@ export function InviteCodeCard({ code }: { code: string | null }) {
             </Button>
           </div>
           <ConfirmDialog
-            title="Rotate invite code?"
-            description="The current code stops working immediately. Anyone you shared it with will need the new one."
-            confirmLabel="Rotate code"
+            title={inv.rotateTitle}
+            description={inv.rotateDescription}
+            confirmLabel={inv.rotate}
             trigger={
               <Button type="button" variant="outline" size="sm" disabled={pending}>
                 <RefreshCw className="h-4 w-4" />
-                {pending ? "Rotating..." : "Rotate code"}
+                {pending ? inv.rotating : inv.rotate}
               </Button>
             }
             onConfirm={() => startTransition(() => rotateJoinCodeAction())}

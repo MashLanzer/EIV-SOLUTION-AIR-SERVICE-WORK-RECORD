@@ -4,13 +4,15 @@ import { LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function LogoutButton() {
+  const t = useT();
   return (
     <ConfirmDialog
-      title="Sign out?"
-      description="You'll need to sign in again to access your account."
-      confirmLabel="Sign out"
+      title={t.settings.signOutTitle}
+      description={t.settings.signOutDescription}
+      confirmLabel={t.settings.signOut}
       trigger={
         <button
           type="button"
@@ -20,7 +22,7 @@ export function LogoutButton() {
             <LogOut className="h-4.5 w-4.5" />
           </span>
           <span className="text-sm font-medium text-destructive-text">
-            Sign out
+            {t.settings.signOut}
           </span>
         </button>
       }

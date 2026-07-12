@@ -84,8 +84,15 @@ export const es: Dictionary = {
       section: "Código de invitación",
       allow: "Permitir unirse con código",
       rotate: "Regenerar código",
+      rotating: "Regenerando…",
+      copyCode: "Copiar código",
       description:
         "Comparte este código para que alguien se una a tu empresa. Inicia sesión con Google y lo ingresa.",
+      descriptionOff:
+        "Unirse con código está desactivado. Nadie puede unirse con un código hasta que lo actives.",
+      rotateTitle: "¿Regenerar código de invitación?",
+      rotateDescription:
+        "El código actual deja de funcionar de inmediato. Quien lo tenga necesitará el nuevo.",
     },
     about: {
       section: "Acerca de",
@@ -95,6 +102,8 @@ export const es: Dictionary = {
       version: "Versión",
     },
     signOut: "Cerrar sesión",
+    signOutTitle: "¿Cerrar sesión?",
+    signOutDescription: "Deberás iniciar sesión de nuevo para acceder a tu cuenta.",
     danger: {
       section: "Zona de peligro",
       description:

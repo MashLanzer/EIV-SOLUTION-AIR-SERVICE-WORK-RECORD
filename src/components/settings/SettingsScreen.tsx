@@ -32,6 +32,7 @@ import {
   SettingsRow,
   SettingsSection,
 } from "@/components/settings/SettingsList";
+import { useT } from "@/components/i18n/LocaleProvider";
 import {
   setLockApprovedRecordsAction,
   setRequireCustomerSignatureAction,
@@ -81,6 +82,8 @@ export function SettingsScreen({
   // The company's invite code, shown to admins only.
   inviteCode?: string | null;
 }) {
+  const t = useT();
+  const s = t.settings;
   const isAdmin = role === "ADMIN";
   const tapsRef = useRef(0);
   const [revealed, setRevealed] = useState(false);
@@ -99,17 +102,17 @@ export function SettingsScreen({
           className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t.common.back}
         </Link>
         <h1 className="mt-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          Settings
+          {s.title}
         </h1>
       </div>
 
       {/* Appearance */}
       <SettingsSection
-        title="Appearance"
-        description="Changes apply on this device only."
+        title={t.appearance.section}
+        description={t.appearance.onThisDevice}
       >
         <AppearanceSettings />
       </SettingsSection>
@@ -117,33 +120,33 @@ export function SettingsScreen({
       {/* Company (admin only) */}
       {isAdmin && company && (
         <SettingsSection
-          title="Company"
-          description="Company name, phone, address and license appear on the work record PDF."
+          title={s.company.section}
+          description={s.company.description}
         >
           <InlineEditRow
             icon={Building2}
-            label="Company name"
+            label={s.company.name}
             value={company.name}
-            placeholder="Company name"
+            placeholder={s.company.name}
             action={updateOrganizationNameAction}
           />
           <InlineEditRow
             icon={Phone}
-            label="Phone"
+            label={s.company.phone}
             value={company.phone}
             placeholder="(555) 123-4567"
             action={updateCompanyFieldAction.bind(null, "phone")}
           />
           <InlineEditRow
             icon={MapPin}
-            label="Address"
+            label={s.company.address}
             value={company.address}
             placeholder="123 Main St, City, ST"
             action={updateCompanyFieldAction.bind(null, "address")}
           />
           <InlineEditRow
             icon={FileText}
-            label="License number"
+            label={s.company.license}
             value={company.license}
             placeholder="e.g. LIC-000000"
             action={updateCompanyFieldAction.bind(null, "license")}
@@ -151,11 +154,11 @@ export function SettingsScreen({
           <CompanyLogoRow url={company.logoUrl} />
           <InlineEditRow
             icon={Coins}
-            label="Currency symbol"
+            label={s.company.currency}
             value={company.currency}
             placeholder="$"
             action={updateCompanyFieldAction.bind(null, "currency")}
-            helpWhenEditing="Shown before money amounts across the app and PDF (e.g. $, €, £)."
+            helpWhenEditing={s.company.currencyHelp}
           />
         </SettingsSection>
       )}
@@ -163,58 +166,58 @@ export function SettingsScreen({
       {/* Work record policy + defaults (admin only) */}
       {isAdmin && company && (
         <SettingsSection
-          title="Work records"
-          description="Defaults and rules applied when workers submit records."
+          title={s.workRecords.section}
+          description={s.workRecords.description}
         >
           <PolicyToggle
             icon={Camera}
-            label="Require a photo"
-            sublabel="Records can't be submitted without at least one photo"
+            label={s.workRecords.requirePhoto}
+            sublabel={s.workRecords.requirePhotoHint}
             initial={company.requirePhoto}
             action={setRequirePhotoAction}
-            ariaLabel="Require a photo to submit a record"
+            ariaLabel={s.workRecords.requirePhoto}
           />
           <PolicyToggle
             icon={Users}
-            label="Require a helper"
-            sublabel="A helper name must be entered on every record"
+            label={s.workRecords.requireHelper}
+            sublabel={s.workRecords.requireHelperHint}
             initial={company.requireHelper}
             action={setRequireHelperAction}
           />
           <PolicyToggle
             icon={PenLine}
-            label="Require customer signature"
-            sublabel="Turn off for unattended jobs where the customer can't sign"
+            label={s.workRecords.requireCustomerSignature}
+            sublabel={s.workRecords.requireCustomerSignatureHint}
             initial={company.requireCustomerSignature}
             action={setRequireCustomerSignatureAction}
           />
           <PolicyToggle
             icon={Lock}
-            label="Lock approved records"
-            sublabel="Once approved, a record must be reopened before anyone can edit it"
+            label={s.workRecords.lockApproved}
+            sublabel={s.workRecords.lockApprovedHint}
             initial={company.lockApprovedRecords}
             action={setLockApprovedRecordsAction}
           />
           <InlineEditRow
             icon={DollarSign}
-            label={`Default lead pay (${company.currency})`}
+            label={`${s.workRecords.defaultLeadPay} (${company.currency})`}
             value={company.leadPay}
             placeholder="0.00"
             action={updateCompanyFieldAction.bind(null, "leadPay")}
-            helpWhenEditing="Pre-fills the lead pay on a new record; workers can still change it."
+            helpWhenEditing={s.workRecords.defaultLeadPayHelp}
           />
           <InlineEditRow
             icon={DollarSign}
-            label={`Default helper pay (${company.currency})`}
+            label={`${s.workRecords.defaultHelperPay} (${company.currency})`}
             value={company.helperPay}
             placeholder="0.00"
             action={updateCompanyFieldAction.bind(null, "helperPay")}
-            helpWhenEditing="Pre-fills the helper pay on a new record; workers can still change it."
+            helpWhenEditing={s.workRecords.defaultHelperPayHelp}
           />
           <SettingsRow
             icon={Tag}
-            label="Work types"
-            sublabel="Predefined types of work the crew can pick, by category"
+            label={s.workRecords.workTypes}
+            sublabel={s.workRecords.workTypesHint}
             href="/admin/settings/work-types"
           />
           <DefaultNotesRow value={company.defaultWorkNotes} />
@@ -226,15 +229,15 @@ export function SettingsScreen({
       )}
 
       {/* Access level (read-only, everyone) */}
-      <SettingsSection title="About">
+      <SettingsSection title={s.about.section}>
         <SettingsRow
           icon={ShieldCheck}
-          label={isAdmin ? "Admin" : "Worker"}
-          sublabel="Your access level"
+          label={isAdmin ? s.about.admin : s.about.worker}
+          sublabel={s.about.accessLevel}
         />
         <SettingsRow
           icon={Info}
-          label="Version"
+          label={s.about.version}
           trailing={APP_VERSION}
           onClick={bumpTaps}
         />
@@ -248,8 +251,8 @@ export function SettingsScreen({
       {/* Danger zone - admin only, hidden behind the 7-tap reveal */}
       {revealed && isAdmin && (
         <SettingsSection
-          title="Danger zone"
-          description="Permanently deletes everything in your company — records, customers, projects, photos, teams, checklists and comments. User accounts are kept, so you stay signed in. This can't be undone."
+          title={s.danger.section}
+          description={s.danger.description}
         >
           <div className="flex items-center gap-3 px-4 py-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive-soft text-destructive-text">
@@ -257,7 +260,7 @@ export function SettingsScreen({
             </span>
             <div className="flex-1">
               <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                Reset all company data
+                {s.danger.reset}
               </p>
             </div>
             <ResetHistoryDialog />

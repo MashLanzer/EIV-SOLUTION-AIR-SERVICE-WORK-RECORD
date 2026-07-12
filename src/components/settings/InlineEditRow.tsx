@@ -7,6 +7,7 @@ import { Check, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SettingsCustomRow } from "@/components/settings/SettingsList";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 type EditState = { error?: string; ok?: boolean } | undefined;
 
@@ -31,6 +32,7 @@ export function InlineEditRow({
   action: (prev: EditState, formData: FormData) => Promise<EditState>;
   helpWhenEditing?: string;
 }) {
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export function InlineEditRow({
           className="flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-neutral-500 dark:text-neutral-400 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100"
         >
           <Pencil className="h-3.5 w-3.5" />
-          Edit
+          {t.common.edit}
         </button>
       </SettingsCustomRow>
     );

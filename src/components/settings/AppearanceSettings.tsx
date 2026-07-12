@@ -5,6 +5,8 @@ import { Check, Monitor, Moon, Sun, Palette as PaletteIcon, Sparkles, Thermomete
 
 import { Switch } from "@/components/ui/switch";
 import { SettingsCustomRow, SettingsRow } from "@/components/settings/SettingsList";
+import { LanguageSetting } from "@/components/settings/LanguageSetting";
+import { useT } from "@/components/i18n/LocaleProvider";
 import {
   DEFAULT_PALETTE_ID,
   PALETTES,
@@ -13,18 +15,16 @@ import {
 import { setTempUnit, useTempUnit, type TempUnit } from "@/lib/tempUnit";
 import { cn } from "@/lib/utils";
 
-const TEMP_UNIT_OPTIONS: { value: TempUnit; label: string }[] = [
-  { value: "F", label: "°F" },
-  { value: "C", label: "°C" },
-];
+const TEMP_UNIT_VALUES: TempUnit[] = ["F", "C"];
+const TEMP_UNIT_LABELS: Record<TempUnit, string> = { F: "°F", C: "°C" };
 
 type ThemeChoice = "light" | "system" | "dark" | "custom";
 
-const THEME_OPTIONS: { value: ThemeChoice; label: string; icon: typeof Sun }[] = [
-  { value: "light", label: "Light", icon: Sun },
-  { value: "system", label: "System", icon: Monitor },
-  { value: "dark", label: "Dark", icon: Moon },
-  { value: "custom", label: "Custom", icon: PaletteIcon },
+const THEME_OPTIONS: { value: ThemeChoice; icon: typeof Sun }[] = [
+  { value: "light", icon: Sun },
+  { value: "system", icon: Monitor },
+  { value: "dark", icon: Moon },
+  { value: "custom", icon: PaletteIcon },
 ];
 
 // A tiny same-tab store over the Appearance prefs the before-paint script reads
@@ -107,6 +107,7 @@ function useReduceMotion(): boolean {
 }
 
 export function AppearanceSettings() {
+  const t = useT();
   const theme = useThemeChoice();
   const paletteId = usePaletteId();
   const reduceMotion = useReduceMotion();
@@ -116,11 +117,11 @@ export function AppearanceSettings() {
     <>
       <SettingsCustomRow className="flex flex-col gap-2.5">
         <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-          Theme
+          {t.appearance.theme}
         </span>
         <div
           role="radiogroup"
-          aria-label="Theme"
+          aria-label={t.appearance.theme}
           className="grid grid-cols-2 gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900 p-1"
         >
           {THEME_OPTIONS.map((opt) => {
@@ -141,20 +142,20 @@ export function AppearanceSettings() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {opt.label}
+                {t.appearance[opt.value]}
               </button>
             );
           })}
         </div>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          System follows your phone&apos;s light or dark setting.
+          {t.appearance.systemHint}
         </p>
       </SettingsCustomRow>
 
       {theme === "custom" && (
         <SettingsCustomRow className="flex flex-col gap-2.5">
           <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-            Palette
+            {t.appearance.palette}
           </span>
           <div className="flex flex-wrap gap-2">
             {PALETTES.map((p) => {
@@ -187,43 +188,43 @@ export function AppearanceSettings() {
             })}
           </div>
           <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            More palettes are on the way.
+            {t.appearance.morePalettes}
           </p>
         </SettingsCustomRow>
       )}
 
       <SettingsRow
         icon={Sparkles}
-        label="Reduce motion"
-        sublabel="Turn off entrance and tap animations"
+        label={t.appearance.reduceMotion}
+        sublabel={t.appearance.reduceMotionHint}
         trailing={
           <Switch
             checked={reduceMotion}
             onCheckedChange={setReduceMotionPref}
-            aria-label="Reduce motion"
+            aria-label={t.appearance.reduceMotion}
           />
         }
       />
 
       <SettingsRow
         icon={Thermometer}
-        label="Temperature units"
-        sublabel="Used for the jobsite weather"
+        label={t.appearance.tempUnits}
+        sublabel={t.appearance.tempUnitsHint}
         trailing={
           <div
             role="radiogroup"
-            aria-label="Temperature units"
+            aria-label={t.appearance.tempUnits}
             className="flex rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900 p-0.5"
           >
-            {TEMP_UNIT_OPTIONS.map((opt) => {
-              const active = tempUnit === opt.value;
+            {TEMP_UNIT_VALUES.map((value) => {
+              const active = tempUnit === value;
               return (
                 <button
-                  key={opt.value}
+                  key={value}
                   type="button"
                   role="radio"
                   aria-checked={active}
-                  onClick={() => setTempUnit(opt.value)}
+                  onClick={() => setTempUnit(value)}
                   className={cn(
                     "min-w-9 rounded-md px-2.5 py-1 text-sm font-medium tabular-nums transition-colors",
                     active
@@ -231,13 +232,15 @@ export function AppearanceSettings() {
                       : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
                   )}
                 >
-                  {opt.label}
+                  {TEMP_UNIT_LABELS[value]}
                 </button>
               );
             })}
           </div>
         }
       />
+
+      <LanguageSetting />
     </>
   );
 }
