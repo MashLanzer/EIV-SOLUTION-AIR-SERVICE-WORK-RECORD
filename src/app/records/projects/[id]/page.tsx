@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
-import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
+import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { WeatherCard } from "@/components/projects/WeatherCard";
 import { GeocodeNotice } from "@/components/projects/GeocodeNotice";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
@@ -84,6 +84,7 @@ export default async function WorkerProjectPage({
         url: true,
         takenAt: true,
         latitude: true,
+        longitude: true,
         takenById: true,
         takenBy: { select: { name: true } },
         _count: { select: { photoTags: true, comments: true } },
@@ -113,6 +114,31 @@ export default async function WorkerProjectPage({
     tagCount: p._count.photoTags,
     commentCount: p._count.comments,
   }));
+
+  const projectPins = located
+    ? [
+        {
+          id: project.id,
+          name: project.name,
+          latitude: project.latitude as number,
+          longitude: project.longitude as number,
+          kind: "project" as const,
+        },
+      ]
+    : [];
+  const photoPins = photoRows
+    .filter((p) => p.latitude != null && p.longitude != null)
+    .map((p) => ({
+      id: p.id,
+      name: "Photo",
+      latitude: p.latitude as number,
+      longitude: p.longitude as number,
+      kind: "photo" as const,
+      thumbnail: p.url,
+      subtitle: `${p.takenBy?.name ? `${p.takenBy.name} · ` : ""}${formatSince(p.takenAt)}`,
+      href: `/records/projects/${project.id}/photos/${p.id}`,
+    }));
+  const hasMap = projectPins.length > 0 || photoPins.length > 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -154,24 +180,14 @@ export default async function WorkerProjectPage({
         </CardContent>
       </Card>
 
-      {located ? (
+      {hasMap && (
         <>
-          <ProjectsMapCard
-            pins={[
-              {
-                id: project.id,
-                name: project.name,
-                latitude: project.latitude as number,
-                longitude: project.longitude as number,
-              },
-            ]}
-          />
-          {weather && <WeatherCard weather={weather} />}
+          <GeoPhotoMap projectPins={projectPins} photoPins={photoPins} />
+          {located && weather && <WeatherCard weather={weather} />}
         </>
-      ) : (
-        project.address && (
-          <GeocodeNotice projectId={project.id} address={project.address} canRetry={false} />
-        )
+      )}
+      {!located && project.address && (
+        <GeocodeNotice projectId={project.id} address={project.address} canRetry={false} />
       )}
 
       {/* Checklists - workers can only check items off */}

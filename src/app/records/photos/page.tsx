@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
 import { PhotoFilters } from "@/components/photos/PhotoFilters";
+import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
@@ -57,6 +58,7 @@ export default async function WorkerPhotosPage({
         url: true,
         takenAt: true,
         latitude: true,
+        longitude: true,
         project: { select: { id: true, name: true } },
         takenBy: { select: { name: true } },
         _count: { select: { photoTags: true, comments: true } },
@@ -77,6 +79,19 @@ export default async function WorkerPhotosPage({
     commentCount: p._count.comments,
   }));
 
+  const photoPins = photoRows
+    .filter((p) => p.latitude != null && p.longitude != null)
+    .map((p) => ({
+      id: p.id,
+      name: "Photo",
+      latitude: p.latitude as number,
+      longitude: p.longitude as number,
+      kind: "photo" as const,
+      thumbnail: p.url,
+      subtitle: p.project.name,
+      href: `/records/projects/${p.project.id}/photos/${p.id}`,
+    }));
+
   const isFiltered = Boolean(activeTag || activeProject);
 
   return (
@@ -95,6 +110,10 @@ export default async function WorkerPhotosPage({
         activeTag={activeTag}
         activeProject={activeProject}
       />
+
+      {photoPins.length > 0 && (
+        <GeoPhotoMap projectPins={[]} photoPins={photoPins} />
+      )}
 
       {photos.length === 0 ? (
         <Card>

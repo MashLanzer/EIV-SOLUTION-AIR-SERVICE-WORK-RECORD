@@ -16,6 +16,12 @@ export interface MapPin {
   // Optional detail link shown in the pin's popup. Omitted on a project's own
   // detail page (you're already there) and reused generically elsewhere.
   href?: string;
+  // "project" (a location) or "photo" (where a photo was taken). Controls the
+  // marker shape and popup contents. Defaults to project.
+  kind?: "project" | "photo";
+  // Photo-only: a small preview and a one-line caption (who / when).
+  thumbnail?: string;
+  subtitle?: string;
 }
 
 // CartoDB's greyscale basemaps match the app's monochrome look far better than
@@ -29,10 +35,11 @@ const TILES = {
 const ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-// A plain HTML dot avoids Leaflet's default marker image assets (which break
-// under bundlers). The fill inverts with the theme so the pin stays legible on
-// both the light and dark basemap.
-function makePinIcon(family: "light" | "dark") {
+// Plain HTML markers avoid Leaflet's default image assets (which break under
+// bundlers). Both invert with the theme so they stay legible on either basemap:
+// a project is a round dot, a photo is a rounded square with a camera glyph so
+// the two kinds read apart at a glance.
+function makeProjectIcon(family: "light" | "dark") {
   const fill = family === "dark" ? "#fafafa" : "#171717";
   const ring = family === "dark" ? "#0a0a0a" : "#ffffff";
   return L.divIcon({
@@ -40,6 +47,18 @@ function makePinIcon(family: "light" | "dark") {
     html: `<span style="display:block;width:16px;height:16px;border-radius:9999px;background:${fill};border:2px solid ${ring};box-shadow:0 1px 4px rgba(0,0,0,0.45)"></span>`,
     iconSize: [16, 16],
     iconAnchor: [8, 8],
+  });
+}
+
+function makePhotoIcon(family: "light" | "dark") {
+  const fill = family === "dark" ? "#fafafa" : "#171717";
+  const ring = family === "dark" ? "#0a0a0a" : "#ffffff";
+  const camera = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="${ring}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>`;
+  return L.divIcon({
+    className: "",
+    html: `<span style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:7px;background:${fill};border:2px solid ${ring};box-shadow:0 1px 4px rgba(0,0,0,0.45)">${camera}</span>`,
+    iconSize: [22, 22],
+    iconAnchor: [11, 11],
   });
 }
 
@@ -65,15 +84,17 @@ function FitBounds({ pins }: { pins: MapPin[] }) {
 
 export default function ProjectsMap({ pins }: { pins: MapPin[] }) {
   const family = useThemeFamily();
-  const icon = useMemo(() => makePinIcon(family), [family]);
+  const projectIcon = useMemo(() => makeProjectIcon(family), [family]);
+  const photoIcon = useMemo(() => makePhotoIcon(family), [family]);
 
   const center: [number, number] = pins.length
     ? [pins[0].latitude, pins[0].longitude]
     : [39.5, -98.35]; // continental US fallback
 
-  // With a single pin (a project's own map) offer a one-tap "Directions" to
-  // navigate there; with many, directions live in each pin's popup instead.
-  const single = pins.length === 1 ? pins[0] : null;
+  // A lone project pin (a project's own map) gets a one-tap "Directions" to
+  // navigate there; otherwise directions live in each pin's popup.
+  const single =
+    pins.length === 1 && pins[0].kind !== "photo" ? pins[0] : null;
 
   return (
     <div className="relative h-full w-full">
@@ -86,9 +107,22 @@ export default function ProjectsMap({ pins }: { pins: MapPin[] }) {
         <TileLayer key={family} attribution={ATTRIBUTION} url={TILES[family]} />
         <FitBounds pins={pins} />
         {pins.map((p) => (
-          <Marker key={p.id} position={[p.latitude, p.longitude]} icon={icon}>
+          <Marker
+            key={p.id}
+            position={[p.latitude, p.longitude]}
+            icon={p.kind === "photo" ? photoIcon : projectIcon}
+          >
             <Popup>
               <span className="flex flex-col gap-1">
+                {p.kind === "photo" && p.thumbnail && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.thumbnail}
+                    alt=""
+                    width={150}
+                    className="mb-0.5 h-24 w-[150px] rounded-md object-cover"
+                  />
+                )}
                 {p.href ? (
                   <a href={p.href} className="font-medium">
                     {p.name}
@@ -96,15 +130,18 @@ export default function ProjectsMap({ pins }: { pins: MapPin[] }) {
                 ) : (
                   <span className="font-medium">{p.name}</span>
                 )}
-                <a
-                  href={directionsUrl(p.latitude, p.longitude)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 text-xs"
-                >
-                  <Navigation className="h-3 w-3" />
-                  Directions
-                </a>
+                {p.subtitle && <span className="text-xs">{p.subtitle}</span>}
+                {p.kind !== "photo" && (
+                  <a
+                    href={directionsUrl(p.latitude, p.longitude)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs"
+                  >
+                    <Navigation className="h-3 w-3" />
+                    Directions
+                  </a>
+                )}
               </span>
             </Popup>
           </Marker>

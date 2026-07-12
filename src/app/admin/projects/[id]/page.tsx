@@ -33,7 +33,7 @@ import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
 import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
-import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
+import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { WeatherCard } from "@/components/projects/WeatherCard";
 import { GeocodeNotice } from "@/components/projects/GeocodeNotice";
 import { TeamChip } from "@/components/teams/TeamColorDot";
@@ -120,6 +120,7 @@ export default async function AdminProjectPage({
           url: true,
           takenAt: true,
           latitude: true,
+          longitude: true,
           takenBy: { select: { name: true } },
           _count: { select: { photoTags: true, comments: true } },
         },
@@ -162,26 +163,41 @@ export default async function AdminProjectPage({
     ? await getWeather(project.latitude as number, project.longitude as number)
     : null;
 
+  const projectPins = located
+    ? [
+        {
+          id: project.id,
+          name: project.name,
+          latitude: project.latitude as number,
+          longitude: project.longitude as number,
+          kind: "project" as const,
+        },
+      ]
+    : [];
+  const photoPins = photoRows
+    .filter((p) => p.latitude != null && p.longitude != null)
+    .map((p) => ({
+      id: p.id,
+      name: "Photo",
+      latitude: p.latitude as number,
+      longitude: p.longitude as number,
+      kind: "photo" as const,
+      thumbnail: p.url,
+      subtitle: `${p.takenBy?.name ? `${p.takenBy.name} · ` : ""}${formatDate(p.takenAt)}`,
+      href: `/admin/projects/${project.id}/photos/${p.id}`,
+    }));
+  const hasMap = projectPins.length > 0 || photoPins.length > 0;
+
   const overviewPanel = (
     <div className="flex flex-col gap-4">
-      {located ? (
+      {hasMap && (
         <>
-          <ProjectsMapCard
-            pins={[
-              {
-                id: project.id,
-                name: project.name,
-                latitude: project.latitude as number,
-                longitude: project.longitude as number,
-              },
-            ]}
-          />
-          {weather && <WeatherCard weather={weather} />}
+          <GeoPhotoMap projectPins={projectPins} photoPins={photoPins} />
+          {located && weather && <WeatherCard weather={weather} />}
         </>
-      ) : (
-        project.address && (
-          <GeocodeNotice projectId={project.id} address={project.address} canRetry />
-        )
+      )}
+      {!located && project.address && (
+        <GeocodeNotice projectId={project.id} address={project.address} canRetry />
       )}
 
       <Card>
