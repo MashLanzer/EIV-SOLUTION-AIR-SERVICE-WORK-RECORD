@@ -4,9 +4,16 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
-import { updateProfileNameSchema, updateProfilePhoneSchema, saveStoredSignatureSchema, updatePayRateSchema, addSkillSchema } from "@/lib/validations";
+import { updateProfileNameSchema, updateProfilePhoneSchema, saveStoredSignatureSchema, addSkillSchema } from "@/lib/validations";
 
 export type ProfileFormState = { error?: string; ok?: boolean } | undefined;
+
+// The profile screen is served at two routes (worker and admin); both must be
+// revalidated after a change or the admin view goes stale.
+function revalidateProfile() {
+  revalidatePath("/records/profile");
+  revalidatePath("/admin/profile");
+}
 
 // Update the signed-in user's own display name. The name lives on the User row
 // (the auth callback reads it from the DB on every request, not from Google),
@@ -52,7 +59,7 @@ export async function updateProfilePhoneAction(
     data: { phone: parsed.data.phone || null },
   });
 
-  revalidatePath("/records/profile");
+  revalidateProfile();
   return { ok: true };
 }
 
@@ -74,7 +81,7 @@ export async function saveStoredSignatureAction(
     data: { storedSignature: parsed.data.signature },
   });
 
-  revalidatePath("/records/profile");
+  revalidateProfile();
   return { ok: true };
 }
 
@@ -86,29 +93,7 @@ export async function clearStoredSignatureAction(): Promise<ProfileFormState> {
     data: { storedSignature: null },
   });
 
-  revalidatePath("/records/profile");
-  return { ok: true };
-}
-
-export async function updatePayRateAction(
-  _prev: ProfileFormState,
-  formData: FormData
-): Promise<ProfileFormState> {
-  const session = await requireAuth();
-
-  const parsed = updatePayRateSchema.safeParse({
-    payRate: formData.get("payRate"),
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
-
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { payRate: parsed.data.payRate ? parsed.data.payRate : null },
-  });
-
-  revalidatePath("/records/profile");
+  revalidateProfile();
   return { ok: true };
 }
 
@@ -136,7 +121,7 @@ export async function addSkillAction(
     return { error: "Failed to save skill." };
   }
 
-  revalidatePath("/records/profile");
+  revalidateProfile();
   return { ok: true };
 }
 
@@ -147,6 +132,6 @@ export async function removeSkillAction(skillId: string): Promise<ProfileFormSta
     where: { id: skillId, userId: session.user.id },
   });
 
-  revalidatePath("/records/profile");
+  revalidateProfile();
   return { ok: true };
 }

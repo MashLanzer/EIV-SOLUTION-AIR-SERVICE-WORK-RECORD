@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Award, CheckCircle2, Clock, ListTodo, Mail, PenLine, Phone, Plus, ShieldCheck, Trash2, User as UserIcon, X } from "lucide-react";
 import Link from "next/link";
+import type { RecordStatus } from "@prisma/client";
 
 import { useRef, useState } from "react";
 import { AvatarInitials } from "@/components/ui/avatar-initials";
@@ -9,12 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InlineEditRow } from "@/components/settings/InlineEditRow";
 import { SignaturePad, type SignaturePadHandle } from "@/components/forms/SignaturePad";
+import { StatusBadge } from "@/components/records/StatusBadge";
 import {
   SettingsCustomRow,
   SettingsRow,
   SettingsSection,
 } from "@/components/settings/SettingsList";
-import { updateProfileNameAction, updateProfilePhoneAction, saveStoredSignatureAction, clearStoredSignatureAction, updatePayRateAction, addSkillAction, removeSkillAction } from "@/actions/profile";
+import { updateProfileNameAction, updateProfilePhoneAction, saveStoredSignatureAction, clearStoredSignatureAction, addSkillAction, removeSkillAction } from "@/actions/profile";
 import { cn } from "@/lib/utils";
 
 interface ProfileStats {
@@ -34,7 +36,7 @@ interface RecentRecord {
   jobNumber: string;
   customerName: string;
   date: string;
-  status: string;
+  status: RecordStatus;
 }
 
 interface SkillInfo {
@@ -42,19 +44,11 @@ interface SkillInfo {
   name: string;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  SUBMITTED: "Pending",
-  APPROVED: "Approved",
-  NEEDS_CHANGES: "Needs changes",
-};
-
 export function ProfileScreen({
   name,
   email,
   phone,
   storedSignature,
-  payRate,
-  currency,
   role,
   backHref,
   stats,
@@ -66,8 +60,6 @@ export function ProfileScreen({
   email: string;
   phone: string | null;
   storedSignature: string | null;
-  payRate: number | null;
-  currency: string;
   role: "ADMIN" | "WORKER";
   backHref: string;
   stats: ProfileStats;
@@ -82,12 +74,15 @@ export function ProfileScreen({
   const [skillInput, setSkillInput] = useState("");
   const [skillError, setSkillError] = useState<string | null>(null);
 
-  function statCard(icon: typeof ListTodo, label: string, value: number, color: string) {
+  // Stat tiles use the design-system semantic tokens (dark-mode aware) rather
+  // than raw Tailwind colors, so they read as one system with the rest of the
+  // app: neutral for the total, success for approved, warning for pending.
+  function statCard(icon: typeof ListTodo, label: string, value: number, tone: string) {
     const Icon = icon;
     return (
       <div className="flex flex-col items-center gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-3 min-w-0 flex-1">
-        <span className={cn("flex h-8 w-8 items-center justify-center rounded-full", color)}>
-          <Icon className="h-4 w-4 text-white" />
+        <span className={cn("flex h-8 w-8 items-center justify-center rounded-full", tone)}>
+          <Icon className="h-4 w-4" />
         </span>
         <span className="text-lg font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{value}</span>
         <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
@@ -150,17 +145,19 @@ export function ProfileScreen({
         />
       </SettingsSection>
 
-      {/* Stats */}
-      <SettingsSection
-        title="Statistics"
-        description="Your work record overview."
-      >
-        <div className="flex gap-2 px-4 pb-4">
-          {statCard(ListTodo, "Total", stats.totalRecords, "bg-blue-500")}
-          {statCard(CheckCircle2, "Approved", stats.approvedRecords, "bg-green-500")}
-          {statCard(Clock, "Pending", stats.pendingRecords, "bg-amber-500")}
-        </div>
-      </SettingsSection>
+      {/* Stats - workers only; admins don't submit records so theirs are all 0. */}
+      {!isAdmin && (
+        <SettingsSection
+          title="Statistics"
+          description="Your work record overview."
+        >
+          <div className="flex gap-2 px-4 pb-4">
+            {statCard(ListTodo, "Total", stats.totalRecords, "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400")}
+            {statCard(CheckCircle2, "Approved", stats.approvedRecords, "bg-success-soft text-success-text")}
+            {statCard(Clock, "Pending", stats.pendingRecords, "bg-warning-soft text-warning-text")}
+          </div>
+        </SettingsSection>
+      )}
 
       {/* Teams */}
       {teams.length > 0 && (
@@ -185,18 +182,6 @@ export function ProfileScreen({
           </div>
         </SettingsSection>
       )}
-
-      {/* Pay rate */}
-      <SettingsSection title="Pay rate">
-        <InlineEditRow
-          icon={UserIcon}
-          label={`Your rate (${currency})`}
-          value={payRate != null ? String(payRate) : ""}
-          placeholder="0.00"
-          action={updatePayRateAction}
-          helpWhenEditing="Your personal hourly or flat rate. Overrides the company default."
-        />
-      </SettingsSection>
 
       {/* Stored signature */}
       <SettingsSection
@@ -280,13 +265,8 @@ export function ProfileScreen({
                   </p>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">{r.date}</p>
                 </div>
-                <span className={cn(
-                  "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
-                  r.status === "APPROVED" && "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
-                  r.status === "SUBMITTED" && "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
-                  r.status === "NEEDS_CHANGES" && "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
-                )}>
-                  {STATUS_LABELS[r.status] ?? r.status}
+                <span className="shrink-0">
+                  <StatusBadge status={r.status} />
                 </span>
               </Link>
             ))}

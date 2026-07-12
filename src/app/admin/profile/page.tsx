@@ -5,9 +5,8 @@ import { requireAdmin } from "@/lib/session";
 export default async function AdminProfilePage() {
   const session = await requireAdmin();
   const userId = session.user.id;
-  const organizationId = session.user.organizationId;
 
-  const [stats, teams, recentRecords, userData, org] = await Promise.all([
+  const [stats, teams, recentRecords, userData] = await Promise.all([
     prisma.workRecord.groupBy({
       by: ["status"],
       where: { submittedById: userId },
@@ -31,14 +30,8 @@ export default async function AdminProfilePage() {
     }),
     prisma.user.findUnique({
       where: { id: userId },
-      select: { payRate: true, skills: { select: { id: true, name: true } } },
+      select: { skills: { select: { id: true, name: true } } },
     }),
-    organizationId
-      ? prisma.organization.findUnique({
-          where: { id: organizationId },
-          select: { currencySymbol: true },
-        })
-      : null,
   ]);
 
   const totalRecords = stats.reduce((acc, s) => acc + s._count, 0);
@@ -51,8 +44,6 @@ export default async function AdminProfilePage() {
       email={session.user.email ?? ""}
       phone={session.user.phone ?? null}
       storedSignature={session.user.storedSignature ?? null}
-      payRate={userData?.payRate ? Number(userData.payRate) : null}
-      currency={org?.currencySymbol ?? "$"}
       role="ADMIN"
       backHref="/admin"
       stats={{ totalRecords, approvedRecords, pendingRecords }}
