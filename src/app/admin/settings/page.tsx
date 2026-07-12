@@ -24,6 +24,7 @@ export default async function AdminSettingsPage({
       requirePhoto: true,
       lockApprovedRecords: true,
       logoUrl: true,
+      defaultWorkNotes: true,
     },
   });
   return (
@@ -44,6 +45,7 @@ export default async function AdminSettingsPage({
           requirePhoto: org?.requirePhoto ?? false,
           lockApprovedRecords: org?.lockApprovedRecords ?? false,
           logoUrl: org?.logoUrl ?? null,
+          defaultWorkNotes: org?.defaultWorkNotes ?? "",
         }}
       />
     </>

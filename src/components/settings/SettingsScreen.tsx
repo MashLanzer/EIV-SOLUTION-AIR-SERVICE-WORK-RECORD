@@ -20,6 +20,7 @@ import Link from "next/link";
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { CompanyLogoRow } from "@/components/settings/CompanyLogoRow";
+import { DefaultNotesRow } from "@/components/settings/DefaultNotesRow";
 import { InlineEditRow } from "@/components/settings/InlineEditRow";
 import { InviteCodeCard } from "@/components/settings/InviteCodeCard";
 import { PolicyToggle } from "@/components/settings/PolicyToggle";
@@ -56,6 +57,7 @@ export interface CompanySettings {
   requirePhoto: boolean;
   lockApprovedRecords: boolean;
   logoUrl: string | null;
+  defaultWorkNotes: string;
 }
 
 export function SettingsScreen({
@@ -185,6 +187,7 @@ export function SettingsScreen({
             sublabel="Predefined types of work the crew can pick, by category"
             href="/admin/settings/work-types"
           />
+          <DefaultNotesRow value={company.defaultWorkNotes} />
         </SettingsSection>
       )}
 

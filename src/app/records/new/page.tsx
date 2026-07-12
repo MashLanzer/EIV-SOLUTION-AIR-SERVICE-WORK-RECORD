@@ -33,6 +33,7 @@ export default async function NewRecordPage() {
         defaultLeadPay: true,
         defaultHelperPay: true,
         requirePhoto: true,
+        defaultWorkNotes: true,
       },
     }),
   ]);
@@ -57,6 +58,9 @@ export default async function NewRecordPage() {
             org?.defaultLeadPay != null ? String(org.defaultLeadPay) : undefined,
           helperPay:
             org?.defaultHelperPay != null ? String(org.defaultHelperPay) : undefined,
+          // Company notes template (Settings) seeds the notes on a fresh
+          // record; a saved draft still wins.
+          workPerformedNotes: org?.defaultWorkNotes || undefined,
         }}
         submitLabel="Submit Record"
         draftKey={`new-record:${session.user.id}`}

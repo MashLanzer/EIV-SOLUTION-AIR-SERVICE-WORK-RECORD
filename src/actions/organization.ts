@@ -160,6 +160,26 @@ export async function setLockApprovedRecordsAction(enabled: boolean) {
   revalidatePath("/admin/settings");
 }
 
+export type DefaultNotesState = { error?: string; ok?: boolean } | undefined;
+
+// Set the default "work performed" notes template (admin, org-scoped). Blank
+// clears it. Multiline, so it has its own action rather than the single-line
+// company-field one.
+export async function setDefaultWorkNotesAction(
+  _prev: DefaultNotesState,
+  formData: FormData
+): Promise<DefaultNotesState> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const raw = ((formData.get("notes") as string | null) ?? "").trim();
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { defaultWorkNotes: raw || null },
+  });
+  revalidatePath("/admin/settings");
+  return { ok: true };
+}
+
 export type LogoState = { error?: string; ok?: boolean } | undefined;
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2 MB

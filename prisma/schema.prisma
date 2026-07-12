@@ -42,6 +42,9 @@ model Organization {
   licenseNumber    String?
   // Company logo (Vercel Blob URL) shown on the work-record PDF header.
   logoUrl          String?
+  // Optional default text pre-filled into a new record's "work performed"
+  // notes, so a crew can start from a standard template.
+  defaultWorkNotes String?  @db.Text
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   users     User[]
