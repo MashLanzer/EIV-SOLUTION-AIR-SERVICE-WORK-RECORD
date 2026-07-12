@@ -341,6 +341,74 @@ export async function requestChangesAction(recordId: string, formData: FormData)
   revalidatePath("/admin");
 }
 
+// Bulk approve: only records still SUBMITTED (org-scoped) flip to APPROVED, so
+// selecting an already-approved row is a harmless no-op. Returns how many were
+// actually approved for the caller's toast.
+export async function bulkApproveRecordsAction(
+  ids: string[]
+): Promise<{ count: number }> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const clean = [...new Set(ids.filter(Boolean))];
+  if (clean.length === 0) return { count: 0 };
+
+  const pending = await prisma.workRecord.findMany({
+    where: { id: { in: clean }, organizationId, status: "SUBMITTED" },
+    select: { id: true },
+  });
+  const targetIds = pending.map((p) => p.id);
+  if (targetIds.length === 0) return { count: 0 };
+
+  await prisma.workRecord.updateMany({
+    where: { id: { in: targetIds }, organizationId, status: "SUBMITTED" },
+    data: {
+      status: "APPROVED",
+      approvedAt: new Date(),
+      approvedById: session.user.id,
+      reviewNote: null,
+    },
+  });
+  for (const id of targetIds) await notifyWorkerApproved(id);
+  revalidatePath("/admin/records");
+  revalidatePath("/admin");
+  revalidatePath("/records");
+  return { count: targetIds.length };
+}
+
+// Bulk return: send the selected SUBMITTED records back with one shared note.
+export async function bulkRequestChangesAction(
+  ids: string[],
+  note: string
+): Promise<{ count: number }> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const clean = [...new Set(ids.filter(Boolean))];
+  const trimmed = note.trim();
+  if (clean.length === 0 || !trimmed) return { count: 0 };
+
+  const pending = await prisma.workRecord.findMany({
+    where: { id: { in: clean }, organizationId, status: "SUBMITTED" },
+    select: { id: true },
+  });
+  const targetIds = pending.map((p) => p.id);
+  if (targetIds.length === 0) return { count: 0 };
+
+  await prisma.workRecord.updateMany({
+    where: { id: { in: targetIds }, organizationId, status: "SUBMITTED" },
+    data: {
+      status: "NEEDS_CHANGES",
+      reviewNote: trimmed,
+      approvedAt: null,
+      approvedById: null,
+    },
+  });
+  for (const id of targetIds) await notifyWorkerReturned(id);
+  revalidatePath("/admin/records");
+  revalidatePath("/admin");
+  revalidatePath("/records");
+  return { count: targetIds.length };
+}
+
 // Danger zone: wipe every work record - and, via ON DELETE CASCADE, its
 // photos - to hand the app back "like new". Customers and user accounts
 // (workers/admins) are deliberately kept. Admin-only, and double-gated: the

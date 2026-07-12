@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
+import { RecordBulkBar } from "@/components/records/RecordBulkBar";
 import { RecordsFilterBar } from "@/components/records/RecordsFilterBar";
 import { RecordsTable } from "@/components/records/RecordsTable";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
@@ -166,6 +167,12 @@ export default async function AdminRecordsPage({
             jobNumber: filters.jobNumber,
             status: filters.status,
           }}
+        />
+
+        <RecordBulkBar
+          pendingIds={records
+            .filter((r) => r.status === "SUBMITTED")
+            .map((r) => r.id)}
         />
 
         <Pagination
