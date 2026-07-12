@@ -233,9 +233,23 @@ export async function updateRecordAction(
   if (!isAdmin && record.submittedById !== session.user.id) {
     return { error: "You do not have permission to edit this record" };
   }
-  // Approved records are locked to workers; only an admin can still amend them.
-  if (!isAdmin && record.status === "APPROVED") {
-    return { error: "This record was approved and can no longer be edited." };
+  // Approved records are always locked to workers. Admins can still amend
+  // them unless the company turned on the "lock approved records" policy, in
+  // which case an approved record must be reopened before anyone can edit it.
+  if (record.status === "APPROVED") {
+    if (!isAdmin) {
+      return { error: "This record was approved and can no longer be edited." };
+    }
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { lockApprovedRecords: true },
+    });
+    if (org?.lockApprovedRecords) {
+      return {
+        error:
+          "Approved records are locked. Return this record to Needs changes before editing it.",
+      };
+    }
   }
 
   const parsed = parseRecordForm(formData);

@@ -33,6 +33,9 @@ model Organization {
   defaultHelperPay Decimal? @db.Decimal(10, 2)
   // When true, a work record can't be submitted without at least one photo.
   requirePhoto     Boolean  @default(false)
+  // When true, an approved record is locked for everyone (admins included);
+  // it must be reopened (set back to needs-changes) before it can be edited.
+  lockApprovedRecords Boolean @default(false)
   // Extra company details printed on the work-record PDF header.
   companyPhone     String?
   companyAddress   String?

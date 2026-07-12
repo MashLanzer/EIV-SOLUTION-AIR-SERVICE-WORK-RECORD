@@ -4,9 +4,11 @@ import { useRef, useState } from "react";
 import {
   ArrowLeft,
   Building2,
+  Camera,
   DollarSign,
   FileText,
   Info,
+  Lock,
   MapPin,
   Phone,
   ShieldCheck,
@@ -18,13 +20,15 @@ import { LogoutButton } from "@/components/layout/LogoutButton";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { InlineEditRow } from "@/components/settings/InlineEditRow";
 import { InviteCodeCard } from "@/components/settings/InviteCodeCard";
-import { RequirePhotoToggle } from "@/components/settings/RequirePhotoToggle";
+import { PolicyToggle } from "@/components/settings/PolicyToggle";
 import { ResetHistoryDialog } from "@/components/settings/ResetHistoryDialog";
 import {
   SettingsRow,
   SettingsSection,
 } from "@/components/settings/SettingsList";
 import {
+  setLockApprovedRecordsAction,
+  setRequirePhotoAction,
   updateCompanyFieldAction,
   updateOrganizationNameAction,
 } from "@/actions/organization";
@@ -48,6 +52,7 @@ export interface CompanySettings {
   leadPay: string;
   helperPay: string;
   requirePhoto: boolean;
+  lockApprovedRecords: boolean;
 }
 
 export function SettingsScreen({
@@ -139,7 +144,21 @@ export function SettingsScreen({
           title="Work records"
           description="Defaults and rules applied when workers submit records."
         >
-          <RequirePhotoToggle initial={company.requirePhoto} />
+          <PolicyToggle
+            icon={Camera}
+            label="Require a photo"
+            sublabel="Records can't be submitted without at least one photo"
+            initial={company.requirePhoto}
+            action={setRequirePhotoAction}
+            ariaLabel="Require a photo to submit a record"
+          />
+          <PolicyToggle
+            icon={Lock}
+            label="Lock approved records"
+            sublabel="Once approved, a record must be reopened before anyone can edit it"
+            initial={company.lockApprovedRecords}
+            action={setLockApprovedRecordsAction}
+          />
           <InlineEditRow
             icon={DollarSign}
             label="Default lead pay ($)"
