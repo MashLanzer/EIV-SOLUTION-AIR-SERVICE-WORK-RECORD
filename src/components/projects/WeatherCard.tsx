@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Cloud,
   CloudDrizzle,
@@ -14,6 +16,7 @@ import {
 } from "lucide-react";
 
 import type { Weather, WeatherIcon } from "@/lib/weather";
+import { toUnit, useTempUnit } from "@/lib/tempUnit";
 
 const ICONS: Record<WeatherIcon, LucideIcon> = {
   "clear-day": Sun,
@@ -41,6 +44,8 @@ function weekday(date: string) {
 export function WeatherCard({ weather }: { weather: Weather }) {
   const CurrentIcon = ICONS[weather.current.icon];
   const forecast = weather.days.slice(1, 4);
+  const unit = useTempUnit();
+  const t = (f: number) => toUnit(f, unit);
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-4">
@@ -49,7 +54,7 @@ export function WeatherCard({ weather }: { weather: Weather }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-              {weather.current.tempF}°
+              {t(weather.current.tempF)}°{unit}
             </span>
             <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">
               {weather.current.label}
@@ -57,7 +62,7 @@ export function WeatherCard({ weather }: { weather: Weather }) {
           </div>
           <div className="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
             <span>
-              H:{weather.current.highF}° L:{weather.current.lowF}°
+              H:{t(weather.current.highF)}° L:{t(weather.current.lowF)}°
             </span>
             <span className="inline-flex items-center gap-1">
               <Wind className="h-3 w-3" />
@@ -78,8 +83,8 @@ export function WeatherCard({ weather }: { weather: Weather }) {
                 </span>
                 <Icon className="h-5 w-5 text-neutral-600 dark:text-neutral-300" strokeWidth={1.75} />
                 <span className="text-xs tabular-nums text-neutral-900 dark:text-neutral-100">
-                  {day.highF}°
-                  <span className="text-neutral-400 dark:text-neutral-500"> {day.lowF}°</span>
+                  {t(day.highF)}°
+                  <span className="text-neutral-400 dark:text-neutral-500"> {t(day.lowF)}°</span>
                 </span>
               </div>
             );

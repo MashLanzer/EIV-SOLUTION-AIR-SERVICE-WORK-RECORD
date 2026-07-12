@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Check, Monitor, Moon, Sun, Palette as PaletteIcon, Sparkles } from "lucide-react";
+import { Check, Monitor, Moon, Sun, Palette as PaletteIcon, Sparkles, Thermometer } from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
 import { SettingsCustomRow, SettingsRow } from "@/components/settings/SettingsList";
@@ -10,7 +10,13 @@ import {
   PALETTES,
   PALETTE_FAMILIES,
 } from "@/lib/palettes";
+import { setTempUnit, useTempUnit, type TempUnit } from "@/lib/tempUnit";
 import { cn } from "@/lib/utils";
+
+const TEMP_UNIT_OPTIONS: { value: TempUnit; label: string }[] = [
+  { value: "F", label: "°F" },
+  { value: "C", label: "°C" },
+];
 
 type ThemeChoice = "light" | "system" | "dark" | "custom";
 
@@ -104,6 +110,7 @@ export function AppearanceSettings() {
   const theme = useThemeChoice();
   const paletteId = usePaletteId();
   const reduceMotion = useReduceMotion();
+  const tempUnit = useTempUnit();
 
   return (
     <>
@@ -195,6 +202,40 @@ export function AppearanceSettings() {
             onCheckedChange={setReduceMotionPref}
             aria-label="Reduce motion"
           />
+        }
+      />
+
+      <SettingsRow
+        icon={Thermometer}
+        label="Temperature units"
+        sublabel="Used for the jobsite weather"
+        trailing={
+          <div
+            role="radiogroup"
+            aria-label="Temperature units"
+            className="flex rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900 p-0.5"
+          >
+            {TEMP_UNIT_OPTIONS.map((opt) => {
+              const active = tempUnit === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setTempUnit(opt.value)}
+                  className={cn(
+                    "min-w-9 rounded-md px-2.5 py-1 text-sm font-medium tabular-nums transition-colors",
+                    active
+                      ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-sm"
+                      : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         }
       />
     </>
