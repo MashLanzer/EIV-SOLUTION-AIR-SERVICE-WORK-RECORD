@@ -22,6 +22,7 @@ import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { Logo } from "@/components/layout/Logo";
+import { SearchCommand } from "@/components/search/SearchCommand";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS: TabItem[] = [
@@ -121,6 +122,7 @@ export function AdminSidebar({
         <div className="flex items-center justify-between gap-2 border-t border-neutral-200 dark:border-neutral-800 p-3">
           <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{name}</span>
           <div className="flex items-center gap-2">
+            <SearchCommand />
             <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
             <HeaderAccountMenu
               name={name}
@@ -136,6 +138,7 @@ export function AdminSidebar({
       <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 px-4 backdrop-blur sm:hidden native:h-auto native:min-h-14 native:pt-[env(safe-area-inset-top)]">
         <Logo />
         <div className="flex items-center gap-2">
+          <SearchCommand />
           <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
           <HeaderAccountMenu
             name={name}

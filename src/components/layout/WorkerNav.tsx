@@ -7,6 +7,7 @@ import { ClipboardList, FilePlus2, FolderKanban, Images, Plus } from "lucide-rea
 import { ActivityBell } from "@/components/activity/ActivityBell";
 import { AppTabBar } from "@/components/layout/AppTabBar";
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
+import { SearchCommand } from "@/components/search/SearchCommand";
 import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, type TabItem } from "@/components/layout/BottomTabBar";
 import { Logo } from "@/components/layout/Logo";
@@ -65,6 +66,7 @@ export function WorkerNav({
           <Logo />
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">
+          <SearchCommand />
           <ActivityBell href="/records/activity" latestActivityAt={latestActivityAt} />
           <HeaderAccountMenu
             name={name}
