@@ -20,6 +20,7 @@ import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 import type { RecordStatus } from "@prisma/client";
 
@@ -122,12 +123,14 @@ export default async function RecordsPage({
   // The summary is a "home" thing - hide it while searching or filtering.
   const showSummary = !query && !status;
 
+  const t = (await getT()).records;
+
   // Quick status chips, keeping any active search term.
   const statusChips: { label: string; status?: RecordStatus }[] = [
-    { label: "All" },
-    { label: "To fix", status: "NEEDS_CHANGES" },
-    { label: "Pending", status: "SUBMITTED" },
-    { label: "Approved", status: "APPROVED" },
+    { label: t.all },
+    { label: t.toFix, status: "NEEDS_CHANGES" },
+    { label: t.pending, status: "SUBMITTED" },
+    { label: t.approved, status: "APPROVED" },
   ];
   function chipHref(next?: RecordStatus) {
     const p = new URLSearchParams();
@@ -141,29 +144,29 @@ export default async function RecordsPage({
     <div className="flex flex-col gap-4">
       {saved && (
         <>
-          <SuccessToast message="Record saved" />
+          <SuccessToast message={t.recordSaved} />
           <ClearDraftOnMount draftKey={`new-record:${session.user.id}`} />
         </>
       )}
 
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">My Records</h1>
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.myRecords}</h1>
         <Button asChild className="hidden sm:inline-flex">
           <Link href="/records/new">
             <Plus className="h-4 w-4" />
-            New Record
+            {t.newRecord}
           </Link>
         </Button>
       </div>
 
       {showSummary && (
         <div className="grid animate-fade-up grid-cols-3 gap-3">
-          <StatTile icon={ClipboardList} value={monthTotal} label="This month" />
-          <StatTile icon={CheckCircle2} value={approvedThisMonth} label="Approved" />
+          <StatTile icon={ClipboardList} value={monthTotal} label={t.thisMonth} />
+          <StatTile icon={CheckCircle2} value={approvedThisMonth} label={t.approved} />
           <StatTile
             icon={AlertTriangle}
             value={needsChanges}
-            label="To fix"
+            label={t.toFix}
             tone="warning"
           />
         </div>
@@ -171,11 +174,10 @@ export default async function RecordsPage({
 
       {showSummary && needsChanges > 0 && (
         <Alert variant="warning">
-          <span className="font-medium">
-            {needsChanges} record{needsChanges > 1 ? "s" : ""} need
-            {needsChanges > 1 ? "" : "s"} changes.
-          </span>{" "}
-          Fix and resubmit {needsChanges > 1 ? "them" : "it"} below.
+          {(needsChanges === 1 ? t.needsBannerOne : t.needsBannerMany).replace(
+            "{n}",
+            String(needsChanges)
+          )}
         </Alert>
       )}
 
@@ -185,10 +187,10 @@ export default async function RecordsPage({
         <Input
           type="search"
           name="q"
-          placeholder="Search by job # or customer"
+          placeholder={t.searchPlaceholder}
           defaultValue={query}
           className="pl-9"
-          aria-label="Search my records"
+          aria-label={t.searchAria}
         />
       </form>
 
@@ -217,24 +219,24 @@ export default async function RecordsPage({
         query || status ? (
           <EmptyState
             icon={SearchX}
-            title="No matches"
-            description={query ? `Nothing found for "${query}".` : "No records in this view."}
+            title={t.noMatches}
+            description={query ? t.nothingFound.replace("{q}", query) : t.noRecordsInView}
             action={
               <Button asChild variant="outline" className="mt-2">
-                <Link href="/records">Clear filters</Link>
+                <Link href="/records">{t.clearFilters}</Link>
               </Button>
             }
           />
         ) : (
           <EmptyState
             icon={ClipboardList}
-            title="No records yet"
-            description="Work records you submit will show up here."
+            title={t.noRecordsYet}
+            description={t.noRecordsYetDesc}
             action={
               <Button asChild className="mt-2 sm:hidden">
                 <Link href="/records/new">
                   <Plus className="h-4 w-4" />
-                  New Record
+                  {t.newRecord}
                 </Link>
               </Button>
             }

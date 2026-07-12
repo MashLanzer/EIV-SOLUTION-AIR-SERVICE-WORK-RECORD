@@ -6,6 +6,7 @@ import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { getT } from "@/lib/i18n/server";
 
 export default async function LoginPage({
   searchParams,
@@ -26,6 +27,8 @@ export default async function LoginPage({
     redirect("/");
   }
 
+  const t = (await getT()).auth;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm">
@@ -34,17 +37,16 @@ export default async function LoginPage({
           <CardTitle className="text-2xl">
             <AeroWordmark />
           </CardTitle>
-          <CardDescription>Installation / Service Work Record</CardDescription>
+          <CardDescription>{t.tagline}</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
           {error === "AccessDenied" && (
             <Alert variant="error" className="mb-4">
-              This Google account isn&apos;t authorized. Ask your
-              administrator to add it.
+              {t.notAuthorized}
             </Alert>
           )}
           <p className="mb-4 text-center text-sm text-neutral-500 dark:text-neutral-400">
-            Sign in with the Google account your supervisor authorized.
+            {t.signInPrompt}
           </p>
           <GoogleSignInButton />
         </CardContent>

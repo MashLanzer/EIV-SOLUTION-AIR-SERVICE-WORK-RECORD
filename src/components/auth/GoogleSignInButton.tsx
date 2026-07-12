@@ -3,8 +3,10 @@
 import { signIn } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function GoogleSignInButton() {
+  const t = useT();
   const handleClick = async () => {
     // Inside the Android app shell: MainActivity catches this custom-scheme
     // navigation and shows the native Credential Manager account picker
@@ -46,7 +48,7 @@ export function GoogleSignInButton() {
           d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.27 6.62l4 3.1C6.22 6.86 8.87 4.75 12 4.75z"
         />
       </svg>
-      Sign in with Google
+      {t.auth.signInWithGoogle}
     </Button>
   );
 }
