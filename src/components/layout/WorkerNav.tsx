@@ -11,24 +11,26 @@ import { SearchCommand } from "@/components/search/SearchCommand";
 import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, type TabItem } from "@/components/layout/BottomTabBar";
 import { Logo } from "@/components/layout/Logo";
+import { useT } from "@/components/i18n/LocaleProvider";
+import type { Dictionary } from "@/lib/i18n";
 
-const TAB_ITEMS: TabItem[] = [
-  { href: "/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: true },
-  { href: "/records/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban, exact: false },
-  { href: "/records/new", label: "New Record", shortLabel: "New", icon: Plus, exact: true },
-];
+function tabItems(n: Dictionary["nav"]): TabItem[] {
+  return [
+    { href: "/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: true },
+    { href: "/records/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
+    { href: "/records/new", label: n.newRecord, shortLabel: n.newShort, icon: Plus, exact: true },
+  ];
+}
 
 // Native app bar (APK): three real destination tabs + the center menu button.
 // Settings and Sign out live in the menu sheet's account section.
-const APP_TABS: TabItem[] = [
-  { href: "/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: true },
-  { href: "/records/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban, exact: false },
-  { href: "/records/photos", label: "Photos", shortLabel: "Photos", icon: Images, exact: false },
-];
-
-const CREATE_ITEMS: CreateItem[] = [
-  { href: "/records/new", label: "New record", icon: FilePlus2 },
-];
+function appTabItems(n: Dictionary["nav"]): TabItem[] {
+  return [
+    { href: "/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: true },
+    { href: "/records/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
+    { href: "/records/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
+  ];
+}
 
 // Workers reach everything else from the four tabs; the "More" sheet is just
 // their account header (→ Settings) and Sign out.
@@ -51,12 +53,16 @@ export function WorkerNav({
   latestActivityAt?: number | null;
 }) {
   const pathname = usePathname();
-  const items = TAB_ITEMS.map((item) =>
+  const t = useT();
+  const items = tabItems(t.nav).map((item) =>
     item.href === "/records" ? { ...item, badge: returnedCount } : item
   );
-  const appTabs = APP_TABS.map((item) =>
+  const appTabs = appTabItems(t.nav).map((item) =>
     item.href === "/records" ? { ...item, badge: returnedCount } : item
   );
+  const createItems: CreateItem[] = [
+    { href: "/records/new", label: t.nav.newRecord, icon: FilePlus2 },
+  ];
   const focused = isFocusedRecordFlow(pathname);
 
   return (
@@ -81,7 +87,7 @@ export function WorkerNav({
         <AppTabBar
           items={appTabs}
           pathname={pathname}
-          createItems={CREATE_ITEMS}
+          createItems={createItems}
           moreItems={MORE_ITEMS}
         />
       )}

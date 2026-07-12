@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 export interface TabItem {
@@ -35,11 +36,12 @@ export function BottomTabBar({
   // fixed action bar (e.g. the worker's new/edit record form).
   hidden?: boolean;
 }) {
+  const n = useT().nav;
   if (hidden) return null;
 
   return (
     <nav
-      aria-label="Sections"
+      aria-label={n.sections}
       className="fixed inset-x-0 bottom-0 z-20 flex border-t border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-lg shadow-[0_-1px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_16px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)] sm:hidden native:hidden"
     >
       {items.map((item) => {

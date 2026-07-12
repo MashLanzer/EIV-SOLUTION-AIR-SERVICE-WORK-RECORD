@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 
 import { BottomSheet } from "@/components/layout/BottomSheet";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export interface CreateItem {
   href: string;
@@ -35,11 +36,12 @@ export function AppMenuSheet({
   createItems: CreateItem[];
   moreItems: MoreItem[];
 }) {
+  const n = useT().nav;
   return (
-    <BottomSheet open={open} onClose={onClose} label="Menu">
+    <BottomSheet open={open} onClose={onClose} label={n.menu}>
       {/* Create */}
       <p className="px-4 pb-1 pt-1 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-        Create
+        {n.create}
       </p>
       <ul className="flex flex-col px-2 pb-2">
         {createItems.map((item) => {
@@ -65,7 +67,7 @@ export function AppMenuSheet({
         <>
           <div className="mx-4 border-t border-neutral-100 dark:border-neutral-800" />
           <p className="px-4 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            More
+            {n.more}
           </p>
           <ul className="flex flex-col px-2 pb-2">
             {moreItems.map((item) => {

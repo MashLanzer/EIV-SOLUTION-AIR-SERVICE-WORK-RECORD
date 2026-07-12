@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 
 import { AppMenuSheet, type CreateItem, type MoreItem } from "@/components/layout/AppMenuSheet";
 import { isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 // A concave semicircle punched out of the bar's top-centre, so the raised FAB
@@ -32,6 +33,7 @@ export function AppTabBar({
   moreItems: MoreItem[];
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const n = useT().nav;
   const split = Math.ceil(items.length / 2);
   const left = items.slice(0, split);
   const right = items.slice(split);
@@ -53,7 +55,7 @@ export function AppTabBar({
           style={{ filter: "drop-shadow(0 6px 22px rgba(0,0,0,0.18))" }}
         >
           <nav
-            aria-label="Sections"
+            aria-label={n.sections}
             className="flex h-16 items-stretch rounded-[28px] border border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-lg"
             style={{ WebkitMaskImage: NOTCH_MASK, maskImage: NOTCH_MASK }}
           >
@@ -74,7 +76,7 @@ export function AppTabBar({
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={n.menu}
             aria-haspopup="dialog"
             aria-expanded={menuOpen}
             className="absolute left-1/2 top-0 z-10 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/25 transition-transform duration-200 active:scale-90"

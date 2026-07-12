@@ -23,42 +23,52 @@ import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/Bot
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { Logo } from "@/components/layout/Logo";
 import { SearchCommand } from "@/components/search/SearchCommand";
+import { useT } from "@/components/i18n/LocaleProvider";
+import type { Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS: TabItem[] = [
-  { href: "/admin", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard, exact: true },
-  { href: "/admin/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban, exact: false },
-  { href: "/admin/photos", label: "Photos", shortLabel: "Photos", icon: Images, exact: false },
-  { href: "/admin/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: false },
-  { href: "/admin/customers", label: "Customers", shortLabel: "Customers", icon: Contact, exact: false },
-  { href: "/admin/reports", label: "Pay Report", shortLabel: "Pay", icon: BarChart3, exact: false },
-  { href: "/admin/workers", label: "Workers", shortLabel: "Workers", icon: Users, exact: false },
-];
+function navItems(n: Dictionary["nav"]): TabItem[] {
+  return [
+  { href: "/admin", label: n.dashboard, shortLabel: n.home, icon: LayoutDashboard, exact: true },
+  { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
+  { href: "/admin/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
+  { href: "/admin/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: false },
+  { href: "/admin/customers", label: n.customers, shortLabel: n.customers, icon: Contact, exact: false },
+  { href: "/admin/reports", label: n.payReport, shortLabel: n.pay, icon: BarChart3, exact: false },
+  { href: "/admin/workers", label: n.workers, shortLabel: n.workers, icon: Users, exact: false },
+  ];
+}
 
 // Native app bar (APK): four real destination tabs. Everything else (create
 // actions, secondary nav, settings, sign out) lives in the center menu sheet.
-const APP_TABS: TabItem[] = [
-  { href: "/admin", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard, exact: true },
-  { href: "/admin/projects", label: "Projects", shortLabel: "Projects", icon: FolderKanban, exact: false },
-  { href: "/admin/photos", label: "Photos", shortLabel: "Photos", icon: Images, exact: false },
-  { href: "/admin/records", label: "Records", shortLabel: "Records", icon: ClipboardList, exact: false },
-];
+function appTabItems(n: Dictionary["nav"]): TabItem[] {
+  return [
+  { href: "/admin", label: n.dashboard, shortLabel: n.home, icon: LayoutDashboard, exact: true },
+  { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
+  { href: "/admin/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
+  { href: "/admin/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: false },
+  ];
+}
 
-const CREATE_ITEMS: CreateItem[] = [
-  { href: "/admin/projects/new", label: "New project", icon: FolderPlus },
-  { href: "/admin/workers/new", label: "New worker", icon: UserPlus },
-  { href: "/admin/teams/new", label: "New team", icon: Users2 },
-];
+function createItems(n: Dictionary["nav"]): CreateItem[] {
+  return [
+  { href: "/admin/projects/new", label: n.newProject, icon: FolderPlus },
+  { href: "/admin/workers/new", label: n.newWorker, icon: UserPlus },
+  { href: "/admin/teams/new", label: n.newTeam, icon: Users2 },
+  ];
+}
 
 // Everything that doesn't fit in the four native tabs, shown in the "More"
 // section of the menu sheet. Records is now a tab; Settings is reached from
 // the sheet's account header.
-const MORE_ITEMS: MoreItem[] = [
-  { href: "/admin/customers", label: "Customers", icon: Contact },
-  { href: "/admin/reports", label: "Pay Report", icon: BarChart3 },
-  { href: "/admin/workers", label: "Workers", icon: Users },
-  { href: "/admin/checklists", label: "Checklist templates", icon: ListChecks },
-];
+function moreItems(n: Dictionary["nav"]): MoreItem[] {
+  return [
+  { href: "/admin/customers", label: n.customers, icon: Contact },
+  { href: "/admin/reports", label: n.payReport, icon: BarChart3 },
+  { href: "/admin/workers", label: n.workers, icon: Users },
+  { href: "/admin/checklists", label: n.checklistTemplates, icon: ListChecks },
+  ];
+}
 
 function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
   return (
@@ -101,11 +111,12 @@ export function AdminSidebar({
   latestActivityAt?: number | null;
 }) {
   const pathname = usePathname();
-  const items = NAV_ITEMS.map((item) =>
+  const t = useT();
+  const items = navItems(t.nav).map((item) =>
     item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
   );
   // Records is a native tab, so the review badge rides that tab.
-  const appTabs = APP_TABS.map((item) =>
+  const appTabs = appTabItems(t.nav).map((item) =>
     item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
   );
 
@@ -152,8 +163,8 @@ export function AdminSidebar({
       <AppTabBar
         items={appTabs}
         pathname={pathname}
-        createItems={CREATE_ITEMS}
-        moreItems={MORE_ITEMS}
+        createItems={createItems(t.nav)}
+        moreItems={moreItems(t.nav)}
       />
     </>
   );
