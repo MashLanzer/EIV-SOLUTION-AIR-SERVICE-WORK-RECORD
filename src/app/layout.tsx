@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PALETTE_FAMILIES } from "@/lib/palettes";
+import { LocaleProvider } from "@/components/i18n/LocaleProvider";
+import { getDictionary } from "@/lib/i18n";
+import { getLocale } from "@/lib/i18n/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,14 +21,16 @@ export const metadata: Metadata = {
   description: "Installation / Service Work Record",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const dict = getDictionary(locale);
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
@@ -48,7 +53,9 @@ export default function RootLayout({
               "if(localStorage.getItem('reduce-motion')==='1'){d.setAttribute('data-reduce-motion','1')}}catch(e){}",
           }}
         />
-        {children}
+        <LocaleProvider locale={locale} dict={dict}>
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );
