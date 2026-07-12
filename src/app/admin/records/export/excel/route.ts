@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { buildWorkbook } from "@/lib/excel";
@@ -42,7 +43,8 @@ export async function GET(request: Request) {
     orderBy: { date: "desc" },
   });
 
-  const buffer = await buildWorkbook(records);
+  const currency = await getCurrencySymbol(requireOrgId(session));
+  const buffer = await buildWorkbook(records, currency);
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {

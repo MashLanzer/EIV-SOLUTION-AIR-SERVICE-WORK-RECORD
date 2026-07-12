@@ -21,6 +21,7 @@ export default async function AdminSettingsPage({
       licenseNumber: true,
       defaultLeadPay: true,
       defaultHelperPay: true,
+      currencySymbol: true,
       requirePhoto: true,
       lockApprovedRecords: true,
       logoUrl: true,
@@ -42,6 +43,7 @@ export default async function AdminSettingsPage({
           leadPay: org?.defaultLeadPay != null ? String(org.defaultLeadPay) : "",
           helperPay:
             org?.defaultHelperPay != null ? String(org.defaultHelperPay) : "",
+          currency: org?.currencySymbol || "$",
           requirePhoto: org?.requirePhoto ?? false,
           lockApprovedRecords: org?.lockApprovedRecords ?? false,
           logoUrl: org?.logoUrl ?? null,

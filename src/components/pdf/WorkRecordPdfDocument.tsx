@@ -18,6 +18,7 @@ export type PdfCompany = {
   address?: string | null;
   license?: string | null;
   logoUrl?: string | null;
+  currency?: string;
 };
 
 const styles = StyleSheet.create({
@@ -160,6 +161,7 @@ function CompanyHeader({ company, subtitle }: { company: PdfCompany; subtitle: s
 }
 
 function RecordPage({ record, company }: { record: RecordWithWorker; company: PdfCompany }) {
+  const cur = company.currency || "$";
   return (
     <Page size="LETTER" style={styles.page}>
       <CompanyHeader company={company} subtitle="Installation / Service Work Record" />
@@ -176,11 +178,11 @@ function RecordPage({ record, company }: { record: RecordWithWorker; company: Pd
         <Field label="Type of Work" value={record.typeOfWork} />
         <Field
           label="Lead Installer Pay"
-          value={`$${record.leadInstallerPay.toFixed(2)}`}
+          value={`${cur}${record.leadInstallerPay.toFixed(2)}`}
         />
         <Field
           label="Helper Pay"
-          value={record.helperPay ? `$${record.helperPay.toFixed(2)}` : ""}
+          value={record.helperPay ? `${cur}${record.helperPay.toFixed(2)}` : ""}
         />
       </View>
 

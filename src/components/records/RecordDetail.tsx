@@ -33,8 +33,10 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 
 export function RecordDetail({
   record,
+  currency = "$",
 }: {
   record: WorkRecord & { photos?: WorkPhoto[] };
+  currency?: string;
 }) {
   const hours = workDuration(record.arrivalTime, record.departureTime);
   const leadPay = Number(record.leadInstallerPay);
@@ -92,16 +94,16 @@ export function RecordDetail({
       {/* Payment */}
       <Section title="Payment">
         <div className="grid grid-cols-2 gap-3">
-          <DataField label="Lead Installer Pay" value={formatMoney(leadPay)} />
+          <DataField label="Lead Installer Pay" value={formatMoney(leadPay, currency)} />
           <DataField
             label="Helper Pay"
-            value={record.helperPay != null ? formatMoney(helperPay) : null}
+            value={record.helperPay != null ? formatMoney(helperPay, currency) : null}
           />
         </div>
         <div className="flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 pt-3">
           <span className="text-sm text-neutral-500 dark:text-neutral-400">Total</span>
           <span className="text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-            {formatMoney(total)}
+            {formatMoney(total, currency)}
           </span>
         </div>
       </Section>

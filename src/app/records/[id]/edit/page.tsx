@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/records/StatusBadge";
 import { updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
+import { getCurrencySymbol } from "@/lib/currency";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { getWorkTypeGroups } from "@/lib/workTypes";
 import { requireAuth } from "@/lib/session";
@@ -63,6 +64,7 @@ export default async function EditRecordPage({
   });
 
   const workTypeGroups = await getWorkTypeGroups(requireOrgId(session));
+  const currency = await getCurrencySymbol(requireOrgId(session));
   const boundAction = updateRecordAction.bind(null, record.id);
 
   return (
@@ -106,6 +108,7 @@ export default async function EditRecordPage({
         action={boundAction}
         projects={projects}
         workTypeGroups={workTypeGroups}
+        currency={currency}
         defaultValues={{
           date: record.date.toISOString().slice(0, 10),
           jobNumber: record.jobNumber,

@@ -34,6 +34,7 @@ export default async function NewRecordPage() {
         defaultHelperPay: true,
         requirePhoto: true,
         defaultWorkNotes: true,
+        currencySymbol: true,
       },
     }),
   ]);
@@ -67,6 +68,7 @@ export default async function NewRecordPage() {
         projects={projects}
         requirePhoto={org?.requirePhoto ?? false}
         workTypeGroups={workTypeGroups}
+        currency={org?.currencySymbol || "$"}
       />
     </div>
   );

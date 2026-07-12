@@ -18,26 +18,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { buildPayReport, defaultPayReportRange, parsePayReportParams } from "@/lib/payReport";
+import { getCurrencySymbol } from "@/lib/currency";
+import { formatMoney } from "@/lib/format";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
-
-function moneyString(value: number) {
-  return `$${value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function money(value: number) {
-  return (
-    <span className="tabular-nums">
-      ${value.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}
-    </span>
-  );
-}
 
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat("en-US", {
@@ -56,8 +40,14 @@ export default async function AdminReportsPage({
   const session = await requireAdmin();
   const { dateFrom, dateTo } = parsePayReportParams(await searchParams);
   const report = await buildPayReport({ dateFrom, dateTo }, requireOrgId(session));
+  const currency = await getCurrencySymbol(requireOrgId(session));
   const def = defaultPayReportRange();
   const isCustomRange = dateFrom !== def.dateFrom || dateTo !== def.dateTo;
+
+  const moneyString = (value: number) => formatMoney(value, currency);
+  const money = (value: number) => (
+    <span className="tabular-nums">{moneyString(value)}</span>
+  );
 
   // Pay per person, biggest first, for the at-a-glance bar chart above the table.
   const chartData = [...report.rows]

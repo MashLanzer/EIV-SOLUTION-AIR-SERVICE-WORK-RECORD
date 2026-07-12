@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Building2,
   Camera,
+  Coins,
   DollarSign,
   FileText,
   Info,
@@ -54,6 +55,7 @@ export interface CompanySettings {
   license: string;
   leadPay: string;
   helperPay: string;
+  currency: string;
   requirePhoto: boolean;
   lockApprovedRecords: boolean;
   logoUrl: string | null;
@@ -141,6 +143,14 @@ export function SettingsScreen({
             action={updateCompanyFieldAction.bind(null, "license")}
           />
           <CompanyLogoRow url={company.logoUrl} />
+          <InlineEditRow
+            icon={Coins}
+            label="Currency symbol"
+            value={company.currency}
+            placeholder="$"
+            action={updateCompanyFieldAction.bind(null, "currency")}
+            helpWhenEditing="Shown before money amounts across the app and PDF (e.g. $, €, £)."
+          />
         </SettingsSection>
       )}
 
@@ -167,7 +177,7 @@ export function SettingsScreen({
           />
           <InlineEditRow
             icon={DollarSign}
-            label="Default lead pay ($)"
+            label={`Default lead pay (${company.currency})`}
             value={company.leadPay}
             placeholder="0.00"
             action={updateCompanyFieldAction.bind(null, "leadPay")}
@@ -175,7 +185,7 @@ export function SettingsScreen({
           />
           <InlineEditRow
             icon={DollarSign}
-            label="Default helper pay ($)"
+            label={`Default helper pay (${company.currency})`}
             value={company.helperPay}
             placeholder="0.00"
             action={updateCompanyFieldAction.bind(null, "helperPay")}

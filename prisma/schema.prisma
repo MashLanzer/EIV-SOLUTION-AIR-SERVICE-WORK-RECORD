@@ -31,6 +31,8 @@ model Organization {
   // a value is unset.
   defaultLeadPay   Decimal? @db.Decimal(10, 2)
   defaultHelperPay Decimal? @db.Decimal(10, 2)
+  // Currency symbol shown before money amounts (defaults to "$").
+  currencySymbol   String   @default("$")
   // When true, a work record can't be submitted without at least one photo.
   requirePhoto     Boolean  @default(false)
   // When true, an approved record is locked for everyone (admins included);

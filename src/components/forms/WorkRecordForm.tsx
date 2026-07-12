@@ -100,6 +100,8 @@ interface WorkRecordFormProps {
   // The org's predefined work types (Settings → Work types), grouped by
   // category. When present they drive the Type of Work picker.
   workTypeGroups?: WorkTypeGroup[];
+  // The company's currency symbol, used only in the pay field labels.
+  currency?: string;
 }
 
 // The wizard steps, in order. Each carries its icon + the field ids that live
@@ -190,6 +192,7 @@ export function WorkRecordForm({
   projects = [],
   requirePhoto = false,
   workTypeGroups,
+  currency = "$",
 }: WorkRecordFormProps) {
   const router = useRouter();
   const [state, formAction, actionPending] = useActionState<
@@ -818,7 +821,7 @@ export function WorkRecordForm({
         <div ref={(el) => { stepRefs.current[3] = el; }} hidden={step !== 3}>
           <FormSection icon={DollarSign} title="Payment">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="leadInstallerPay" required>Lead Installer Pay ($)</Label>
+              <Label htmlFor="leadInstallerPay" required>Lead Installer Pay ({currency})</Label>
               <Input
                 id="leadInstallerPay"
                 name="leadInstallerPay"
@@ -837,7 +840,7 @@ export function WorkRecordForm({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="helperPay">Helper Pay ($) <span className="font-normal text-neutral-400 dark:text-neutral-500">(optional)</span></Label>
+              <Label htmlFor="helperPay">Helper Pay ({currency}) <span className="font-normal text-neutral-400 dark:text-neutral-500">(optional)</span></Label>
               <Input
                 id="helperPay"
                 name="helperPay"

@@ -3,7 +3,7 @@ import type { WorkRecord } from "@prisma/client";
 
 type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } | null };
 
-export async function buildWorkbook(records: RecordWithWorker[]) {
+export async function buildWorkbook(records: RecordWithWorker[], currency = "$") {
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Work Records");
 
@@ -43,8 +43,9 @@ export async function buildWorkbook(records: RecordWithWorker[]) {
     });
   }
 
-  sheet.getColumn("leadInstallerPay").numFmt = '"$"#,##0.00';
-  sheet.getColumn("helperPay").numFmt = '"$"#,##0.00';
+  const moneyFmt = `"${currency}"#,##0.00`;
+  sheet.getColumn("leadInstallerPay").numFmt = moneyFmt;
+  sheet.getColumn("helperPay").numFmt = moneyFmt;
 
   return workbook.xlsx.writeBuffer();
 }

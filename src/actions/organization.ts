@@ -105,7 +105,8 @@ export type CompanyField =
   | "address"
   | "license"
   | "leadPay"
-  | "helperPay";
+  | "helperPay"
+  | "currency";
 
 type CompanyFieldState = { error?: string; ok?: boolean } | undefined;
 
@@ -122,7 +123,11 @@ export async function updateCompanyFieldAction(
   if (field === "phone") data = { companyPhone: raw || null };
   else if (field === "address") data = { companyAddress: raw || null };
   else if (field === "license") data = { licenseNumber: raw || null };
-  else {
+  else if (field === "currency") {
+    // Short symbol; empty resets to the default "$" (currency can't be blank).
+    const symbol = raw.slice(0, 3) || "$";
+    data = { currencySymbol: symbol };
+  } else {
     // Pay defaults: blank clears; otherwise a non-negative amount.
     const amount = Number(raw);
     if (raw && (!Number.isFinite(amount) || amount < 0)) {

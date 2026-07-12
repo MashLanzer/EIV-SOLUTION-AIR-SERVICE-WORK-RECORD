@@ -23,8 +23,8 @@ export function workDuration(arrival: string, departure: string): string | null 
   return h > 0 ? `${h}h${m ? ` ${m}m` : ""}` : `${m}m`;
 }
 
-export function formatMoney(value: number): string {
-  return `$${value.toLocaleString("en-US", {
+export function formatMoney(value: number, symbol = "$"): string {
+  return `${symbol}${value.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

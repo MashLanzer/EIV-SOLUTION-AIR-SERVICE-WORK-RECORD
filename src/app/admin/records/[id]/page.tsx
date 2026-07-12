@@ -12,6 +12,7 @@ import { RecordDetail } from "@/components/records/RecordDetail";
 import { RequestChangesButton } from "@/components/records/RequestChangesButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
+import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
@@ -41,6 +42,7 @@ export default async function AdminReviewRecordPage({
     },
   });
   if (!record) notFound();
+  const currency = await getCurrencySymbol(requireOrgId(session));
 
   const summaryDate = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -115,7 +117,7 @@ export default async function AdminReviewRecordPage({
         </Alert>
       )}
 
-      <RecordDetail record={record} />
+      <RecordDetail record={record} currency={currency} />
     </div>
   );
 }

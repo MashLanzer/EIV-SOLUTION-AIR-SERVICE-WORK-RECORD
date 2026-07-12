@@ -8,6 +8,7 @@ import { SuccessToast } from "@/components/ui/success-toast";
 import { RecordDetail } from "@/components/records/RecordDetail";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
+import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 
@@ -32,6 +33,7 @@ export default async function RecordDetailPage({
   }
 
   const canEdit = record.status !== "APPROVED";
+  const currency = await getCurrencySymbol(requireOrgId(session));
 
   return (
     <div className="flex flex-col gap-4">
@@ -74,7 +76,7 @@ export default async function RecordDetailPage({
         </Alert>
       )}
 
-      <RecordDetail record={record} />
+      <RecordDetail record={record} currency={currency} />
     </div>
   );
 }

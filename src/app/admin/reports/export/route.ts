@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import { NextResponse } from "next/server";
 
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
+import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
     dateTo: searchParams.get("dateTo") ?? undefined,
   });
   const report = await buildPayReport({ dateFrom, dateTo }, requireOrgId(session));
+  const currency = await getCurrencySymbol(requireOrgId(session));
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Pay Report");
@@ -41,8 +43,9 @@ export async function GET(request: Request) {
   });
   totalRow.font = { bold: true };
 
+  const moneyFmt = `"${currency}"#,##0.00`;
   for (const key of ["leadTotal", "helperTotal", "total"]) {
-    sheet.getColumn(key).numFmt = '"$"#,##0.00';
+    sheet.getColumn(key).numFmt = moneyFmt;
   }
 
   const buffer = await workbook.xlsx.writeBuffer();
