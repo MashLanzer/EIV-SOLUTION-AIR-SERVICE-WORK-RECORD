@@ -21,6 +21,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import type { RecordStatus } from "@prisma/client";
 
 // Compact summary tile for the worker's home, matching the admin dashboard.
 function StatTile({
@@ -54,19 +55,25 @@ function StatTile({
   );
 }
 
+const WORKER_STATUSES: RecordStatus[] = ["SUBMITTED", "APPROVED", "NEEDS_CHANGES"];
+
 export default async function RecordsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; saved?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; saved?: string; page?: string; status?: string }>;
 }) {
   const session = await requireAuth();
-  const { q, saved, page: rawPage } = await searchParams;
+  const { q, saved, page: rawPage, status: rawStatus } = await searchParams;
   const query = q?.trim() || undefined;
+  const status = WORKER_STATUSES.includes(rawStatus as RecordStatus)
+    ? (rawStatus as RecordStatus)
+    : undefined;
   const page = parsePage(rawPage);
 
   const where = {
     organizationId: requireOrgId(session),
     submittedById: session.user.id,
+    ...(status ? { status } : {}),
     ...(query
       ? {
           OR: [
@@ -112,8 +119,23 @@ export default async function RecordsPage({
       prisma.workRecord.count({ where: { ...mine, status: "NEEDS_CHANGES" } }),
     ]);
   const pages = pageCount(total);
-  // The summary is a "home" thing - hide it while actively searching.
-  const showSummary = !query;
+  // The summary is a "home" thing - hide it while searching or filtering.
+  const showSummary = !query && !status;
+
+  // Quick status chips, keeping any active search term.
+  const statusChips: { label: string; status?: RecordStatus }[] = [
+    { label: "All" },
+    { label: "To fix", status: "NEEDS_CHANGES" },
+    { label: "Pending", status: "SUBMITTED" },
+    { label: "Approved", status: "APPROVED" },
+  ];
+  function chipHref(next?: RecordStatus) {
+    const p = new URLSearchParams();
+    if (query) p.set("q", query);
+    if (next) p.set("status", next);
+    const qs = p.toString();
+    return qs ? `/records?${qs}` : "/records";
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -158,6 +180,7 @@ export default async function RecordsPage({
       )}
 
       <form method="get" className="relative">
+        {status && <input type="hidden" name="status" value={status} />}
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
         <Input
           type="search"
@@ -169,15 +192,36 @@ export default async function RecordsPage({
         />
       </form>
 
+      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {statusChips.map((chip) => {
+          const active = (chip.status ?? undefined) === (status ?? undefined);
+          return (
+            <Link
+              key={chip.label}
+              href={chipHref(chip.status)}
+              aria-current={active ? "true" : undefined}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                active
+                  ? "border-transparent bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                  : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              )}
+            >
+              {chip.label}
+            </Link>
+          );
+        })}
+      </div>
+
       {records.length === 0 ? (
-        query ? (
+        query || status ? (
           <EmptyState
             icon={SearchX}
             title="No matches"
-            description={`Nothing found for "${query}".`}
+            description={query ? `Nothing found for "${query}".` : "No records in this view."}
             action={
               <Button asChild variant="outline" className="mt-2">
-                <Link href="/records">Clear search</Link>
+                <Link href="/records">Clear filters</Link>
               </Button>
             }
           />
@@ -211,7 +255,7 @@ export default async function RecordsPage({
             page={page}
             pageCount={pages}
             basePath="/records"
-            params={{ q: query }}
+            params={{ q: query, status }}
           />
         </>
       )}

@@ -1,3 +1,4 @@
+import { SkipLink } from "@/components/layout/SkipLink";
 import { WorkerNav } from "@/components/layout/WorkerNav";
 import { getLatestActivityAt } from "@/lib/activity";
 import { prisma } from "@/lib/prisma";
@@ -28,12 +29,16 @@ export default async function RecordsLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      <SkipLink />
       <WorkerNav
         name={session.user.name ?? session.user.email ?? ""}
         returnedCount={returnedCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}
       />
-      <main className="mx-auto max-w-3xl px-4 py-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] native:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-6">
+      <main
+        id="main-content"
+        className="mx-auto max-w-3xl px-4 py-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] native:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-6"
+      >
         {children}
       </main>
     </div>

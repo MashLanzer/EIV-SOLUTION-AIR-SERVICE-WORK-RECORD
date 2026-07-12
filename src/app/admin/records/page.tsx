@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ChevronDown, FileText, Sheet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +14,8 @@ import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFil
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { parseSort } from "@/lib/sort";
-import type { Prisma } from "@prisma/client";
+import { cn } from "@/lib/utils";
+import type { Prisma, RecordStatus } from "@prisma/client";
 
 const EXPORT_FORM_ID = "export-form";
 
@@ -96,9 +98,50 @@ export default async function AdminRecordsPage({
     filters.status,
   ].filter(Boolean).length;
 
+  // Quick status chips: one tap to filter by review state, keeping any other
+  // active filters. "All" clears just the status.
+  const statusChips: { label: string; status?: RecordStatus }[] = [
+    { label: "All" },
+    { label: "Pending", status: "SUBMITTED" },
+    { label: "Returned", status: "NEEDS_CHANGES" },
+    { label: "Approved", status: "APPROVED" },
+  ];
+  function chipHref(status?: RecordStatus) {
+    const p = new URLSearchParams();
+    if (filters.dateFrom) p.set("dateFrom", filters.dateFrom);
+    if (filters.dateTo) p.set("dateTo", filters.dateTo);
+    if (filters.workerId) p.set("workerId", filters.workerId);
+    if (filters.customerName) p.set("customerName", filters.customerName);
+    if (filters.jobNumber) p.set("jobNumber", filters.jobNumber);
+    if (status) p.set("status", status);
+    const qs = p.toString();
+    return qs ? `/admin/records?${qs}` : "/admin/records";
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">All Work Records</h1>
+
+      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {statusChips.map((chip) => {
+          const active = (chip.status ?? undefined) === (filters.status ?? undefined);
+          return (
+            <Link
+              key={chip.label}
+              href={chipHref(chip.status)}
+              aria-current={active ? "true" : undefined}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                active
+                  ? "border-transparent bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                  : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              )}
+            >
+              {chip.label}
+            </Link>
+          );
+        })}
+      </div>
 
       <Card>
         {/* Always collapsed by default so the filter form stays the compact

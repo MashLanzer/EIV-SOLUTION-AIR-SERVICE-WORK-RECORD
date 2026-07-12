@@ -424,3 +424,17 @@ html[data-reduce-motion] *::after {
 .leaflet-control-attribution a {
   color: var(--color-neutral-500) !important;
 }
+
+/* Accessibility: a consistent keyboard focus ring for interactive elements
+   that don't already define one. Button/Input opt out via focus-visible:
+   outline-none (a higher-specificity utility), so this only backstops raw
+   links, chips, <summary> and div-buttons - no double indicators. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
