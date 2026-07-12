@@ -102,6 +102,9 @@ interface WorkRecordFormProps {
   workTypeGroups?: WorkTypeGroup[];
   // The company's currency symbol, used only in the pay field labels.
   currency?: string;
+  // The user's saved signature from their profile, pre-filled on the
+  // installer signature pad so they don't have to redraw it every time.
+  storedSignature?: string | null;
   // Company required-field policies (Settings). Server-enforced; these reflect
   // them in the UI. Customer signature defaults to required.
   requireHelper?: boolean;
@@ -199,6 +202,7 @@ export function WorkRecordForm({
   currency = "$",
   requireHelper = false,
   requireCustomerSignature = true,
+  storedSignature,
 }: WorkRecordFormProps) {
   const router = useRouter();
   const [state, formAction, actionPending] = useActionState<
@@ -219,9 +223,13 @@ export function WorkRecordForm({
 
   // Field values seeded into the (remountable) form. Restoring a draft
   // swaps these in and bumps formKey to re-init the uncontrolled inputs,
-  // signature pads, and photo grid.
+  // signature pads, and photo grid. If the user has a saved signature,
+  // pre-fill the installer signature pad.
+  const initialValues = storedSignature
+    ? { ...defaultValues, installerSignature: storedSignature }
+    : defaultValues;
   const [values, setValues] = useState<Partial<WorkRecordFormValues> | undefined>(
-    defaultValues
+    initialValues
   );
   const [formKey, setFormKey] = useState(0);
   const [pendingDraft, setPendingDraft] =

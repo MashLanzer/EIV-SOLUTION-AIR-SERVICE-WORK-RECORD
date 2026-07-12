@@ -7,6 +7,8 @@ export default async function WorkerProfilePage() {
     <ProfileScreen
       name={session.user.name ?? ""}
       email={session.user.email ?? ""}
+      phone={session.user.phone ?? null}
+      storedSignature={session.user.storedSignature ?? null}
       role={session.user.role}
       backHref="/records"
     />

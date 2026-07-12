@@ -1,16 +1,19 @@
 "use client";
 
-import { ArrowLeft, Mail, ShieldCheck, Sparkles, User as UserIcon } from "lucide-react";
+import { ArrowLeft, Mail, PenLine, Phone, ShieldCheck, Trash2, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 
+import { useRef, useState } from "react";
 import { AvatarInitials } from "@/components/ui/avatar-initials";
+import { Button } from "@/components/ui/button";
 import { InlineEditRow } from "@/components/settings/InlineEditRow";
+import { SignaturePad, type SignaturePadHandle } from "@/components/forms/SignaturePad";
 import {
   SettingsCustomRow,
   SettingsRow,
   SettingsSection,
 } from "@/components/settings/SettingsList";
-import { updateProfileNameAction } from "@/actions/profile";
+import { updateProfileNameAction, updateProfilePhoneAction, saveStoredSignatureAction, clearStoredSignatureAction } from "@/actions/profile";
 
 // The Profile screen, split out of Settings so identity and account details can
 // grow on their own. Today it carries what used to be the Settings "Profile"
@@ -19,15 +22,22 @@ import { updateProfileNameAction } from "@/actions/profile";
 export function ProfileScreen({
   name,
   email,
+  phone,
+  storedSignature,
   role,
   backHref,
 }: {
   name: string;
   email: string;
+  phone: string | null;
+  storedSignature: string | null;
   role: "ADMIN" | "WORKER";
   backHref: string;
 }) {
   const isAdmin = role === "ADMIN";
+  const sigRef = useRef<SignaturePadHandle>(null);
+  const [saving, setSaving] = useState(false);
+  const [sigError, setSigError] = useState<string | null>(null);
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">
@@ -68,6 +78,14 @@ export function ProfileScreen({
           action={updateProfileNameAction}
           helpWhenEditing="Shown on your submitted records, comments and team lists."
         />
+        <InlineEditRow
+          icon={Phone}
+          label="Phone"
+          value={phone ?? ""}
+          placeholder="(555) 123-4567"
+          action={updateProfilePhoneAction}
+          helpWhenEditing="Visible to your company admins and team members."
+        />
         <SettingsRow icon={Mail} label={email} sublabel="Signed in with Google" />
         <SettingsRow
           icon={ShieldCheck}
@@ -76,19 +94,64 @@ export function ProfileScreen({
         />
       </SettingsSection>
 
-      {/* Placeholder for the expanded profile coming later */}
+      {/* Stored signature */}
       <SettingsSection
-        title="Coming soon"
-        description="More profile options are on the way."
+        title="Saved signature"
+        description="Save your signature so it's pre-filled on every work record."
       >
-        <SettingsCustomRow className="flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-500">
-            <Sparkles className="h-4.5 w-4.5" />
-          </span>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            We&apos;re building out your profile — more to manage here soon.
-          </p>
-        </SettingsCustomRow>
+        <form
+          action={async (formData) => {
+            setSaving(true);
+            setSigError(null);
+            const res = await saveStoredSignatureAction(undefined, formData);
+            if (res?.error) setSigError(res.error);
+            setSaving(false);
+          }}
+        >
+          <SettingsCustomRow className="flex flex-col gap-3">
+            <input type="hidden" name="signature" id="sig-hidden" />
+            <SignaturePad
+              ref={sigRef}
+              label="Your signature"
+              defaultValue={storedSignature ?? undefined}
+            />
+            {sigError && (
+              <p className="text-sm text-destructive" role="alert">{sigError}</p>
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={saving}
+                onClick={() => {
+                  const dataUrl = sigRef.current?.getDataUrl();
+                  if (!dataUrl) return;
+                  const input = document.getElementById("sig-hidden") as HTMLInputElement;
+                  if (input) input.value = dataUrl;
+                  const form = input.closest("form");
+                  if (form) form.requestSubmit();
+                }}
+              >
+                <PenLine className="h-3.5 w-3.5" />
+                {storedSignature ? "Update" : "Save signature"}
+              </Button>
+              {storedSignature && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    await clearStoredSignatureAction();
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </SettingsCustomRow>
+        </form>
       </SettingsSection>
     </div>
   );

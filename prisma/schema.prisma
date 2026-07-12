@@ -292,6 +292,8 @@ model User {
   id               String        @id @default(cuid())
   email            String        @unique
   name             String
+  phone            String?
+  storedSignature  String?       @db.Text
   role             Role          @default(WORKER)
   active           Boolean       @default(true)
   createdAt        DateTime      @default(now())

@@ -97,7 +97,7 @@ export async function duplicateTemplateAction(templateId: string) {
       organizationId,
       name: `${src.name} (copy)`.slice(0, MAX_NAME_LEN),
       items: {
-        create: src.items.map((i, position) => ({ text: i.text, position })),
+        create: src.items.map((i: { text: string }, position: number) => ({ text: i.text, position })),
       },
     },
   });
@@ -139,7 +139,7 @@ export async function addChecklistAction(projectId: string, formData: FormData) 
     });
     if (!template) return;
     if (!name) name = template.name;
-    itemTexts = template.items.map((i) => i.text);
+    itemTexts = template.items.map((i: { text: string }) => i.text);
   }
 
   if (!name) return;

@@ -50,6 +50,7 @@ export default async function NewRecordPage() {
       </h1>
       <WorkRecordForm
         action={createRecordAction}
+        storedSignature={session.user.storedSignature}
         defaultValues={{
           leadInstallerName: session.user.name ?? "",
           // Suggested next sequential job number (blank if the org doesn't

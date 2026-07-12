@@ -109,6 +109,18 @@ export const updateProfileNameSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(80, "Name is too long"),
 });
 
+export const updateProfilePhoneSchema = z.object({
+  phone: z
+    .string()
+    .max(40, "Phone number is too long")
+    .optional()
+    .or(z.literal("")),
+});
+
+export const saveStoredSignatureSchema = z.object({
+  signature: z.string().min(1, "Signature is required").max(300_000, "Signature image is too large"),
+});
+
 export const updateOrganizationNameSchema = z.object({
   name: z
     .string()
