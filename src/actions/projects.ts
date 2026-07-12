@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { geocodeAddress } from "@/lib/geocode";
+import { projectDetailPaths } from "@/lib/projectAccess";
 import { PROJECT_STATUSES, projectSchema } from "@/lib/validations";
 
 export type ProjectFormState =
@@ -153,6 +154,30 @@ export async function setProjectStatusAction(projectId: string, status: string) 
   });
   revalidatePath("/admin/projects");
   revalidatePath(`/admin/projects/${projectId}`);
+}
+
+// Re-run geocoding for a project whose address didn't resolve to a map pin
+// (Nominatim miss, earlier rate limit, ...). Returns whether a location was
+// found so the caller can tell the admin if it still didn't match.
+export async function retryGeocodeAction(
+  projectId: string
+): Promise<{ ok: boolean; located: boolean }> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const project = await prisma.project.findFirst({
+    where: { id: projectId, organizationId },
+    select: { address: true },
+  });
+  if (!project?.address) return { ok: false, located: false };
+
+  const geo = await geocodeAddress(project.address);
+  await prisma.project.updateMany({
+    where: { id: projectId, organizationId },
+    data: { latitude: geo?.latitude ?? null, longitude: geo?.longitude ?? null },
+  });
+  for (const path of projectDetailPaths(projectId)) revalidatePath(path);
+  revalidatePath("/admin/projects");
+  return { ok: true, located: Boolean(geo) };
 }
 
 export async function deleteProjectAction(projectId: string) {

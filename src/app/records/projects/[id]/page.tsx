@@ -10,9 +10,12 @@ import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table"
 import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
+import { WeatherCard } from "@/components/projects/WeatherCard";
+import { GeocodeNotice } from "@/components/projects/GeocodeNotice";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
+import { getWeather } from "@/lib/weather";
 import { requireOrgId } from "@/lib/orgScope";
 import { canAccessProject } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
@@ -51,6 +54,11 @@ export default async function WorkerProjectPage({
     include: { team: { select: { name: true } } },
   });
   if (!project) notFound();
+
+  const located = project.latitude != null && project.longitude != null;
+  const weather = located
+    ? await getWeather(project.latitude as number, project.longitude as number)
+    : null;
 
   const [records, photoRows, checklists] = await Promise.all([
     prisma.workRecord.findMany({
@@ -146,17 +154,24 @@ export default async function WorkerProjectPage({
         </CardContent>
       </Card>
 
-      {project.latitude != null && project.longitude != null && (
-        <ProjectsMapCard
-          pins={[
-            {
-              id: project.id,
-              name: project.name,
-              latitude: project.latitude,
-              longitude: project.longitude,
-            },
-          ]}
-        />
+      {located ? (
+        <>
+          <ProjectsMapCard
+            pins={[
+              {
+                id: project.id,
+                name: project.name,
+                latitude: project.latitude as number,
+                longitude: project.longitude as number,
+              },
+            ]}
+          />
+          {weather && <WeatherCard weather={weather} />}
+        </>
+      ) : (
+        project.address && (
+          <GeocodeNotice projectId={project.id} address={project.address} canRetry={false} />
+        )
       )}
 
       {/* Checklists - workers can only check items off */}

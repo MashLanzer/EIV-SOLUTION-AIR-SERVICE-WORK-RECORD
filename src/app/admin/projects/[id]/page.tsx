@@ -34,9 +34,12 @@ import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
 import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
+import { WeatherCard } from "@/components/projects/WeatherCard";
+import { GeocodeNotice } from "@/components/projects/GeocodeNotice";
 import { TeamChip } from "@/components/teams/TeamColorDot";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
+import { getWeather } from "@/lib/weather";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 
@@ -154,19 +157,31 @@ export default async function AdminProjectPage({
   const statusCount = (s: "APPROVED" | "SUBMITTED" | "NEEDS_CHANGES") =>
     statusGroups.find((g) => g.status === s)?._count._all ?? 0;
 
+  const located = project.latitude != null && project.longitude != null;
+  const weather = located
+    ? await getWeather(project.latitude as number, project.longitude as number)
+    : null;
+
   const overviewPanel = (
     <div className="flex flex-col gap-4">
-      {project.latitude != null && project.longitude != null && (
-        <ProjectsMapCard
-          pins={[
-            {
-              id: project.id,
-              name: project.name,
-              latitude: project.latitude,
-              longitude: project.longitude,
-            },
-          ]}
-        />
+      {located ? (
+        <>
+          <ProjectsMapCard
+            pins={[
+              {
+                id: project.id,
+                name: project.name,
+                latitude: project.latitude as number,
+                longitude: project.longitude as number,
+              },
+            ]}
+          />
+          {weather && <WeatherCard weather={weather} />}
+        </>
+      ) : (
+        project.address && (
+          <GeocodeNotice projectId={project.id} address={project.address} canRetry />
+        )
       )}
 
       <Card>
