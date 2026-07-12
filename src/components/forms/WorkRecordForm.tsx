@@ -93,6 +93,9 @@ interface WorkRecordFormProps {
   draftKey?: string;
   // The org's projects, so a record can be filed under one (optional).
   projects?: ProjectOption[];
+  // Company policy (Settings): when true at least one photo is required to
+  // submit. The server enforces it; this just reflects it in the UI.
+  requirePhoto?: boolean;
 }
 
 // The wizard steps, in order. Each carries its icon + the field ids that live
@@ -181,6 +184,7 @@ export function WorkRecordForm({
   submitLabel = "Submit",
   draftKey,
   projects = [],
+  requirePhoto = false,
 }: WorkRecordFormProps) {
   const router = useRouter();
   const [state, formAction, actionPending] = useActionState<
@@ -846,7 +850,16 @@ export function WorkRecordForm({
 
         {/* Step 5 - Photos */}
         <div ref={(el) => { stepRefs.current[4] = el; }} hidden={step !== 4}>
-          <FormSection icon={Camera} title="Photos (optional)" emphasis="subtle">
+          <FormSection
+            icon={Camera}
+            title={requirePhoto ? "Photos (required)" : "Photos (optional)"}
+            emphasis="subtle"
+          >
+            {requirePhoto && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Your company requires at least one photo to submit this record.
+              </p>
+            )}
             <PhotoField defaultPhotos={values?.photos} />
             <FieldError id="photos-error" message={fieldError("photos")} />
           </FormSection>

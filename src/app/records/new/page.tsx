@@ -27,7 +27,11 @@ export default async function NewRecordPage() {
     }),
     prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { defaultLeadPay: true, defaultHelperPay: true },
+      select: {
+        defaultLeadPay: true,
+        defaultHelperPay: true,
+        requirePhoto: true,
+      },
     }),
   ]);
 
@@ -50,6 +54,7 @@ export default async function NewRecordPage() {
         submitLabel="Submit Record"
         draftKey={`new-record:${session.user.id}`}
         projects={projects}
+        requirePhoto={org?.requirePhoto ?? false}
       />
     </div>
   );

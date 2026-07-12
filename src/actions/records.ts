@@ -150,6 +150,23 @@ export async function createRecordAction(
 
   const organizationId = requireOrgId(session);
   const data = parsed.data;
+
+  // Company policy (Settings): a record can't be submitted without a photo.
+  if (!data.photos?.length) {
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { requirePhoto: true },
+    });
+    if (org?.requirePhoto) {
+      return {
+        error: "Please fix the highlighted fields.",
+        fieldErrors: {
+          photos: ["Your company requires at least one photo on every record."],
+        },
+      };
+    }
+  }
+
   const dupJobNumber = await findDuplicateJobNumber(data.jobNumber, organizationId);
   if (dupJobNumber) return jobNumberTakenError(dupJobNumber);
 
