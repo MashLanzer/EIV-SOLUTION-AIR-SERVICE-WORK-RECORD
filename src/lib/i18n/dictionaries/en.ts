@@ -625,6 +625,12 @@ export const en = {
     noJobsWeek: "No jobs scheduled this week",
     noJobsWeekDesc: "Use “Schedule a job” above to plan the crew's visits.",
     noJobsDay: "Nothing scheduled",
+    // Morning brief (once-a-day dialog)
+    morningTitle: "Your day",
+    morningSubtitleOne: "You have {n} job scheduled today.",
+    morningSubtitleMany: "You have {n} jobs scheduled today.",
+    morningViewSchedule: "Open schedule",
+    morningDismiss: "Got it",
     // Worker view
     workerSubtitle: "Your upcoming visits. Open one to start its record.",
     directions: "Directions",

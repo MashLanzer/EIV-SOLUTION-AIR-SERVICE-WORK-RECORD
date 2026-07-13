@@ -16,10 +16,12 @@ import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { RecordCard } from "@/components/records/RecordCard";
+import { MorningBriefDialog } from "@/components/schedule/MorningBriefDialog";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
+import { addUtcDays, dayKey, getScheduledJobs, startOfUtcDay } from "@/lib/schedule";
 import { getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 import type { RecordStatus } from "@prisma/client";
@@ -123,6 +125,24 @@ export default async function RecordsPage({
   // The summary is a "home" thing - hide it while searching or filtering.
   const showSummary = !query && !status;
 
+  // Today's scheduled visits feed the once-a-day morning brief dialog.
+  const todayStart = startOfUtcDay(new Date());
+  const briefRaw = await getScheduledJobs({
+    session,
+    organizationId: requireOrgId(session),
+    from: todayStart,
+    to: addUtcDays(todayStart, 1),
+  });
+  const briefJobs = briefRaw
+    .filter((j) => j.status !== "CANCELED")
+    .map((j) => ({
+      id: j.id,
+      title: j.title,
+      startTime: j.startTime,
+      customerName: j.customer?.name ?? null,
+      projectName: j.project?.name ?? null,
+    }));
+
   const t = (await getT()).records;
 
   // Quick status chips, keeping any active search term.
@@ -142,6 +162,11 @@ export default async function RecordsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <MorningBriefDialog
+        jobs={briefJobs}
+        dayKey={dayKey(todayStart)}
+        userId={session.user.id}
+      />
       {saved && (
         <>
           <SuccessToast message={t.recordSaved} />
