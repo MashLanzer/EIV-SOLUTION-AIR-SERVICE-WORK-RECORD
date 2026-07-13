@@ -15,11 +15,23 @@ export default async function AdminTeamsPage() {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
 
-  const teams = await prisma.team.findMany({
-    where: { organizationId },
-    orderBy: { name: "asc" },
-    include: { _count: { select: { memberships: true, projects: true } } },
-  });
+  const [teams, activeByTeam] = await Promise.all([
+    prisma.team.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      include: { _count: { select: { memberships: true, projects: true } } },
+    }),
+    // One aggregate for active-project counts across all teams, so the list
+    // scales regardless of how many projects each team has.
+    prisma.project.groupBy({
+      by: ["teamId"],
+      where: { organizationId, status: "ACTIVE", teamId: { not: null } },
+      _count: { _all: true },
+    }),
+  ]);
+  const activeCount = new Map<string, number>(
+    activeByTeam.map((g) => [g.teamId as string, g._count._all])
+  );
   const tr = (await getT()).teams;
 
   return (
@@ -73,6 +85,12 @@ export default async function AdminTeamsPage() {
                       <FolderKanban className="h-3.5 w-3.5" />
                       {(t._count.projects === 1 ? tr.projectCountOne : tr.projectCountMany).replace("{n}", String(t._count.projects))}
                     </span>
+                    {(activeCount.get(t.id) ?? 0) > 0 && (
+                      <span className="flex items-center gap-1.5 text-neutral-900 dark:text-neutral-100">
+                        <span className="h-1.5 w-1.5 rounded-full bg-neutral-900 dark:bg-neutral-100" />
+                        <span className="tabular-nums">{activeCount.get(t.id)}</span> {tr.active}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
