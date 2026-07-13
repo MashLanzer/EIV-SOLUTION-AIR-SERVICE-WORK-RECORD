@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 
 export default async function WorkerPhotosPage({
   searchParams,
@@ -93,13 +94,17 @@ export default async function WorkerPhotosPage({
     }));
 
   const isFiltered = Boolean(activeTag || activeProject);
+  const t = (await getT()).photos;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Photos</h1>
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
         <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
-          {photos.length} photo{photos.length === 1 ? "" : "s"}
+          {(photos.length === 1 ? t.countOne : t.countMany).replace(
+            "{n}",
+            String(photos.length)
+          )}
         </span>
       </div>
 
@@ -120,12 +125,8 @@ export default async function WorkerPhotosPage({
           <CardContent className="p-0">
             <EmptyState
               icon={Images}
-              title={isFiltered ? "No photos match" : "No photos yet"}
-              description={
-                isFiltered
-                  ? "Try a different tag or project, or clear the filters."
-                  : "Photos from your team's projects show up here, newest first."
-              }
+              title={isFiltered ? t.noMatch : t.noYet}
+              description={isFiltered ? t.tryDifferent : t.feedHint}
             />
           </CardContent>
         </Card>

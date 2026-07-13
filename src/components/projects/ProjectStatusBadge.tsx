@@ -1,7 +1,9 @@
+"use client";
+
 import type { ProjectStatus } from "@prisma/client";
 
 import { Badge } from "@/components/ui/badge";
-import { PROJECT_STATUS_LABELS } from "@/lib/validations";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 const VARIANT: Record<ProjectStatus, "success" | "secondary" | "warning"> = {
   ACTIVE: "success",
@@ -10,5 +12,11 @@ const VARIANT: Record<ProjectStatus, "success" | "secondary" | "warning"> = {
 };
 
 export function ProjectStatusBadge({ status }: { status: ProjectStatus }) {
-  return <Badge variant={VARIANT[status]}>{PROJECT_STATUS_LABELS[status]}</Badge>;
+  const t = useT().projects;
+  const label: Record<ProjectStatus, string> = {
+    ACTIVE: t.statusActive,
+    ON_HOLD: t.statusOnHold,
+    COMPLETED: t.statusCompleted,
+  };
+  return <Badge variant={VARIANT[status]}>{label[status]}</Badge>;
 }

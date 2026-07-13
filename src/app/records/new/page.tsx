@@ -6,6 +6,7 @@ import { getWorkTypeGroups } from "@/lib/workTypes";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 
 export default async function NewRecordPage() {
   const session = await requireAuth();
@@ -42,11 +43,12 @@ export default async function NewRecordPage() {
   ]);
   const suggestedJobNumber = await suggestNextJobNumber(organizationId);
   const workTypeGroups = await getWorkTypeGroups(organizationId);
+  const t = (await getT()).form;
 
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-        New Work Record
+        {t.newRecordTitle}
       </h1>
       <WorkRecordForm
         action={createRecordAction}
@@ -66,7 +68,7 @@ export default async function NewRecordPage() {
           // record; a saved draft still wins.
           workPerformedNotes: org?.defaultWorkNotes || undefined,
         }}
-        submitLabel="Submit Record"
+        submitLabel={t.submitRecord}
         draftKey={`new-record:${session.user.id}`}
         projects={projects}
         requirePhoto={org?.requirePhoto ?? false}

@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 
 export default async function WorkerProjectsPage() {
   const session = await requireAuth();
@@ -31,11 +32,12 @@ export default async function WorkerProjectsPage() {
   });
 
   const hasTeam = isAdmin || (teamIds?.length ?? 0) > 0;
+  const t = (await getT()).projects;
 
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-        Projects
+        {t.title}
       </h1>
 
       {projects.length === 0 ? (
@@ -43,12 +45,8 @@ export default async function WorkerProjectsPage() {
           <CardContent className="p-0">
             <EmptyState
               icon={FolderKanban}
-              title={hasTeam ? "No projects yet" : "You're not on a team yet"}
-              description={
-                hasTeam
-                  ? "Projects assigned to your team will show up here."
-                  : "Ask your admin to add you to a team so you can see its projects."
-              }
+              title={hasTeam ? t.noProjectsYet : t.notOnTeam}
+              description={hasTeam ? t.teamProjectsHere : t.askAdminTeam}
             />
           </CardContent>
         </Card>
@@ -59,7 +57,7 @@ export default async function WorkerProjectsPage() {
               key={p.id}
               actions={
                 <Button asChild variant="outline" size="icon">
-                  <Link href={`/records/projects/${p.id}`} aria-label={`Open ${p.name}`}>
+                  <Link href={`/records/projects/${p.id}`} aria-label={t.openAria.replace("{name}", p.name)}>
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -72,7 +70,7 @@ export default async function WorkerProjectsPage() {
                 <ProjectStatusBadge status={p.status} />
               </div>
               <DataField
-                label="Address"
+                label={t.address}
                 value={
                   p.address ? (
                     <span className="flex items-center gap-1.5">

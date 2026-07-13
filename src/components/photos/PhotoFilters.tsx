@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Tag as TagIcon } from "lucide-react";
 
 import { Select } from "@/components/ui/select";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface TagOption {
@@ -32,6 +33,7 @@ export function PhotoFilters({
   activeProject: string | null;
 }) {
   const router = useRouter();
+  const t = useT().photos;
 
   function navigate(next: { tag?: string | null; project?: string | null }) {
     const tag = next.tag !== undefined ? next.tag : activeTag;
@@ -51,12 +53,12 @@ export function PhotoFilters({
     <div className="flex flex-col gap-2">
       {hasProjects && (
         <Select
-          aria-label="Filter by project"
+          aria-label={t.filterByProject}
           value={activeProject ?? ""}
           onChange={(e) => navigate({ project: e.target.value || null })}
           className="sm:max-w-xs"
         >
-          <option value="">All projects</option>
+          <option value="">{t.allProjects}</option>
           {projects.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
@@ -77,7 +79,7 @@ export function PhotoFilters({
                 : "border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-600"
             )}
           >
-            All
+            {t.allTags}
           </button>
           {tags.map((t) => (
             <button

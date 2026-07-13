@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 
 export default async function RecordDetailPage({
   params,
@@ -34,15 +35,17 @@ export default async function RecordDetailPage({
 
   const canEdit = record.status !== "APPROVED";
   const currency = await getCurrencySymbol(requireOrgId(session));
+  const t = await getT();
 
   return (
     <div className="flex flex-col gap-4">
-      {saved && <SuccessToast message="Record saved" />}
+      {saved && <SuccessToast message={t.records.recordSaved} />}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-            Job #{record.jobNumber}
+            {t.records.jobNumber}
+            {record.jobNumber}
           </h1>
           <StatusBadge status={record.status} />
         </div>
@@ -51,14 +54,14 @@ export default async function RecordDetailPage({
             <Button asChild size="sm">
               <Link href={`/records/${record.id}/edit`}>
                 <Pencil className="h-4 w-4" />
-                Edit
+                {t.common.edit}
               </Link>
             </Button>
           )}
           <Button asChild variant="outline" size="sm">
             <a href={`/records/${record.id}/pdf`}>
               <Download className="h-4 w-4" />
-              Download PDF
+              {t.records.downloadPdf}
             </a>
           </Button>
         </div>
@@ -67,12 +70,14 @@ export default async function RecordDetailPage({
       {record.status === "NEEDS_CHANGES" && (
         <Alert variant="warning">
           <span className="font-medium">
-            Your supervisor asked for changes.
+            {t.records.supervisorAskedChanges}
           </span>{" "}
           {record.reviewNote
             ? record.reviewNote
-            : "Please review and resubmit this record."}{" "}
-          Tap <span className="font-medium">Edit</span> to fix and resubmit.
+            : t.records.pleaseReviewResubmit}{" "}
+          {t.records.tapEditPrefix}
+          <span className="font-medium">{t.common.edit}</span>
+          {t.records.tapEditSuffix}
         </Alert>
       )}
 

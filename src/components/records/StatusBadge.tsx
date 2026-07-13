@@ -1,14 +1,18 @@
+"use client";
+
 import type { RecordStatus } from "@prisma/client";
 import { CheckCircle2, Clock3, AlertTriangle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function StatusBadge({ status }: { status: RecordStatus }) {
+  const t = useT().records;
   if (status === "APPROVED") {
     return (
       <Badge variant="success">
         <CheckCircle2 className="h-3 w-3" />
-        Approved
+        {t.statusApproved}
       </Badge>
     );
   }
@@ -16,14 +20,14 @@ export function StatusBadge({ status }: { status: RecordStatus }) {
     return (
       <Badge variant="warning">
         <AlertTriangle className="h-3 w-3" />
-        Needs changes
+        {t.statusNeedsChanges}
       </Badge>
     );
   }
   return (
     <Badge variant="default">
       <Clock3 className="h-3 w-3" />
-      Submitted
+      {t.statusSubmitted}
     </Badge>
   );
 }

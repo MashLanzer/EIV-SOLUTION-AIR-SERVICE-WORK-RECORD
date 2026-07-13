@@ -12,12 +12,7 @@ import { getCurrencySymbol } from "@/lib/currency";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { getWorkTypeGroups } from "@/lib/workTypes";
 import { requireAuth } from "@/lib/session";
-
-const editDateFmt = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
+import { getLocale, getT } from "@/lib/i18n/server";
 
 export default async function EditRecordPage({
   params,
@@ -70,6 +65,12 @@ export default async function EditRecordPage({
     select: { requireHelper: true, requireCustomerSignature: true },
   });
   const boundAction = updateRecordAction.bind(null, record.id);
+  const t = await getT();
+  const locale = await getLocale();
+  const editDateFmt = new Intl.DateTimeFormat(
+    locale === "es" ? "es-ES" : "en-US",
+    { month: "short", day: "numeric", year: "numeric" }
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -79,7 +80,7 @@ export default async function EditRecordPage({
           className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t.common.back}
         </Link>
         <div className="mt-2 flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
@@ -87,7 +88,9 @@ export default async function EditRecordPage({
           </span>
           <div className="min-w-0">
             <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-              Edit Job #{record.jobNumber}
+              {t.form.editPrefix}
+              {t.records.jobNumber}
+              {record.jobNumber}
             </h1>
             <div className="flex items-center gap-2">
               <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">
@@ -98,13 +101,13 @@ export default async function EditRecordPage({
           </div>
         </div>
         <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
-          Job date {editDateFmt.format(record.date)} · Updated{" "}
+          {t.form.jobDate} {editDateFmt.format(record.date)} · {t.form.updated}{" "}
           {editDateFmt.format(record.updatedAt)}
         </p>
       </div>
       {record.status === "NEEDS_CHANGES" && record.reviewNote && (
         <Alert variant="warning">
-          <span className="font-medium">Requested changes:</span>{" "}
+          <span className="font-medium">{t.form.requestedChanges}</span>{" "}
           {record.reviewNote}
         </Alert>
       )}
@@ -133,7 +136,7 @@ export default async function EditRecordPage({
           installerSignature: record.installerSignature,
           photos: record.photos.map((p) => p.dataUrl),
         }}
-        submitLabel="Resubmit"
+        submitLabel={t.form.resubmit}
       />
     </div>
   );

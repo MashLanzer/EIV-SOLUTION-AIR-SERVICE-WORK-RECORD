@@ -6,9 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataField } from "@/components/ui/data-field";
 import { RecordPhotoGrid } from "@/components/records/RecordPhotoGrid";
 import { formatMoney, formatTime, workDuration } from "@/lib/format";
+import { getLocale, getT } from "@/lib/i18n/server";
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -31,13 +32,15 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export function RecordDetail({
+export async function RecordDetail({
   record,
   currency = "$",
 }: {
   record: WorkRecord & { photos?: WorkPhoto[] };
   currency?: string;
 }) {
+  const t = (await getT()).records;
+  const locale = await getLocale();
   const hours = workDuration(record.arrivalTime, record.departureTime);
   const leadPay = Number(record.leadInstallerPay);
   const helperPay = record.helperPay != null ? Number(record.helperPay) : 0;
@@ -49,7 +52,7 @@ export function RecordDetail({
   return (
     <div className="flex flex-col gap-4">
       {/* Customer & job */}
-      <Section title="Customer & job">
+      <Section title={t.customerAndJob}>
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold text-neutral-900 dark:text-neutral-100">
             {record.customerName}
@@ -65,43 +68,43 @@ export function RecordDetail({
           </a>
         </div>
         <div className="grid grid-cols-2 gap-3 border-t border-neutral-200 dark:border-neutral-800 pt-3">
-          <DataField label="Date" value={formatDate(record.date)} />
-          <DataField label="Type of Work" value={record.typeOfWork} />
+          <DataField label={t.date} value={formatDate(record.date, locale)} />
+          <DataField label={t.typeOfWork} value={record.typeOfWork} />
         </div>
       </Section>
 
       {/* Schedule & crew */}
-      <Section title="Schedule & crew">
+      <Section title={t.scheduleCrew}>
         <div className="grid grid-cols-2 gap-3">
-          <DataField label="Arrival" value={formatTime(record.arrivalTime)} />
-          <DataField label="Departure" value={formatTime(record.departureTime)} />
+          <DataField label={t.arrival} value={formatTime(record.arrivalTime)} />
+          <DataField label={t.departure} value={formatTime(record.departureTime)} />
         </div>
         {hours && (
           <div className="flex items-center gap-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-300">
             <Clock className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
             <span>
-              Time on site:{" "}
+              {t.timeOnSite}{" "}
               <span className="font-semibold tabular-nums">{hours}</span>
             </span>
           </div>
         )}
         <div className="grid grid-cols-2 gap-3 border-t border-neutral-200 dark:border-neutral-800 pt-3">
-          <DataField label="Lead Installer" value={record.leadInstallerName} />
-          <DataField label="Helper" value={record.helperName} />
+          <DataField label={t.leadInstaller} value={record.leadInstallerName} />
+          <DataField label={t.helper} value={record.helperName} />
         </div>
       </Section>
 
       {/* Payment */}
-      <Section title="Payment">
+      <Section title={t.payment}>
         <div className="grid grid-cols-2 gap-3">
-          <DataField label="Lead Installer Pay" value={formatMoney(leadPay, currency)} />
+          <DataField label={t.leadInstallerPay} value={formatMoney(leadPay, currency)} />
           <DataField
-            label="Helper Pay"
+            label={t.helperPay}
             value={record.helperPay != null ? formatMoney(helperPay, currency) : null}
           />
         </div>
         <div className="flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 pt-3">
-          <span className="text-sm text-neutral-500 dark:text-neutral-400">Total</span>
+          <span className="text-sm text-neutral-500 dark:text-neutral-400">{t.total}</span>
           <span className="text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
             {formatMoney(total, currency)}
           </span>
@@ -109,7 +112,7 @@ export function RecordDetail({
       </Section>
 
       {/* Work performed */}
-      <Section title="Work performed / notes">
+      <Section title={t.workNotes}>
         <p className="whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-200">
           {record.workPerformedNotes}
         </p>
@@ -117,7 +120,7 @@ export function RecordDetail({
 
       {/* Photos */}
       {record.photos && record.photos.length > 0 && (
-        <Section title={`Photos (${record.photos.length})`}>
+        <Section title={t.photosCount.replace("{n}", String(record.photos.length))}>
           <RecordPhotoGrid
             photos={record.photos.map((p) => ({
               id: p.id,
@@ -129,27 +132,27 @@ export function RecordDetail({
       )}
 
       {/* Signatures */}
-      <Section title="Signatures">
+      <Section title={t.signatures}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              Customer Signature
+              {t.customerSignature}
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={record.customerSignature}
-              alt="Customer signature"
+              alt={t.customerSignature}
               className="h-28 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white object-contain"
             />
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              Installer Signature
+              {t.installerSignature}
             </span>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={record.installerSignature}
-              alt="Installer signature"
+              alt={t.installerSignature}
               className="h-28 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white object-contain"
             />
           </div>

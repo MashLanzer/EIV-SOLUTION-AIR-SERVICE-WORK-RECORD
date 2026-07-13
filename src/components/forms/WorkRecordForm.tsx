@@ -46,6 +46,7 @@ import {
 import { TypeOfWorkField } from "@/components/forms/TypeOfWorkField";
 import { clearDraft, getDraft, setDraft } from "@/lib/draftStore";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n/LocaleProvider";
 import type { WorkTypeGroup } from "@/lib/workTypes";
 import type { RecordFormState } from "@/actions/records";
 
@@ -173,24 +174,6 @@ function draftHasContent(d: Partial<WorkRecordFormValues>): boolean {
   );
 }
 
-// Friendly names for the error summary, keyed by field name / anchor id.
-const FIELD_LABELS: Record<string, string> = {
-  date: "Date",
-  jobNumber: "Job #",
-  leadInstallerName: "Lead Installer",
-  customerName: "Customer Name",
-  customerAddress: "Customer Address",
-  arrivalTime: "Arrival Time",
-  departureTime: "Departure Time",
-  typeOfWork: "Type of Work",
-  workPerformedNotes: "Work Performed / Notes",
-  leadInstallerPay: "Lead Installer Pay",
-  helperPay: "Helper Pay",
-  photos: "Photos",
-  "sig-customer": "Customer Signature",
-  "sig-installer": "Installer Signature",
-};
-
 export function WorkRecordForm({
   action,
   defaultValues,
@@ -204,7 +187,35 @@ export function WorkRecordForm({
   requireCustomerSignature = true,
   storedSignature,
 }: WorkRecordFormProps) {
+  const t = useT().form;
+  const tc = useT().common;
   const router = useRouter();
+  // Translated wizard step titles, indexed the same as STEPS.
+  const stepTitles = [
+    t.stepJob,
+    t.stepCustomer,
+    t.stepTime,
+    t.stepPayment,
+    t.stepPhotos,
+    t.stepSignatures,
+  ];
+  // Friendly names for the error summary, keyed by field name / anchor id.
+  const fieldLabels: Record<string, string> = {
+    date: t.date,
+    jobNumber: t.jobNumber,
+    leadInstallerName: t.leadInstaller,
+    customerName: t.customerName,
+    customerAddress: t.customerAddress,
+    arrivalTime: t.arrivalTime,
+    departureTime: t.departureTime,
+    typeOfWork: t.typeOfWork,
+    workPerformedNotes: t.workNotes,
+    leadInstallerPay: t.leadInstallerPay,
+    helperPay: t.helperPay,
+    photos: t.stepPhotos,
+    "sig-customer": t.customerSignature,
+    "sig-installer": t.installerSignature,
+  };
   const [state, formAction, actionPending] = useActionState<
     RecordFormState,
     FormData
@@ -261,9 +272,9 @@ export function WorkRecordForm({
   const errorSummary: { id: string; label: string }[] = [
     ...Object.keys(state?.fieldErrors ?? {})
       .filter((name) => state?.fieldErrors?.[name]?.length)
-      .map((name) => ({ id: name, label: FIELD_LABELS[name] ?? name })),
-    ...(sigErrors.customer ? [{ id: "sig-customer", label: FIELD_LABELS["sig-customer"] }] : []),
-    ...(sigErrors.installer ? [{ id: "sig-installer", label: FIELD_LABELS["sig-installer"] }] : []),
+      .map((name) => ({ id: name, label: fieldLabels[name] ?? name })),
+    ...(sigErrors.customer ? [{ id: "sig-customer", label: fieldLabels["sig-customer"] }] : []),
+    ...(sigErrors.installer ? [{ id: "sig-installer", label: fieldLabels["sig-installer"] }] : []),
   ];
 
   // Bring a field into view, switching to its step first (it may live on a
@@ -485,8 +496,8 @@ export function WorkRecordForm({
     const customerMissing = requireCustomerSignature && !customerSignature;
     if (customerMissing || !installerSignature) {
       const next = {
-        customer: customerMissing ? "Customer signature is required." : undefined,
-        installer: installerSignature ? undefined : "Installer signature is required.",
+        customer: customerMissing ? t.customerSigRequiredError : undefined,
+        installer: installerSignature ? undefined : t.installerSigRequiredError,
       };
       setSigErrors(next);
       focusField(next.customer ? "sig-customer" : "sig-installer");
@@ -506,17 +517,15 @@ export function WorkRecordForm({
     });
   }
 
-  const current = STEPS[step];
-
   return (
     <div className="flex flex-col gap-4">
       {pendingDraft && (
         <Alert variant="info">
           <div className="flex flex-col gap-2">
-            <span>You have an unsaved draft from earlier. Resume it?</span>
+            <span>{t.draftPrompt}</span>
             <div className="flex gap-2">
               <Button type="button" size="sm" onClick={resumeDraft}>
-                Resume draft
+                {t.resumeDraft}
               </Button>
               <Button
                 type="button"
@@ -524,7 +533,7 @@ export function WorkRecordForm({
                 variant="outline"
                 onClick={discardDraft}
               >
-                Discard
+                {t.discard}
               </Button>
             </div>
           </div>
@@ -545,7 +554,9 @@ export function WorkRecordForm({
                 <button
                   type="button"
                   onClick={() => goStep(i)}
-                  aria-label={`Step ${i + 1}: ${s.title}`}
+                  aria-label={t.stepAria
+                    .replace("{n}", String(i + 1))
+                    .replace("{title}", stepTitles[i])}
                   aria-current={active ? "step" : undefined}
                   className={cn(
                     "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors",
@@ -574,10 +585,12 @@ export function WorkRecordForm({
         </div>
         <div className="mt-2 flex items-baseline justify-between">
           <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-            {current.title === "Sign" ? "Signatures" : current.title === "Pay" ? "Payment" : current.title === "Time" ? "Time & Work" : current.title === "Job" ? "Job Details" : current.title}
+            {stepTitles[step]}
           </span>
           <span className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
-            Step {step + 1} of {STEPS.length}
+            {t.stepOf
+              .replace("{n}", String(step + 1))
+              .replace("{m}", String(STEPS.length))}
           </span>
         </div>
       </div>
@@ -594,7 +607,7 @@ export function WorkRecordForm({
           <Alert variant="error">
             <div className="flex flex-col gap-1">
               <span className="font-medium">
-                {state?.error ?? "Please fix the following before submitting:"}
+                {state?.error ?? t.fixBeforeSubmit}
               </span>
               {errorSummary.length > 0 && (
                 <ul className="ml-4 list-disc">
@@ -620,9 +633,9 @@ export function WorkRecordForm({
 
         {/* Step 1 - Job Details */}
         <div ref={(el) => { stepRefs.current[0] = el; }} hidden={step !== 0}>
-          <FormSection icon={Briefcase} title="Job Details">
+          <FormSection icon={Briefcase} title={t.stepJob}>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="date" required>Date</Label>
+              <Label htmlFor="date" required>{t.date}</Label>
               <Input
                 id="date"
                 name="date"
@@ -635,7 +648,7 @@ export function WorkRecordForm({
               <FieldError id="date-error" message={fieldError("date")} />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="jobNumber" required>Job #</Label>
+              <Label htmlFor="jobNumber" required>{t.jobNumber}</Label>
               <Input
                 id="jobNumber"
                 name="jobNumber"
@@ -647,7 +660,7 @@ export function WorkRecordForm({
               <FieldError id="jobNumber-error" message={fieldError("jobNumber")} />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="leadInstallerName" required>Lead Installer</Label>
+              <Label htmlFor="leadInstallerName" required>{t.leadInstaller}</Label>
               <Input
                 id="leadInstallerName"
                 name="leadInstallerName"
@@ -663,9 +676,9 @@ export function WorkRecordForm({
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="helperName" required={requireHelper}>
-                Helper
+                {t.helper}
                 {!requireHelper && (
-                  <span className="font-normal text-neutral-400 dark:text-neutral-500"> (optional)</span>
+                  <span className="font-normal text-neutral-400 dark:text-neutral-500"> ({tc.optional})</span>
                 )}
               </Label>
               <Input
@@ -681,9 +694,9 @@ export function WorkRecordForm({
             {projects.length > 0 && (
               <div className="flex flex-col gap-2 sm:col-span-2">
                 <Label htmlFor="projectId">
-                  Project{" "}
+                  {t.project}{" "}
                   <span className="font-normal text-neutral-400 dark:text-neutral-500">
-                    (optional)
+                    ({tc.optional})
                   </span>
                 </Label>
                 <Select
@@ -692,7 +705,7 @@ export function WorkRecordForm({
                   defaultValue={values?.projectId ?? ""}
                   onChange={handleProjectChange}
                 >
-                  <option value="">No project</option>
+                  <option value="">{t.noProject}</option>
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
@@ -706,9 +719,9 @@ export function WorkRecordForm({
 
         {/* Step 2 - Customer */}
         <div ref={(el) => { stepRefs.current[1] = el; }} hidden={step !== 1}>
-          <FormSection icon={User} title="Customer">
+          <FormSection icon={User} title={t.stepCustomer}>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="customerName" required>Customer Name</Label>
+              <Label htmlFor="customerName" required>{t.customerName}</Label>
               <CustomerAutocomplete
                 ref={customerNameRef}
                 defaultValue={values?.customerName}
@@ -724,7 +737,7 @@ export function WorkRecordForm({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="customerAddress" required>Customer Address</Label>
+              <Label htmlFor="customerAddress" required>{t.customerAddress}</Label>
               <Input
                 id="customerAddress"
                 name="customerAddress"
@@ -740,7 +753,7 @@ export function WorkRecordForm({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="customerPhone">Customer Phone (optional)</Label>
+              <Label htmlFor="customerPhone">{t.customerPhone} ({tc.optional})</Label>
               <Input
                 id="customerPhone"
                 name="customerPhone"
@@ -751,7 +764,7 @@ export function WorkRecordForm({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="customerEmail">Customer Email (optional)</Label>
+              <Label htmlFor="customerEmail">{t.customerEmail} ({tc.optional})</Label>
               <Input
                 id="customerEmail"
                 name="customerEmail"
@@ -766,9 +779,9 @@ export function WorkRecordForm({
 
         {/* Step 3 - Time & Work */}
         <div ref={(el) => { stepRefs.current[2] = el; }} hidden={step !== 2}>
-          <FormSection icon={Clock} title="Time & Work">
+          <FormSection icon={Clock} title={t.stepTime}>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="arrivalTime" required>Arrival Time</Label>
+              <Label htmlFor="arrivalTime" required>{t.arrivalTime}</Label>
               <Input
                 id="arrivalTime"
                 name="arrivalTime"
@@ -785,7 +798,7 @@ export function WorkRecordForm({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="departureTime" required>Departure Time</Label>
+              <Label htmlFor="departureTime" required>{t.departureTime}</Label>
               <Input
                 id="departureTime"
                 name="departureTime"
@@ -805,12 +818,12 @@ export function WorkRecordForm({
               <div className="flex items-center gap-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-300 sm:col-span-2">
                 <Clock className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
                 <span>
-                  Time on site: <span className="font-semibold tabular-nums">{duration}</span>
+                  {t.timeOnSite} <span className="font-semibold tabular-nums">{duration}</span>
                 </span>
               </div>
             )}
             <div className="flex flex-col gap-2 sm:col-span-2">
-              <Label htmlFor="typeOfWork" required>Type of Work</Label>
+              <Label htmlFor="typeOfWork" required>{t.typeOfWork}</Label>
               <TypeOfWorkField
                 defaultValue={values?.typeOfWork}
                 invalid={invalid("typeOfWork")}
@@ -822,7 +835,7 @@ export function WorkRecordForm({
               />
             </div>
             <div className="flex flex-col gap-2 sm:col-span-2">
-              <Label htmlFor="workPerformedNotes" required>Work Performed / Notes</Label>
+              <Label htmlFor="workPerformedNotes" required>{t.workNotes}</Label>
               <Textarea
                 id="workPerformedNotes"
                 name="workPerformedNotes"
@@ -842,9 +855,9 @@ export function WorkRecordForm({
 
         {/* Step 4 - Payment */}
         <div ref={(el) => { stepRefs.current[3] = el; }} hidden={step !== 3}>
-          <FormSection icon={DollarSign} title="Payment">
+          <FormSection icon={DollarSign} title={t.stepPayment}>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="leadInstallerPay" required>Lead Installer Pay ({currency})</Label>
+              <Label htmlFor="leadInstallerPay" required>{t.leadInstallerPay} ({currency})</Label>
               <Input
                 id="leadInstallerPay"
                 name="leadInstallerPay"
@@ -863,7 +876,7 @@ export function WorkRecordForm({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="helperPay">Helper Pay ({currency}) <span className="font-normal text-neutral-400 dark:text-neutral-500">(optional)</span></Label>
+              <Label htmlFor="helperPay">{t.helperPay} ({currency}) <span className="font-normal text-neutral-400 dark:text-neutral-500">({tc.optional})</span></Label>
               <Input
                 id="helperPay"
                 name="helperPay"
@@ -884,12 +897,12 @@ export function WorkRecordForm({
         <div ref={(el) => { stepRefs.current[4] = el; }} hidden={step !== 4}>
           <FormSection
             icon={Camera}
-            title={requirePhoto ? "Photos (required)" : "Photos (optional)"}
+            title={requirePhoto ? t.photosRequired : t.photosOptional}
             emphasis="subtle"
           >
             {requirePhoto && (
               <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Your company requires at least one photo to submit this record.
+                {t.photoRequiredHint}
               </p>
             )}
             <PhotoField defaultPhotos={values?.photos} />
@@ -899,14 +912,14 @@ export function WorkRecordForm({
 
         {/* Step 6 - Signatures */}
         <div ref={(el) => { stepRefs.current[5] = el; }} hidden={step !== 5}>
-          <FormSection icon={PenTool} title="Signatures" emphasis="critical">
+          <FormSection icon={PenTool} title={t.signatures} emphasis="critical">
             <SignaturePad
               id="sig-customer"
               ref={customerSigRef}
               label={
                 requireCustomerSignature
-                  ? "Customer Signature"
-                  : "Customer Signature (optional)"
+                  ? t.customerSignature
+                  : t.customerSignatureOptional
               }
               defaultValue={values?.customerSignature}
               error={sigErrors.customer}
@@ -914,7 +927,7 @@ export function WorkRecordForm({
             <SignaturePad
               id="sig-installer"
               ref={installerSigRef}
-              label="Installer Signature"
+              label={t.installerSignature}
               defaultValue={values?.installerSignature}
               error={sigErrors.installer}
             />
@@ -923,8 +936,7 @@ export function WorkRecordForm({
 
         {offline && (
           <Alert variant="warning">
-            <span className="font-medium">You&apos;re offline.</span> Your entry
-            is saved on this device. Reconnect to submit it.
+            <span className="font-medium">{t.offlineTitle}</span> {t.offlineHint}
           </Alert>
         )}
 
@@ -935,13 +947,13 @@ export function WorkRecordForm({
           {step === 0 ? (
             guardUnsaved && dirty ? (
               <ConfirmDialog
-                title="Discard changes?"
-                description="You have unsaved edits. Leaving now will lose them."
-                confirmLabel="Discard"
+                title={t.discardTitle}
+                description={t.discardDescription}
+                confirmLabel={t.discard}
                 trigger={
                   <Button type="button" variant="outline" size="lg">
                     <X className="h-4 w-4" />
-                    Cancel
+                    {tc.cancel}
                   </Button>
                 }
                 onConfirm={() => router.back()}
@@ -954,7 +966,7 @@ export function WorkRecordForm({
                 onClick={() => router.back()}
               >
                 <X className="h-4 w-4" />
-                Cancel
+                {tc.cancel}
               </Button>
             )
           ) : (
@@ -965,13 +977,13 @@ export function WorkRecordForm({
               onClick={() => goStep(step - 1)}
             >
               <ChevronLeft className="h-4 w-4" />
-              Back
+              {t.back}
             </Button>
           )}
 
           {step < LAST_STEP ? (
             <Button type="button" size="lg" className="flex-1" onClick={goNext}>
-              Next
+              {t.next}
               <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
@@ -986,7 +998,7 @@ export function WorkRecordForm({
               ) : (
                 <Save className="h-4 w-4" />
               )}
-              {offline ? "Offline" : pending ? "Saving..." : submitLabel}
+              {offline ? t.offline : pending ? t.saving : submitLabel}
             </Button>
           )}
         </div>
