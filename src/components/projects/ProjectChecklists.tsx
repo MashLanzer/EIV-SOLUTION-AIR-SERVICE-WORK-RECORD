@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import {
   addChecklistAction,
   addChecklistItemAction,
@@ -64,18 +65,14 @@ export async function ProjectChecklists({
                 <span className="text-neutral-500 dark:text-neutral-400">
                   {t.fromTemplate}
                 </span>
-                <select
-                  name="templateId"
-                  defaultValue=""
-                  className="h-10 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 text-sm text-neutral-900 dark:text-neutral-100 focus:border-primary focus:outline-none"
-                >
+                <Select name="templateId" defaultValue="">
                   <option value="">{t.blankChecklist}</option>
                   {templates.map((tpl) => (
                     <option key={tpl.id} value={tpl.id}>
                       {tpl.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
             )}
             <label className="flex flex-col gap-1 text-sm">
