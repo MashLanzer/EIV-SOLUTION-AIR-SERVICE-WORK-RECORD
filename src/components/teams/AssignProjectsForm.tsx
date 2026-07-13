@@ -5,6 +5,7 @@ import type { ProjectStatus } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { setTeamProjectsAction } from "@/actions/teams";
 
 interface OrgProject {
@@ -25,11 +26,12 @@ export function AssignProjectsForm({
   assignedIds: string[];
 }) {
   const assigned = new Set(assignedIds);
+  const t = useT().teams;
 
   if (projects.length === 0) {
     return (
       <p className="text-sm text-neutral-500 dark:text-neutral-400">
-        Create a project first, then assign it to this team here.
+        {t.createProjectFirst}
       </p>
     );
   }
@@ -67,7 +69,7 @@ export function AssignProjectsForm({
       </div>
       <Button type="submit" className="w-fit">
         <Save className="h-4 w-4" />
-        Save projects
+        {t.saveProjects}
       </Button>
     </form>
   );

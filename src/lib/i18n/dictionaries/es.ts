@@ -314,6 +314,60 @@ export const es: Dictionary = {
       "ej. Falta la firma del instalador — vuelve a recogerla y reenvía.",
     returnN: "Devolver {n}",
   },
+  teams: {
+    tabProjects: "Proyectos",
+    tabTeams: "Equipos",
+    newTeam: "Nuevo equipo",
+    noTeams: "Aún no hay equipos",
+    noTeamsDesc:
+      "Crea un equipo (una cuadrilla) para agrupar trabajadores y asignarlos a proyectos.",
+    memberCountOne: "{n} miembro",
+    memberCountMany: "{n} miembros",
+    projectCountOne: "{n} proyecto",
+    projectCountMany: "{n} proyectos",
+    // New page
+    newTeamTitle: "Nuevo equipo",
+    newTeamDesc:
+      "Una cuadrilla que puedes asignar a proyectos. Agrega miembros y proyectos ahora o después.",
+    // Detail
+    teamSaved: "Equipo guardado",
+    created: "Creado {date}",
+    members: "Miembros",
+    active: "Activos",
+    photos: "Fotos",
+    jobs: "Trabajos",
+    addPeopleFirst:
+      "Primero agrega personas a tu empresa, luego asígnalas aquí.",
+    assignProjects: "Asignar proyectos",
+    projectsCount: "Proyectos ({n})",
+    noProjectsAssigned: "Sin proyectos asignados",
+    noProjectsAssignedDesc:
+      "Usa “Asignar proyectos” arriba para agregar este equipo a un jobsite.",
+    manage: "Gestionar",
+    teamDetails: "Datos del equipo",
+    // Form
+    teamName: "Nombre del equipo",
+    teamNamePlaceholder: "ej. Cuadrilla de instalación A",
+    color: "Color",
+    colorHint: "Se muestra como un punto junto al equipo y en sus tarjetas de proyecto.",
+    projectsLabel: "Proyectos",
+    saving: "Guardando...",
+    saveTeam: "Guardar equipo",
+    createTeam: "Crear equipo",
+    // Members form
+    saveMembers: "Guardar miembros",
+    roleAdmin: "Admin",
+    roleWorker: "Trabajador",
+    // Assign projects form
+    createProjectFirst:
+      "Primero crea un proyecto, luego asígnalo a este equipo aquí.",
+    saveProjects: "Guardar proyectos",
+    // Delete
+    deleteTitle: "¿Eliminar este equipo?",
+    deleteDesc:
+      "El equipo se elimina y sus miembros quedan sin asignar. Los proyectos asignados conservan su trabajo pero pierden el vínculo con el equipo.",
+    deleteConfirm: "Eliminar equipo",
+  },
   customers: {
     // List page
     title: "Clientes",

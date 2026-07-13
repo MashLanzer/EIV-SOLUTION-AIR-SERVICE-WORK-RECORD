@@ -20,18 +20,12 @@ import { TeamAvatar } from "@/components/teams/TeamColorDot";
 import { TeamForm } from "@/components/teams/TeamForm";
 import { TeamMembersForm } from "@/components/teams/TeamMembersForm";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
-import { PROJECT_STATUS_LABELS } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getLocale, getT } from "@/lib/i18n/server";
 
 const SECTION_ORDER: ProjectStatus[] = ["ACTIVE", "ON_HOLD", "COMPLETED"];
-
-const teamDateFmt = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
 
 function StatTile({
   icon: Icon,
@@ -99,10 +93,23 @@ export default async function AdminTeamPage({
     status,
     items: team.projects.filter((p) => p.status === status),
   })).filter((g) => g.items.length > 0);
+  const dict = await getT();
+  const t = dict.teams;
+  const locale = await getLocale();
+  const teamDateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const projectStatusLabel: Record<ProjectStatus, string> = {
+    ACTIVE: dict.projects.statusActive,
+    ON_HOLD: dict.projects.statusOnHold,
+    COMPLETED: dict.projects.statusCompleted,
+  };
 
   return (
     <div className="flex flex-col gap-4">
-      {saved && <SuccessToast message="Team saved" aboveMobileNav />}
+      {saved && <SuccessToast message={t.teamSaved} aboveMobileNav />}
 
       {/* Header: color identity + stats */}
       <Card className="animate-fade-up">
@@ -112,7 +119,7 @@ export default async function AdminTeamPage({
             className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
           >
             <ArrowLeft className="h-4 w-4" />
-            Teams
+            {t.tabTeams}
           </Link>
           <div className="flex items-center gap-3">
             <TeamAvatar name={team.name} color={team.color} seed={team.id} />
@@ -121,15 +128,15 @@ export default async function AdminTeamPage({
                 {team.name}
               </h1>
               <p className="text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
-                Created {teamDateFmt.format(team.createdAt)}
+                {t.created.replace("{date}", teamDateFmt.format(team.createdAt))}
               </p>
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2">
-            <StatTile icon={Users2} value={memberIds.length} label="Members" />
-            <StatTile icon={FolderKanban} value={activeProjects} label="Active" />
-            <StatTile icon={ImageIcon} value={photoCount} label="Photos" />
-            <StatTile icon={ClipboardList} value={jobCount} label="Jobs" />
+            <StatTile icon={Users2} value={memberIds.length} label={t.members} />
+            <StatTile icon={FolderKanban} value={activeProjects} label={t.active} />
+            <StatTile icon={ImageIcon} value={photoCount} label={t.photos} />
+            <StatTile icon={ClipboardList} value={jobCount} label={t.jobs} />
           </div>
         </CardContent>
       </Card>
@@ -140,12 +147,12 @@ export default async function AdminTeamPage({
         style={{ animationDelay: "40ms", animationFillMode: "both" }}
       >
         <CardHeader>
-          <CardTitle>Members</CardTitle>
+          <CardTitle>{t.members}</CardTitle>
         </CardHeader>
         <CardContent>
           {users.length === 0 ? (
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Add people to your company first, then assign them here.
+              {t.addPeopleFirst}
             </p>
           ) : (
             <TeamMembersForm teamId={team.id} users={users} memberIds={memberIds} />
@@ -159,7 +166,7 @@ export default async function AdminTeamPage({
         style={{ animationDelay: "80ms", animationFillMode: "both" }}
       >
         <CardHeader>
-          <CardTitle>Assign projects</CardTitle>
+          <CardTitle>{t.assignProjects}</CardTitle>
         </CardHeader>
         <CardContent>
           <AssignProjectsForm
@@ -176,15 +183,15 @@ export default async function AdminTeamPage({
         style={{ animationDelay: "120ms", animationFillMode: "both" }}
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Projects ({team.projects.length})
+          {t.projectsCount.replace("{n}", String(team.projects.length))}
         </h2>
         {team.projects.length === 0 ? (
           <Card>
             <CardContent className="p-0">
               <EmptyState
                 icon={FolderKanban}
-                title="No projects assigned"
-                description="Use “Assign projects” above to add this team to a jobsite."
+                title={t.noProjectsAssigned}
+                description={t.noProjectsAssignedDesc}
               />
             </CardContent>
           </Card>
@@ -192,7 +199,7 @@ export default async function AdminTeamPage({
           byStatus.map(({ status, items }) => (
             <div key={status} className="flex flex-col gap-1.5">
               <div className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                {PROJECT_STATUS_LABELS[status]} ({items.length})
+                {projectStatusLabel[status]} ({items.length})
               </div>
               <Card>
                 <CardContent className="flex flex-col divide-y divide-neutral-200 dark:divide-neutral-800 p-0">
@@ -224,13 +231,13 @@ export default async function AdminTeamPage({
         style={{ animationDelay: "160ms", animationFillMode: "both" }}
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Manage
+          {t.manage}
         </h2>
         <Card>
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
               <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                Team details
+                {t.teamDetails}
               </span>
               <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
             </summary>

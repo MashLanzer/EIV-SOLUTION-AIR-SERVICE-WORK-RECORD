@@ -312,6 +312,59 @@ export const en = {
       "e.g. Missing installer signature — please re-collect and resubmit.",
     returnN: "Return {n}",
   },
+  teams: {
+    tabProjects: "Projects",
+    tabTeams: "Teams",
+    newTeam: "New Team",
+    noTeams: "No teams yet",
+    noTeamsDesc:
+      "Create a team (a crew) to group workers and assign them to projects.",
+    memberCountOne: "{n} member",
+    memberCountMany: "{n} members",
+    projectCountOne: "{n} project",
+    projectCountMany: "{n} projects",
+    // New page
+    newTeamTitle: "New team",
+    newTeamDesc:
+      "A crew you can assign to projects. Add members and projects now or later.",
+    // Detail
+    teamSaved: "Team saved",
+    created: "Created {date}",
+    members: "Members",
+    active: "Active",
+    photos: "Photos",
+    jobs: "Jobs",
+    addPeopleFirst: "Add people to your company first, then assign them here.",
+    assignProjects: "Assign projects",
+    projectsCount: "Projects ({n})",
+    noProjectsAssigned: "No projects assigned",
+    noProjectsAssignedDesc:
+      "Use “Assign projects” above to add this team to a jobsite.",
+    manage: "Manage",
+    teamDetails: "Team details",
+    // Form
+    teamName: "Team name",
+    teamNamePlaceholder: "e.g. Install Crew A",
+    color: "Color",
+    colorHint: "Shown as a dot next to the team and on its project cards.",
+    projectsLabel: "Projects",
+    saving: "Saving...",
+    saveTeam: "Save team",
+    createTeam: "Create team",
+    // Members form
+    saveMembers: "Save members",
+    roleAdmin: "Admin",
+    roleWorker: "Worker",
+    // Assign projects form
+    createProjectFirst:
+      "Create a project first, then assign it to this team here.",
+    saveProjects: "Save projects",
+    // Delete
+    deleteTitle: "Delete this team?",
+    deleteDesc:
+      "The team is removed and its members are unassigned. Projects assigned to it keep their work but lose the team link.",
+    deleteConfirm: "Delete team",
+  },
   customers: {
     // List page
     title: "Customers",

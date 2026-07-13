@@ -9,6 +9,7 @@ import { TeamAvatar } from "@/components/teams/TeamColorDot";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 
 export default async function AdminTeamsPage() {
   const session = await requireAdmin();
@@ -19,6 +20,7 @@ export default async function AdminTeamsPage() {
     orderBy: { name: "asc" },
     include: { _count: { select: { memberships: true, projects: true } } },
   });
+  const tr = (await getT()).teams;
 
   return (
     <div className="flex flex-col gap-4">
@@ -27,7 +29,7 @@ export default async function AdminTeamsPage() {
         <Button asChild>
           <Link href="/admin/teams/new">
             <Plus className="h-4 w-4" />
-            New Team
+            {tr.newTeam}
           </Link>
         </Button>
       </div>
@@ -35,13 +37,13 @@ export default async function AdminTeamsPage() {
       {teams.length === 0 ? (
         <EmptyState
           icon={Users2}
-          title="No teams yet"
-          description="Create a team (a crew) to group workers and assign them to projects."
+          title={tr.noTeams}
+          description={tr.noTeamsDesc}
           action={
             <Button asChild variant="outline" className="mt-2">
               <Link href="/admin/teams/new">
                 <Plus className="h-4 w-4" />
-                New Team
+                {tr.newTeam}
               </Link>
             </Button>
           }
@@ -65,13 +67,11 @@ export default async function AdminTeamsPage() {
                   <div className="mt-0.5 flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
                     <span className="flex items-center gap-1.5">
                       <Users2 className="h-3.5 w-3.5" />
-                      <span className="tabular-nums">{t._count.memberships}</span>
-                      member{t._count.memberships === 1 ? "" : "s"}
+                      {(t._count.memberships === 1 ? tr.memberCountOne : tr.memberCountMany).replace("{n}", String(t._count.memberships))}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <FolderKanban className="h-3.5 w-3.5" />
-                      <span className="tabular-nums">{t._count.projects}</span>
-                      project{t._count.projects === 1 ? "" : "s"}
+                      {(t._count.projects === 1 ? tr.projectCountOne : tr.projectCountMany).replace("{n}", String(t._count.projects))}
                     </span>
                   </div>
                 </div>

@@ -5,20 +5,23 @@ import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { deleteTeamAction } from "@/actions/teams";
 
 export function DeleteTeamButton({ teamId }: { teamId: string }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const t = useT().teams;
+  const tc = useT().common;
   return (
     <form ref={formRef} action={deleteTeamAction.bind(null, teamId)}>
       <ConfirmDialog
-        title="Delete this team?"
-        description="The team is removed and its members are unassigned. Projects assigned to it keep their work but lose the team link."
-        confirmLabel="Delete team"
+        title={t.deleteTitle}
+        description={t.deleteDesc}
+        confirmLabel={t.deleteConfirm}
         trigger={
           <Button type="button" variant="destructive" size="sm">
             <Trash2 className="h-4 w-4" />
-            Delete
+            {tc.delete}
           </Button>
         }
         onConfirm={() => formRef.current?.requestSubmit()}

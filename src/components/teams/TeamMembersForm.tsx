@@ -5,6 +5,7 @@ import { Check, Save } from "lucide-react";
 import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { setTeamMembersAction } from "@/actions/teams";
 
 interface OrgUser {
@@ -24,6 +25,7 @@ export function TeamMembersForm({
   memberIds: string[];
 }) {
   const memberSet = new Set(memberIds);
+  const t = useT().teams;
 
   return (
     <form
@@ -50,7 +52,7 @@ export function TeamMembersForm({
                   {u.name}
                 </span>
                 <Badge variant={u.role === "ADMIN" ? "default" : "secondary"}>
-                  {u.role === "ADMIN" ? "Admin" : "Worker"}
+                  {u.role === "ADMIN" ? t.roleAdmin : t.roleWorker}
                 </Badge>
               </div>
               <div className="truncate text-sm text-neutral-500 dark:text-neutral-400">
@@ -67,7 +69,7 @@ export function TeamMembersForm({
       </div>
       <Button type="submit" className="w-fit">
         <Save className="h-4 w-4" />
-        Save members
+        {t.saveMembers}
       </Button>
     </form>
   );

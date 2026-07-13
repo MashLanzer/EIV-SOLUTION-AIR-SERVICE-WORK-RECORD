@@ -14,6 +14,7 @@ import {
 } from "@/actions/teams";
 import { TEAM_COLORS } from "@/lib/teamColors";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 export function TeamForm({
@@ -39,6 +40,8 @@ export function TeamForm({
   const [color, setColor] = useState<string>(defaultColor ?? "");
   const [dirty, setDirty] = useState(false);
   useBeforeUnloadGuard(dirty && !pending);
+  const t = useT().teams;
+  const tc = useT().common;
 
   return (
     <form
@@ -48,19 +51,19 @@ export function TeamForm({
     >
       <div className="flex flex-col gap-2">
         <Label htmlFor="name" required>
-          Team name
+          {t.teamName}
         </Label>
         <Input
           id="name"
           name="name"
           required
           defaultValue={defaultName}
-          placeholder="e.g. Install Crew A"
+          placeholder={t.teamNamePlaceholder}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label>Color</Label>
+        <Label>{t.color}</Label>
         <input type="hidden" name="color" value={color} />
         <div className="flex flex-wrap gap-2">
           {TEAM_COLORS.map((c) => {
@@ -87,7 +90,7 @@ export function TeamForm({
           })}
         </div>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          Shown as a dot next to the team and on its project cards.
+          {t.colorHint}
         </p>
       </div>
 
@@ -95,9 +98,9 @@ export function TeamForm({
       {!teamId && users.length > 0 && (
         <div className="flex flex-col gap-2">
           <Label>
-            Members{" "}
+            {t.members}{" "}
             <span className="font-normal text-neutral-400 dark:text-neutral-500">
-              (optional)
+              ({tc.optional})
             </span>
           </Label>
           <div className="flex max-h-56 flex-col divide-y divide-neutral-200 dark:divide-neutral-800 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
@@ -117,9 +120,9 @@ export function TeamForm({
       {!teamId && projects.length > 0 && (
         <div className="flex flex-col gap-2">
           <Label>
-            Projects{" "}
+            {t.projectsLabel}{" "}
             <span className="font-normal text-neutral-400 dark:text-neutral-500">
-              (optional)
+              ({tc.optional})
             </span>
           </Label>
           <div className="flex max-h-56 flex-col divide-y divide-neutral-200 dark:divide-neutral-800 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
@@ -140,7 +143,7 @@ export function TeamForm({
       <div>
         <Button type="submit" disabled={pending}>
           <Save className="h-4 w-4" />
-          {pending ? "Saving..." : teamId ? "Save team" : "Create team"}
+          {pending ? t.saving : teamId ? t.saveTeam : t.createTeam}
         </Button>
       </div>
     </form>
