@@ -261,6 +261,19 @@ export default async function SchedulePage({
     byDay.set(v.scheduledFor, list);
   }
 
+  // Non-canceled job count per day per worker, so the new-job form can rank
+  // skill-matched workers by who's least busy that day. Covers the fetched
+  // range; days outside it just show no load (treated as 0).
+  const loadByDay: Record<string, Record<string, number>> = {};
+  for (const [key, list] of byDay) {
+    const counts: Record<string, number> = {};
+    for (const j of list) {
+      if (j.status === "CANCELED" || !j.assignedToId) continue;
+      counts[j.assignedToId] = (counts[j.assignedToId] ?? 0) + 1;
+    }
+    loadByDay[key] = counts;
+  }
+
   // The create form opens on the selected day (so "Schedule for this day"
   // lands there); for a plain week visit with no selection it falls to today.
   const formDefaultDate = selectedKey;
@@ -334,6 +347,7 @@ export default async function SchedulePage({
               projects={projects}
               workerSkills={workerSkills}
               skillSuggestions={skillSuggestions}
+              loadByDay={loadByDay}
             />
           </div>
         </details>

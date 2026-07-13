@@ -72,6 +72,7 @@ export function ScheduleJobForm({
   projects,
   workerSkills,
   skillSuggestions,
+  loadByDay,
   onDone,
 }: {
   jobId?: string;
@@ -86,15 +87,28 @@ export function ScheduleJobForm({
   // can autocomplete and the worker dropdown can flag who's qualified.
   workerSkills?: Record<string, string[]>;
   skillSuggestions?: string[];
+  // Non-canceled job count per day per worker (dateKey -> workerId -> count),
+  // to rank the skill-matched suggestions by who's least busy that day.
+  loadByDay?: Record<string, Record<string, number>>;
   onDone?: () => void;
 }) {
   const t = useT().schedule;
   const tc = useT().common;
   const [requiredSkill, setRequiredSkill] = useState(defaultValues?.requiredSkill ?? "");
+  const [date, setDate] = useState(defaultValues?.scheduledFor ?? defaultDate ?? "");
+  const [assignedToId, setAssignedToId] = useState(defaultValues?.assignedToId ?? "");
   const skillNeeded = requiredSkill.trim().toLowerCase();
   const hasSkill = (id: string) =>
     !!skillNeeded &&
     (workerSkills?.[id] ?? []).some((s) => s.toLowerCase() === skillNeeded);
+
+  // Workers who have the required skill, ranked by the lightest load that day -
+  // the best person to assign. Empty when no skill is set.
+  const loadOf = (id: string) => loadByDay?.[date]?.[id] ?? 0;
+  const eligible = skillNeeded ? workers.filter((w) => hasSkill(w.id)) : [];
+  const suggestions = [...eligible]
+    .sort((a, b) => loadOf(a.id) - loadOf(b.id) || a.name.localeCompare(b.name))
+    .slice(0, 3);
   const action = jobId
     ? updateScheduledJobAction.bind(null, jobId)
     : createScheduledJobAction;
@@ -113,9 +127,17 @@ export function ScheduleJobForm({
     if (jobId) {
       onDone?.();
     } else {
+      // form.reset() clears the uncontrolled fields; the controlled ones
+      // (date, worker, required skill) are reset by hand. The reset can only
+      // happen here since success is signalled through the post-render state.
       formRef.current?.reset();
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setDate(defaultDate ?? "");
+      setAssignedToId("");
+      setRequiredSkill("");
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
-  }, [state?.ok, jobId, onDone]);
+  }, [state?.ok, jobId, onDone, defaultDate]);
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col gap-5">
@@ -146,7 +168,8 @@ export function ScheduleJobForm({
               name="scheduledFor"
               type="date"
               required
-              defaultValue={defaultValues?.scheduledFor ?? defaultDate}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
               aria-invalid={err("scheduledFor") ? true : undefined}
             />
             <FieldError id={`date-${uid}-error`} message={err("scheduledFor")} />
@@ -197,7 +220,12 @@ export function ScheduleJobForm({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`worker-${uid}`}>{t.worker}</Label>
-            <Select id={`worker-${uid}`} name="assignedToId" defaultValue={defaultValues?.assignedToId ?? ""}>
+            <Select
+              id={`worker-${uid}`}
+              name="assignedToId"
+              value={assignedToId}
+              onChange={(e) => setAssignedToId(e.target.value)}
+            >
               <option value="">{t.noWorker}</option>
               {workers.map((w) => (
                 <option key={w.id} value={w.id}>
@@ -206,9 +234,31 @@ export function ScheduleJobForm({
                 </option>
               ))}
             </Select>
-            {skillNeeded && (
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.skillStarHint}</p>
-            )}
+            {skillNeeded &&
+              (eligible.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <span className="text-neutral-500 dark:text-neutral-400">{t.suggestedWorkers}</span>
+                  {suggestions.map((w) => (
+                    <button
+                      key={w.id}
+                      type="button"
+                      onClick={() => setAssignedToId(w.id)}
+                      title={t.suggestedLoadTitle}
+                      className={
+                        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium transition-colors " +
+                        (assignedToId === w.id
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-accent-soft text-accent-text hover:brightness-95")
+                      }
+                    >
+                      {w.name}
+                      <span className="tabular-nums opacity-70">{loadOf(w.id)}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.noSkilledWorker}</p>
+              ))}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`team-${uid}`}>{t.team}</Label>
