@@ -1,38 +1,60 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Copy, ExternalLink, Share2, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Mail, MessageCircle, Share2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 import { shareRecordAction, unshareRecordAction } from "@/actions/records";
 import { useT } from "@/components/i18n/LocaleProvider";
 
 // Toggle the public customer receipt from the record detail. When shared, shows
-// the link with copy / open / stop-sharing controls.
+// the link with copy / open / stop-sharing controls, an optional expiry, and
+// one-tap WhatsApp / email hand-off to the customer.
 export function ShareReceiptButton({
   recordId,
   initialToken,
+  initialExpiresAt = null,
+  customerPhone = null,
+  customerEmail = null,
 }: {
   recordId: string;
   initialToken: string | null;
+  initialExpiresAt?: string | null;
+  customerPhone?: string | null;
+  customerEmail?: string | null;
 }) {
   const t = useT().receipt;
   const [token, setToken] = useState(initialToken);
+  const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
+  const [expiryDays, setExpiryDays] = useState("0");
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
 
-  const url = token ? `${typeof window !== "undefined" ? window.location.origin : ""}/receipt/${token}` : "";
+  const url = token
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/receipt/${token}`
+    : "";
+  const message = `${t.shareMessage} ${url}`;
+  const phoneDigits = (customerPhone ?? "").replace(/\D/g, "");
+  const whatsappUrl = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
+  const mailtoUrl = `mailto:${customerEmail ?? ""}?subject=${encodeURIComponent(
+    t.emailSubject
+  )}&body=${encodeURIComponent(message)}`;
 
   function share() {
     startTransition(async () => {
-      const res = await shareRecordAction(recordId);
-      if (res?.token) setToken(res.token);
+      const res = await shareRecordAction(recordId, Number(expiryDays) || null);
+      if (res?.token) {
+        setToken(res.token);
+        setExpiresAt(res.expiresAt);
+      }
     });
   }
   function stop() {
     startTransition(async () => {
       await unshareRecordAction(recordId);
       setToken(null);
+      setExpiresAt(null);
       setCopied(false);
     });
   }
@@ -48,12 +70,35 @@ export function ShareReceiptButton({
 
   if (!token) {
     return (
-      <Button type="button" variant="outline" size="sm" disabled={pending} onClick={share}>
-        <Share2 className="h-4 w-4" />
-        {t.share}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Select
+          value={expiryDays}
+          onChange={(e) => setExpiryDays(e.target.value)}
+          aria-label={t.expiryLabel}
+          className="h-9 sm:max-w-[9rem]"
+        >
+          <option value="0">{t.expiryNever}</option>
+          <option value="7">{t.expiry7}</option>
+          <option value="30">{t.expiry30}</option>
+        </Select>
+        <Button type="button" variant="outline" size="sm" disabled={pending} onClick={share}>
+          <Share2 className="h-4 w-4" />
+          {t.share}
+        </Button>
+      </div>
     );
   }
+
+  const expiryNote = expiresAt
+    ? t.expiresOn.replace(
+        "{date}",
+        new Date(expiresAt).toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        })
+      )
+    : t.neverExpires;
 
   return (
     <div className="flex w-full flex-col gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 p-3">
@@ -70,7 +115,21 @@ export function ShareReceiptButton({
           {copied ? t.copied : t.copyLink}
         </Button>
       </div>
-      <div className="flex items-center gap-2">
+      {/* Hand the link straight to the customer. WhatsApp pre-fills the chat
+          (their number if we have it); email pre-fills subject + body. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button asChild variant="ghost" size="sm">
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+            <MessageCircle className="h-3.5 w-3.5" />
+            {t.sendWhatsApp}
+          </a>
+        </Button>
+        <Button asChild variant="ghost" size="sm">
+          <a href={mailtoUrl}>
+            <Mail className="h-3.5 w-3.5" />
+            {t.sendEmail}
+          </a>
+        </Button>
         <Button asChild variant="ghost" size="sm">
           <a href={url} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-3.5 w-3.5" />
@@ -89,7 +148,9 @@ export function ShareReceiptButton({
           {t.stopSharing}
         </Button>
       </div>
-      <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.sharingHint}</p>
+      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+        {t.sharingHint} · {expiryNote}
+      </p>
     </div>
   );
 }

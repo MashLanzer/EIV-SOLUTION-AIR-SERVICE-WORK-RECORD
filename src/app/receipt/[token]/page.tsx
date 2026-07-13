@@ -5,6 +5,12 @@ import { getLocale, getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
+// A set expiry in the past means the link is retired. Kept as a module-level
+// helper so the time read stays out of the component render body.
+function isExpired(expiresAt: Date | null): boolean {
+  return expiresAt != null && expiresAt.getTime() < Date.now();
+}
+
 function ReceiptRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5 border-b border-neutral-100 py-2 last:border-0 sm:flex-row sm:justify-between sm:gap-4">
@@ -35,6 +41,19 @@ export default async function ReceiptPage({
   if (!record) notFound();
 
   const t = (await getT()).receipt;
+
+  // A set, past expiry retires the link with a friendly notice rather than a
+  // bare 404 - the customer knows to ask for a fresh link.
+  if (isExpired(record.publicTokenExpiresAt)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4 py-8">
+        <div className="mx-auto max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-lg font-semibold text-neutral-900">{t.expiredTitle}</h1>
+          <p className="mt-2 text-sm text-neutral-500">{t.expiredDesc}</p>
+        </div>
+      </main>
+    );
+  }
   const locale = await getLocale();
   const dateStr = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     weekday: "long",

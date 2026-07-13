@@ -407,8 +407,12 @@ export async function deleteRecordAction(recordId: string) {
 }
 
 // Turn on the public customer receipt: mint an unguessable token (idempotent -
-// keeps an existing one) so the link stays stable. Admin + org-scoped.
-export async function shareRecordAction(recordId: string): Promise<{ token: string } | null> {
+// keeps an existing one) so the link stays stable, and set/refresh its optional
+// expiry. expiryDays of 0/null means the link never expires. Admin + org-scoped.
+export async function shareRecordAction(
+  recordId: string,
+  expiryDays?: number | null
+): Promise<{ token: string; expiresAt: string | null } | null> {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
   const record = await prisma.workRecord.findFirst({
@@ -417,13 +421,19 @@ export async function shareRecordAction(recordId: string): Promise<{ token: stri
   });
   if (!record) return null;
 
-  let token = record.publicToken;
-  if (!token) {
-    token = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
-    await prisma.workRecord.update({ where: { id: recordId }, data: { publicToken: token } });
-    revalidatePath(`/admin/records/${recordId}`);
-  }
-  return { token };
+  const token =
+    record.publicToken ?? `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+  const expiresAt =
+    expiryDays && expiryDays > 0
+      ? new Date(Date.now() + expiryDays * 86_400_000)
+      : null;
+
+  await prisma.workRecord.update({
+    where: { id: recordId },
+    data: { publicToken: token, publicTokenExpiresAt: expiresAt },
+  });
+  revalidatePath(`/admin/records/${recordId}`);
+  return { token, expiresAt: expiresAt ? expiresAt.toISOString() : null };
 }
 
 // Stop sharing: clear the token so the public link 404s.
@@ -432,7 +442,7 @@ export async function unshareRecordAction(recordId: string): Promise<void> {
   const organizationId = requireOrgId(session);
   await prisma.workRecord.updateMany({
     where: { id: recordId, organizationId },
-    data: { publicToken: null },
+    data: { publicToken: null, publicTokenExpiresAt: null },
   });
   revalidatePath(`/admin/records/${recordId}`);
 }

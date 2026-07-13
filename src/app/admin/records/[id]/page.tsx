@@ -42,6 +42,7 @@ export default async function AdminReviewRecordPage({
     include: {
       photos: { orderBy: { position: "asc" } },
       approvedBy: { select: { name: true } },
+      customer: { select: { phone: true, email: true } },
       reviewEvents: {
         orderBy: { createdAt: "desc" },
         select: { id: true, action: true, note: true, actorName: true, createdAt: true },
@@ -107,7 +108,13 @@ export default async function AdminReviewRecordPage({
                 {dict.records.downloadPdf}
               </a>
             </Button>
-            <ShareReceiptButton recordId={record.id} initialToken={record.publicToken} />
+            <ShareReceiptButton
+              recordId={record.id}
+              initialToken={record.publicToken}
+              initialExpiresAt={record.publicTokenExpiresAt?.toISOString() ?? null}
+              customerPhone={record.customer?.phone ?? null}
+              customerEmail={record.customer?.email ?? null}
+            />
             <div className="ml-auto">
               <DeleteRecordButton recordId={record.id} />
             </div>
