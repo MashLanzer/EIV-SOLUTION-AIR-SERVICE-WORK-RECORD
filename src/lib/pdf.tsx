@@ -14,6 +14,11 @@ import {
   ReceiptPdfDocument,
   type ReceiptLabels,
 } from "@/components/pdf/ReceiptPdfDocument";
+import {
+  PayReportPdfDocument,
+  type PayReportLabels,
+} from "@/components/pdf/PayReportPdfDocument";
+import type { PayReportRow } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
 
 type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } | null };
@@ -49,6 +54,17 @@ export async function renderRecordsPdf(records: RecordWithWorker[], company: Pdf
 
 export async function renderPhotoReportPdf(data: PhotoReportData) {
   return renderToBuffer(<PhotoReportPdfDocument data={data} />);
+}
+
+export async function renderPayReportPdf(
+  rows: PayReportRow[],
+  grand: { jobs: number; leadTotal: number; helperTotal: number; total: number },
+  company: PdfCompany,
+  labels: PayReportLabels
+) {
+  return renderToBuffer(
+    <PayReportPdfDocument rows={rows} grand={grand} company={company} labels={labels} />
+  );
 }
 
 export async function renderReceiptPdf(

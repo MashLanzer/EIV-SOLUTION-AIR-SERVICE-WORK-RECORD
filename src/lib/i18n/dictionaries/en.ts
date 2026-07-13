@@ -636,6 +636,7 @@ export const en = {
     pendingNote:
       "Records still pending review or returned for changes aren't counted until they're approved.",
     exportExcel: "Export to Excel",
+    exportPdf: "Export to PDF",
     payByPerson: "Pay by person",
     noRecords: "No records in this range",
     noRecordsDesc: "Adjust the date range to see pay totals.",

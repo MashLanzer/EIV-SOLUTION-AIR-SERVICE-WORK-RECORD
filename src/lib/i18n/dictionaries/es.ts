@@ -638,6 +638,7 @@ export const es: Dictionary = {
     pendingNote:
       "Los registros aún pendientes de revisión o devueltos para cambios no se cuentan hasta que se aprueban.",
     exportExcel: "Exportar a Excel",
+    exportPdf: "Exportar a PDF",
     payByPerson: "Pago por persona",
     noRecords: "No hay registros en este rango",
     noRecordsDesc: "Ajusta el rango de fechas para ver los totales de pago.",

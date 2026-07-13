@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, ChevronDown, Clock, DollarSign, Sheet, Users } from "lucide-react";
+import { BarChart3, ChevronDown, Clock, DollarSign, FileText, Sheet, Users } from "lucide-react";
 
 import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { BarList } from "@/components/charts/BarList";
@@ -175,6 +175,10 @@ export default async function AdminReportsPage({
           <form method="GET" className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="dateFrom" value={dateFrom} />
             <input type="hidden" name="dateTo" value={dateTo} />
+            <Button type="submit" variant="outline" size="sm" formAction="/admin/reports/export/pdf">
+              <FileText className="h-4 w-4" />
+              {t.exportPdf}
+            </Button>
             <Button type="submit" variant="outline" size="sm" formAction="/admin/reports/export">
               <Sheet className="h-4 w-4" />
               {t.exportExcel}
