@@ -335,6 +335,7 @@ export const en = {
     approved: "Approved",
     pending: "Pending",
     needsChanges: "Needs changes",
+    checklistProgress: "Checklist progress",
     created: "Created {date}",
     manageProject: "Manage project",
     fullEditPage: "Full edit page",

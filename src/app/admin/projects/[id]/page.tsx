@@ -163,6 +163,12 @@ export default async function AdminProjectPage({
   // deriving the count from them would undercount a busy project).
   const recordCount = statusGroups.reduce((n, g) => n + g._count._all, 0);
   const checklistItemCount = checklists.reduce((n, c) => n + c.items.length, 0);
+  const checklistDoneCount = checklists.reduce(
+    (n, c) => n + c.items.filter((i) => i.done).length,
+    0
+  );
+  const checklistPct =
+    checklistItemCount > 0 ? Math.round((checklistDoneCount / checklistItemCount) * 100) : 0;
   const statusCount = (s: "APPROVED" | "SUBMITTED" | "NEEDS_CHANGES") =>
     statusGroups.find((g) => g.status === s)?._count._all ?? 0;
 
@@ -242,6 +248,22 @@ export default async function AdminProjectPage({
                   {statusCount("NEEDS_CHANGES")}
                 </div>
                 <div className="text-xs text-neutral-500 dark:text-neutral-400">{t.needsChanges}</div>
+              </div>
+            </div>
+          )}
+          {checklistItemCount > 0 && (
+            <div className="flex flex-col gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-neutral-500 dark:text-neutral-400">{t.checklistProgress}</span>
+                <span className="font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
+                  {checklistDoneCount}/{checklistItemCount} · {checklistPct}%
+                </span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+                <div
+                  className="h-full rounded-full bg-neutral-900 dark:bg-neutral-100"
+                  style={{ width: `${checklistPct}%` }}
+                />
               </div>
             </div>
           )}

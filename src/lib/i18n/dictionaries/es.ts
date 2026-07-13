@@ -336,6 +336,7 @@ export const es: Dictionary = {
     approved: "Aprobados",
     pending: "Pendientes",
     needsChanges: "Necesitan cambios",
+    checklistProgress: "Progreso de listas",
     created: "Creado {date}",
     manageProject: "Gestionar proyecto",
     fullEditPage: "Página de edición completa",
