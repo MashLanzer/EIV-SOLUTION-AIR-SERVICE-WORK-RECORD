@@ -829,6 +829,13 @@ export const es: Dictionary = {
     bulkReturnPlaceholder:
       "ej. Falta la firma del instalador — vuelve a recogerla y reenvía.",
     returnN: "Devolver {n}",
+    // Review history timeline
+    reviewHistory: "Historial de revisión",
+    actionSubmitted: "Enviado",
+    actionApproved: "Aprobado",
+    actionReturned: "Devuelto",
+    actionResubmitted: "Reenviado",
+    reviewBy: "por {name}",
   },
   teams: {
     tabProjects: "Proyectos",

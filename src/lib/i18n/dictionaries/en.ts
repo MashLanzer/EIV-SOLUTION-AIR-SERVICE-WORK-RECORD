@@ -827,6 +827,13 @@ export const en = {
     bulkReturnPlaceholder:
       "e.g. Missing installer signature — please re-collect and resubmit.",
     returnN: "Return {n}",
+    // Review history timeline
+    reviewHistory: "Review history",
+    actionSubmitted: "Submitted",
+    actionApproved: "Approved",
+    actionReturned: "Returned",
+    actionResubmitted: "Resubmitted",
+    reviewBy: "by {name}",
   },
   teams: {
     tabProjects: "Projects",

@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { RecordDetail } from "@/components/records/RecordDetail";
+import { ReviewTimeline } from "@/components/records/ReviewTimeline";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -26,7 +27,13 @@ export default async function RecordDetailPage({
 
   const record = await prisma.workRecord.findFirst({
     where: { id, organizationId: requireOrgId(session) },
-    include: { photos: { orderBy: { position: "asc" } } },
+    include: {
+      photos: { orderBy: { position: "asc" } },
+      reviewEvents: {
+        orderBy: { createdAt: "desc" },
+        select: { id: true, action: true, note: true, actorName: true, createdAt: true },
+      },
+    },
   });
   if (!record) notFound();
   if (session.user.role !== "ADMIN" && record.submittedById !== session.user.id) {
@@ -82,6 +89,12 @@ export default async function RecordDetailPage({
       )}
 
       <RecordDetail record={record} currency={currency} />
+
+      {record.reviewEvents.length > 0 && (
+        <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+          <ReviewTimeline events={record.reviewEvents} />
+        </div>
+      )}
     </div>
   );
 }

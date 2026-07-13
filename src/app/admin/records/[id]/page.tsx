@@ -10,6 +10,7 @@ import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
 import { RecordDetail } from "@/components/records/RecordDetail";
 import { RequestChangesButton } from "@/components/records/RequestChangesButton";
+import { ReviewTimeline } from "@/components/records/ReviewTimeline";
 import { ShareReceiptButton } from "@/components/records/ShareReceiptButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
@@ -41,6 +42,10 @@ export default async function AdminReviewRecordPage({
     include: {
       photos: { orderBy: { position: "asc" } },
       approvedBy: { select: { name: true } },
+      reviewEvents: {
+        orderBy: { createdAt: "desc" },
+        select: { id: true, action: true, note: true, actorName: true, createdAt: true },
+      },
     },
   });
   if (!record) notFound();
@@ -125,6 +130,14 @@ export default async function AdminReviewRecordPage({
       )}
 
       <RecordDetail record={record} currency={currency} />
+
+      {record.reviewEvents.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <ReviewTimeline events={record.reviewEvents} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

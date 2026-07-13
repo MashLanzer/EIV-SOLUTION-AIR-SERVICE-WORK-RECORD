@@ -34,6 +34,32 @@ async function linkScheduledJob(
   for (const path of schedulePaths()) revalidatePath(path);
 }
 
+// Append one entry to a record's review history. Denormalizes the actor's
+// name so the timeline still reads right after an account is deleted. Never
+// blocks the caller - a logging failure is swallowed.
+async function logReviewEvent(
+  organizationId: string,
+  recordId: string,
+  action: "SUBMITTED" | "APPROVED" | "RETURNED" | "RESUBMITTED",
+  actor: { id?: string | null; name?: string | null },
+  note?: string | null
+) {
+  try {
+    await prisma.recordReviewEvent.create({
+      data: {
+        organizationId,
+        recordId,
+        action,
+        note: note?.trim() || null,
+        actorId: actor.id ?? null,
+        actorName: actor.name?.trim() || "—",
+      },
+    });
+  } catch {
+    /* history is best-effort; never block the review action */
+  }
+}
+
 export type RecordFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
   | undefined;
@@ -250,6 +276,7 @@ export async function createRecordAction(
     select: { id: true },
   });
 
+  await logReviewEvent(organizationId, created.id, "SUBMITTED", session.user);
   await notifyAdminsRecordForReview(created.id, "new");
 
   const jobId = (formData.get("jobId") as string | null)?.trim();
@@ -357,6 +384,7 @@ export async function updateRecordAction(
   // A worker resubmitting sends it back into the review queue - let the
   // admins know. Admin edits don't change the status, so no notice.
   if (!isAdmin) {
+    await logReviewEvent(organizationId, recordId, "RESUBMITTED", session.user);
     await notifyAdminsRecordForReview(recordId, "resubmitted");
   }
 
@@ -421,6 +449,7 @@ export async function approveRecordAction(recordId: string) {
       reviewNote: null,
     },
   });
+  await logReviewEvent(organizationId, recordId, "APPROVED", session.user);
   await notifyWorkerApproved(recordId);
   revalidatePath("/admin/records");
   revalidatePath(`/admin/records/${recordId}`);
@@ -441,6 +470,7 @@ export async function requestChangesAction(recordId: string, formData: FormData)
       approvedById: null,
     },
   });
+  await logReviewEvent(organizationId, recordId, "RETURNED", session.user, note);
   await notifyWorkerReturned(recordId);
   revalidatePath("/admin/records");
   revalidatePath(`/admin/records/${recordId}`);
@@ -476,7 +506,10 @@ export async function bulkApproveRecordsAction(
       reviewNote: null,
     },
   });
-  for (const id of targetIds) await notifyWorkerApproved(id);
+  for (const id of targetIds) {
+    await logReviewEvent(organizationId, id, "APPROVED", session.user);
+    await notifyWorkerApproved(id);
+  }
   revalidatePath("/admin/records");
   revalidatePath("/admin");
   revalidatePath("/records");
@@ -510,7 +543,10 @@ export async function bulkRequestChangesAction(
       approvedById: null,
     },
   });
-  for (const id of targetIds) await notifyWorkerReturned(id);
+  for (const id of targetIds) {
+    await logReviewEvent(organizationId, id, "RETURNED", session.user, trimmed);
+    await notifyWorkerReturned(id);
+  }
   revalidatePath("/admin/records");
   revalidatePath("/admin");
   revalidatePath("/records");

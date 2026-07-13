@@ -74,6 +74,8 @@ model Organization {
   workTypes          WorkType[]
   scheduledJobs      ScheduledJob[]
   orgSkills          OrgSkill[]
+  reviewEvents       RecordReviewEvent[]
+  roleChangeEvents   RoleChangeEvent[]
 }
 
 // The org's official skill catalog. Admin-curated so skill names stay
@@ -154,6 +156,35 @@ enum RecordStatus {
   SUBMITTED
   APPROVED
   NEEDS_CHANGES
+}
+
+// One entry in a work record's review history: who did what, when, and (for a
+// return) the note explaining why. Denormalizes the actor's name so the
+// timeline still reads correctly after an account is deleted.
+enum ReviewAction {
+  SUBMITTED
+  APPROVED
+  RETURNED
+  RESUBMITTED
+}
+
+model RecordReviewEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recordId       String
+  record         WorkRecord   @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  action         ReviewAction
+  note           String?      @db.Text
+  // Who performed the action. Nullable + SetNull so deleting the account keeps
+  // the history; actorName preserves the display name regardless.
+  actorId        String?
+  actor          User?        @relation("ReviewActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorName      String
+  createdAt      DateTime     @default(now())
+
+  @@index([recordId, createdAt])
+  @@index([organizationId])
 }
 
 enum ProjectStatus {
@@ -320,6 +351,26 @@ model Comment {
   @@index([photoId])
 }
 
+// An audit entry recording a worker's role change: who changed it, for whom,
+// from what to what, and when. Names are denormalized so the log survives an
+// account deletion. Admin-visible under Settings.
+model RoleChangeEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  targetId       String?
+  target         User?        @relation("RoleChangeTarget", fields: [targetId], references: [id], onDelete: SetNull)
+  targetName     String
+  actorId        String?
+  actor          User?        @relation("RoleChangeActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorName      String
+  fromRole       Role
+  toRole         Role
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+}
+
 model User {
   id               String        @id @default(cuid())
   email            String        @unique
@@ -343,6 +394,9 @@ model User {
   skills           UserSkill[]
   assignedJobs     ScheduledJob[] @relation("AssignedJobs")
   createdJobs      ScheduledJob[] @relation("CreatedJobs")
+  reviewEvents     RecordReviewEvent[] @relation("ReviewActor")
+  roleChangesMade  RoleChangeEvent[]   @relation("RoleChangeActor")
+  roleChangesGot   RoleChangeEvent[]   @relation("RoleChangeTarget")
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -410,6 +464,9 @@ model WorkRecord {
   // Unguessable token for the public customer receipt. Null = not shared;
   // set when an admin shares the receipt, cleared when they stop sharing.
   publicToken        String?  @unique
+  // Optional expiry for the public receipt link. Null = never expires; when
+  // set and in the past, the /receipt/[token] page treats the link as gone.
+  publicTokenExpiresAt DateTime?
   date               DateTime @db.Date
   jobNumber          String
   leadInstallerName  String
@@ -444,6 +501,7 @@ model WorkRecord {
   project            Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   projectPhotos      Photo[]
   scheduledJob       ScheduledJob?
+  reviewEvents       RecordReviewEvent[]
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
