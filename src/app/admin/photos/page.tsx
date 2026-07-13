@@ -22,7 +22,13 @@ export default async function AdminPhotosPage({
   const activeTag = tag?.trim().toLowerCase() || null;
   const activeProject = project?.trim() || null;
 
-  const [tags, projects, photoRows] = await Promise.all([
+  const photoWhere = {
+    organizationId,
+    ...(activeProject ? { projectId: activeProject } : {}),
+    ...(activeTag ? { photoTags: { some: { tag: { name: activeTag } } } } : {}),
+  };
+
+  const [tags, projects, photoRows, totalPhotos] = await Promise.all([
     prisma.tag.findMany({
       where: { organizationId },
       orderBy: { name: "asc" },
@@ -34,11 +40,7 @@ export default async function AdminPhotosPage({
       select: { id: true, name: true },
     }),
     prisma.photo.findMany({
-      where: {
-        organizationId,
-        ...(activeProject ? { projectId: activeProject } : {}),
-        ...(activeTag ? { photoTags: { some: { tag: { name: activeTag } } } } : {}),
-      },
+      where: photoWhere,
       orderBy: { takenAt: "desc" },
       take: 120,
       select: {
@@ -52,6 +54,7 @@ export default async function AdminPhotosPage({
         _count: { select: { photoTags: true, comments: true } },
       },
     }),
+    prisma.photo.count({ where: photoWhere }),
   ]);
 
   const usableTags = tags
@@ -92,12 +95,21 @@ export default async function AdminPhotosPage({
           {t.title}
         </h1>
         <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
-          {(photos.length === 1 ? t.countOne : t.countMany).replace(
+          {(totalPhotos === 1 ? t.countOne : t.countMany).replace(
             "{n}",
-            String(photos.length)
+            String(totalPhotos)
           )}
         </span>
       </div>
+
+      {/* The feed shows the newest 120; be honest when there are more. */}
+      {totalPhotos > photos.length && (
+        <p className="-mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+          {t.showingLatest
+            .replace("{shown}", String(photos.length))
+            .replace("{total}", String(totalPhotos))}
+        </p>
+      )}
 
       <PhotoFilters
         basePath="/admin/photos"

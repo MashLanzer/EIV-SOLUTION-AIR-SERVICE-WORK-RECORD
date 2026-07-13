@@ -86,7 +86,7 @@ export default async function AdminProjectPage({
   const t = dict.projects;
   const locale = await getLocale();
 
-  const [teams, customers, statusGroups, records, photoRows, checklists, templates] =
+  const [teams, customers, statusGroups, records, photoRows, checklists, templates, photoCount] =
     await Promise.all([
       prisma.team.findMany({
         where: { organizationId },
@@ -147,6 +147,7 @@ export default async function AdminProjectPage({
         orderBy: { name: "asc" },
         select: { id: true, name: true },
       }),
+      prisma.photo.count({ where: { organizationId, projectId: id } }),
     ]);
 
   const photos = photoRows.map((p) => ({
@@ -158,7 +159,9 @@ export default async function AdminProjectPage({
     tagCount: p._count.photoTags,
     commentCount: p._count.comments,
   }));
-  const recordCount = records.length;
+  // True totals (the record/photo lists above are capped for the tables, so
+  // deriving the count from them would undercount a busy project).
+  const recordCount = statusGroups.reduce((n, g) => n + g._count._all, 0);
   const checklistItemCount = checklists.reduce((n, c) => n + c.items.length, 0);
   const statusCount = (s: "APPROVED" | "SUBMITTED" | "NEEDS_CHANGES") =>
     statusGroups.find((g) => g.status === s)?._count._all ?? 0;
@@ -472,7 +475,7 @@ export default async function AdminProjectPage({
         <Tabs
           tabs={[
             { key: "overview", label: t.tabOverview, content: overviewPanel },
-            { key: "photos", label: t.tabPhotos, count: photos.length, content: photosPanel },
+            { key: "photos", label: t.tabPhotos, count: photoCount, content: photosPanel },
             {
               key: "checklists",
               label: t.tabChecklists,

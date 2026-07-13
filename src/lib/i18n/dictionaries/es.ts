@@ -390,6 +390,7 @@ export const es: Dictionary = {
     title: "Fotos",
     countOne: "{n} foto",
     countMany: "{n} fotos",
+    showingLatest: "Mostrando las últimas {shown} de {total}",
     filterByProject: "Filtrar por proyecto",
     allProjects: "Todos los proyectos",
     allTags: "Todas",

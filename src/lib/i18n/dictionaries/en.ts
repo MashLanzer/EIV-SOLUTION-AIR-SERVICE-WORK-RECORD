@@ -389,6 +389,7 @@ export const en = {
     title: "Photos",
     countOne: "{n} photo",
     countMany: "{n} photos",
+    showingLatest: "Showing the latest {shown} of {total}",
     filterByProject: "Filter by project",
     allProjects: "All projects",
     allTags: "All",
