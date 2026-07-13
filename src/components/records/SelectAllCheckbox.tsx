@@ -1,10 +1,14 @@
 "use client";
 
+import { useT } from "@/components/i18n/LocaleProvider";
+
 export function SelectAllCheckbox({ formId }: { formId: string }) {
+  const t = useT().adminRecords;
   return (
     <input
       type="checkbox"
-      aria-label="Select all records"
+      aria-label={t.selectAll}
+      data-select-all
       onChange={(e) => {
         const form = document.getElementById(formId) as HTMLFormElement | null;
         form

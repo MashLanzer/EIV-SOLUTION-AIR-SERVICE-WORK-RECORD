@@ -30,6 +30,7 @@ import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getLocale, getT } from "@/lib/i18n/server";
 
 const WEEKS_BACK = 8;
 const TYPE_WINDOW_MONTHS = 12;
@@ -59,8 +60,8 @@ function monthsAgo(months: number) {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, 1));
 }
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
     day: "numeric",
     timeZone: "UTC",
@@ -68,9 +69,9 @@ function formatDate(date: Date) {
 }
 
 // Coarse "how long has this been waiting" label for the review queue.
-function timeAgo(date: Date) {
+function timeAgo(date: Date, justNow: string) {
   const mins = Math.floor((Date.now() - date.getTime()) / 60000);
-  if (mins < 1) return "just now";
+  if (mins < 1) return justNow;
   if (mins < 60) return `${mins}m`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h`;
@@ -225,18 +226,22 @@ export default async function AdminDashboardPage() {
 
   // One unified metrics grid: a headline "Total Records" hero, then the
   // remaining stats + the clickable workspace shortcuts as uniform tiles.
+  const dict = await getT();
+  const t = dict.dashboard;
+  const locale = await getLocale();
+
   const tiles: {
     label: string;
     value: number;
     icon: LucideIcon;
     href?: string;
   }[] = [
-    { label: "This Week", value: recordsThisWeek, icon: CalendarDays },
-    { label: "This Month", value: recordsThisMonth, icon: CalendarRange },
-    { label: "Active Workers", value: activeWorkers, icon: Users },
-    { label: "Active Projects", value: activeProjects, icon: FolderKanban, href: "/admin/projects" },
-    { label: "Photos", value: photoCount, icon: Images, href: "/admin/photos" },
-    { label: "Teams", value: teamCount, icon: Users2, href: "/admin/teams" },
+    { label: t.tileThisWeek, value: recordsThisWeek, icon: CalendarDays },
+    { label: t.tileThisMonth, value: recordsThisMonth, icon: CalendarRange },
+    { label: t.tileActiveWorkers, value: activeWorkers, icon: Users },
+    { label: t.tileActiveProjects, value: activeProjects, icon: FolderKanban, href: "/admin/projects" },
+    { label: t.tilePhotos, value: photoCount, icon: Images, href: "/admin/photos" },
+    { label: t.tileTeams, value: teamCount, icon: Users2, href: "/admin/teams" },
   ];
 
   // Bucket records into WEEKS_BACK weekly columns ending this week.
@@ -244,7 +249,7 @@ export default async function AdminDashboardPage() {
     { length: WEEKS_BACK },
     (_, i) => {
       const start = new Date(windowStart.getTime() + i * 7 * DAY_MS);
-      return { label: formatDate(start), value: 0 };
+      return { label: formatDate(start, locale), value: 0 };
     }
   );
   for (const r of weeklyRecords) {
@@ -269,14 +274,14 @@ export default async function AdminDashboardPage() {
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "40ms" }}>
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            Needs your attention
+            {t.needsAttention}
           </h2>
           {pendingReview > 0 && (
             <Link
               href="/admin/records?status=SUBMITTED"
               className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >
-              Review all ({pendingReview})
+              {t.reviewAll.replace("{n}", String(pendingReview))}
             </Link>
           )}
         </div>
@@ -287,9 +292,9 @@ export default async function AdminDashboardPage() {
                 <CheckCircle2 className="h-5 w-5" />
               </span>
               <div>
-                <div className="font-medium text-neutral-900 dark:text-neutral-100">All caught up</div>
+                <div className="font-medium text-neutral-900 dark:text-neutral-100">{t.allCaughtUp}</div>
                 <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                  No records are waiting for review.
+                  {t.nothingWaiting}
                 </div>
               </div>
             </CardContent>
@@ -309,15 +314,15 @@ export default async function AdminDashboardPage() {
                     </span>
                     <div className="min-w-0">
                       <div className="truncate font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
-                        Job #{record.jobNumber} — {record.customerName}
+                        {dict.records.jobNumber}{record.jobNumber} — {record.customerName}
                       </div>
                       <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                        {record.submittedBy?.name ?? "—"} · waiting {timeAgo(record.createdAt)}
+                        {record.submittedBy?.name ?? "—"} · {t.waiting.replace("{ago}", timeAgo(record.createdAt, t.justNow))}
                       </div>
                     </div>
                   </div>
                   <span className="hidden shrink-0 items-center gap-1 text-sm font-medium text-neutral-500 group-hover:text-neutral-900 dark:group-hover:text-neutral-100 sm:inline-flex">
-                    Review
+                    {t.review}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </span>
                   <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500 sm:hidden" />
@@ -330,7 +335,7 @@ export default async function AdminDashboardPage() {
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Overview
+          {t.overview}
         </h2>
         {/* Two headline totals side by side... */}
         <div className="grid grid-cols-2 gap-3">
@@ -343,7 +348,7 @@ export default async function AdminDashboardPage() {
                 <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
                   {totalRecords}
                 </div>
-                <div className="text-sm text-neutral-500 dark:text-neutral-400">Total records</div>
+                <div className="text-sm text-neutral-500 dark:text-neutral-400">{t.totalRecords}</div>
               </div>
             </CardContent>
           </Card>
@@ -360,7 +365,7 @@ export default async function AdminDashboardPage() {
                   <div className="truncate text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
                     {money.format(payReport.grand.total)}
                   </div>
-                  <div className="text-sm text-neutral-500 dark:text-neutral-400">To pay this month</div>
+                  <div className="text-sm text-neutral-500 dark:text-neutral-400">{t.toPayThisMonth}</div>
                 </div>
               </CardContent>
             </Card>
@@ -378,13 +383,13 @@ export default async function AdminDashboardPage() {
         <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              Active projects
+              {t.activeProjects}
             </h2>
             <Link
               href="/admin/projects"
               className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >
-              View all
+              {t.viewAll}
             </Link>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -451,13 +456,13 @@ export default async function AdminDashboardPage() {
         <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "110ms" }}>
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              Recent photos
+              {t.recentPhotos}
             </h2>
             <Link
               href="/admin/photos"
               className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >
-              View all
+              {t.viewAll}
             </Link>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -470,7 +475,7 @@ export default async function AdminDashboardPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
-                  alt="Recent jobsite photo"
+                  alt={t.recentPhotoAlt}
                   className="h-24 w-24 rounded-lg border border-neutral-200 object-cover transition-opacity hover:opacity-90 dark:border-neutral-800"
                 />
               </Link>
@@ -481,18 +486,18 @@ export default async function AdminDashboardPage() {
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "120ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Recent Activity
+          {t.recentActivity}
         </h2>
         <Card>
           <CardHeader>
-            <CardTitle>Recent Records</CardTitle>
+            <CardTitle>{t.recentRecords}</CardTitle>
           </CardHeader>
           <CardContent>
             {recentRecords.length === 0 ? (
               <EmptyState
                 icon={ClipboardList}
-                title="No records yet"
-                description="Submitted work records will show up here."
+                title={t.noRecordsYet}
+                description={t.noRecordsYetDesc}
               />
             ) : (
               <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
@@ -504,10 +509,10 @@ export default async function AdminDashboardPage() {
                   >
                     <div className="min-w-0">
                       <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
-                        Job #{record.jobNumber} — {record.customerName}
+                        {dict.records.jobNumber}{record.jobNumber} — {record.customerName}
                       </div>
                       <div className="text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
-                        {record.submittedBy?.name ?? "—"} · {formatDate(record.date)} ·{" "}
+                        {record.submittedBy?.name ?? "—"} · {formatDate(record.date, locale)} ·{" "}
                         {formatTime(record.arrivalTime)}
                       </div>
                     </div>
@@ -522,20 +527,20 @@ export default async function AdminDashboardPage() {
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "160ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Trends
+          {t.trends}
         </h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <Card className="lg:col-span-2">
             <CardHeader className="flex-row items-center gap-2 space-y-0">
               <TrendingUp className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               <CardTitle>
-                Records per week (last {WEEKS_BACK} weeks)
+                {t.recordsPerWeek.replace("{n}", String(WEEKS_BACK))}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <BarList
                 data={weekBuckets}
-                emptyLabel="No records in this period"
+                emptyLabel={t.noRecordsPeriod}
                 labelWidth="4rem"
               />
             </CardContent>
@@ -545,14 +550,14 @@ export default async function AdminDashboardPage() {
             <CardHeader className="flex-row items-center gap-2 space-y-0">
               <DollarSign className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               <CardTitle>
-                Top approved pay this month
+                {t.topPay}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <BarList
                 data={payData}
                 formatValue={(v) => money.format(v)}
-                emptyLabel="No pay recorded this month"
+                emptyLabel={t.noPayMonth}
               />
             </CardContent>
           </Card>
@@ -561,11 +566,11 @@ export default async function AdminDashboardPage() {
             <CardHeader className="flex-row items-center gap-2 space-y-0">
               <Wrench className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               <CardTitle>
-                Work by type (last {TYPE_WINDOW_MONTHS} months)
+                {t.workByType.replace("{n}", String(TYPE_WINDOW_MONTHS))}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <BarList data={typeData} emptyLabel="No records yet" />
+              <BarList data={typeData} emptyLabel={t.noRecordsYet} />
             </CardContent>
           </Card>
         </div>

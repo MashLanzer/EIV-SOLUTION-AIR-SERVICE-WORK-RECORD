@@ -15,9 +15,10 @@ import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getLocale, getT } from "@/lib/i18n/server";
 
-function formatDateTime(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDateTime(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     dateStyle: "medium",
     timeStyle: "short",
     timeZone: "UTC",
@@ -43,8 +44,11 @@ export default async function AdminReviewRecordPage({
   });
   if (!record) notFound();
   const currency = await getCurrencySymbol(requireOrgId(session));
+  const dict = await getT();
+  const t = dict.adminRecords;
+  const locale = await getLocale();
 
-  const summaryDate = new Intl.DateTimeFormat("en-US", {
+  const summaryDate = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -53,7 +57,7 @@ export default async function AdminReviewRecordPage({
 
   return (
     <div className="flex flex-col gap-4">
-      {saved && <SuccessToast message="Record saved" aboveMobileNav />}
+      {saved && <SuccessToast message={dict.records.recordSaved} aboveMobileNav />}
 
       {/* Header: identity + status, a quick summary line, and the review
           actions - Approve/Return get prominence, the rest are secondary. */}
@@ -62,7 +66,7 @@ export default async function AdminReviewRecordPage({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                Job #{record.jobNumber}
+                {dict.records.jobNumber}{record.jobNumber}
               </h1>
               <p className="mt-0.5 truncate text-sm text-neutral-500 dark:text-neutral-400">
                 {record.customerName} · {summaryDate} · {record.typeOfWork}
@@ -88,13 +92,13 @@ export default async function AdminReviewRecordPage({
             <Button asChild variant="outline" size="sm">
               <Link href={`/admin/records/${record.id}/edit`}>
                 <Pencil className="h-4 w-4" />
-                Edit
+                {dict.common.edit}
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm">
               <a href={`/admin/records/${record.id}/pdf`}>
                 <Download className="h-4 w-4" />
-                Download PDF
+                {dict.records.downloadPdf}
               </a>
             </Button>
             <div className="ml-auto">
@@ -106,14 +110,15 @@ export default async function AdminReviewRecordPage({
 
       {record.status === "NEEDS_CHANGES" && record.reviewNote && (
         <Alert variant="warning">
-          <span className="font-medium">Returned to worker:</span>{" "}
+          <span className="font-medium">{t.returnedToWorker}</span>{" "}
           {record.reviewNote}
         </Alert>
       )}
       {record.status === "APPROVED" && record.approvedAt && (
         <Alert variant="success">
-          Approved{record.approvedBy ? ` by ${record.approvedBy.name}` : ""} on{" "}
-          {formatDateTime(record.approvedAt)}.
+          {(record.approvedBy ? t.approvedByOn : t.approvedOn)
+            .replace("{name}", record.approvedBy?.name ?? "")
+            .replace("{date}", formatDateTime(record.approvedAt, locale))}
         </Alert>
       )}
 

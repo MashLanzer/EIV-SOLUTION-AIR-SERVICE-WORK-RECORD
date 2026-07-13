@@ -5,6 +5,7 @@ import { CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { approveRecordAction } from "@/actions/records";
 
 // Approving is significant (it locks the record and feeds pay totals), so it
@@ -22,6 +23,7 @@ export function ApproveRecordButton({
   className?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const t = useT().adminRecords;
 
   return (
     <form
@@ -30,19 +32,19 @@ export function ApproveRecordButton({
       className={className}
     >
       <ConfirmDialog
-        title="Approve this record?"
-        description="This marks the job as approved and counts it toward pay totals. You can still return it for changes afterwards."
-        confirmLabel="Approve"
+        title={t.approveTitle}
+        description={t.approveDesc}
+        confirmLabel={t.approve}
         confirmVariant="default"
         trigger={
           iconOnly ? (
-            <Button type="button" size="icon" aria-label="Approve record">
+            <Button type="button" size="icon" aria-label={t.approveAria}>
               <CheckCircle2 className="h-4 w-4" />
             </Button>
           ) : (
             <Button type="button" size={size} className="w-full">
               <CheckCircle2 className="h-4 w-4" />
-              Approve
+              {t.approve}
             </Button>
           )
         }

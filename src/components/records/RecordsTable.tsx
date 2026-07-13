@@ -20,6 +20,7 @@ import { RequestChangesButton } from "@/components/records/RequestChangesButton"
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { MobileCardList } from "@/components/ui/responsive-table";
 import { SortHeader } from "@/components/ui/sort-header";
+import { getLocale, getT } from "@/lib/i18n/server";
 import type { SortDir } from "@/lib/sort";
 
 type RecordWithWorker = Pick<
@@ -27,8 +28,8 @@ type RecordWithWorker = Pick<
   "id" | "date" | "jobNumber" | "customerName" | "typeOfWork" | "status" | "reviewNote"
 > & { submittedBy: { name: string } | null };
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -36,7 +37,7 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-export function RecordsTable({
+export async function RecordsTable({
   records,
   exportFormId,
   sort,
@@ -50,15 +51,18 @@ export function RecordsTable({
   sortParams?: Record<string, string | undefined>;
 }) {
   const sortProps = { sort, dir, basePath: "/admin/records", params: sortParams };
+  const dict = await getT();
+  const t = dict.adminRecords;
+  const locale = await getLocale();
   if (records.length === 0) {
     return (
       <EmptyState
         icon={ClipboardList}
-        title="No records match these filters"
-        description="Try adjusting or clearing the filters above."
+        title={t.noMatch}
+        description={t.noMatchDesc}
         action={
           <Button asChild variant="outline" className="mt-2">
-            <Link href="/admin/records">Clear filters</Link>
+            <Link href="/admin/records">{t.clearFilters}</Link>
           </Button>
         }
       />
@@ -77,24 +81,24 @@ export function RecordsTable({
                     <SelectAllCheckbox formId={exportFormId} />
                   </TableHead>
                   <TableHead>
-                    <SortHeader column="date" label="Date" {...sortProps} />
+                    <SortHeader column="date" label={dict.records.date} {...sortProps} />
                   </TableHead>
                   <TableHead>
-                    <SortHeader column="jobNumber" label="Job #" {...sortProps} />
+                    <SortHeader column="jobNumber" label={dict.records.jobNumber} {...sortProps} />
                   </TableHead>
                   <TableHead>
-                    <SortHeader column="status" label="Status" {...sortProps} />
+                    <SortHeader column="status" label={t.colStatus} {...sortProps} />
                   </TableHead>
                   <TableHead>
-                    <SortHeader column="customerName" label="Customer" {...sortProps} />
+                    <SortHeader column="customerName" label={dict.records.customer} {...sortProps} />
                   </TableHead>
                   <TableHead>
-                    <SortHeader column="worker" label="Submitted By" {...sortProps} />
+                    <SortHeader column="worker" label={t.colSubmittedBy} {...sortProps} />
                   </TableHead>
                   <TableHead>
-                    <SortHeader column="typeOfWork" label="Type of Work" {...sortProps} />
+                    <SortHeader column="typeOfWork" label={dict.records.typeOfWork} {...sortProps} />
                   </TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">{t.colActions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -106,10 +110,10 @@ export function RecordsTable({
                         name="ids"
                         value={record.id}
                         form={exportFormId}
-                        aria-label={`Select record ${record.jobNumber}`}
+                        aria-label={t.selectRecord.replace("{n}", record.jobNumber)}
                       />
                     </TableCell>
-                    <TableCell className="tabular-nums">{formatDate(record.date)}</TableCell>
+                    <TableCell className="tabular-nums">{formatDate(record.date, locale)}</TableCell>
                     <TableCell className="tabular-nums">{record.jobNumber}</TableCell>
                     <TableCell>
                       <StatusBadge status={record.status} />
@@ -118,7 +122,7 @@ export function RecordsTable({
                       {record.customerName}
                       {record.status === "NEEDS_CHANGES" && record.reviewNote && (
                         <span className="mt-0.5 block max-w-[16rem] truncate text-xs text-warning-text" title={record.reviewNote}>
-                          Returned: {record.reviewNote}
+                          {t.returnedPrefix} {record.reviewNote}
                         </span>
                       )}
                     </TableCell>
@@ -126,7 +130,7 @@ export function RecordsTable({
                     <TableCell>{record.typeOfWork}</TableCell>
                     <TableCell className="flex justify-end gap-2 text-right">
                       <Button asChild variant="outline" size="icon">
-                        <Link href={`/admin/records/${record.id}`} aria-label="Review record">
+                        <Link href={`/admin/records/${record.id}`} aria-label={t.reviewRecord}>
                           <Eye className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -137,7 +141,7 @@ export function RecordsTable({
                         </>
                       )}
                       <Button asChild variant="outline" size="icon">
-                        <Link href={`/admin/records/${record.id}/pdf`} aria-label="Download PDF">
+                        <Link href={`/admin/records/${record.id}/pdf`} aria-label={dict.records.downloadPdf}>
                           <Download className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -165,7 +169,7 @@ export function RecordsTable({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                    Job #{record.jobNumber}
+                    {dict.records.jobNumber}{record.jobNumber}
                   </span>
                   <StatusBadge status={record.status} />
                 </div>
@@ -173,14 +177,14 @@ export function RecordsTable({
                   {record.customerName}
                 </div>
                 <div className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                  {formatDate(record.date)} · {record.typeOfWork}
+                  {formatDate(record.date, locale)} · {record.typeOfWork}
                 </div>
                 <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
                   {record.submittedBy?.name ?? "—"}
                 </div>
                 {record.status === "NEEDS_CHANGES" && record.reviewNote && (
                   <p className="mt-1.5 text-xs text-warning-text">
-                    <span className="font-medium">Returned:</span> {record.reviewNote}
+                    <span className="font-medium">{t.returnedPrefix}</span> {record.reviewNote}
                   </p>
                 )}
               </div>
@@ -194,7 +198,7 @@ export function RecordsTable({
                 </>
               )}
               <Button asChild variant="outline" size="icon">
-                <a href={`/admin/records/${record.id}/pdf`} aria-label="Download PDF">
+                <a href={`/admin/records/${record.id}/pdf`} aria-label={dict.records.downloadPdf}>
                   <Download className="h-4 w-4" />
                 </a>
               </Button>

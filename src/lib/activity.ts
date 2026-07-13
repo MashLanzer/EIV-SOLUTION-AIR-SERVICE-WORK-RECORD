@@ -1,4 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import { getT } from "@/lib/i18n/server";
+import type { Dictionary } from "@/lib/i18n";
+
+type FeedDict = Dictionary["activityFeed"];
 
 // The activity feed is derived on read from data the app already stores -
 // there is no ActivityEvent table. Every event is a projection of an existing
@@ -45,13 +49,13 @@ export interface ActivityScope {
 // feed complete for the visible window.
 const PER_SOURCE = 40;
 
-function nameOr(person: { name: string | null } | null | undefined, fallback = "Someone") {
+function nameOr(person: { name: string | null } | null | undefined, fallback: string) {
   return person?.name?.trim() || fallback;
 }
 
 // Admin: company-wide. Pulls the most recent rows from every source, projects
 // each into one or more ActivityEvents, then the caller merges + sorts.
-async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
+async function adminEvents(organizationId: string, t: FeedDict): Promise<ActivityEvent[]> {
   const [records, photos, comments, projects, workers, customers, teams] =
     await Promise.all([
       prisma.workRecord.findMany({
@@ -131,8 +135,8 @@ async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
       id: `rec-sub-${r.id}`,
       type: "record_submitted",
       at: r.createdAt,
-      actor: nameOr(r.submittedBy),
-      title: `${nameOr(r.submittedBy)} submitted a record`,
+      actor: nameOr(r.submittedBy, t.someone),
+      title: t.submittedRecord.replace("{name}", nameOr(r.submittedBy, t.someone)),
       detail: label,
       href,
     });
@@ -141,8 +145,8 @@ async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
         id: `rec-app-${r.id}`,
         type: "record_approved",
         at: r.approvedAt,
-        actor: nameOr(r.approvedBy),
-        title: `Record approved`,
+        actor: nameOr(r.approvedBy, t.someone),
+        title: t.recordApproved,
         detail: label,
         href,
       });
@@ -154,7 +158,7 @@ async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
         id: `rec-ret-${r.id}`,
         type: "record_returned",
         at: r.updatedAt,
-        title: `Record returned for changes`,
+        title: t.recordReturned,
         detail: r.reviewNote?.trim() ? r.reviewNote.trim() : label,
         href,
       });
@@ -166,8 +170,8 @@ async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
       id: `photo-${p.id}`,
       type: "photo_added",
       at: p.createdAt,
-      actor: nameOr(p.takenBy),
-      title: `${nameOr(p.takenBy)} added a photo`,
+      actor: nameOr(p.takenBy, t.someone),
+      title: t.addedPhoto.replace("{name}", nameOr(p.takenBy, t.someone)),
       detail: p.project?.name ?? undefined,
       href: `/admin/projects/${p.projectId}`,
     });
@@ -178,8 +182,8 @@ async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
       id: `comment-${c.id}`,
       type: "comment_added",
       at: c.createdAt,
-      actor: nameOr(c.author),
-      title: `${nameOr(c.author)} commented`,
+      actor: nameOr(c.author, t.someone),
+      title: t.commented.replace("{name}", nameOr(c.author, t.someone)),
       detail: c.body.trim().slice(0, 120) || c.photo?.project?.name || undefined,
       href: c.photo ? `/admin/projects/${c.photo.projectId}` : undefined,
     });
@@ -190,7 +194,7 @@ async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
       id: `project-${p.id}`,
       type: "project_created",
       at: p.createdAt,
-      title: `New project created`,
+      title: t.newProject,
       detail: p.name,
       href: `/admin/projects/${p.id}`,
     });
@@ -201,7 +205,7 @@ async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
       id: `worker-${w.id}`,
       type: "worker_added",
       at: w.createdAt,
-      title: w.role === "ADMIN" ? `New admin added` : `New worker added`,
+      title: w.role === "ADMIN" ? t.newAdmin : t.newWorker,
       detail: w.name?.trim() || w.email,
       href: w.role === "ADMIN" ? undefined : `/admin/workers/${w.id}`,
     });
@@ -212,20 +216,20 @@ async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
       id: `customer-${c.id}`,
       type: "customer_added",
       at: c.createdAt,
-      title: `New customer added`,
+      title: t.newCustomer,
       detail: c.name,
       href: `/admin/customers/${c.id}`,
     });
   }
 
-  for (const t of teams) {
+  for (const team of teams) {
     events.push({
-      id: `team-${t.id}`,
+      id: `team-${team.id}`,
       type: "team_added",
-      at: t.createdAt,
-      title: `New team created`,
-      detail: t.name,
-      href: `/admin/teams/${t.id}`,
+      at: team.createdAt,
+      title: t.newTeam,
+      detail: team.name,
+      href: `/admin/teams/${team.id}`,
     });
   }
 
@@ -236,7 +240,8 @@ async function adminEvents(organizationId: string): Promise<ActivityEvent[]> {
 // their records approved/returned, and comments on photos of their records.
 async function workerEvents(
   organizationId: string,
-  userId: string
+  userId: string,
+  t: FeedDict
 ): Promise<ActivityEvent[]> {
   const [records, comments] = await Promise.all([
     prisma.workRecord.findMany({
@@ -285,7 +290,7 @@ async function workerEvents(
         id: `rec-app-${r.id}`,
         type: "record_approved",
         at: r.approvedAt,
-        title: `Your record was approved`,
+        title: t.yourApproved,
         detail: label,
         href,
       });
@@ -295,7 +300,7 @@ async function workerEvents(
         id: `rec-ret-${r.id}`,
         type: "record_returned",
         at: r.updatedAt,
-        title: `Your record needs changes`,
+        title: t.yourNeedsChanges,
         detail: r.reviewNote?.trim() ? r.reviewNote.trim() : label,
         href,
       });
@@ -307,8 +312,8 @@ async function workerEvents(
       id: `comment-${c.id}`,
       type: "comment_added",
       at: c.createdAt,
-      actor: nameOr(c.author),
-      title: `${nameOr(c.author)} commented on your work`,
+      actor: nameOr(c.author, t.someone),
+      title: t.commentedOnYourWork.replace("{name}", nameOr(c.author, t.someone)),
       detail: c.body.trim().slice(0, 120) || undefined,
       href: c.photo ? `/records/projects/${c.photo.projectId}` : undefined,
     });
@@ -323,9 +328,10 @@ export async function getActivityFeed(
   scope: ActivityScope,
   limit = 60
 ): Promise<ActivityEvent[]> {
+  const t = (await getT()).activityFeed;
   const events = scope.isAdmin
-    ? await adminEvents(scope.organizationId)
-    : await workerEvents(scope.organizationId, scope.userId);
+    ? await adminEvents(scope.organizationId, t)
+    : await workerEvents(scope.organizationId, scope.userId, t);
   events.sort((a, b) => b.at.getTime() - a.at.getTime());
   return events.slice(0, limit);
 }

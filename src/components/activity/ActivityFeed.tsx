@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import type { ActivityEvent, ActivityType } from "@/lib/activity";
+import { getLocale, getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
 // Icon + tint per event type. Only state events (approved/returned) carry
@@ -30,34 +31,8 @@ const META: Record<ActivityType, { icon: LucideIcon; tone: "neutral" | "success"
   team_added: { icon: Users2, tone: "neutral" },
 };
 
-const timeFmt = new Intl.DateTimeFormat("en-US", {
-  hour: "numeric",
-  minute: "2-digit",
-});
-
-const dateFmt = new Intl.DateTimeFormat("en-US", {
-  weekday: "short",
-  month: "short",
-  day: "numeric",
-});
-
-const dateFmtWithYear = new Intl.DateTimeFormat("en-US", {
-  weekday: "short",
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-}
-
-function dayLabel(d: Date): string {
-  const now = new Date();
-  const diff = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
-  return (d.getFullYear() === now.getFullYear() ? dateFmt : dateFmtWithYear).format(d);
 }
 
 const TONE_CLASS: Record<"neutral" | "success" | "warning", string> = {
@@ -66,7 +41,13 @@ const TONE_CLASS: Record<"neutral" | "success" | "warning", string> = {
   warning: "bg-warning-soft text-warning-text",
 };
 
-function EventRow({ event }: { event: ActivityEvent }) {
+function EventRow({
+  event,
+  timeFmt,
+}: {
+  event: ActivityEvent;
+  timeFmt: Intl.DateTimeFormat;
+}) {
   const { icon: Icon, tone } = META[event.type];
   const inner = (
     <div className="flex items-start gap-3 px-4 py-3">
@@ -107,7 +88,34 @@ function EventRow({ event }: { event: ActivityEvent }) {
   return inner;
 }
 
-export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
+export async function ActivityFeed({ events }: { events: ActivityEvent[] }) {
+  const locale = await getLocale();
+  const t = (await getT()).activityFeed;
+  const intlLocale = locale === "es" ? "es-ES" : "en-US";
+  const timeFmt = new Intl.DateTimeFormat(intlLocale, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const dateFmt = new Intl.DateTimeFormat(intlLocale, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  const dateFmtWithYear = new Intl.DateTimeFormat(intlLocale, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  function dayLabel(d: Date): string {
+    const now = new Date();
+    const diff = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
+    if (diff === 0) return t.today;
+    if (diff === 1) return t.yesterday;
+    return (d.getFullYear() === now.getFullYear() ? dateFmt : dateFmtWithYear).format(d);
+  }
+
   // Group by calendar day, preserving the incoming (newest-first) order.
   const groups: { key: number; label: string; items: ActivityEvent[] }[] = [];
   for (const e of events) {
@@ -133,7 +141,7 @@ export function ActivityFeed({ events }: { events: ActivityEvent[] }) {
           </h2>
           <div className="overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 divide-y divide-neutral-100 dark:divide-neutral-800/70">
             {group.items.map((event) => (
-              <EventRow key={event.id} event={event} />
+              <EventRow key={event.id} event={event} timeFmt={timeFmt} />
             ))}
           </div>
         </div>

@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 import { parseSort } from "@/lib/sort";
 import { cn } from "@/lib/utils";
 import type { Prisma, RecordStatus } from "@prisma/client";
@@ -98,13 +99,15 @@ export default async function AdminRecordsPage({
     filters.status,
   ].filter(Boolean).length;
 
+  const t = (await getT()).adminRecords;
+
   // Quick status chips: one tap to filter by review state, keeping any other
   // active filters. "All" clears just the status.
   const statusChips: { label: string; status?: RecordStatus }[] = [
-    { label: "All" },
-    { label: "Pending", status: "SUBMITTED" },
-    { label: "Returned", status: "NEEDS_CHANGES" },
-    { label: "Approved", status: "APPROVED" },
+    { label: t.chipAll },
+    { label: t.chipPending, status: "SUBMITTED" },
+    { label: t.chipReturned, status: "NEEDS_CHANGES" },
+    { label: t.chipApproved, status: "APPROVED" },
   ];
   function chipHref(status?: RecordStatus) {
     const p = new URLSearchParams();
@@ -120,7 +123,7 @@ export default async function AdminRecordsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">All Work Records</h1>
+      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.allRecords}</h1>
 
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {statusChips.map((chip) => {
@@ -152,7 +155,7 @@ export default async function AdminRecordsPage({
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <span className="flex items-center gap-2 text-base font-semibold text-neutral-900 dark:text-neutral-100">
-              Filters
+              {t.filters}
               {activeFilterCount > 0 && <Badge variant="secondary">{activeFilterCount}</Badge>}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
@@ -166,7 +169,7 @@ export default async function AdminRecordsPage({
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {total} Record{total === 1 ? "" : "s"}
+            {(total === 1 ? t.recordCountOne : t.recordCountMany).replace("{n}", String(total))}
           </h2>
           <form id={EXPORT_FORM_ID} method="GET" className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="dateFrom" value={filters.dateFrom ?? ""} />
@@ -180,10 +183,10 @@ export default async function AdminRecordsPage({
               variant="outline"
               size="sm"
               formAction="/admin/records/export/pdf"
-              title="Bulk PDF exports don't include work photos"
+              title={t.exportPdfTitle}
             >
               <FileText className="h-4 w-4" />
-              Export to PDF
+              {t.exportPdf}
             </Button>
             <Button
               type="submit"
@@ -192,7 +195,7 @@ export default async function AdminRecordsPage({
               formAction="/admin/records/export/excel"
             >
               <Sheet className="h-4 w-4" />
-              Export to Excel
+              {t.exportExcel}
             </Button>
           </form>
         </div>

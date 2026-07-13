@@ -6,6 +6,7 @@ import { Check, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/components/i18n/LocaleProvider";
 import {
   bulkApproveRecordsAction,
   bulkRequestChangesAction,
@@ -21,6 +22,8 @@ export function RecordBulkBar({ pendingIds }: { pendingIds: string[] }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [pending, startTransition] = useTransition();
   const returnRef = useRef<HTMLDialogElement>(null);
+  const t = useT().adminRecords;
+  const tc = useT().common;
 
   useEffect(() => {
     pendingSet.current = new Set(pendingIds);
@@ -44,7 +47,7 @@ export function RecordBulkBar({ pendingIds }: { pendingIds: string[] }) {
     document
       .querySelectorAll<HTMLInputElement>('input[type="checkbox"]')
       .forEach((c) => {
-        if (c.name === "ids" || c.getAttribute("aria-label") === "Select all records") {
+        if (c.name === "ids" || c.hasAttribute("data-select-all")) {
           c.checked = false;
         }
       });
@@ -82,13 +85,13 @@ export function RecordBulkBar({ pendingIds }: { pendingIds: string[] }) {
           <button
             type="button"
             onClick={clearChecks}
-            aria-label="Clear selection"
+            aria-label={t.clearSelection}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
             <X className="h-4 w-4" />
           </button>
           <span className="text-sm font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
-            {count} pending selected
+            {t.pendingSelected.replace("{n}", String(count))}
           </span>
           <div className="ml-auto flex items-center gap-2">
             <Button
@@ -99,18 +102,21 @@ export function RecordBulkBar({ pendingIds }: { pendingIds: string[] }) {
               onClick={() => returnRef.current?.showModal()}
             >
               <Undo2 className="h-4 w-4" />
-              Return
+              {t.return}
             </Button>
             <ConfirmDialog
-              title={`Approve ${count} record${count === 1 ? "" : "s"}?`}
-              description="They'll be marked approved and counted in the pay report. Only records still pending review are affected."
-              confirmLabel="Approve"
+              title={(count === 1 ? t.bulkApproveTitleOne : t.bulkApproveTitleMany).replace(
+                "{n}",
+                String(count)
+              )}
+              description={t.bulkApproveDesc}
+              confirmLabel={t.approve}
               confirmVariant="default"
               onConfirm={approve}
               trigger={
                 <Button type="button" size="sm" disabled={pending}>
                   <Check className="h-4 w-4" />
-                  Approve
+                  {t.approve}
                 </Button>
               }
             />
@@ -127,18 +133,20 @@ export function RecordBulkBar({ pendingIds }: { pendingIds: string[] }) {
       >
         <form onSubmit={submitReturn}>
           <h2 className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            Return {count} record{count === 1 ? "" : "s"} for changes
+            {(count === 1 ? t.bulkReturnTitleOne : t.bulkReturnTitleMany).replace(
+              "{n}",
+              String(count)
+            )}
           </h2>
           <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-            The same note is sent to every selected record. Each worker can edit
-            and resubmit theirs.
+            {t.bulkReturnDesc}
           </p>
           <Textarea
             name="reviewNote"
             required
             rows={4}
             className="mt-3"
-            placeholder="e.g. Missing installer signature — please re-collect and resubmit."
+            placeholder={t.bulkReturnPlaceholder}
           />
           <div className="mt-5 flex justify-end gap-2">
             <Button
@@ -146,11 +154,11 @@ export function RecordBulkBar({ pendingIds }: { pendingIds: string[] }) {
               variant="outline"
               onClick={() => returnRef.current?.close()}
             >
-              Cancel
+              {tc.cancel}
             </Button>
             <Button type="submit" variant="destructive">
               <Undo2 className="h-4 w-4" />
-              Return {count}
+              {t.returnN.replace("{n}", String(count))}
             </Button>
           </div>
         </form>

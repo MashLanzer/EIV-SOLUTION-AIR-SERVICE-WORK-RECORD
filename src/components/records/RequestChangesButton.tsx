@@ -5,6 +5,7 @@ import { Undo2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { requestChangesAction } from "@/actions/records";
 
 // Sends a record back to the worker with a required note explaining what
@@ -23,6 +24,8 @@ export function RequestChangesButton({
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const action = requestChangesAction.bind(null, recordId);
+  const t = useT().adminRecords;
+  const tc = useT().common;
   const id = useId();
   const titleId = `${id}-title`;
   const descriptionId = `${id}-description`;
@@ -34,7 +37,7 @@ export function RequestChangesButton({
           type="button"
           variant="outline"
           size="icon"
-          aria-label="Return for changes"
+          aria-label={t.returnForChanges}
           onClick={() => dialogRef.current?.showModal()}
         >
           <Undo2 className="h-4 w-4" />
@@ -48,7 +51,7 @@ export function RequestChangesButton({
           onClick={() => dialogRef.current?.showModal()}
         >
           <Undo2 className="h-4 w-4" />
-          Return for changes
+          {t.returnForChanges}
         </Button>
       )}
       <dialog
@@ -62,18 +65,17 @@ export function RequestChangesButton({
       >
         <form action={action} onSubmit={() => dialogRef.current?.close()}>
           <h2 id={titleId} className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            Return for changes
+            {t.returnForChanges}
           </h2>
           <p id={descriptionId} className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-            Explain what needs fixing. The worker will see this note and can
-            edit and resubmit the record.
+            {t.returnDesc}
           </p>
           <Textarea
             name="reviewNote"
             required
             rows={4}
             className="mt-3"
-            placeholder="e.g. The customer address is wrong and the installer signature is missing."
+            placeholder={t.returnPlaceholder}
           />
           <div className="mt-5 flex justify-end gap-2">
             <Button
@@ -81,11 +83,11 @@ export function RequestChangesButton({
               variant="outline"
               onClick={() => dialogRef.current?.close()}
             >
-              Cancel
+              {tc.cancel}
             </Button>
             <Button type="submit" variant="destructive">
               <Undo2 className="h-4 w-4" />
-              Return
+              {t.return}
             </Button>
           </div>
         </form>
