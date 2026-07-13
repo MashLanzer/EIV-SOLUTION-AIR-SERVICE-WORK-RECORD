@@ -571,6 +571,9 @@ export const es: Dictionary = {
     month: "Mes",
     week: "Semana",
     allWorkers: "Todos los trabajadores",
+    summaryJobs: "Trabajos del mes",
+    summaryCompleted: "Completados",
+    summaryBusiest: "Más ocupado",
     // New / edit job form
     newJob: "Programar trabajo",
     editJob: "Editar trabajo",

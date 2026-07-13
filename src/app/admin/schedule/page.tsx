@@ -267,6 +267,39 @@ export default async function SchedulePage({
 type SchedT = Awaited<ReturnType<typeof getT>>["schedule"];
 type Opt = { id: string; name: string };
 
+// A compact stat tile for the month summary, matching the dashboard tiles.
+function SummaryTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="flex flex-col gap-0.5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-3">
+      <span className="truncate text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+        {value}
+      </span>
+      <span className="truncate text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
+      {sub && (
+        <span className="text-[11px] tabular-nums text-neutral-400 dark:text-neutral-500">{sub}</span>
+      )}
+    </div>
+  );
+}
+
+// Totals for the selected month (non-canceled jobs only): how many, what share
+// are done, and who's carrying the most visits.
+function monthSummary(monthJobs: ScheduleJobView[]) {
+  const total = monthJobs.length;
+  const done = monthJobs.filter((j) => j.status === "DONE").length;
+  const donePct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const byWorker = new Map<string, number>();
+  for (const j of monthJobs) {
+    if (!j.assignedToName) continue;
+    byWorker.set(j.assignedToName, (byWorker.get(j.assignedToName) ?? 0) + 1);
+  }
+  let busiest: { name: string; count: number } | null = null;
+  for (const [name, count] of byWorker) {
+    if (!busiest || count > busiest.count) busiest = { name, count };
+  }
+  return { total, done, donePct, busiest };
+}
+
 function MonthView({
   selected,
   selectedKey,
@@ -318,8 +351,28 @@ function MonthView({
   const prevMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth - 1, 1));
   const nextMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth + 1, 1));
 
+  // Month totals from only the days that belong to the selected month.
+  const monthJobs = gridDays
+    .filter((d) => d.getUTCMonth() === selectedMonth)
+    .flatMap((d) => byDay.get(dayKey(d)) ?? [])
+    .filter((j) => j.status !== "CANCELED");
+  const summary = monthSummary(monthJobs);
+
   return (
     <>
+      <div className="grid grid-cols-3 gap-3">
+        <SummaryTile label={t.summaryJobs} value={String(summary.total)} />
+        <SummaryTile
+          label={t.summaryCompleted}
+          value={`${summary.donePct}%`}
+          sub={`${summary.done}/${summary.total}`}
+        />
+        <SummaryTile
+          label={t.summaryBusiest}
+          value={summary.busiest?.name ?? "—"}
+          sub={summary.busiest ? count(summary.busiest.count) : undefined}
+        />
+      </div>
       <ScheduleMonthCalendar
         monthLabel={monthLabel}
         weekdayLabels={weekdayLabels}
