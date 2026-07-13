@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   addUtcDays,
   dayKey,
+  monthGridDays,
+  monthRange,
   startOfUtcDay,
   timeWindowsOverlap,
   toMinutes,
@@ -46,6 +48,34 @@ describe("schedule date math", () => {
     const { from, to } = weekRange(utcDay(2026, 6, 19)); // Sunday
     expect(dayKey(from)).toBe("2026-07-13");
     expect(dayKey(to)).toBe("2026-07-20");
+  });
+});
+
+describe("monthRange", () => {
+  it("spans the first of the month to the first of the next", () => {
+    const { from, to } = monthRange(new Date("2026-07-14T09:00:00.000Z"));
+    expect(dayKey(from)).toBe("2026-07-01");
+    expect(dayKey(to)).toBe("2026-08-01");
+  });
+
+  it("rolls the year over in December", () => {
+    const { from, to } = monthRange(utcDay(2026, 11, 15)); // Dec 2026
+    expect(dayKey(from)).toBe("2026-12-01");
+    expect(dayKey(to)).toBe("2027-01-01");
+  });
+});
+
+describe("monthGridDays", () => {
+  it("returns a 42-day grid starting on the Monday before the 1st", () => {
+    const days = monthGridDays(utcDay(2026, 6, 14)); // July 2026 (1st is Wed)
+    expect(days).toHaveLength(42);
+    expect(dayKey(days[0])).toBe("2026-06-29"); // Monday
+    expect(dayKey(days[41])).toBe("2026-08-09");
+  });
+
+  it("starts on the 1st when the month begins on a Monday", () => {
+    const days = monthGridDays(utcDay(2026, 5, 10)); // June 2026 (1st is Monday)
+    expect(dayKey(days[0])).toBe("2026-06-01");
   });
 });
 

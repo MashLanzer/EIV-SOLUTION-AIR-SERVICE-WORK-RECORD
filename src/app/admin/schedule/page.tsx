@@ -1,11 +1,13 @@
-import Link from "next/link";
-import { CalendarDays, CalendarPlus, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, CalendarPlus, ChevronDown } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ScheduleJobCard, type ScheduleJobView } from "@/components/schedule/ScheduleJobCard";
 import { ScheduleJobForm } from "@/components/schedule/ScheduleJobForm";
+import {
+  ScheduleMonthCalendar,
+  type CalendarDay,
+} from "@/components/schedule/ScheduleMonthCalendar";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
@@ -14,9 +16,10 @@ import {
   addUtcDays,
   dayKey,
   getScheduledJobs,
+  monthGridDays,
   startOfUtcDay,
   timeWindowsOverlap,
-  weekRange,
+  utcDay,
 } from "@/lib/schedule";
 
 function parseDateParam(value: string | undefined): Date {
@@ -39,9 +42,16 @@ export default async function SchedulePage({
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
 
   const { date } = await searchParams;
-  const anchor = parseDateParam(date);
-  const { from, to } = weekRange(anchor);
+  const selected = parseDateParam(date);
+  const selectedKey = dayKey(selected);
   const todayKey = dayKey(startOfUtcDay(new Date()));
+
+  // The 6-week grid that renders the selected day's month; fetch every job in
+  // it so the calendar can show per-day activity, and the selected day its
+  // full cards.
+  const gridDays = monthGridDays(selected);
+  const from = gridDays[0];
+  const to = addUtcDays(gridDays[gridDays.length - 1], 1);
 
   const [jobs, workers, teams, customers, projects] = await Promise.all([
     getScheduledJobs({ session, organizationId, from, to }),
@@ -95,27 +105,46 @@ export default async function SchedulePage({
     byDay.set(v.scheduledFor, list);
   }
 
-  // Flag jobs where the same worker is double-booked with an overlapping timed
-  // window on the same day, so the calendar warns at a glance (not just on save).
+  // Calendar cells: day number, whether it's in the selected month, activity
+  // count and up to three team-color dots.
+  const selectedMonth = selected.getUTCMonth();
+  const calendarDays: CalendarDay[] = gridDays.map((d) => {
+    const key = dayKey(d);
+    const dayJobs = (byDay.get(key) ?? []).filter((j) => j.status !== "CANCELED");
+    const colors: string[] = [];
+    for (const j of dayJobs) {
+      const c = j.teamColor ?? "";
+      if (!colors.includes(c)) colors.push(c);
+      if (colors.length >= 3) break;
+    }
+    return {
+      key,
+      day: d.getUTCDate(),
+      inMonth: d.getUTCMonth() === selectedMonth,
+      isToday: key === todayKey,
+      isSelected: key === selectedKey,
+      count: dayJobs.length,
+      colors,
+    };
+  });
+
+  // The selected day's jobs, in the same order the calendar counts them.
+  const selectedJobs = byDay.get(selectedKey) ?? [];
+
+  // Overlap flags for the selected day (same worker, overlapping timed window).
   const conflictIds = new Set<string>();
-  const byDayWorker = new Map<string, ScheduleJobView[]>();
-  for (const v of views) {
+  const byWorker = new Map<string, ScheduleJobView[]>();
+  for (const v of selectedJobs) {
     if (!v.assignedToId || v.status === "CANCELED") continue;
-    const k = `${v.scheduledFor}|${v.assignedToId}`;
-    const list = byDayWorker.get(k) ?? [];
+    const list = byWorker.get(v.assignedToId) ?? [];
     list.push(v);
-    byDayWorker.set(k, list);
+    byWorker.set(v.assignedToId, list);
   }
-  for (const list of byDayWorker.values()) {
+  for (const list of byWorker.values()) {
     for (let i = 0; i < list.length; i++) {
       for (let j = i + 1; j < list.length; j++) {
         if (
-          timeWindowsOverlap(
-            list[i].startTime,
-            list[i].endTime,
-            list[j].startTime,
-            list[j].endTime
-          )
+          timeWindowsOverlap(list[i].startTime, list[i].endTime, list[j].startTime, list[j].endTime)
         ) {
           conflictIds.add(list[i].id);
           conflictIds.add(list[j].id);
@@ -124,24 +153,30 @@ export default async function SchedulePage({
     }
   }
 
-  const days = Array.from({ length: 7 }, (_, i) => addUtcDays(from, i));
-  const prevWeekKey = dayKey(addUtcDays(from, -7));
-  const nextWeekKey = dayKey(addUtcDays(from, 7));
-  // Land a new job on the day being viewed (today if it's in this week).
-  const formDefaultDate =
-    todayKey >= dayKey(from) && todayKey < dayKey(to) ? todayKey : dayKey(from);
+  // Month nav targets: the 1st of the previous / next month (and today).
+  const prevMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth - 1, 1));
+  const nextMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth + 1, 1));
 
-  const dayFmt = new Intl.DateTimeFormat(intlLocale, {
+  const monthLabel = new Intl.DateTimeFormat(intlLocale, {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(selected);
+  const selectedDayLabel = new Intl.DateTimeFormat(intlLocale, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(selected);
+
+  // Localized Monday-first weekday initials, built from a known Monday.
+  const weekdayFmt = new Intl.DateTimeFormat(intlLocale, {
     weekday: "short",
-    month: "short",
-    day: "numeric",
     timeZone: "UTC",
   });
-  const weekFmt = new Intl.DateTimeFormat(intlLocale, {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
+  const weekdayLabels = Array.from({ length: 7 }, (_, i) =>
+    weekdayFmt.format(utcDay(2024, 0, 1 + i))
+  ); // 2024-01-01 is a Monday
 
   const count = (n: number) =>
     (n === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(n));
@@ -160,31 +195,22 @@ export default async function SchedulePage({
         </div>
       </div>
 
-      {/* Week navigator */}
-      <div className="flex items-center justify-between gap-2">
-        <Button asChild variant="outline" size="icon" aria-label={t.prevWeek}>
-          <Link href={`/admin/schedule?date=${prevWeekKey}`}>
-            <ChevronLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div className="flex flex-1 items-center justify-center gap-2 text-center">
-          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-            {t.weekOf.replace("{date}", weekFmt.format(from))}
-          </span>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/admin/schedule">{t.today}</Link>
-          </Button>
-        </div>
-        <Button asChild variant="outline" size="icon" aria-label={t.nextWeek}>
-          <Link href={`/admin/schedule?date=${nextWeekKey}`}>
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
+      <ScheduleMonthCalendar
+        monthLabel={monthLabel}
+        weekdayLabels={weekdayLabels}
+        days={calendarDays}
+        basePath="/admin/schedule"
+        prevHref={`/admin/schedule?date=${prevMonthKey}`}
+        nextHref={`/admin/schedule?date=${nextMonthKey}`}
+        todayHref="/admin/schedule"
+        prevLabel={t.prevMonth}
+        nextLabel={t.nextMonth}
+        todayLabel={t.today}
+      />
 
-      {/* New job */}
+      {/* New job (defaults to the selected day) */}
       <Card>
-        <details className="group" open={views.length === 0}>
+        <details className="group" open={selectedJobs.length === 0}>
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <span className="flex items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">
               <CalendarPlus className="h-4 w-4" />
@@ -194,7 +220,7 @@ export default async function SchedulePage({
           </summary>
           <div className="px-4 pb-4">
             <ScheduleJobForm
-              defaultDate={formDefaultDate}
+              defaultDate={selectedKey}
               workers={workers}
               teams={teams}
               customers={customers}
@@ -204,70 +230,44 @@ export default async function SchedulePage({
         </details>
       </Card>
 
-      {views.length === 0 ? (
-        <Card>
-          <CardContent className="p-0">
-            <EmptyState
-              icon={CalendarDays}
-              title={t.noJobsWeek}
-              description={t.noJobsWeekDesc}
-            />
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {days.map((day) => {
-            const key = dayKey(day);
-            const dayJobs = byDay.get(key) ?? [];
-            const isToday = key === todayKey;
-            return (
-              <section key={key} className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <h2
-                    className={
-                      "text-xs font-semibold uppercase tracking-wide " +
-                      (isToday
-                        ? "text-primary"
-                        : "text-neutral-500 dark:text-neutral-400")
-                    }
-                  >
-                    {dayFmt.format(day)}
-                  </h2>
-                  {isToday && (
-                    <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-text">
-                      {t.today}
-                    </span>
-                  )}
-                  {dayJobs.length > 0 && (
-                    <span className="text-xs tabular-nums text-neutral-400 dark:text-neutral-500">
-                      {count(dayJobs.length)}
-                    </span>
-                  )}
-                </div>
-                {dayJobs.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm text-neutral-400 dark:text-neutral-500">
-                    {t.noJobsDay}
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {dayJobs.map((job) => (
-                      <ScheduleJobCard
-                        key={job.id}
-                        job={job}
-                        workers={workers}
-                        teams={teams}
-                        customers={customers}
-                        projects={projects}
-                        conflict={conflictIds.has(job.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-            );
-          })}
+      {/* Selected day */}
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold capitalize text-neutral-900 dark:text-neutral-100">
+            {selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
+          </h2>
+          {selectedJobs.length > 0 && (
+            <span className="text-xs tabular-nums text-neutral-400 dark:text-neutral-500">
+              {count(selectedJobs.length)}
+            </span>
+          )}
         </div>
-      )}
+        {selectedJobs.length === 0 ? (
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState
+                icon={CalendarDays}
+                title={t.noJobsDay}
+                description={t.noJobsWeekDesc}
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {selectedJobs.map((job) => (
+              <ScheduleJobCard
+                key={job.id}
+                job={job}
+                workers={workers}
+                teams={teams}
+                customers={customers}
+                projects={projects}
+                conflict={conflictIds.has(job.id)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

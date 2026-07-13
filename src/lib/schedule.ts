@@ -40,6 +40,23 @@ export function weekRange(date: Date): { from: Date; to: Date } {
   return { from, to };
 }
 
+// The calendar month [from, to) that contains `date`: first day of the month
+// to the first day of the next month (both UTC midnight, exclusive upper bound).
+export function monthRange(date: Date): { from: Date; to: Date } {
+  const from = utcDay(date.getUTCFullYear(), date.getUTCMonth(), 1);
+  const to = utcDay(date.getUTCFullYear(), date.getUTCMonth() + 1, 1);
+  return { from, to };
+}
+
+// The 42-day (6-week) grid that renders a month calendar, starting on the
+// Monday of the week containing the 1st so leading/trailing days of the
+// adjacent months fill the grid. Always 42 days for a stable 6-row layout.
+export function monthGridDays(date: Date): Date[] {
+  const first = monthRange(date).from;
+  const gridStart = weekRange(first).from;
+  return Array.from({ length: 42 }, (_, i) => addUtcDays(gridStart, i));
+}
+
 // "HH:MM" wall-clock to minutes since midnight. Returns null for empty/garbage
 // so callers can treat "no time set" distinctly from midnight.
 export function toMinutes(hhmm: string | null | undefined): number | null {

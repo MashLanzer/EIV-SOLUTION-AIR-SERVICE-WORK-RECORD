@@ -564,6 +564,8 @@ export const en = {
     nextWeek: "Next week",
     thisWeek: "This week",
     weekOf: "Week of {date}",
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
     // New / edit job form
     newJob: "Schedule a job",
     editJob: "Edit job",

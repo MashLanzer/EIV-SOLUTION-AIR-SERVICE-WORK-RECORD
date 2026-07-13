@@ -566,6 +566,8 @@ export const es: Dictionary = {
     nextWeek: "Semana siguiente",
     thisWeek: "Esta semana",
     weekOf: "Semana del {date}",
+    prevMonth: "Mes anterior",
+    nextMonth: "Mes siguiente",
     // New / edit job form
     newJob: "Programar trabajo",
     editJob: "Editar trabajo",
