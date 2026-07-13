@@ -65,6 +65,19 @@ export const es: Dictionary = {
     removeSkillAria: "Quitar {name}",
     skillsPlaceholder: "ej. Instalación de horno, Ductos",
     add: "Agregar",
+    // Aviso de perfil incompleto
+    completeTitle: "Termina de configurar tu perfil",
+    completeProgress: "{done} de {total} listo",
+    completePhone: "Añade tu teléfono",
+    completeSignature: "Guarda tu firma",
+    completeSkills: "Añade tus habilidades",
+    // Mi semana (trabajos asignados)
+    myWeek: "Mi semana",
+    myWeekDesc: "Trabajos asignados a ti en los próximos 7 días.",
+    viewSchedule: "Ver agenda completa",
+    // Necesita tu atención (registros devueltos)
+    needsAttention: "Necesita tu atención",
+    needsAttentionDesc: "Registros devueltos para corregir.",
   },
   errors: {
     somethingWrong: "Algo salió mal",
@@ -917,6 +930,8 @@ export const es: Dictionary = {
     roleWorker: "Trabajador",
     joined: "Se unió {date}",
     recordsSubmitted: "Registros enviados",
+    skills: "Habilidades y certificaciones",
+    noSkills: "Aún no hay habilidades. El trabajador las añade en su perfil.",
     manage: "Gestionar",
     authorizedEmail: "Correo de Google autorizado",
     role: "Rol",

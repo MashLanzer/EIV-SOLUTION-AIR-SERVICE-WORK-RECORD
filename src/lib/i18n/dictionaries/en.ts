@@ -65,6 +65,19 @@ export const en = {
     removeSkillAria: "Remove {name}",
     skillsPlaceholder: "e.g. Furnace install, Ductwork",
     add: "Add",
+    // Completeness nudge
+    completeTitle: "Finish setting up your profile",
+    completeProgress: "{done} of {total} done",
+    completePhone: "Add your phone number",
+    completeSignature: "Save your signature",
+    completeSkills: "Add your skills",
+    // My week (assigned jobs)
+    myWeek: "My week",
+    myWeekDesc: "Jobs assigned to you over the next 7 days.",
+    viewSchedule: "View full schedule",
+    // Needs attention (returned records)
+    needsAttention: "Needs your attention",
+    needsAttentionDesc: "Records sent back for changes.",
   },
   errors: {
     somethingWrong: "Something went wrong",
@@ -914,6 +927,8 @@ export const en = {
     roleWorker: "Worker",
     joined: "Joined {date}",
     recordsSubmitted: "Records submitted",
+    skills: "Skills & certifications",
+    noSkills: "No skills listed yet. The worker adds these on their profile.",
     manage: "Manage",
     authorizedEmail: "Authorized Google email",
     role: "Role",

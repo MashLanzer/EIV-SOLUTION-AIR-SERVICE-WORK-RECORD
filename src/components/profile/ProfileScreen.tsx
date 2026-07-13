@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Award, CheckCircle2, Clock, ListTodo, Mail, PenLine, Phone, Plus, ShieldCheck, Trash2, User as UserIcon, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, CheckCircle2, ChevronRight, Circle, Clock, ListTodo, Mail, MapPin, PenLine, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, X } from "lucide-react";
 import Link from "next/link";
 import type { RecordStatus } from "@prisma/client";
 
@@ -45,6 +45,15 @@ interface SkillInfo {
   name: string;
 }
 
+interface UpcomingJob {
+  id: string;
+  title: string;
+  dateKey: string; // YYYY-MM-DD, for the schedule day link
+  dateLabel: string;
+  timeLabel: string | null;
+  subtitle: string | null;
+}
+
 export function ProfileScreen({
   name,
   email,
@@ -52,9 +61,13 @@ export function ProfileScreen({
   storedSignature,
   role,
   backHref,
+  recordHrefBase,
+  scheduleHref,
   stats,
   teams,
   recentRecords,
+  needsAttention,
+  upcomingJobs,
   skills,
 }: {
   name: string;
@@ -63,14 +76,31 @@ export function ProfileScreen({
   storedSignature: string | null;
   role: "ADMIN" | "WORKER";
   backHref: string;
+  // Base path for record links, so they resolve to the caller's area
+  // ("/records" for workers, "/admin/records" for admins).
+  recordHrefBase: string;
+  // Base path for the schedule, used by the "my week" links.
+  scheduleHref: string;
   stats: ProfileStats;
   teams: TeamInfo[];
   recentRecords: RecentRecord[];
+  needsAttention: RecentRecord[];
+  upcomingJobs: UpcomingJob[];
   skills: SkillInfo[];
 }) {
   const isAdmin = role === "ADMIN";
   const t = useT().profile;
   const tc = useT().common;
+
+  // Profile "completeness": the fields that actually make the profile useful to
+  // the rest of the app. Signature pre-fills every record; phone reaches the
+  // person; skills tell admins what they can do. Shown as a nudge until done.
+  const checklist = [
+    { key: "phone", label: t.completePhone, done: !!phone },
+    { key: "signature", label: t.completeSignature, done: !!storedSignature },
+    { key: "skills", label: t.completeSkills, done: skills.length > 0 },
+  ];
+  const doneCount = checklist.filter((c) => c.done).length;
   const sigRef = useRef<SignaturePadHandle>(null);
   const [saving, setSaving] = useState(false);
   const [sigError, setSigError] = useState<string | null>(null);
@@ -121,6 +151,117 @@ export function ProfileScreen({
           </span>
         </div>
       </div>
+
+      {/* Profile completeness nudge - only until every useful field is filled */}
+      {doneCount < checklist.length && (
+        <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-4">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-text">
+              <Sparkles className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                {t.completeTitle}
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {t.completeProgress
+                  .replace("{done}", String(doneCount))
+                  .replace("{total}", String(checklist.length))}
+              </p>
+            </div>
+          </div>
+          <ul className="flex flex-col gap-1.5">
+            {checklist.map((c) => (
+              <li key={c.key} className="flex items-center gap-2 text-sm">
+                {c.done ? (
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-success-text" />
+                ) : (
+                  <Circle className="h-4 w-4 shrink-0 text-neutral-300 dark:text-neutral-600" />
+                )}
+                <span
+                  className={cn(
+                    c.done
+                      ? "text-neutral-400 line-through dark:text-neutral-500"
+                      : "text-neutral-700 dark:text-neutral-300"
+                  )}
+                >
+                  {c.label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* My week - jobs assigned to me over the next 7 days */}
+      {upcomingJobs.length > 0 && (
+        <SettingsSection title={t.myWeek} description={t.myWeekDesc}>
+          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+            {upcomingJobs.map((j) => (
+              <Link
+                key={j.id}
+                href={`${scheduleHref}?date=${j.dateKey}`}
+                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
+                  <CalendarClock className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                    {j.title}
+                  </p>
+                  <p className="flex items-center gap-1.5 truncate text-xs text-neutral-500 dark:text-neutral-400">
+                    <span className="capitalize">{j.dateLabel}</span>
+                    {j.timeLabel && <span className="tabular-nums">· {j.timeLabel}</span>}
+                    {j.subtitle && (
+                      <span className="flex items-center gap-1 truncate">
+                        · <MapPin className="h-3 w-3 shrink-0" />
+                        {j.subtitle}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-neutral-300 dark:text-neutral-600" />
+              </Link>
+            ))}
+          </div>
+          <Link
+            href={scheduleHref}
+            className="flex items-center justify-center gap-1 border-t border-neutral-100 dark:border-neutral-800 px-4 py-2.5 text-sm font-medium text-primary hover:bg-neutral-50 dark:hover:bg-neutral-900"
+          >
+            {t.viewSchedule}
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </SettingsSection>
+      )}
+
+      {/* Needs your attention - records the reviewer sent back to fix */}
+      {needsAttention.length > 0 && (
+        <SettingsSection title={t.needsAttention} description={t.needsAttentionDesc}>
+          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+            {needsAttention.map((r) => (
+              <Link
+                key={r.id}
+                href={`${recordHrefBase}/${r.id}`}
+                className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning-text">
+                  <AlertTriangle className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                    #{r.jobNumber} — {r.customerName}
+                  </p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{r.date}</p>
+                </div>
+                <span className="shrink-0">
+                  <StatusBadge status={r.status} />
+                </span>
+              </Link>
+            ))}
+          </div>
+        </SettingsSection>
+      )}
 
       {/* Account */}
       <SettingsSection title={t.account}>
@@ -256,7 +397,7 @@ export function ProfileScreen({
             {recentRecords.map((r) => (
               <Link
                 key={r.id}
-                href={`/records/${r.id}`}
+                href={`${recordHrefBase}/${r.id}`}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
               >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">

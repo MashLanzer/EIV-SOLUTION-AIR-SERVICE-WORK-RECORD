@@ -1,42 +1,18 @@
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
-import { prisma } from "@/lib/prisma";
+import { getProfileData } from "@/lib/profileData";
+import { getLocale } from "@/lib/i18n/server";
 import { requireAdmin } from "@/lib/session";
 
 export default async function AdminProfilePage() {
   const session = await requireAdmin();
-  const userId = session.user.id;
-
-  const [stats, teams, recentRecords, userData] = await Promise.all([
-    prisma.workRecord.groupBy({
-      by: ["status"],
-      where: { submittedById: userId },
-      _count: true,
-    }),
-    prisma.teamMembership.findMany({
-      where: { userId },
-      include: { team: { select: { id: true, name: true, color: true } } },
-    }),
-    prisma.workRecord.findMany({
-      where: { submittedById: userId },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        jobNumber: true,
-        customerName: true,
-        date: true,
-        status: true,
-      },
-    }),
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { skills: { select: { id: true, name: true } } },
-    }),
-  ]);
-
-  const totalRecords = stats.reduce((acc, s) => acc + s._count, 0);
-  const approvedRecords = stats.find((s) => s.status === "APPROVED")?._count ?? 0;
-  const pendingRecords = stats.find((s) => s.status === "SUBMITTED")?._count ?? 0;
+  const data = await getProfileData(session.user.id);
+  const locale = await getLocale();
+  const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 
   return (
     <ProfileScreen
@@ -46,16 +22,33 @@ export default async function AdminProfilePage() {
       storedSignature={session.user.storedSignature ?? null}
       role="ADMIN"
       backHref="/admin"
-      stats={{ totalRecords, approvedRecords, pendingRecords }}
-      teams={teams.map((t) => ({ id: t.team.id, name: t.team.name, color: t.team.color }))}
-      recentRecords={recentRecords.map((r) => ({
+      recordHrefBase="/admin/records"
+      scheduleHref="/admin/schedule"
+      stats={data.stats}
+      teams={data.teams}
+      recentRecords={data.recentRecords.map((r) => ({
         id: r.id,
         jobNumber: r.jobNumber,
         customerName: r.customerName,
         date: r.date.toISOString().slice(0, 10),
         status: r.status,
       }))}
-      skills={userData?.skills ?? []}
+      needsAttention={data.needsAttention.map((r) => ({
+        id: r.id,
+        jobNumber: r.jobNumber,
+        customerName: r.customerName,
+        date: r.date.toISOString().slice(0, 10),
+        status: r.status,
+      }))}
+      upcomingJobs={data.upcomingJobs.map((j) => ({
+        id: j.id,
+        title: j.title,
+        dateKey: j.scheduledFor.toISOString().slice(0, 10),
+        dateLabel: dateFmt.format(j.scheduledFor),
+        timeLabel: j.startTime && j.endTime ? `${j.startTime}–${j.endTime}` : j.startTime,
+        subtitle: j.customer?.name ?? j.project?.name ?? null,
+      }))}
+      skills={data.skills}
     />
   );
 }

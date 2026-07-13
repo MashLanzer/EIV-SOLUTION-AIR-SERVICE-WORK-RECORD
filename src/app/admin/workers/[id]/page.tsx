@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, CalendarDays, ClipboardList, Mail, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarDays, ClipboardList, Mail, Trash2, Wrench } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,10 @@ export default async function WorkerDetailPage({
   const organizationId = requireOrgId(session);
   const { id } = await params;
 
-  const worker = await prisma.user.findFirst({ where: { id, organizationId } });
+  const worker = await prisma.user.findFirst({
+    where: { id, organizationId },
+    include: { skills: { select: { id: true, name: true }, orderBy: { name: "asc" } } },
+  });
   if (!worker) notFound();
 
   const [otherActiveAdmins, recordCount, org] = await Promise.all([
@@ -104,6 +107,31 @@ export default async function WorkerDetailPage({
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Skills - self-entered on the worker's profile, surfaced here so an
+          admin can see who's qualified when assigning jobs. */}
+      <Card>
+        <CardContent className="flex flex-col gap-3 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            <Wrench className="h-3.5 w-3.5" />
+            {t.skills}
+          </div>
+          {worker.skills.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {worker.skills.map((s) => (
+                <span
+                  key={s.id}
+                  className="inline-flex items-center rounded-full bg-neutral-100 dark:bg-neutral-800 px-3 py-1 text-sm text-neutral-700 dark:text-neutral-300"
+                >
+                  {s.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.noSkills}</p>
           )}
         </CardContent>
       </Card>
