@@ -4,17 +4,19 @@ import { AlertTriangle, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export default function RecordsError({ reset }: { reset: () => void }) {
+  const t = useT().errors;
   return (
     <EmptyState
       icon={AlertTriangle}
-      title="Something went wrong"
-      description="We couldn't load this page. Check your connection and try again."
+      title={t.somethingWrong}
+      description={t.loadFailed}
       action={
         <Button className="mt-2" onClick={reset}>
           <RotateCcw className="h-4 w-4" />
-          Try again
+          {t.tryAgain}
         </Button>
       }
     />

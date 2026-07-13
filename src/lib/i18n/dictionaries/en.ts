@@ -23,6 +23,24 @@ export const en = {
     close: "Close",
     confirm: "Confirm",
   },
+  account: {
+    menuAria: "Account menu",
+    yourAccount: "Your account",
+    profile: "Profile",
+    settings: "Settings",
+  },
+  errors: {
+    somethingWrong: "Something went wrong",
+    loadFailed:
+      "We couldn't load this page. Check your connection and try again.",
+    tryAgain: "Try again",
+    recordNotFound: "Record not found",
+    recordNotFoundDesc: "It may have been deleted, or the link is incorrect.",
+    backToRecords: "Back to My Records",
+    notFound: "Not found",
+    notFoundDesc: "This item may have been deleted, or the link is incorrect.",
+    backToDashboard: "Back to Dashboard",
+  },
   pagination: {
     previous: "Previous",
     next: "Next",
@@ -149,6 +167,8 @@ export const en = {
     saving: "Saving...",
     submitRecord: "Submit Record",
     resubmit: "Resubmit",
+    otherOption: "Other…",
+    describeWork: "Describe the type of work",
     // Discard dialog
     discardTitle: "Discard changes?",
     discardDescription: "You have unsaved edits. Leaving now will lose them.",

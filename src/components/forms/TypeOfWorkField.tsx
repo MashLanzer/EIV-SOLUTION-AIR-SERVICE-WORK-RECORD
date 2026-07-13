@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { TYPE_OF_WORK_OPTIONS } from "@/lib/validations";
 import type { WorkTypeGroup } from "@/lib/workTypes";
 
@@ -21,6 +22,7 @@ export function TypeOfWorkField({
   invalid?: boolean;
   groups?: WorkTypeGroup[];
 }) {
+  const t = useT().form;
   const nonEmpty = (groups ?? []).filter((g) => g.items.length > 0);
   const useGroups = nonEmpty.length > 0;
 
@@ -59,14 +61,14 @@ export function TypeOfWorkField({
                 {option}
               </option>
             ))}
-        <option value="Other">Other…</option>
+        <option value="Other">{t.otherOption}</option>
       </Select>
       {selected === "Other" && (
         <Input
           name="typeOfWork"
-          placeholder="Describe the type of work"
+          placeholder={t.describeWork}
           defaultValue={isCustom ? defaultValue : ""}
-          aria-label="Describe the type of work"
+          aria-label={t.describeWork}
           aria-invalid={invalid ? true : undefined}
           required
         />

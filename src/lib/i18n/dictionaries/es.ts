@@ -23,6 +23,24 @@ export const es: Dictionary = {
     close: "Cerrar",
     confirm: "Confirmar",
   },
+  account: {
+    menuAria: "Menú de cuenta",
+    yourAccount: "Tu cuenta",
+    profile: "Perfil",
+    settings: "Ajustes",
+  },
+  errors: {
+    somethingWrong: "Algo salió mal",
+    loadFailed:
+      "No pudimos cargar esta página. Revisa tu conexión e inténtalo de nuevo.",
+    tryAgain: "Reintentar",
+    recordNotFound: "Registro no encontrado",
+    recordNotFoundDesc: "Puede que se haya eliminado o el enlace sea incorrecto.",
+    backToRecords: "Volver a Mis registros",
+    notFound: "No encontrado",
+    notFoundDesc: "Este elemento puede haberse eliminado o el enlace es incorrecto.",
+    backToDashboard: "Volver al panel",
+  },
   pagination: {
     previous: "Anterior",
     next: "Siguiente",
@@ -150,6 +168,8 @@ export const es: Dictionary = {
     saving: "Guardando...",
     submitRecord: "Enviar registro",
     resubmit: "Reenviar",
+    otherOption: "Otro…",
+    describeWork: "Describe el tipo de trabajo",
     // Discard dialog
     discardTitle: "¿Descartar cambios?",
     discardDescription: "Tienes cambios sin guardar. Si sales ahora se perderán.",

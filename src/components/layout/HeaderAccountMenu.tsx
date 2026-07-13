@@ -6,6 +6,7 @@ import { ChevronDown, LogOut, Settings, User as UserIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 function initialsOf(name: string): string {
@@ -31,6 +32,8 @@ export function HeaderAccountMenu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT().account;
+  const ts = useT().settings;
 
   useEffect(() => {
     if (!open) return;
@@ -58,7 +61,7 @@ export function HeaderAccountMenu({
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Account menu"
+        aria-label={t.menuAria}
         className="flex items-center gap-1 rounded-full py-0.5 pl-0.5 pr-1.5 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95"
       >
         <span
@@ -82,7 +85,7 @@ export function HeaderAccountMenu({
         >
           <div className="flex items-center gap-2 px-2.5 py-2">
             <span className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-              {name || "Your account"}
+              {name || t.yourAccount}
             </span>
           </div>
           <div className="mb-1 border-t border-neutral-100 dark:border-neutral-800" />
@@ -94,7 +97,7 @@ export function HeaderAccountMenu({
             className={itemClass}
           >
             <UserIcon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-            Profile
+            {t.profile}
           </Link>
           <Link
             href={settingsHref}
@@ -103,7 +106,7 @@ export function HeaderAccountMenu({
             className={itemClass}
           >
             <Settings className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-            Settings
+            {t.settings}
           </Link>
 
           <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
@@ -112,13 +115,13 @@ export function HeaderAccountMenu({
               the menu, so opening it does not trip the click-outside handler and
               it survives while the menu stays mounted. */}
           <ConfirmDialog
-            title="Sign out?"
-            description="You'll need to sign in again to access your account."
-            confirmLabel="Sign out"
+            title={ts.signOutTitle}
+            description={ts.signOutDescription}
+            confirmLabel={ts.signOut}
             trigger={
               <button type="button" role="menuitem" className={cn(itemClass, "text-destructive-text")}>
                 <LogOut className="h-4 w-4" />
-                Sign out
+                {ts.signOut}
               </button>
             }
             onConfirm={() => signOut({ redirectTo: "/login" })}

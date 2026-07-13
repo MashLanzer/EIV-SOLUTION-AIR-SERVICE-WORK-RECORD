@@ -3,18 +3,20 @@ import { FileQuestion, ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { getT } from "@/lib/i18n/server";
 
-export default function AdminNotFound() {
+export default async function AdminNotFound() {
+  const t = (await getT()).errors;
   return (
     <EmptyState
       icon={FileQuestion}
-      title="Not found"
-      description="This item may have been deleted, or the link is incorrect."
+      title={t.notFound}
+      description={t.notFoundDesc}
       action={
         <Button asChild className="mt-2">
           <Link href="/admin">
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            {t.backToDashboard}
           </Link>
         </Button>
       }
