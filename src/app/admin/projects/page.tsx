@@ -20,10 +20,11 @@ import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
 import { ProjectsTeamsTabs } from "@/components/projects/ProjectsTeamsTabs";
 import { TeamChip } from "@/components/teams/TeamColorDot";
-import { PROJECT_STATUS_LABELS } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
+import type { Dictionary } from "@/lib/i18n";
 
 // The order the status sections render in. Active is always shown (even
 // empty), the others only when they hold something.
@@ -53,7 +54,7 @@ function checklistProgress(checklists: ProjectRow["checklists"]) {
   return { total, done, pct: total === 0 ? 0 : Math.round((done / total) * 100) };
 }
 
-function ProjectCard({ project }: { project: ProjectRow }) {
+function ProjectCard({ project, t }: { project: ProjectRow; t: Dictionary["projects"] }) {
   const progress = checklistProgress(project.checklists);
   return (
     <Card className="relative transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
@@ -83,7 +84,7 @@ function ProjectCard({ project }: { project: ProjectRow }) {
                   <span className="min-w-0">{project.address}</span>
                 </>
               ) : (
-                <span className="text-neutral-400 dark:text-neutral-600">No address</span>
+                <span className="text-neutral-400 dark:text-neutral-600">{t.noAddress}</span>
               )}
             </div>
           </div>
@@ -104,7 +105,7 @@ function ProjectCard({ project }: { project: ProjectRow }) {
           {progress.total > 0 && (
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
-                <span>Checklist</span>
+                <span>{t.checklist}</span>
                 <span className="tabular-nums">
                   {progress.done}/{progress.total} · {progress.pct}%
                 </span>
@@ -120,13 +121,11 @@ function ProjectCard({ project }: { project: ProjectRow }) {
           <div className="flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
             <span className="flex items-center gap-1.5">
               <ImageIcon className="h-3.5 w-3.5" />
-              <span className="tabular-nums">{project._count.photos}</span>
-              photo{project._count.photos === 1 ? "" : "s"}
+              {(project._count.photos === 1 ? t.photoCountOne : t.photoCountMany).replace("{n}", String(project._count.photos))}
             </span>
             <span className="flex items-center gap-1.5">
               <ClipboardList className="h-3.5 w-3.5" />
-              <span className="tabular-nums">{project._count.records}</span>
-              job{project._count.records === 1 ? "" : "s"}
+              {(project._count.records === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(project._count.records))}
             </span>
             <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
           </div>
@@ -199,6 +198,13 @@ export default async function AdminProjectsPage({
 
   const isFiltered = Boolean(query || teamFilter);
   const hasProjects = projects.length > 0;
+  const dict = await getT();
+  const t = dict.projects;
+  const projectStatusLabel: Record<ProjectStatus, string> = {
+    ACTIVE: t.statusActive,
+    ON_HOLD: t.statusOnHold,
+    COMPLETED: t.statusCompleted,
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -207,7 +213,7 @@ export default async function AdminProjectsPage({
         <Button asChild>
           <Link href="/admin/projects/new">
             <Plus className="h-4 w-4" />
-            New Project
+            {t.newProject}
           </Link>
         </Button>
       </div>
@@ -220,29 +226,29 @@ export default async function AdminProjectsPage({
           <Input
             type="search"
             name="q"
-            placeholder="Search by name or address"
+            placeholder={t.searchPlaceholder}
             defaultValue={query}
             className="pl-9"
-            aria-label="Search projects by name or address"
+            aria-label={t.searchAria}
           />
         </div>
         <div className="flex gap-2">
           <Select
             name="team"
             defaultValue={teamFilter ?? ""}
-            aria-label="Filter by team"
+            aria-label={t.filterByTeam}
             className="sm:w-48"
           >
-            <option value="">All teams</option>
-            <option value="none">No team</option>
-            {teams.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
+            <option value="">{t.allTeams}</option>
+            <option value="none">{t.noTeam}</option>
+            {teams.map((team) => (
+              <option key={team.id} value={team.id}>
+                {team.name}
               </option>
             ))}
           </Select>
           <Button type="submit" variant="outline">
-            Filter
+            {t.filter}
           </Button>
         </div>
       </form>
@@ -253,24 +259,24 @@ export default async function AdminProjectsPage({
         isFiltered ? (
           <EmptyState
             icon={SearchX}
-            title="No matches"
-            description="No projects match your search and filters."
+            title={t.noMatches}
+            description={t.noMatchesDesc}
             action={
               <Button asChild variant="outline" className="mt-2">
-                <Link href="/admin/projects">Clear filters</Link>
+                <Link href="/admin/projects">{t.clearFilters}</Link>
               </Button>
             }
           />
         ) : (
           <EmptyState
             icon={FolderKanban}
-            title="No projects yet"
-            description="Create a project (a jobsite) to group its work and photos."
+            title={t.noProjectsYet}
+            description={t.createProjectDesc}
             action={
               <Button asChild variant="outline" className="mt-2">
                 <Link href="/admin/projects/new">
                   <Plus className="h-4 w-4" />
-                  New Project
+                  {t.newProject}
                 </Link>
               </Button>
             }
@@ -284,16 +290,16 @@ export default async function AdminProjectsPage({
           return (
             <section key={status} className="flex flex-col gap-3">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-                {PROJECT_STATUS_LABELS[status]} ({items.length})
+                {t.statusCount.replace("{label}", projectStatusLabel[status]).replace("{n}", String(items.length))}
               </h2>
               {items.length === 0 ? (
                 <Card className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
-                  No active projects{isFiltered ? " match your filters" : ""}.
+                  {isFiltered ? t.noActiveMatchFilters : t.noActiveProjects}.
                 </Card>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {items.map((p) => (
-                    <ProjectCard key={p.id} project={p} />
+                    <ProjectCard key={p.id} project={p} t={t} />
                   ))}
                 </div>
               )}

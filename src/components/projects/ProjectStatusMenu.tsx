@@ -6,7 +6,8 @@ import type { ProjectStatus } from "@prisma/client";
 
 import { setProjectStatusAction } from "@/actions/projects";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
-import { PROJECT_STATUSES, PROJECT_STATUS_LABELS } from "@/lib/validations";
+import { PROJECT_STATUSES } from "@/lib/validations";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 // A compact status control: shows the current ProjectStatusBadge and, on tap,
@@ -28,6 +29,12 @@ export function ProjectStatusMenu({
   const [pending, startTransition] = useTransition();
   const [optimistic, setOptimistic] = useOptimistic<ProjectStatus>(status);
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT().projects;
+  const statusLabel: Record<ProjectStatus, string> = {
+    ACTIVE: t.statusActive,
+    ON_HOLD: t.statusOnHold,
+    COMPLETED: t.statusCompleted,
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -62,7 +69,7 @@ export function ProjectStatusMenu({
         disabled={pending}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Change status"
+        aria-label={t.changeStatus}
         className="inline-flex items-center gap-1 rounded-full transition-opacity hover:opacity-80 disabled:opacity-50"
       >
         <ProjectStatusBadge status={optimistic} />
@@ -84,7 +91,7 @@ export function ProjectStatusMenu({
               onClick={() => pick(s)}
               className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
-              {PROJECT_STATUS_LABELS[s]}
+              {statusLabel[s]}
               {s === optimistic && <Check className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />}
             </button>
           ))}

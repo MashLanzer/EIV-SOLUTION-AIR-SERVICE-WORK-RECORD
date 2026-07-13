@@ -17,7 +17,9 @@ import {
   updateProjectAction,
   type ProjectFormState,
 } from "@/actions/projects";
-import { PROJECT_STATUSES, PROJECT_STATUS_LABELS } from "@/lib/validations";
+import { PROJECT_STATUSES } from "@/lib/validations";
+import { useT } from "@/components/i18n/LocaleProvider";
+import type { ProjectStatus } from "@prisma/client";
 
 interface ProjectValues {
   name: string;
@@ -51,6 +53,13 @@ export function ProjectForm({
   );
   const [dirty, setDirty] = useState(false);
   const err = (name: string) => state?.fieldErrors?.[name]?.[0];
+  const t = useT().projects;
+  const tc = useT().common;
+  const statusLabel: Record<ProjectStatus, string> = {
+    ACTIVE: t.statusActive,
+    ON_HOLD: t.statusOnHold,
+    COMPLETED: t.statusCompleted,
+  };
 
   // Warn before a full page unload (reload / closing the app) when there are
   // unsaved edits. In-app navigation is guarded by the Cancel button below.
@@ -73,39 +82,39 @@ export function ProjectForm({
     >
       <div className="flex flex-col gap-2">
         <Label htmlFor="name" required>
-          Project name
+          {t.projectName}
         </Label>
         <Input
           id="name"
           name="name"
           required
           defaultValue={defaultValues?.name}
-          placeholder="e.g. 3803 Romano Busciglio St"
+          placeholder={t.projectNamePlaceholder}
           aria-invalid={err("name") ? true : undefined}
         />
         <FieldError id="name-error" message={err("name")} />
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="address">{t.address}</Label>
         <Input
           id="address"
           name="address"
           defaultValue={defaultValues?.address}
           autoComplete="street-address"
-          placeholder="Street, city, state"
+          placeholder={t.addressPlaceholder}
         />
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          Used to pin the project on the map.
+          {t.addressHint}
         </p>
       </div>
 
       {customers.length > 0 && (
         <div className="flex flex-col gap-2">
           <Label htmlFor="customerId">
-            Customer{" "}
+            {t.customer}{" "}
             <span className="font-normal text-neutral-400 dark:text-neutral-500">
-              (optional)
+              ({tc.optional})
             </span>
           </Label>
           <Select
@@ -113,7 +122,7 @@ export function ProjectForm({
             name="customerId"
             defaultValue={defaultValues?.customerId ?? ""}
           >
-            <option value="">No customer</option>
+            <option value="">{t.noCustomer}</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
@@ -124,11 +133,11 @@ export function ProjectForm({
       )}
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="status">Status</Label>
+        <Label htmlFor="status">{t.status}</Label>
         <Select id="status" name="status" defaultValue={defaultValues?.status ?? "ACTIVE"}>
           {PROJECT_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {PROJECT_STATUS_LABELS[s]}
+              {statusLabel[s]}
             </option>
           ))}
         </Select>
@@ -137,13 +146,13 @@ export function ProjectForm({
       {teams.length > 0 && (
         <div className="flex flex-col gap-2">
           <Label htmlFor="teamId">
-            Team{" "}
+            {t.team}{" "}
             <span className="font-normal text-neutral-400 dark:text-neutral-500">
-              (optional)
+              ({tc.optional})
             </span>
           </Label>
           <Select id="teamId" name="teamId" defaultValue={defaultValues?.teamId ?? ""}>
-            <option value="">No team</option>
+            <option value="">{t.noTeam}</option>
             {teams.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}
@@ -158,24 +167,24 @@ export function ProjectForm({
       <div className="flex items-center gap-2">
         <Button type="submit" disabled={pending}>
           <Save className="h-4 w-4" />
-          {pending ? "Saving..." : projectId ? "Save project" : "Create project"}
+          {pending ? t.saving : projectId ? t.saveProject : t.createProject}
         </Button>
         {cancelHref &&
           (dirty ? (
             <ConfirmDialog
-              title="Discard changes?"
-              description="You have unsaved edits. Leaving now will lose them."
-              confirmLabel="Discard"
+              title={t.discardTitle}
+              description={t.discardDesc}
+              confirmLabel={t.discard}
               trigger={
                 <Button type="button" variant="outline" disabled={pending}>
-                  Cancel
+                  {tc.cancel}
                 </Button>
               }
               onConfirm={() => router.push(cancelHref)}
             />
           ) : (
             <Button type="button" variant="outline" asChild>
-              <Link href={cancelHref}>Cancel</Link>
+              <Link href={cancelHref}>{tc.cancel}</Link>
             </Button>
           ))}
       </div>
