@@ -159,7 +159,30 @@ export default async function AdminCustomersPage({
                         </TableCell>
                         <TableCell>{customer.address}</TableCell>
                         <TableCell className="text-sm text-neutral-500 dark:text-neutral-400">
-                          {customer.phone || customer.email || "—"}
+                          {customer.phone || customer.email ? (
+                            <div className="flex flex-col gap-0.5">
+                              {customer.phone && (
+                                <a
+                                  href={`tel:${customer.phone}`}
+                                  className="flex w-fit items-center gap-1.5 hover:text-primary"
+                                >
+                                  <Phone className="h-3.5 w-3.5 shrink-0" />
+                                  {customer.phone}
+                                </a>
+                              )}
+                              {customer.email && (
+                                <a
+                                  href={`mailto:${customer.email}`}
+                                  className="flex w-fit items-center gap-1.5 hover:text-primary"
+                                >
+                                  <Mail className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="truncate">{customer.email}</span>
+                                </a>
+                              )}
+                            </div>
+                          ) : (
+                            "—"
+                          )}
                         </TableCell>
                         <TableCell className="tabular-nums">{customer._count.records}</TableCell>
                         <TableCell className="text-right">
