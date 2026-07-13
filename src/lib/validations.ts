@@ -125,6 +125,32 @@ export const addSkillSchema = z.object({
   name: z.string().trim().min(1, "Skill name is required").max(60, "Skill name is too long"),
 });
 
+export const SCHEDULED_JOB_STATUSES = [
+  "SCHEDULED",
+  "IN_PROGRESS",
+  "DONE",
+  "CANCELED",
+] as const;
+export type ScheduledJobStatusValue = (typeof SCHEDULED_JOB_STATUSES)[number];
+
+// A planned visit on the calendar. Times are optional (some jobs are just
+// "sometime that day"); when both are given, end must be after start.
+export const scheduledJobSchema = z
+  .object({
+    title: z.string().trim().min(1, "A title is required").max(120, "Title is too long"),
+    scheduledFor: z.string().min(1, "A date is required"),
+    startTime: z.string().optional().or(z.literal("")),
+    endTime: z.string().optional().or(z.literal("")),
+    notes: z.string().max(2000, "Notes are too long").optional().or(z.literal("")),
+  })
+  .refine(
+    (d) =>
+      !d.startTime ||
+      !d.endTime ||
+      timeToMinutes(d.endTime) > timeToMinutes(d.startTime),
+    { message: "End time must be after start time", path: ["endTime"] }
+  );
+
 export const updateOrganizationNameSchema = z.object({
   name: z
     .string()

@@ -40,6 +40,34 @@ export function weekRange(date: Date): { from: Date; to: Date } {
   return { from, to };
 }
 
+// "HH:MM" wall-clock to minutes since midnight. Returns null for empty/garbage
+// so callers can treat "no time set" distinctly from midnight.
+export function toMinutes(hhmm: string | null | undefined): number | null {
+  if (!hhmm) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm);
+  if (!m) return null;
+  const mins = Number(m[1]) * 60 + Number(m[2]);
+  return mins >= 0 && mins < 24 * 60 ? mins : null;
+}
+
+// Do two timed windows on the same day overlap? Used to warn (never block)
+// when a worker is double-booked. Only meaningful when both jobs have a start
+// time; a job with a start but no end is treated as a zero-length point, so
+// two untimed or point jobs never "overlap" - we only flag genuine clashes.
+export function timeWindowsOverlap(
+  aStart: string | null,
+  aEnd: string | null,
+  bStart: string | null,
+  bEnd: string | null
+): boolean {
+  const as = toMinutes(aStart);
+  const bs = toMinutes(bStart);
+  if (as == null || bs == null) return false;
+  const ae = toMinutes(aEnd) ?? as;
+  const be = toMinutes(bEnd) ?? bs;
+  return as < be && bs < ae;
+}
+
 // The role-scoped filter every scheduler query must go through: an admin sees
 // the whole company's calendar; a worker sees only jobs assigned to them
 // personally or to one of their teams. Mirrors the project-access rules so the
