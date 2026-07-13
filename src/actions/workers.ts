@@ -195,6 +195,46 @@ export async function updateWorkerEmailAction(
   revalidatePath(`/admin/workers/${userId}`);
 }
 
+export type UpdateWorkerOverloadState = { error?: string; ok?: boolean } | undefined;
+
+// Set (or clear) a worker's personal overload threshold - how many jobs in a
+// day flag them as overloaded on the schedule. Blank clears it back to the org
+// default; otherwise a whole number clamped 1..50. Admin + org-scoped.
+export async function updateWorkerOverloadAction(
+  userId: string,
+  _prevState: UpdateWorkerOverloadState,
+  formData: FormData
+): Promise<UpdateWorkerOverloadState> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  const target = await prisma.user.findFirst({
+    where: { id: userId, organizationId },
+    select: { id: true },
+  });
+  if (!target) return { error: "Worker not found" };
+
+  const raw = ((formData.get("threshold") as string | null) ?? "").trim();
+  let value: number | null;
+  if (!raw) {
+    value = null;
+  } else {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1) {
+      return { error: "Enter a whole number of 1 or more." };
+    }
+    value = Math.min(50, n);
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { scheduleOverloadThreshold: value },
+  });
+
+  revalidatePath(`/admin/workers/${userId}`);
+  return { ok: true };
+}
+
 export type UpdateWorkerRoleState = { error?: string } | undefined;
 
 export async function updateWorkerRoleAction(

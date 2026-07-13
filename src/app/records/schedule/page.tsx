@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { WorkerJobCard, type WorkerJobView } from "@/components/schedule/WorkerJobCard";
+import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import {
   ScheduleMonthCalendar,
   type CalendarDay,
@@ -18,6 +19,7 @@ import {
   getScheduledJobs,
   monthGridDays,
   startOfUtcDay,
+  timeWindowsOverlap,
   utcDay,
 } from "@/lib/schedule";
 
@@ -49,14 +51,20 @@ export default async function WorkerSchedulePage({
   const from = gridDays[0];
   const to = addUtcDays(gridDays[gridDays.length - 1], 1);
 
-  const [jobs, org] = await Promise.all([
+  const [jobs, org, me] = await Promise.all([
     getScheduledJobs({ session, organizationId, from, to }),
     prisma.organization.findUnique({
       where: { id: organizationId },
       select: { scheduleOverloadThreshold: true },
     }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { scheduleOverloadThreshold: true },
+    }),
   ]);
-  const overloadThreshold = org?.scheduleOverloadThreshold ?? 4;
+  // The worker's own threshold wins when set; otherwise the org default.
+  const overloadThreshold =
+    me?.scheduleOverloadThreshold ?? org?.scheduleOverloadThreshold ?? 4;
 
   // Canceled visits are hidden - they're not something to act on.
   type Row = WorkerJobView & { day: string };
@@ -101,6 +109,19 @@ export default async function WorkerSchedulePage({
   });
 
   const selectedJobs = byDay.get(selectedKey) ?? [];
+
+  // Flag the worker's own overlapping timed visits so the timeline can warn.
+  const conflictIds = new Set<string>();
+  for (let i = 0; i < selectedJobs.length; i++) {
+    for (let j = i + 1; j < selectedJobs.length; j++) {
+      const a = selectedJobs[i];
+      const b = selectedJobs[j];
+      if (timeWindowsOverlap(a.startTime, a.endTime, b.startTime, b.endTime)) {
+        conflictIds.add(a.id);
+        conflictIds.add(b.id);
+      }
+    }
+  }
 
   const prevMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth - 1, 1));
   const nextMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth + 1, 1));
@@ -169,6 +190,14 @@ export default async function WorkerSchedulePage({
         </div>
       )}
 
+      {selectedJobs.length > 0 && (
+        <ScheduleDayTimeline
+          jobs={selectedJobs}
+          conflictIds={conflictIds}
+          conflictLabel={t.conflictBadge}
+        />
+      )}
+
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold capitalize text-neutral-900 dark:text-neutral-100">
           {selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
@@ -186,7 +215,9 @@ export default async function WorkerSchedulePage({
         ) : (
           <div className="flex flex-col gap-2">
             {selectedJobs.map((job) => (
-              <WorkerJobCard key={job.id} job={job} />
+              <div key={job.id} id={`job-${job.id}`} className="scroll-mt-20">
+                <WorkerJobCard job={job} />
+              </div>
             ))}
           </div>
         )}

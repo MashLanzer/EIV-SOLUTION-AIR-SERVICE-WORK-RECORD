@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { DeleteWorkerButton } from "@/components/workers/DeleteWorkerButton";
 import { ToggleWorkerActiveButton } from "@/components/workers/ToggleWorkerActiveButton";
 import { UpdateWorkerEmailForm } from "@/components/workers/UpdateWorkerEmailForm";
+import { UpdateWorkerOverloadForm } from "@/components/workers/UpdateWorkerOverloadForm";
 import { UpdateWorkerRoleForm } from "@/components/workers/UpdateWorkerRoleForm";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -35,12 +36,17 @@ export default async function WorkerDetailPage({
   const worker = await prisma.user.findFirst({ where: { id, organizationId } });
   if (!worker) notFound();
 
-  const [otherActiveAdmins, recordCount] = await Promise.all([
+  const [otherActiveAdmins, recordCount, org] = await Promise.all([
     prisma.user.count({
       where: { organizationId, role: "ADMIN", active: true, id: { not: worker.id } },
     }),
     prisma.workRecord.count({ where: { organizationId, submittedById: worker.id } }),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { scheduleOverloadThreshold: true },
+    }),
   ]);
+  const orgOverloadDefault = org?.scheduleOverloadThreshold ?? 4;
   const isLastActiveAdmin =
     worker.role === "ADMIN" && worker.active && otherActiveAdmins === 0;
   const dict = await getT();
@@ -122,6 +128,15 @@ export default async function WorkerDetailPage({
                 userId={worker.id}
                 currentRole={worker.role}
                 disableDemote={isLastActiveAdmin}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>{t.overloadThreshold}</Label>
+              <UpdateWorkerOverloadForm
+                userId={worker.id}
+                current={worker.scheduleOverloadThreshold}
+                orgDefault={orgOverloadDefault}
               />
             </div>
 

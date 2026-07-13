@@ -970,6 +970,11 @@ export const es: Dictionary = {
     creating: "Creando...",
     createAccount: "Crear cuenta",
     saving: "Guardando...",
+    save: "Guardar",
+    // Umbral de sobrecarga (por trabajador)
+    overloadThreshold: "Aviso de sobrecarga",
+    overloadThresholdHint:
+      "Marca el día de este trabajador como sobrecargado a partir de esta cantidad de trabajos. Déjalo en blanco para usar el valor por defecto de la empresa ({default}).",
   },
   nav: {
     dashboard: "Panel",

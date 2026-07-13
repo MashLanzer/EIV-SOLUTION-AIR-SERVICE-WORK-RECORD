@@ -967,6 +967,11 @@ export const en = {
     creating: "Creating...",
     createAccount: "Create account",
     saving: "Saving...",
+    save: "Save",
+    // Overload threshold (per worker)
+    overloadThreshold: "Overload alert",
+    overloadThresholdHint:
+      "Flags this worker's day as overloaded at this many jobs. Leave blank to use the company default ({default}).",
   },
   nav: {
     dashboard: "Dashboard",

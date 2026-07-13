@@ -310,6 +310,9 @@ model User {
   payRate          Decimal?      @db.Decimal(10, 2)
   role             Role          @default(WORKER)
   active           Boolean       @default(true)
+  // Per-worker override for the scheduler overload alert. Null falls back to
+  // the organization's scheduleOverloadThreshold.
+  scheduleOverloadThreshold Int?
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   submittedRecords WorkRecord[]  @relation("SubmittedBy")

@@ -1,8 +1,20 @@
+import type { ScheduledJobStatus } from "@prisma/client";
 import { AlertTriangle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { toMinutes } from "@/lib/schedule";
-import type { ScheduleJobView } from "@/components/schedule/ScheduleJobCard";
+
+// The minimum a job needs to appear on the timeline. Both the admin's
+// ScheduleJobView and the worker's own job rows satisfy this, so the same
+// timeline serves both sides.
+export interface TimelineJob {
+  id: string;
+  title: string;
+  startTime: string | null;
+  endTime: string | null;
+  status: ScheduledJobStatus;
+  assignedToName?: string | null;
+}
 
 // Height of one hour row in the timeline. Kept in one place so the gutter
 // labels, gridlines and block positions all agree.
@@ -11,7 +23,7 @@ const HOUR_PX = 56;
 // still shows its title.
 const MIN_BLOCK_PX = 28;
 
-type Slot = { job: ScheduleJobView; start: number; end: number };
+type Slot = { job: TimelineJob; start: number; end: number };
 type Placed = Slot & { lane: number; lanes: number };
 
 // Lay the day's timed jobs out into non-overlapping lanes. Overlapping jobs
@@ -66,7 +78,7 @@ export function ScheduleDayTimeline({
   conflictIds,
   conflictLabel,
 }: {
-  jobs: ScheduleJobView[];
+  jobs: TimelineJob[];
   conflictIds: Set<string>;
   conflictLabel: string;
 }) {
