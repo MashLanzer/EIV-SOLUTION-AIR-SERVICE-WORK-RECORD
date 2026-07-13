@@ -312,6 +312,70 @@ export const en = {
       "e.g. Missing installer signature — please re-collect and resubmit.",
     returnN: "Return {n}",
   },
+  customers: {
+    // List page
+    title: "Customers",
+    searchPlaceholder: "Search by name, address, phone, or email",
+    searchAria: "Search customers by name, address, phone, or email",
+    noMatches: "No matches",
+    nothingFound: 'Nothing found for "{q}".',
+    clearSearch: "Clear search",
+    noCustomers: "No customers yet",
+    noCustomersDesc:
+      "Customers are saved automatically when work records are submitted.",
+    countOne: "{n} Customer",
+    countMany: "{n} Customers",
+    colName: "Name",
+    colAddress: "Address",
+    colContact: "Contact",
+    colJobs: "Jobs",
+    colHistory: "History",
+    jobCountOne: "{n} job",
+    jobCountMany: "{n} jobs",
+    // Detail
+    customerSaved: "Customer saved",
+    customersMerged: "Customers merged",
+    mergeError:
+      "Couldn't merge - pick a valid customer to merge into and try again.",
+    call: "Call",
+    email: "Email",
+    directions: "Directions",
+    customerSince: "Customer since {date}",
+    totalJobs: "Total jobs",
+    viewAll: "View all",
+    approved: "Approved",
+    pendingReview: "Pending review",
+    needsChanges: "Needs changes",
+    projectsCount: "Projects ({n})",
+    jobHistory: "Job history ({n})",
+    noJobs: "No jobs yet",
+    noJobsDesc: "Work records for this customer will show up here.",
+    open: "Open",
+    openRecordAria: "Open record {n}",
+    submittedBy: "Submitted By",
+    manage: "Manage",
+    customerDetails: "Customer details",
+    // Edit form
+    name: "Name",
+    address: "Address",
+    phone: "Phone",
+    applyToRecords:
+      "Also update the name/address on this customer's existing work records. Leave unchecked to keep their past records exactly as they were submitted.",
+    saveCustomer: "Save customer",
+    saving: "Saving...",
+    // Delete
+    deleteTitle: "Delete this customer?",
+    deleteDesc:
+      "Their saved contact details are removed. Existing work records are kept but will no longer be linked to a saved customer.",
+    deleteConfirm: "Delete customer",
+    // Merge
+    mergeInto: "Merge into…",
+    mergeTitle: "Merge customer",
+    mergeDesc:
+      "Move every job from this customer to the one you pick, then delete this duplicate. This can't be undone.",
+    mergeChoose: "Choose the customer to keep…",
+    merge: "Merge",
+  },
   workers: {
     // List page
     team: "Team",

@@ -5,6 +5,7 @@ import { Merge } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { mergeCustomerAction } from "@/actions/customers";
 
 interface OtherCustomer {
@@ -27,6 +28,8 @@ export function MergeCustomerForm({
   const id = useId();
   const titleId = `${id}-title`;
   const descriptionId = `${id}-description`;
+  const t = useT().customers;
+  const tc = useT().common;
 
   if (others.length === 0) return null;
 
@@ -39,7 +42,7 @@ export function MergeCustomerForm({
         onClick={() => dialogRef.current?.showModal()}
       >
         <Merge className="h-4 w-4" />
-        Merge into…
+        {t.mergeInto}
       </Button>
       <dialog
         ref={dialogRef}
@@ -52,15 +55,14 @@ export function MergeCustomerForm({
       >
         <form action={mergeCustomerAction.bind(null, sourceId)}>
           <h2 id={titleId} className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            Merge customer
+            {t.mergeTitle}
           </h2>
           <p id={descriptionId} className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
-            Move every job from this customer to the one you pick, then delete
-            this duplicate. This can&apos;t be undone.
+            {t.mergeDesc}
           </p>
           <Select name="targetId" required className="mt-3" defaultValue="">
             <option value="" disabled>
-              Choose the customer to keep…
+              {t.mergeChoose}
             </option>
             {others.map((c) => (
               <option key={c.id} value={c.id}>
@@ -74,11 +76,11 @@ export function MergeCustomerForm({
               variant="outline"
               onClick={() => dialogRef.current?.close()}
             >
-              Cancel
+              {tc.cancel}
             </Button>
             <Button type="submit" variant="destructive">
               <Merge className="h-4 w-4" />
-              Merge
+              {t.merge}
             </Button>
           </div>
         </form>

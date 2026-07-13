@@ -22,6 +22,7 @@ import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 import type { Prisma } from "@prisma/client";
 
 const CUSTOMER_SORTS = ["name", "address", "jobs"] as const;
@@ -88,20 +89,22 @@ export default async function AdminCustomersPage({
     basePath: "/admin/customers",
     params: { q: query },
   };
+  const dict = await getT();
+  const t = dict.customers;
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Customers</h1>
+      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
 
       <form method="get" className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
         <Input
           type="search"
           name="q"
-          placeholder="Search by name, address, phone, or email"
+          placeholder={t.searchPlaceholder}
           defaultValue={query}
           className="pl-9"
-          aria-label="Search customers by name, address, phone, or email"
+          aria-label={t.searchAria}
         />
       </form>
 
@@ -109,25 +112,25 @@ export default async function AdminCustomersPage({
         query ? (
           <EmptyState
             icon={SearchX}
-            title="No matches"
-            description={`Nothing found for "${query}".`}
+            title={t.noMatches}
+            description={t.nothingFound.replace("{q}", query)}
             action={
               <Button asChild variant="outline" className="mt-2">
-                <Link href="/admin/customers">Clear search</Link>
+                <Link href="/admin/customers">{t.clearSearch}</Link>
               </Button>
             }
           />
         ) : (
           <EmptyState
             icon={Contact}
-            title="No customers yet"
-            description="Customers are saved automatically when work records are submitted."
+            title={t.noCustomers}
+            description={t.noCustomersDesc}
           />
         )
       ) : (
         <section className="flex flex-col gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {total} Customer{total === 1 ? "" : "s"}
+            {(total === 1 ? t.countOne : t.countMany).replace("{n}", String(total))}
           </h2>
           <div className="hidden sm:block">
             <Card>
@@ -136,16 +139,16 @@ export default async function AdminCustomersPage({
                   <TableHeader>
                     <TableRow>
                       <TableHead>
-                        <SortHeader column="name" label="Name" {...sortProps} />
+                        <SortHeader column="name" label={t.colName} {...sortProps} />
                       </TableHead>
                       <TableHead>
-                        <SortHeader column="address" label="Address" {...sortProps} />
+                        <SortHeader column="address" label={t.colAddress} {...sortProps} />
                       </TableHead>
-                      <TableHead>Contact</TableHead>
+                      <TableHead>{t.colContact}</TableHead>
                       <TableHead>
-                        <SortHeader column="jobs" label="Jobs" {...sortProps} />
+                        <SortHeader column="jobs" label={t.colJobs} {...sortProps} />
                       </TableHead>
-                      <TableHead className="text-right">History</TableHead>
+                      <TableHead className="text-right">{t.colHistory}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -162,7 +165,7 @@ export default async function AdminCustomersPage({
                         <TableCell className="text-right">
                           <Button asChild variant="outline" size="sm">
                             <Link href={`/admin/customers/${customer.id}`}>
-                              View
+                              {dict.common.view}
                               <ArrowRight className="h-4 w-4" />
                             </Link>
                           </Button>
@@ -189,7 +192,7 @@ export default async function AdminCustomersPage({
                         {customer.name}
                       </span>
                       <span className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                        {customer._count.records} job{customer._count.records === 1 ? "" : "s"}
+                        {(customer._count.records === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(customer._count.records))}
                       </span>
                     </div>
                     <div className="mt-0.5 flex items-start gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">

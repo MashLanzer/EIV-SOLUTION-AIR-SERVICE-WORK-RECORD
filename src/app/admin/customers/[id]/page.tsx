@@ -39,9 +39,10 @@ import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getLocale, getT } from "@/lib/i18n/server";
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -49,8 +50,8 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-function formatSince(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatSince(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -131,15 +132,17 @@ export default async function AdminCustomerPage({
   const mapsDir = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
     customer.address
   )}`;
+  const dict = await getT();
+  const t = dict.customers;
+  const locale = await getLocale();
 
   return (
     <div className="flex flex-col gap-4">
-      {saved && <SuccessToast message="Customer saved" aboveMobileNav />}
-      {merged && <SuccessToast message="Customers merged" aboveMobileNav />}
+      {saved && <SuccessToast message={t.customerSaved} aboveMobileNav />}
+      {merged && <SuccessToast message={t.customersMerged} aboveMobileNav />}
       {error === "merge" && (
         <Alert variant="error">
-          Couldn&apos;t merge - pick a valid customer to merge into and try
-          again.
+          {t.mergeError}
         </Alert>
       )}
 
@@ -154,7 +157,7 @@ export default async function AdminCustomerPage({
               </h1>
               <div className="mt-0.5 flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
                 <CalendarDays className="h-3.5 w-3.5 shrink-0" />
-                Customer since {formatSince(customer.createdAt)}
+                {t.customerSince.replace("{date}", formatSince(customer.createdAt, locale))}
               </div>
             </div>
           </div>
@@ -175,7 +178,7 @@ export default async function AdminCustomerPage({
               <Button asChild variant="outline" className="flex-1">
                 <a href={`tel:${customer.phone}`}>
                   <Phone className="h-4 w-4" />
-                  Call
+                  {t.call}
                 </a>
               </Button>
             )}
@@ -183,14 +186,14 @@ export default async function AdminCustomerPage({
               <Button asChild variant="outline" className="flex-1">
                 <a href={`mailto:${customer.email}`}>
                   <Mail className="h-4 w-4" />
-                  Email
+                  {t.email}
                 </a>
               </Button>
             )}
             <Button asChild variant="outline" className="flex-1">
               <a href={mapsDir} target="_blank" rel="noopener noreferrer">
                 <Navigation className="h-4 w-4" />
-                Directions
+                {t.directions}
               </a>
             </Button>
           </div>
@@ -213,7 +216,7 @@ export default async function AdminCustomerPage({
                   {recordCount}
                 </div>
                 <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Total jobs
+                  {t.totalJobs}
                 </div>
               </div>
             </div>
@@ -222,7 +225,7 @@ export default async function AdminCustomerPage({
                 <Link
                   href={`/admin/records?customerName=${encodeURIComponent(customer.name)}`}
                 >
-                  View all
+                  {t.viewAll}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -236,7 +239,7 @@ export default async function AdminCustomerPage({
                   {approvedCount}
                 </div>
                 <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Approved
+                  {t.approved}
                 </div>
               </div>
               <div>
@@ -244,7 +247,7 @@ export default async function AdminCustomerPage({
                   {pendingCount}
                 </div>
                 <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Pending review
+                  {t.pendingReview}
                 </div>
               </div>
               <div>
@@ -252,7 +255,7 @@ export default async function AdminCustomerPage({
                   {needsChangesCount}
                 </div>
                 <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Needs changes
+                  {t.needsChanges}
                 </div>
               </div>
             </div>
@@ -267,7 +270,7 @@ export default async function AdminCustomerPage({
           style={{ animationDelay: "80ms", animationFillMode: "both" }}
         >
           <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            Projects ({projects.length})
+            {t.projectsCount.replace("{n}", String(projects.length))}
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {projects.map((p) => (
@@ -314,15 +317,15 @@ export default async function AdminCustomerPage({
         style={{ animationDelay: "120ms", animationFillMode: "both" }}
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Job history ({recordCount})
+          {t.jobHistory.replace("{n}", String(recordCount))}
         </h2>
         {records.length === 0 ? (
           <Card>
             <CardContent className="p-0">
               <EmptyState
                 icon={ClipboardList}
-                title="No jobs yet"
-                description="Work records for this customer will show up here."
+                title={t.noJobs}
+                description={t.noJobsDesc}
               />
             </CardContent>
           </Card>
@@ -334,18 +337,18 @@ export default async function AdminCustomerPage({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Job #</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Type of Work</TableHead>
-                        <TableHead>Submitted By</TableHead>
-                        <TableHead className="text-right">Open</TableHead>
+                        <TableHead>{dict.records.date}</TableHead>
+                        <TableHead>{dict.records.jobNumber}</TableHead>
+                        <TableHead>{dict.adminRecords.colStatus}</TableHead>
+                        <TableHead>{dict.records.typeOfWork}</TableHead>
+                        <TableHead>{t.submittedBy}</TableHead>
+                        <TableHead className="text-right">{t.open}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {records.map((record) => (
                         <TableRow key={record.id}>
-                          <TableCell>{formatDate(record.date)}</TableCell>
+                          <TableCell>{formatDate(record.date, locale)}</TableCell>
                           <TableCell>{record.jobNumber}</TableCell>
                           <TableCell>
                             <StatusBadge status={record.status} />
@@ -356,7 +359,7 @@ export default async function AdminCustomerPage({
                             <Button asChild variant="outline" size="icon">
                               <Link
                                 href={`/admin/records/${record.id}`}
-                                aria-label={`Open record ${record.jobNumber}`}
+                                aria-label={t.openRecordAria.replace("{n}", record.jobNumber)}
                               >
                                 <ArrowRight className="h-4 w-4" />
                               </Link>
@@ -383,12 +386,12 @@ export default async function AdminCustomerPage({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                          Job #{record.jobNumber}
+                          {dict.records.jobNumber}{record.jobNumber}
                         </span>
                         <StatusBadge status={record.status} />
                       </div>
                       <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                        {formatDate(record.date)} · {record.typeOfWork}
+                        {formatDate(record.date, locale)} · {record.typeOfWork}
                       </div>
                       <div className="text-xs text-neutral-400 dark:text-neutral-500">
                         {record.submittedBy?.name ?? "—"}
@@ -415,7 +418,7 @@ export default async function AdminCustomerPage({
         style={{ animationDelay: "160ms", animationFillMode: "both" }}
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Manage
+          {t.manage}
         </h2>
         <Card>
           {/* Collapsed by default so the edit form no longer dominates the
@@ -424,7 +427,7 @@ export default async function AdminCustomerPage({
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
               <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                Customer details
+                {t.customerDetails}
               </span>
               <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
             </summary>

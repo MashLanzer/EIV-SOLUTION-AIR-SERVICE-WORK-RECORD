@@ -13,6 +13,7 @@ import {
   type CustomerFormState,
 } from "@/actions/customers";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 interface CustomerValues {
   name: string;
@@ -34,6 +35,7 @@ export function CustomerEditForm({
   >(updateCustomerAction.bind(null, customerId), undefined);
   const [dirty, setDirty] = useState(false);
   useBeforeUnloadGuard(dirty && !pending);
+  const t = useT().customers;
 
   const err = (name: string) => state?.fieldErrors?.[name]?.[0];
 
@@ -45,7 +47,7 @@ export function CustomerEditForm({
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t.name}</Label>
           <Input
             id="name"
             name="name"
@@ -56,7 +58,7 @@ export function CustomerEditForm({
           <FieldError id="name-error" message={err("name")} />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="address">Address</Label>
+          <Label htmlFor="address">{t.address}</Label>
           <Input
             id="address"
             name="address"
@@ -67,7 +69,7 @@ export function CustomerEditForm({
           <FieldError id="address-error" message={err("address")} />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">{t.phone}</Label>
           <Input
             id="phone"
             name="phone"
@@ -76,7 +78,7 @@ export function CustomerEditForm({
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t.email}</Label>
           <Input
             id="email"
             name="email"
@@ -94,11 +96,7 @@ export function CustomerEditForm({
           name="applyToExistingRecords"
           className="mt-0.5"
         />
-        <span>
-          Also update the name/address on this customer&apos;s existing work
-          records. Leave unchecked to keep their past records exactly as they
-          were submitted.
-        </span>
+        <span>{t.applyToRecords}</span>
       </label>
 
       {state?.error && <Alert variant="error">{state.error}</Alert>}
@@ -106,7 +104,7 @@ export function CustomerEditForm({
       <div>
         <Button type="submit" disabled={pending}>
           <Save className="h-4 w-4" />
-          {pending ? "Saving..." : "Save customer"}
+          {pending ? t.saving : t.saveCustomer}
         </Button>
       </div>
     </form>

@@ -314,6 +314,70 @@ export const es: Dictionary = {
       "ej. Falta la firma del instalador — vuelve a recogerla y reenvía.",
     returnN: "Devolver {n}",
   },
+  customers: {
+    // List page
+    title: "Clientes",
+    searchPlaceholder: "Buscar por nombre, dirección, teléfono o correo",
+    searchAria: "Buscar clientes por nombre, dirección, teléfono o correo",
+    noMatches: "Sin coincidencias",
+    nothingFound: 'No se encontró nada para "{q}".',
+    clearSearch: "Limpiar búsqueda",
+    noCustomers: "Aún no hay clientes",
+    noCustomersDesc:
+      "Los clientes se guardan automáticamente cuando se envían registros de trabajo.",
+    countOne: "{n} cliente",
+    countMany: "{n} clientes",
+    colName: "Nombre",
+    colAddress: "Dirección",
+    colContact: "Contacto",
+    colJobs: "Trabajos",
+    colHistory: "Historial",
+    jobCountOne: "{n} trabajo",
+    jobCountMany: "{n} trabajos",
+    // Detail
+    customerSaved: "Cliente guardado",
+    customersMerged: "Clientes combinados",
+    mergeError:
+      "No se pudo combinar: elige un cliente válido con el cual combinar e inténtalo de nuevo.",
+    call: "Llamar",
+    email: "Correo",
+    directions: "Cómo llegar",
+    customerSince: "Cliente desde {date}",
+    totalJobs: "Trabajos totales",
+    viewAll: "Ver todo",
+    approved: "Aprobados",
+    pendingReview: "Pendientes de revisión",
+    needsChanges: "Necesitan cambios",
+    projectsCount: "Proyectos ({n})",
+    jobHistory: "Historial de trabajos ({n})",
+    noJobs: "Aún no hay trabajos",
+    noJobsDesc: "Los registros de trabajo de este cliente aparecerán aquí.",
+    open: "Abrir",
+    openRecordAria: "Abrir registro {n}",
+    submittedBy: "Enviado por",
+    manage: "Gestionar",
+    customerDetails: "Datos del cliente",
+    // Edit form
+    name: "Nombre",
+    address: "Dirección",
+    phone: "Teléfono",
+    applyToRecords:
+      "También actualizar el nombre/dirección en los registros de trabajo existentes de este cliente. Deja sin marcar para conservar sus registros pasados tal como se enviaron.",
+    saveCustomer: "Guardar cliente",
+    saving: "Guardando...",
+    // Delete
+    deleteTitle: "¿Eliminar este cliente?",
+    deleteDesc:
+      "Se eliminan sus datos de contacto guardados. Los registros de trabajo existentes se conservan pero ya no estarán vinculados a un cliente guardado.",
+    deleteConfirm: "Eliminar cliente",
+    // Merge
+    mergeInto: "Combinar con…",
+    mergeTitle: "Combinar cliente",
+    mergeDesc:
+      "Mueve todos los trabajos de este cliente al que elijas, luego elimina este duplicado. No se puede deshacer.",
+    mergeChoose: "Elige el cliente que se conserva…",
+    merge: "Combinar",
+  },
   workers: {
     // List page
     team: "Equipo",
