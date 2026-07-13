@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import { WorkersSection, type WorkerStat } from "@/components/workers/WorkersTable";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -111,17 +112,17 @@ export default async function AdminWorkersPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          {t.team}
-        </h1>
-        <Button asChild>
-          <Link href="/admin/workers/new">
-            <UserPlus className="h-4 w-4" />
-            {t.newWorker}
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title={t.team}
+        action={
+          <Button asChild>
+            <Link href="/admin/workers/new">
+              <UserPlus className="h-4 w-4" />
+              {t.newWorker}
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Team summary - only when not filtering, so the numbers reflect the
           whole roster rather than the filtered subset. */}

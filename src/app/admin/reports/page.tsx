@@ -9,6 +9,7 @@ import { DatePresets } from "@/components/ui/date-presets";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterActions, FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import { MobileCardList } from "@/components/ui/responsive-table";
 import {
   Table,
@@ -60,15 +61,17 @@ export default async function AdminReportsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/admin/reports/utilization">
-            <Clock className="h-4 w-4" />
-            {t.utilization}
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title={t.title}
+        action={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/reports/utilization">
+              <Clock className="h-4 w-4" />
+              {t.utilization}
+            </Link>
+          </Button>
+        }
+      />
 
       {/* Headline totals for the selected range - the payout number an admin
           actually cares about, up top instead of buried in the table's last

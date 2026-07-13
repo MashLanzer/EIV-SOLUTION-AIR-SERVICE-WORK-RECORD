@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -106,19 +107,12 @@ export default async function UtilizationReportPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          href="/admin/reports"
-          className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {t.title}
-        </Link>
-        <h1 className="mt-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          {t.utilizationTitle}
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{t.utilizationDesc}</p>
-      </div>
+      <PageHeader
+        backHref="/admin/reports"
+        backLabel={t.title}
+        title={t.utilizationTitle}
+        description={t.utilizationDesc}
+      />
 
       {/* Period + grouping toggles */}
       <div className="flex flex-wrap items-center justify-between gap-2">

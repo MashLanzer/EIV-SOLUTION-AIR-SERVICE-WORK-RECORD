@@ -1,9 +1,9 @@
-import Link from "next/link";
 import type { Role } from "@prisma/client";
-import { ChevronLeft, History, ShieldCheck } from "lucide-react";
+import { History, ShieldCheck } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
@@ -40,19 +40,12 @@ export default async function RoleAuditPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          href="/admin/settings"
-          className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {dict.settings.title}
-        </Link>
-        <h1 className="mt-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          {s.title}
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{s.description}</p>
-      </div>
+      <PageHeader
+        backHref="/admin/settings"
+        backLabel={dict.settings.title}
+        title={s.title}
+        description={s.description}
+      />
 
       {events.length === 0 ? (
         <Card>

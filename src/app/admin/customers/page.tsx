@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { SortHeader } from "@/components/ui/sort-header";
 import { MobileCardList } from "@/components/ui/responsive-table";
+import { PageHeader } from "@/components/ui/page-header";
 import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -94,7 +95,7 @@ export default async function AdminCustomersPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
+      <PageHeader title={t.title} />
 
       <form method="get" className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />

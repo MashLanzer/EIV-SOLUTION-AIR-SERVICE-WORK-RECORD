@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -50,12 +51,7 @@ export default async function ReviewQueuePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          {t.title}
-        </h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{t.desc}</p>
-      </div>
+      <PageHeader title={t.title} description={t.desc} />
 
       {count === 0 ? (
         <Card>

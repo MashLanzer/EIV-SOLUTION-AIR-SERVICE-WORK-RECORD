@@ -2,6 +2,7 @@ import { Images } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
 import { PhotoFilters } from "@/components/photos/PhotoFilters";
 import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
@@ -90,17 +91,14 @@ export default async function AdminPhotosPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          {t.title}
-        </h1>
-        <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
-          {(totalPhotos === 1 ? t.countOne : t.countMany).replace(
-            "{n}",
-            String(totalPhotos)
-          )}
-        </span>
-      </div>
+      <PageHeader
+        title={t.title}
+        action={
+          <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
+            {(totalPhotos === 1 ? t.countOne : t.countMany).replace("{n}", String(totalPhotos))}
+          </span>
+        }
+      />
 
       {/* The feed shows the newest 120; be honest when there are more. */}
       {totalPhotos > photos.length && (
