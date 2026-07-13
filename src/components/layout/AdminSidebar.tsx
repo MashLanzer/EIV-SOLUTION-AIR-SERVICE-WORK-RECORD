@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   CalendarDays,
   ClipboardList,
+  ClipboardCheck,
   ListChecks,
   Users,
   Users2,
@@ -31,6 +32,7 @@ import { cn } from "@/lib/utils";
 function navItems(n: Dictionary["nav"]): TabItem[] {
   return [
   { href: "/admin", label: n.dashboard, shortLabel: n.home, icon: LayoutDashboard, exact: true },
+  { href: "/admin/review", label: n.reviewQueue, shortLabel: n.reviewQueue, icon: ClipboardCheck, exact: false },
   { href: "/admin/schedule", label: n.schedule, shortLabel: n.schedule, icon: CalendarDays, exact: false },
   { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
   { href: "/admin/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
@@ -67,6 +69,7 @@ function createItems(n: Dictionary["nav"]): CreateItem[] {
 // the sheet's account header.
 function moreItems(n: Dictionary["nav"]): MoreItem[] {
   return [
+  { href: "/admin/review", label: n.reviewQueue, icon: ClipboardCheck },
   // Records is no longer a native tab, so it lives here (and on the dashboard).
   { href: "/admin/records", label: n.records, icon: ClipboardList },
   { href: "/admin/customers", label: n.customers, icon: Contact },
@@ -109,7 +112,12 @@ function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
 
 // Supervisors only get the review scope; management destinations are hidden
 // (and their pages fail closed via requireAdmin anyway).
-const SUPERVISOR_HREFS = new Set(["/admin", "/admin/records", "/admin/reports"]);
+const SUPERVISOR_HREFS = new Set([
+  "/admin",
+  "/admin/review",
+  "/admin/records",
+  "/admin/reports",
+]);
 
 export function AdminSidebar({
   name,
@@ -129,7 +137,7 @@ export function AdminSidebar({
   const forRole = (list: TabItem[]) =>
     isSupervisor ? list.filter((item) => SUPERVISOR_HREFS.has(item.href)) : list;
   const items = forRole(navItems(t.nav)).map((item) =>
-    item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
+    item.href === "/admin/review" ? { ...item, badge: pendingReviewCount } : item
   );
   // Records is no longer a native tab, so the review badge rides the Dashboard
   // tab (where the review queue lives) in the APK bar.

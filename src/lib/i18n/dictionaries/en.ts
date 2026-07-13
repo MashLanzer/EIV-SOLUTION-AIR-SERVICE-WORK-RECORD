@@ -571,6 +571,19 @@ export const en = {
     stopSharing: "Stop sharing",
     sharingHint: "Anyone with this link can view the receipt.",
   },
+  reviewQueue: {
+    title: "Review queue",
+    desc: "Records waiting for review, oldest first.",
+    empty: "All caught up",
+    emptyDesc: "There are no records waiting for review right now.",
+    countOne: "{n} record waiting",
+    countMany: "{n} records waiting",
+    submittedBy: "by {name}",
+    today: "Today",
+    waitingOne: "{n} day waiting",
+    waitingMany: "{n} days waiting",
+    review: "Review",
+  },
   reports: {
     title: "Pay Report",
     // Utilization report
@@ -1052,6 +1065,7 @@ export const en = {
   nav: {
     dashboard: "Dashboard",
     home: "Home",
+    reviewQueue: "Review queue",
     projects: "Projects",
     photos: "Photos",
     records: "Records",

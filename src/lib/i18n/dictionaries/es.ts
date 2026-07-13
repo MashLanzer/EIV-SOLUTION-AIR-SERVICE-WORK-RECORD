@@ -573,6 +573,19 @@ export const es: Dictionary = {
     stopSharing: "Dejar de compartir",
     sharingHint: "Cualquiera con este enlace puede ver el recibo.",
   },
+  reviewQueue: {
+    title: "Cola de revisión",
+    desc: "Registros en espera de revisión, del más antiguo primero.",
+    empty: "Todo al día",
+    emptyDesc: "No hay registros en espera de revisión en este momento.",
+    countOne: "{n} registro en espera",
+    countMany: "{n} registros en espera",
+    submittedBy: "por {name}",
+    today: "Hoy",
+    waitingOne: "{n} día en espera",
+    waitingMany: "{n} días en espera",
+    review: "Revisar",
+  },
   reports: {
     title: "Reporte de pago",
     // Reporte de utilización
@@ -1055,6 +1068,7 @@ export const es: Dictionary = {
   nav: {
     dashboard: "Panel",
     home: "Inicio",
+    reviewQueue: "Cola de revisión",
     projects: "Proyectos",
     photos: "Fotos",
     records: "Registros",
