@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
+import { deleteProjectPhoto, uploadUserAvatar } from "@/lib/blob";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { updateProfileNameSchema, updateProfilePhoneSchema, saveStoredSignatureSchema, addSkillSchema } from "@/lib/validations";
 
 export type ProfileFormState = { error?: string; ok?: boolean } | undefined;
+
+const MAX_AVATAR_BYTES = 4 * 1024 * 1024; // 4 MB
 
 // The profile screen is served at two routes (worker and admin); both must be
 // revalidated after a change or the admin view goes stale.
@@ -93,6 +96,60 @@ export async function clearStoredSignatureAction(): Promise<ProfileFormState> {
     data: { storedSignature: null },
   });
 
+  revalidateProfile();
+  return { ok: true };
+}
+
+// Upload (or replace) the signed-in user's profile photo.
+export async function updateProfileAvatarAction(
+  _prev: ProfileFormState,
+  formData: FormData
+): Promise<ProfileFormState> {
+  const session = await requireAuth();
+
+  const file = formData.get("avatar");
+  if (!(file instanceof Blob) || file.size === 0) {
+    return { error: "Choose an image to upload." };
+  }
+  if (!file.type.startsWith("image/")) {
+    return { error: "That file isn't an image." };
+  }
+  if (file.size > MAX_AVATAR_BYTES) {
+    return { error: "Photo must be 4 MB or smaller." };
+  }
+
+  let url: string;
+  try {
+    url = await uploadUserAvatar(session.user.id, file, file.type);
+  } catch {
+    return { error: "Image storage isn't configured. Ask your provider to enable it." };
+  }
+
+  const prev = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { avatarUrl: true },
+  });
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { avatarUrl: url },
+  });
+  if (prev?.avatarUrl) await deleteProjectPhoto(prev.avatarUrl);
+
+  revalidateProfile();
+  return { ok: true };
+}
+
+export async function removeProfileAvatarAction(): Promise<ProfileFormState> {
+  const session = await requireAuth();
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { avatarUrl: true },
+  });
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { avatarUrl: null },
+  });
+  if (user?.avatarUrl) await deleteProjectPhoto(user.avatarUrl);
   revalidateProfile();
   return { ok: true };
 }

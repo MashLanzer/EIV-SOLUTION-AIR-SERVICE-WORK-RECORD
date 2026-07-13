@@ -306,6 +306,7 @@ model User {
   email            String        @unique
   name             String
   phone            String?
+  avatarUrl        String?
   storedSignature  String?       @db.Text
   payRate          Decimal?      @db.Decimal(10, 2)
   role             Role          @default(WORKER)

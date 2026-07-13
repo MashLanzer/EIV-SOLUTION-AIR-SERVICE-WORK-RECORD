@@ -1,11 +1,12 @@
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { getProfileData } from "@/lib/profileData";
 import { getLocale } from "@/lib/i18n/server";
+import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 
 export default async function WorkerProfilePage() {
   const session = await requireAuth();
-  const data = await getProfileData(session.user.id);
+  const data = await getProfileData(session.user.id, requireOrgId(session));
   const locale = await getLocale();
   const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     weekday: "short",
@@ -24,6 +25,8 @@ export default async function WorkerProfilePage() {
       backHref="/records"
       recordHrefBase="/records"
       scheduleHref="/records/schedule"
+      avatarUrl={data.avatarUrl}
+      metrics={data.metrics}
       stats={data.stats}
       teams={data.teams}
       recentRecords={data.recentRecords.map((r) => ({
@@ -48,6 +51,7 @@ export default async function WorkerProfilePage() {
         timeLabel: j.startTime && j.endTime ? `${j.startTime}–${j.endTime}` : j.startTime,
         subtitle: j.customer?.name ?? j.project?.name ?? null,
       }))}
+      skillSuggestions={data.skillSuggestions}
       skills={data.skills}
     />
   );

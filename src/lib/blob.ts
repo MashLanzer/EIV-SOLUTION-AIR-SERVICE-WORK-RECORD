@@ -33,3 +33,15 @@ export async function uploadCompanyLogo(
   const blob = await put(key, body, { access: "public", contentType });
   return blob.url;
 }
+
+// A user's profile photo. Keyed per user (randomized to bust CDN caches on
+// replace); the old blob is deleted by the caller after the row updates.
+export async function uploadUserAvatar(
+  userId: string,
+  body: Blob | ArrayBuffer | Buffer,
+  contentType = "image/jpeg"
+): Promise<string> {
+  const key = `users/${userId}/avatar/${crypto.randomUUID()}`;
+  const blob = await put(key, body, { access: "public", contentType });
+  return blob.url;
+}

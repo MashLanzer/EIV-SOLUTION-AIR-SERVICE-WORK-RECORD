@@ -50,6 +50,8 @@ export default async function AdminWorkersPage({
   const rawParams = await searchParams;
   const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;
   const query = rawQ?.trim() || undefined;
+  const rawSkill = Array.isArray(rawParams.skill) ? rawParams.skill[0] : rawParams.skill;
+  const skill = rawSkill?.trim() || undefined;
 
   const where: Prisma.UserWhereInput = {
     organizationId,
@@ -61,9 +63,10 @@ export default async function AdminWorkersPage({
           ],
         }
       : {}),
+    ...(skill ? { skills: { some: { name: { equals: skill, mode: "insensitive" } } } } : {}),
   };
 
-  const [users, recordStats] = await Promise.all([
+  const [users, recordStats, skillNames] = await Promise.all([
     prisma.user.findMany({ where, orderBy: { name: "asc" } }),
     // Jobs submitted + last activity per person (submittedById is SetNull, so
     // some records have no author - those don't attribute to anyone).
@@ -73,7 +76,23 @@ export default async function AdminWorkersPage({
       _count: { _all: true },
       _max: { createdAt: true },
     }),
+    // Distinct skills in the org, for the skill filter chips.
+    prisma.userSkill.findMany({
+      where: { user: { organizationId } },
+      distinct: ["name"],
+      select: { name: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
+
+  // Preserve the text query when switching skill chips.
+  const skillHref = (s?: string) => {
+    const p = new URLSearchParams();
+    if (query) p.set("q", query);
+    if (s) p.set("skill", s);
+    const qs = p.toString();
+    return qs ? `/admin/workers?${qs}` : "/admin/workers";
+  };
 
   const stats: Record<string, WorkerStat> = {};
   for (const row of recordStats) {
@@ -103,9 +122,9 @@ export default async function AdminWorkersPage({
         </Button>
       </div>
 
-      {/* Team summary - only when not searching, so the numbers reflect the
+      {/* Team summary - only when not filtering, so the numbers reflect the
           whole roster rather than the filtered subset. */}
-      {!query && users.length > 0 && (
+      {!query && !skill && users.length > 0 && (
         <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
           <StatTile icon={Users} value={users.length} label={t.members} />
           <StatTile icon={Users} value={activeCount} label={t.active} />
@@ -123,14 +142,50 @@ export default async function AdminWorkersPage({
           className="pl-9"
           aria-label={t.searchAria}
         />
+        {skill && <input type="hidden" name="skill" value={skill} />}
       </form>
 
+      {/* Skill filter - the org's skills as chips, so an admin can find who's
+          qualified for a job. */}
+      {skillNames.length > 0 && (
+        <div className="-mx-1 flex flex-wrap gap-1.5 px-1">
+          <Link
+            href={skillHref()}
+            className={
+              "rounded-full px-3 py-1 text-sm font-medium transition-colors " +
+              (!skill
+                ? "bg-primary text-primary-foreground"
+                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700")
+            }
+          >
+            {t.allSkills}
+          </Link>
+          {skillNames.map((s) => {
+            const active = skill?.toLowerCase() === s.name.toLowerCase();
+            return (
+              <Link
+                key={s.name}
+                href={skillHref(s.name)}
+                className={
+                  "rounded-full px-3 py-1 text-sm font-medium transition-colors " +
+                  (active
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700")
+                }
+              >
+                {s.name}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
       {users.length === 0 ? (
-        query ? (
+        query || skill ? (
           <EmptyState
             icon={SearchX}
             title={t.noMatches}
-            description={t.nothingFound.replace("{q}", query)}
+            description={t.nothingFound.replace("{q}", query ?? skill ?? "")}
             action={
               <Button asChild variant="outline" className="mt-2">
                 <Link href="/admin/workers">{t.clearSearch}</Link>

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, CheckCircle2, ChevronRight, Circle, Clock, ListTodo, Mail, MapPin, PenLine, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, Camera, CheckCircle2, ChevronRight, Circle, Clock, ListTodo, Mail, MapPin, PenLine, Percent, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, X } from "lucide-react";
 import Link from "next/link";
 import type { RecordStatus } from "@prisma/client";
 
@@ -16,7 +16,7 @@ import {
   SettingsRow,
   SettingsSection,
 } from "@/components/settings/SettingsList";
-import { updateProfileNameAction, updateProfilePhoneAction, saveStoredSignatureAction, clearStoredSignatureAction, addSkillAction, removeSkillAction } from "@/actions/profile";
+import { updateProfileNameAction, updateProfilePhoneAction, saveStoredSignatureAction, clearStoredSignatureAction, addSkillAction, removeSkillAction, updateProfileAvatarAction, removeProfileAvatarAction } from "@/actions/profile";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,12 @@ interface ProfileStats {
   totalRecords: number;
   approvedRecords: number;
   pendingRecords: number;
+}
+
+interface ProfileMetrics {
+  approvalRate: number; // 0-100
+  hoursThisMonth: number;
+  weekly: number[]; // submissions per week, oldest first
 }
 
 interface TeamInfo {
@@ -63,12 +69,15 @@ export function ProfileScreen({
   backHref,
   recordHrefBase,
   scheduleHref,
+  avatarUrl,
+  metrics,
   stats,
   teams,
   recentRecords,
   needsAttention,
   upcomingJobs,
   skills,
+  skillSuggestions,
 }: {
   name: string;
   email: string;
@@ -81,12 +90,16 @@ export function ProfileScreen({
   recordHrefBase: string;
   // Base path for the schedule, used by the "my week" links.
   scheduleHref: string;
+  avatarUrl: string | null;
+  metrics: ProfileMetrics;
   stats: ProfileStats;
   teams: TeamInfo[];
   recentRecords: RecentRecord[];
   needsAttention: RecentRecord[];
   upcomingJobs: UpcomingJob[];
   skills: SkillInfo[];
+  // Distinct skill names already used in the org, to autocomplete the input.
+  skillSuggestions: string[];
 }) {
   const isAdmin = role === "ADMIN";
   const t = useT().profile;
@@ -106,11 +119,13 @@ export function ProfileScreen({
   const [sigError, setSigError] = useState<string | null>(null);
   const [skillInput, setSkillInput] = useState("");
   const [skillError, setSkillError] = useState<string | null>(null);
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   // Stat tiles use the design-system semantic tokens (dark-mode aware) rather
   // than raw Tailwind colors, so they read as one system with the rest of the
   // app: neutral for the total, success for approved, warning for pending.
-  function statCard(icon: typeof ListTodo, label: string, value: number, tone: string) {
+  function statCard(icon: typeof ListTodo, label: string, value: string, tone: string) {
     const Icon = icon;
     return (
       <div className="flex flex-col items-center gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-3 min-w-0 flex-1">
@@ -118,7 +133,7 @@ export function ProfileScreen({
           <Icon className="h-4 w-4" />
         </span>
         <span className="text-lg font-bold tabular-nums text-neutral-900 dark:text-neutral-100">{value}</span>
-        <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
+        <span className="text-center text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
       </div>
     );
   }
@@ -140,7 +155,16 @@ export function ProfileScreen({
 
       {/* Identity hero */}
       <div className="flex flex-col items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-6 text-center">
-        <AvatarInitials name={name || email} className="h-16 w-16 text-lg" />
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            className="h-16 w-16 rounded-full object-cover"
+          />
+        ) : (
+          <AvatarInitials name={name || email} className="h-16 w-16 text-lg" />
+        )}
         <div className="min-w-0">
           <p className="truncate text-base font-semibold text-neutral-900 dark:text-neutral-100">
             {name || t.yourAccount}
@@ -150,6 +174,58 @@ export function ProfileScreen({
             {isAdmin ? t.admin : t.worker}
           </span>
         </div>
+        <form
+          action={async (formData) => {
+            setAvatarSaving(true);
+            setAvatarError(null);
+            const res = await updateProfileAvatarAction(undefined, formData);
+            if (res?.error) setAvatarError(res.error);
+            setAvatarSaving(false);
+          }}
+          className="flex flex-col items-center gap-1.5"
+        >
+          <input
+            type="file"
+            name="avatar"
+            id="avatar-file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              if (e.target.files?.length) e.target.form?.requestSubmit();
+            }}
+          />
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={avatarSaving}
+              onClick={() => document.getElementById("avatar-file")?.click()}
+            >
+              <Camera className="h-3.5 w-3.5" />
+              {avatarUrl ? t.changePhoto : t.addPhoto}
+            </Button>
+            {avatarUrl && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={avatarSaving}
+                onClick={async () => {
+                  setAvatarSaving(true);
+                  await removeProfileAvatarAction();
+                  setAvatarSaving(false);
+                }}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {t.removePhoto}
+              </Button>
+            )}
+          </div>
+          {avatarError && (
+            <p className="text-sm text-destructive" role="alert">{avatarError}</p>
+          )}
+        </form>
       </div>
 
       {/* Profile completeness nudge - only until every useful field is filled */}
@@ -295,10 +371,17 @@ export function ProfileScreen({
           title={t.statistics}
           description={t.statsDesc}
         >
-          <div className="flex gap-2 px-4 pb-4">
-            {statCard(ListTodo, t.total, stats.totalRecords, "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400")}
-            {statCard(CheckCircle2, t.approved, stats.approvedRecords, "bg-success-soft text-success-text")}
-            {statCard(Clock, t.pending, stats.pendingRecords, "bg-warning-soft text-warning-text")}
+          <div className="flex flex-col gap-2 px-4 pb-4">
+            <div className="flex gap-2">
+              {statCard(ListTodo, t.total, String(stats.totalRecords), "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400")}
+              {statCard(CheckCircle2, t.approved, String(stats.approvedRecords), "bg-success-soft text-success-text")}
+              {statCard(Clock, t.pending, String(stats.pendingRecords), "bg-warning-soft text-warning-text")}
+            </div>
+            <div className="flex gap-2">
+              {statCard(Percent, t.approvalRate, `${metrics.approvalRate}%`, "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400")}
+              {statCard(Clock, t.hoursThisMonth, String(metrics.hoursThisMonth), "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400")}
+            </div>
+            <WeeklyTrend weekly={metrics.weekly} label={t.trendLabel} thisWeekLabel={t.thisWeek} />
           </div>
         </SettingsSection>
       )}
@@ -464,7 +547,16 @@ export function ProfileScreen({
                 value={skillInput}
                 onChange={(e) => setSkillInput(e.target.value)}
                 className="flex-1"
+                list="skill-suggestions"
+                autoComplete="off"
               />
+              {skillSuggestions.length > 0 && (
+                <datalist id="skill-suggestions">
+                  {skillSuggestions.map((s) => (
+                    <option key={s} value={s} />
+                  ))}
+                </datalist>
+              )}
               <Button type="submit" variant="outline" size="default">
                 <Plus className="h-4 w-4" />
                 {t.add}
@@ -476,6 +568,44 @@ export function ProfileScreen({
           </SettingsCustomRow>
         </form>
       </SettingsSection>
+    </div>
+  );
+}
+
+// A tiny CSS-only sparkline of submissions per week (oldest → this week). Bars
+// scale to the busiest week so a flat run of 1s doesn't read as empty.
+function WeeklyTrend({
+  weekly,
+  label,
+  thisWeekLabel,
+}: {
+  weekly: number[];
+  label: string;
+  thisWeekLabel: string;
+}) {
+  const max = Math.max(1, ...weekly);
+  return (
+    <div className="flex flex-col gap-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-3">
+      <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
+      <div className="flex h-12 items-end gap-1.5">
+        {weekly.map((n, i) => {
+          const last = i === weekly.length - 1;
+          return (
+            <div
+              key={i}
+              title={String(n)}
+              className={cn(
+                "flex-1 rounded-sm transition-colors",
+                last ? "bg-primary" : "bg-neutral-200 dark:bg-neutral-700"
+              )}
+              style={{ height: `${Math.max(6, (n / max) * 100)}%` }}
+            />
+          );
+        })}
+      </div>
+      <span className="self-end text-[10px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+        {thisWeekLabel}
+      </span>
     </div>
   );
 }
