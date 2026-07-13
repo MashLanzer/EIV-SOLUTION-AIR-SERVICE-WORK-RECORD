@@ -568,14 +568,20 @@ export const es: Dictionary = {
     weekOf: "Semana del {date}",
     prevMonth: "Mes anterior",
     nextMonth: "Mes siguiente",
+    prevDay: "Día anterior",
+    nextDay: "Día siguiente",
     month: "Mes",
     week: "Semana",
+    day: "Día",
+    untimed: "Sin hora fija",
     allWorkers: "Todos los trabajadores",
     summaryJobs: "Trabajos del mes",
     summaryCompleted: "Completados",
     summaryBusiest: "Más ocupado",
     overloadWarning:
       "Atención: {n} trabajos para un mismo trabajador este día, igual o por encima de tu aviso de sobrecarga de {threshold}.",
+    overloadWarningYou:
+      "Atención: tienes {n} trabajos este día, una carga alta. Deja algo de margen entre visitas.",
     // New / edit job form
     newJob: "Programar trabajo",
     editJob: "Editar trabajo",

@@ -566,14 +566,20 @@ export const en = {
     weekOf: "Week of {date}",
     prevMonth: "Previous month",
     nextMonth: "Next month",
+    prevDay: "Previous day",
+    nextDay: "Next day",
     month: "Month",
     week: "Week",
+    day: "Day",
+    untimed: "No set time",
     allWorkers: "All workers",
     summaryJobs: "Jobs this month",
     summaryCompleted: "Completed",
     summaryBusiest: "Busiest",
     overloadWarning:
       "Heads up: {n} jobs for one worker this day — at or above your overload alert of {threshold}.",
+    overloadWarningYou:
+      "Heads up: you have {n} jobs this day — a heavy load. Plan some buffer between visits.",
     // New / edit job form
     newJob: "Schedule a job",
     editJob: "Edit job",

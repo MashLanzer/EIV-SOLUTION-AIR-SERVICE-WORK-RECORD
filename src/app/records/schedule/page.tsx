@@ -1,4 +1,4 @@
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, TriangleAlert } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -147,6 +147,15 @@ export default async function WorkerSchedulePage({
         nextLabel={t.nextMonth}
         todayLabel={t.today}
       />
+
+      {selectedJobs.length >= overloadThreshold && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/70 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-2.5 text-amber-800 dark:text-amber-200">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <p className="text-sm">
+            {t.overloadWarningYou.replace("{n}", String(selectedJobs.length))}
+          </p>
+        </div>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold capitalize text-neutral-900 dark:text-neutral-100">

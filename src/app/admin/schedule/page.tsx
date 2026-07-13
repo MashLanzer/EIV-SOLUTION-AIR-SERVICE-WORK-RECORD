@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { ScheduleJobCard, type ScheduleJobView } from "@/components/schedule/ScheduleJobCard";
+import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { ScheduleJobForm } from "@/components/schedule/ScheduleJobForm";
 import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
 import {
@@ -115,7 +116,7 @@ export default async function SchedulePage({
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
 
   const { date, view: viewParam, worker: workerParam, new: newParam } = await searchParams;
-  const view = viewParam === "week" ? "week" : "month";
+  const view = viewParam === "week" ? "week" : viewParam === "day" ? "day" : "month";
   const worker = workerParam?.trim() || undefined;
   const formOpen = newParam === "1";
   const selected = parseDateParam(date);
@@ -123,11 +124,21 @@ export default async function SchedulePage({
   const todayKey = dayKey(startOfUtcDay(new Date()));
 
   // Month view fetches the whole 6-week grid (so the calendar can show per-day
-  // activity); week view only its 7 days. Either way, one query.
-  const range = view === "week" ? weekRange(selected) : null;
+  // activity); week view its 7 days; day view just the one. Either way, one query.
   const gridDays = monthGridDays(selected);
-  const from = range ? range.from : gridDays[0];
-  const to = range ? range.to : addUtcDays(gridDays[gridDays.length - 1], 1);
+  let from: Date;
+  let to: Date;
+  if (view === "day") {
+    from = selected;
+    to = addUtcDays(selected, 1);
+  } else if (view === "week") {
+    const range = weekRange(selected);
+    from = range.from;
+    to = range.to;
+  } else {
+    from = gridDays[0];
+    to = addUtcDays(gridDays[gridDays.length - 1], 1);
+  }
 
   const [jobs, workers, teams, customers, projects, org] = await Promise.all([
     getScheduledJobs({ session, organizationId, from, to, assignedToId: worker }),
@@ -220,6 +231,7 @@ export default async function SchedulePage({
           items={[
             { label: t.month, href: schedHref({ view: "month", date: selectedKey, worker }), active: view === "month" },
             { label: t.week, href: schedHref({ view: "week", date: selectedKey, worker }), active: view === "week" },
+            { label: t.day, href: schedHref({ view: "day", date: selectedKey, worker }), active: view === "day" },
           ]}
         />
         <ScheduleWorkerFilter workers={workers} />
@@ -264,6 +276,22 @@ export default async function SchedulePage({
           monthLabel={intl.month.format(selected)}
           weekdayLabels={weekdayLabels}
           selectedDayLabel={intl.dayLong.format(selected)}
+          count={count}
+          t={t}
+        />
+      ) : view === "day" ? (
+        <DayView
+          selected={selected}
+          selectedKey={selectedKey}
+          todayKey={todayKey}
+          byDay={byDay}
+          worker={worker}
+          workers={workers}
+          teams={teams}
+          customers={customers}
+          projects={projects}
+          overloadThreshold={overloadThreshold}
+          dayLabel={intl.dayLong.format(selected)}
           count={count}
           t={t}
         />
@@ -438,6 +466,102 @@ function MonthView({
   );
 }
 
+// Single-day view: a timeline of the day's timed jobs (positioned by the
+// clock) over the full, editable job list. Prev/next step one day at a time.
+function DayView({
+  selected,
+  selectedKey,
+  todayKey,
+  byDay,
+  worker,
+  workers,
+  teams,
+  customers,
+  projects,
+  overloadThreshold,
+  dayLabel,
+  count,
+  t,
+}: {
+  selected: Date;
+  selectedKey: string;
+  todayKey: string;
+  byDay: Map<string, ScheduleJobView[]>;
+  worker?: string;
+  workers: Opt[];
+  teams: Opt[];
+  customers: Opt[];
+  projects: Opt[];
+  overloadThreshold: number;
+  dayLabel: string;
+  count: (n: number) => string;
+  t: SchedT;
+}) {
+  const dayJobs = byDay.get(selectedKey) ?? [];
+  const conflictIds = conflictingIds(dayJobs);
+  const selectedPeak = overloadPeak(dayJobs);
+  const prevKey = dayKey(addUtcDays(selected, -1));
+  const nextKey = dayKey(addUtcDays(selected, 1));
+  const isToday = selectedKey === todayKey;
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <Button asChild variant="outline" size="icon" aria-label={t.prevDay}>
+          <Link href={schedHref({ view: "day", date: prevKey, worker })}>
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <div className="flex flex-1 items-center justify-center gap-2">
+          <span className="text-sm font-medium capitalize text-neutral-900 dark:text-neutral-100">
+            {dayLabel}
+          </span>
+          {!isToday && (
+            <Button asChild variant="ghost" size="sm">
+              <Link href={schedHref({ view: "day", worker })}>{t.today}</Link>
+            </Button>
+          )}
+        </div>
+        <Button asChild variant="outline" size="icon" aria-label={t.nextDay}>
+          <Link href={schedHref({ view: "day", date: nextKey, worker })}>
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+
+      <ScheduleDayTimeline
+        jobs={dayJobs}
+        conflictIds={conflictIds}
+        conflictLabel={t.conflictBadge}
+      />
+
+      {selectedPeak >= overloadThreshold && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/70 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-2.5 text-amber-800 dark:text-amber-200">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <p className="text-sm">
+            {t.overloadWarning
+              .replace("{n}", String(selectedPeak))
+              .replace("{threshold}", String(overloadThreshold))}
+          </p>
+        </div>
+      )}
+
+      <DaySection
+        heading={isToday ? `${t.today} · ${dayLabel}` : dayLabel}
+        jobs={dayJobs}
+        conflictIds={conflictIds}
+        emptyCtaHref={schedHref({ view: "day", date: selectedKey, worker, create: true })}
+        workers={workers}
+        teams={teams}
+        customers={customers}
+        projects={projects}
+        count={count}
+        t={t}
+      />
+    </>
+  );
+}
+
 function WeekView({
   from,
   todayKey,
@@ -597,15 +721,16 @@ function DaySection({
       ) : (
         <div className="flex flex-col gap-2">
           {jobs.map((job) => (
-            <ScheduleJobCard
-              key={job.id}
-              job={job}
-              workers={workers}
-              teams={teams}
-              customers={customers}
-              projects={projects}
-              conflict={conflictIds.has(job.id)}
-            />
+            <div key={job.id} id={`job-${job.id}`} className="scroll-mt-20">
+              <ScheduleJobCard
+                job={job}
+                workers={workers}
+                teams={teams}
+                customers={customers}
+                projects={projects}
+                conflict={conflictIds.has(job.id)}
+              />
+            </div>
           ))}
         </div>
       )}
