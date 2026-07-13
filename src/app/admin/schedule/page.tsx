@@ -15,6 +15,7 @@ import {
   dayKey,
   getScheduledJobs,
   startOfUtcDay,
+  timeWindowsOverlap,
   weekRange,
 } from "@/lib/schedule";
 
@@ -92,6 +93,35 @@ export default async function SchedulePage({
     const list = byDay.get(v.scheduledFor) ?? [];
     list.push(v);
     byDay.set(v.scheduledFor, list);
+  }
+
+  // Flag jobs where the same worker is double-booked with an overlapping timed
+  // window on the same day, so the calendar warns at a glance (not just on save).
+  const conflictIds = new Set<string>();
+  const byDayWorker = new Map<string, ScheduleJobView[]>();
+  for (const v of views) {
+    if (!v.assignedToId || v.status === "CANCELED") continue;
+    const k = `${v.scheduledFor}|${v.assignedToId}`;
+    const list = byDayWorker.get(k) ?? [];
+    list.push(v);
+    byDayWorker.set(k, list);
+  }
+  for (const list of byDayWorker.values()) {
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        if (
+          timeWindowsOverlap(
+            list[i].startTime,
+            list[i].endTime,
+            list[j].startTime,
+            list[j].endTime
+          )
+        ) {
+          conflictIds.add(list[i].id);
+          conflictIds.add(list[j].id);
+        }
+      }
+    }
   }
 
   const days = Array.from({ length: 7 }, (_, i) => addUtcDays(from, i));
@@ -228,6 +258,7 @@ export default async function SchedulePage({
                         teams={teams}
                         customers={customers}
                         projects={projects}
+                        conflict={conflictIds.has(job.id)}
                       />
                     ))}
                   </div>

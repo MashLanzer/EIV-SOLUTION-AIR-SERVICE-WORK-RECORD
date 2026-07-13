@@ -110,6 +110,9 @@ interface WorkRecordFormProps {
   // them in the UI. Customer signature defaults to required.
   requireHelper?: boolean;
   requireCustomerSignature?: boolean;
+  // When this record is being started from a scheduled job, its id rides along
+  // as a hidden field so the server can mark the job done and link them.
+  scheduledJobId?: string;
 }
 
 // The wizard steps, in order. Each carries its icon + the field ids that live
@@ -186,6 +189,7 @@ export function WorkRecordForm({
   requireHelper = false,
   requireCustomerSignature = true,
   storedSignature,
+  scheduledJobId,
 }: WorkRecordFormProps) {
   const t = useT().form;
   const tc = useT().common;
@@ -603,6 +607,9 @@ export function WorkRecordForm({
         onPointerUp={handleFormPointerUp}
         className="flex flex-col gap-4"
       >
+        {scheduledJobId && (
+          <input type="hidden" name="jobId" value={scheduledJobId} />
+        )}
         {(errorSummary.length > 0 || state?.error) && (
           <Alert variant="error">
             <div className="flex flex-col gap-1">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ClipboardList,
   CalendarDays,
+  CalendarClock,
   CalendarRange,
   Users,
   Users2,
@@ -30,6 +31,7 @@ import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { addUtcDays, startOfUtcDay } from "@/lib/schedule";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 const WEEKS_BACK = 8;
@@ -156,6 +158,7 @@ export default async function AdminDashboardPage() {
     teamCount,
     recentPhotos,
     recentActiveProjects,
+    todayJobs,
   ] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId } }),
     prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
@@ -222,6 +225,18 @@ export default async function AdminDashboardPage() {
         checklists: { select: { items: { select: { done: true } } } },
       },
     }),
+    // Jobs planned for today (excluding canceled) - the dashboard's live count
+    // linking into the schedule.
+    prisma.scheduledJob.count({
+      where: {
+        organizationId,
+        status: { not: "CANCELED" },
+        scheduledFor: {
+          gte: startOfUtcDay(new Date()),
+          lt: addUtcDays(startOfUtcDay(new Date()), 1),
+        },
+      },
+    }),
   ]);
 
   // One unified metrics grid: a headline "Total Records" hero, then the
@@ -236,6 +251,7 @@ export default async function AdminDashboardPage() {
     icon: LucideIcon;
     href?: string;
   }[] = [
+    { label: t.tileTodayJobs, value: todayJobs, icon: CalendarClock, href: "/admin/schedule" },
     { label: t.tileThisWeek, value: recordsThisWeek, icon: CalendarDays },
     { label: t.tileThisMonth, value: recordsThisMonth, icon: CalendarRange },
     { label: t.tileActiveWorkers, value: activeWorkers, icon: Users },

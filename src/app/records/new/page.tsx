@@ -61,6 +61,9 @@ export default async function NewRecordPage({
     customerEmail?: string;
     projectId?: string;
   } = {};
+  // Only thread the job id through to the record on submit once we've confirmed
+  // the job is real and the worker's - keeps a bogus ?jobId from linking.
+  let linkedJobId: string | undefined;
   if (jobId) {
     const scope = await scheduleWhereForUser(session, organizationId);
     const job = await prisma.scheduledJob.findFirst({
@@ -71,6 +74,7 @@ export default async function NewRecordPage({
       },
     });
     if (job) {
+      linkedJobId = jobId;
       jobPrefill = {
         customerName: job.customer?.name || undefined,
         customerAddress: job.customer?.address || undefined,
@@ -119,6 +123,7 @@ export default async function NewRecordPage({
         requireCustomerSignature={org?.requireCustomerSignature ?? true}
         workTypeGroups={workTypeGroups}
         currency={org?.currencySymbol || "$"}
+        scheduledJobId={linkedJobId}
       />
     </div>
   );

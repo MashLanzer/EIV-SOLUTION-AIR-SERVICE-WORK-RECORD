@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { ScheduledJobStatus } from "@prisma/client";
 import {
+  AlertTriangle,
   CheckCircle2,
   Clock,
   ExternalLink,
@@ -17,6 +18,7 @@ import {
   XCircle,
 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ScheduleStatusBadge } from "@/components/schedule/ScheduleStatusBadge";
@@ -54,12 +56,15 @@ export function ScheduleJobCard({
   teams,
   customers,
   projects,
+  conflict = false,
 }: {
   job: ScheduleJobView;
   workers: JobOption[];
   teams: JobOption[];
   customers: JobOption[];
   projects: JobOption[];
+  // The assigned worker has another timed job that overlaps this one this day.
+  conflict?: boolean;
 }) {
   const t = useT().schedule;
   const [editing, setEditing] = useState(false);
@@ -123,7 +128,15 @@ export function ScheduleJobCard({
             {job.title || t.untitled}
           </h3>
         </div>
-        <ScheduleStatusBadge status={job.status} />
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <ScheduleStatusBadge status={job.status} />
+          {conflict && !canceled && (
+            <Badge variant="warning" title={t.conflictTitle}>
+              <AlertTriangle className="h-3 w-3" />
+              {t.conflictBadge}
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Who / where */}

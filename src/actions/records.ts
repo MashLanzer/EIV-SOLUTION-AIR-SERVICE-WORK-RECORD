@@ -13,7 +13,26 @@ import {
 } from "@/lib/notifications";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin, requireAuth } from "@/lib/session";
+import { scheduleWhereForUser, schedulePaths } from "@/lib/schedule";
 import { workRecordSchema } from "@/lib/validations";
+
+// When a record is filed from a scheduled job, close the loop: link the two
+// and mark the job done. Scope-safe (updateMany over the caller's own jobs) so
+// a forged jobId can't touch someone else's plan. Best-effort - a bad id is a
+// silent no-op and never blocks the record from saving.
+async function linkScheduledJob(
+  session: Awaited<ReturnType<typeof requireAuth>>,
+  organizationId: string,
+  jobId: string,
+  workRecordId: string
+) {
+  const scope = await scheduleWhereForUser(session, organizationId);
+  await prisma.scheduledJob.updateMany({
+    where: { AND: [{ id: jobId, workRecordId: null }, scope] },
+    data: { workRecordId, status: "DONE" },
+  });
+  for (const path of schedulePaths()) revalidatePath(path);
+}
 
 export type RecordFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
@@ -232,6 +251,9 @@ export async function createRecordAction(
   });
 
   await notifyAdminsRecordForReview(created.id, "new");
+
+  const jobId = (formData.get("jobId") as string | null)?.trim();
+  if (jobId) await linkScheduledJob(session, organizationId, jobId, created.id);
 
   revalidatePath("/records");
   redirect("/records?saved=1");
