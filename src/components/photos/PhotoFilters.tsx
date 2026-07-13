@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import { Tag as TagIcon } from "lucide-react";
 
+import { FilterChip } from "@/components/ui/filter-chip";
 import { Select } from "@/components/ui/select";
 import { useT } from "@/components/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
 
 interface TagOption {
   name: string;
@@ -35,6 +35,9 @@ export function PhotoFilters({
   const router = useRouter();
   const t = useT().photos;
 
+  // The project dropdown pushes client-side (Select has no href); tag chips
+  // are links that preserve the current project, matching how the status /
+  // skill filters compose their query strings across the app.
   function navigate(next: { tag?: string | null; project?: string | null }) {
     const tag = next.tag !== undefined ? next.tag : activeTag;
     const project = next.project !== undefined ? next.project : activeProject;
@@ -43,6 +46,14 @@ export function PhotoFilters({
     if (project) params.set("project", project);
     const qs = params.toString();
     router.push(qs ? `${basePath}?${qs}` : basePath);
+  }
+
+  function tagHref(tag: string | null) {
+    const params = new URLSearchParams();
+    if (tag) params.set("tag", tag);
+    if (activeProject) params.set("project", activeProject);
+    const qs = params.toString();
+    return qs ? `${basePath}?${qs}` : basePath;
   }
 
   const hasTags = tags.length > 0;
@@ -69,36 +80,19 @@ export function PhotoFilters({
 
       {hasTags && (
         <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <button
-            type="button"
-            onClick={() => navigate({ tag: null })}
-            className={cn(
-              "shrink-0 rounded-full border px-3 py-1 text-sm transition-colors",
-              activeTag === null
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-600"
-            )}
-          >
+          <FilterChip href={tagHref(null)} active={activeTag === null}>
             {t.allTags}
-          </button>
-          {tags.map((t) => (
-            <button
-              key={t.name}
-              type="button"
-              onClick={() => navigate({ tag: t.name })}
-              className={cn(
-                "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors",
-                activeTag === t.name
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 hover:border-neutral-400 dark:hover:border-neutral-600"
-              )}
+          </FilterChip>
+          {tags.map((tag) => (
+            <FilterChip
+              key={tag.name}
+              href={tagHref(tag.name)}
+              active={activeTag === tag.name}
+              count={tag.count}
             >
               <TagIcon className="h-3.5 w-3.5" />
-              {t.name}
-              {t.count != null && (
-                <span className="tabular-nums opacity-60">{t.count}</span>
-              )}
-            </button>
+              {tag.name}
+            </FilterChip>
           ))}
         </div>
       )}
