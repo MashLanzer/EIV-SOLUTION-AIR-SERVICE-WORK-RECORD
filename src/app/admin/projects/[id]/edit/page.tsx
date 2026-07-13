@@ -9,12 +9,7 @@ import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
-
-const dateFmt = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
+import { getLocale, getT } from "@/lib/i18n/server";
 
 export default async function EditProjectPage({
   params,
@@ -43,6 +38,13 @@ export default async function EditProjectPage({
   ]);
 
   const backHref = `/admin/projects/${id}`;
+  const t = (await getT()).projects;
+  const locale = await getLocale();
+  const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4">
@@ -52,7 +54,7 @@ export default async function EditProjectPage({
           className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Project
+          {t.projectBack}
         </Link>
         <div className="mt-2 flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
@@ -60,7 +62,7 @@ export default async function EditProjectPage({
           </span>
           <div className="min-w-0">
             <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-              Edit project
+              {t.editProjectTitle}
             </h1>
             <div className="flex items-center gap-2">
               <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">
@@ -71,8 +73,9 @@ export default async function EditProjectPage({
           </div>
         </div>
         <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
-          Created {dateFmt.format(project.createdAt)} · Updated{" "}
-          {dateFmt.format(project.updatedAt)}
+          {t.createdUpdated
+            .replace("{created}", dateFmt.format(project.createdAt))
+            .replace("{updated}", dateFmt.format(project.updatedAt))}
         </p>
       </div>
 
@@ -96,12 +99,11 @@ export default async function EditProjectPage({
 
       <Card className="border-destructive/40">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger zone</CardTitle>
+          <CardTitle className="text-destructive">{t.dangerZone}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Delete this project. Its work records are kept but will no longer be
-            linked to a project. This can&apos;t be undone.
+            {t.deleteDangerDesc}
           </p>
           <div>
             <DeleteProjectButton projectId={project.id} />

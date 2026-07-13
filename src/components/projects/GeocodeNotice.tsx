@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { MapPinOff, RefreshCw } from "lucide-react";
 
 import { retryGeocodeAction } from "@/actions/projects";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 // Shown on a project whose address is set but didn't resolve to coordinates, so
 // the missing map pin has a visible reason instead of just vanishing. Admins
@@ -19,6 +20,7 @@ export function GeocodeNotice({
 }) {
   const [pending, startTransition] = useTransition();
   const [stillMissing, setStillMissing] = useState(false);
+  const t = useT().projects;
 
   function retry() {
     setStillMissing(false);
@@ -37,12 +39,12 @@ export function GeocodeNotice({
       </span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-          Couldn&apos;t place this address on the map
+          {t.geocodeTitle}
         </p>
         <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">{address}</p>
         {stillMissing && (
           <p className="mt-1 text-xs text-warning-text">
-            Still no match — check the address for typos.
+            {t.geocodeStillMissing}
           </p>
         )}
       </div>
@@ -54,7 +56,7 @@ export function GeocodeNotice({
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-1.5 text-xs font-medium text-neutral-900 dark:text-neutral-100 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 disabled:opacity-50"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${pending ? "animate-spin" : ""}`} />
-          {pending ? "Retrying" : "Retry"}
+          {pending ? t.retrying : t.retry}
         </button>
       )}
     </div>

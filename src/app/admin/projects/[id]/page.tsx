@@ -42,9 +42,10 @@ import { prisma } from "@/lib/prisma";
 import { getWeather } from "@/lib/weather";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getLocale, getT } from "@/lib/i18n/server";
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -52,8 +53,8 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-function formatSince(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatSince(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -80,6 +81,10 @@ export default async function AdminProjectPage({
     },
   });
   if (!project) notFound();
+
+  const dict = await getT();
+  const t = dict.projects;
+  const locale = await getLocale();
 
   const [teams, customers, statusGroups, records, photoRows, checklists, templates] =
     await Promise.all([
@@ -183,7 +188,7 @@ export default async function AdminProjectPage({
       longitude: p.longitude as number,
       kind: "photo" as const,
       thumbnail: p.url,
-      subtitle: `${p.takenBy?.name ? `${p.takenBy.name} · ` : ""}${formatDate(p.takenAt)}`,
+      subtitle: `${p.takenBy?.name ? `${p.takenBy.name} · ` : ""}${formatDate(p.takenAt, locale)}`,
       href: `/admin/projects/${project.id}/photos/${p.id}`,
     }));
   const hasMap = projectPins.length > 0 || photoPins.length > 0;
@@ -211,7 +216,7 @@ export default async function AdminProjectPage({
                 {recordCount}
               </div>
               <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                Work records
+                {t.workRecords}
               </div>
             </div>
           </div>
@@ -221,25 +226,25 @@ export default async function AdminProjectPage({
                 <div className="text-lg font-semibold tabular-nums text-success-text">
                   {statusCount("APPROVED")}
                 </div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400">Approved</div>
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">{t.approved}</div>
               </div>
               <div>
                 <div className="text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
                   {statusCount("SUBMITTED")}
                 </div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400">Pending</div>
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">{t.pending}</div>
               </div>
               <div>
                 <div className="text-lg font-semibold tabular-nums text-warning-text">
                   {statusCount("NEEDS_CHANGES")}
                 </div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400">Needs changes</div>
+                <div className="text-xs text-neutral-500 dark:text-neutral-400">{t.needsChanges}</div>
               </div>
             </div>
           )}
           <div className="flex items-center gap-1.5 border-t border-neutral-200 dark:border-neutral-800 pt-4 text-sm text-neutral-500 dark:text-neutral-400">
             <CalendarDays className="h-4 w-4 shrink-0" />
-            Created {formatSince(project.createdAt)}
+            {t.created.replace("{date}", formatSince(project.createdAt, locale))}
           </div>
         </CardContent>
       </Card>
@@ -249,7 +254,7 @@ export default async function AdminProjectPage({
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-              Manage project
+              {t.manageProject}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
           </summary>
@@ -270,7 +275,7 @@ export default async function AdminProjectPage({
               <Button asChild variant="outline" size="sm">
                 <Link href={`/admin/projects/${project.id}/edit`}>
                   <Pencil className="h-4 w-4" />
-                  Full edit page
+                  {t.fullEditPage}
                 </Link>
               </Button>
               <DeleteProjectButton projectId={project.id} />
@@ -292,7 +297,7 @@ export default async function AdminProjectPage({
               rel="noopener noreferrer"
             >
               <Download className="h-4 w-4" />
-              Photo report
+              {t.photoReport}
             </a>
           </Button>
         </div>
@@ -311,8 +316,8 @@ export default async function AdminProjectPage({
         <CardContent className="p-0">
           <EmptyState
             icon={ClipboardList}
-            title="No work records yet"
-            description="Records assigned to this project will show up here."
+            title={t.noWorkRecords}
+            description={t.noWorkRecordsDesc}
           />
         </CardContent>
       </Card>
@@ -324,18 +329,18 @@ export default async function AdminProjectPage({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Job #</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Type of Work</TableHead>
-                    <TableHead>Submitted By</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{dict.records.date}</TableHead>
+                    <TableHead>{dict.records.jobNumber}</TableHead>
+                    <TableHead>{dict.adminRecords.colStatus}</TableHead>
+                    <TableHead>{dict.records.typeOfWork}</TableHead>
+                    <TableHead>{t.submittedBy}</TableHead>
+                    <TableHead className="text-right">{t.actions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {records.map((record) => (
                     <TableRow key={record.id}>
-                      <TableCell>{formatDate(record.date)}</TableCell>
+                      <TableCell>{formatDate(record.date, locale)}</TableCell>
                       <TableCell>{record.jobNumber}</TableCell>
                       <TableCell>
                         <StatusBadge status={record.status} />
@@ -346,7 +351,7 @@ export default async function AdminProjectPage({
                         <Button asChild variant="outline" size="icon">
                           <Link
                             href={`/admin/records/${record.id}`}
-                            aria-label={`Open record ${record.jobNumber}`}
+                            aria-label={t.openRecordAria.replace("{n}", record.jobNumber)}
                           >
                             <ArrowRight className="h-4 w-4" />
                           </Link>
@@ -368,7 +373,7 @@ export default async function AdminProjectPage({
                 <Button asChild variant="outline" size="icon">
                   <Link
                     href={`/admin/records/${record.id}`}
-                    aria-label={`Open record ${record.jobNumber}`}
+                    aria-label={t.openRecordAria.replace("{n}", record.jobNumber)}
                   >
                     <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -377,14 +382,14 @@ export default async function AdminProjectPage({
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                  Job #{record.jobNumber}
+                  {dict.records.jobNumber}{record.jobNumber}
                 </span>
                 <StatusBadge status={record.status} />
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <DataField label="Date" value={formatDate(record.date)} />
-                <DataField label="Type of Work" value={record.typeOfWork} />
-                <DataField label="Submitted By" value={record.submittedBy?.name ?? "—"} />
+                <DataField label={dict.records.date} value={formatDate(record.date, locale)} />
+                <DataField label={dict.records.typeOfWork} value={record.typeOfWork} />
+                <DataField label={t.submittedBy} value={record.submittedBy?.name ?? "—"} />
               </div>
             </MobileCardRow>
           ))}
@@ -394,7 +399,7 @@ export default async function AdminProjectPage({
 
   return (
     <div className="flex flex-col gap-4">
-      {saved && <SuccessToast message="Project saved" aboveMobileNav />}
+      {saved && <SuccessToast message={t.projectSaved} aboveMobileNav />}
 
       {/* Compact header: identity + quick status + team + customer contact */}
       <Card className="animate-fade-up">
@@ -453,7 +458,7 @@ export default async function AdminProjectPage({
             ) : (
               <span className="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
                 <User className="h-4 w-4 shrink-0" />
-                No customer assigned
+                {t.noCustomerAssigned}
               </span>
             )}
           </div>
@@ -466,15 +471,15 @@ export default async function AdminProjectPage({
       >
         <Tabs
           tabs={[
-            { key: "overview", label: "Overview", content: overviewPanel },
-            { key: "photos", label: "Photos", count: photos.length, content: photosPanel },
+            { key: "overview", label: t.tabOverview, content: overviewPanel },
+            { key: "photos", label: t.tabPhotos, count: photos.length, content: photosPanel },
             {
               key: "checklists",
-              label: "Checklists",
+              label: t.tabChecklists,
               count: checklistItemCount,
               content: checklistsPanel,
             },
-            { key: "records", label: "Records", count: recordCount, content: recordsPanel },
+            { key: "records", label: t.tabRecords, count: recordCount, content: recordsPanel },
           ]}
         />
       </div>
