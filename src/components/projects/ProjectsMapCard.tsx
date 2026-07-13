@@ -16,7 +16,11 @@ const ProjectsMap = dynamic(() => import("@/components/projects/ProjectsMap"), {
 
 export function ProjectsMapCard({ pins }: { pins: MapPin[] }) {
   return (
-    <div className="h-64 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 sm:h-80">
+    // `isolate` gives the map its own stacking context so Leaflet's controls
+    // and attribution (z-index ~1000 by default) stay contained and can't
+    // paint over the app's overlays - the bottom sheet / menu (z-40) would
+    // otherwise show the map bleeding through on top of it.
+    <div className="isolate h-64 overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 sm:h-80">
       <ProjectsMap pins={pins} />
     </div>
   );
