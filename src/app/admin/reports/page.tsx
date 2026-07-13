@@ -1,4 +1,5 @@
-import { BarChart3, ChevronDown, DollarSign, Sheet, Users } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, ChevronDown, Clock, DollarSign, Sheet, Users } from "lucide-react";
 
 import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { BarList } from "@/components/charts/BarList";
@@ -59,7 +60,15 @@ export default async function AdminReportsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/admin/reports/utilization">
+            <Clock className="h-4 w-4" />
+            {t.utilization}
+          </Link>
+        </Button>
+      </div>
 
       {/* Headline totals for the selected range - the payout number an admin
           actually cares about, up top instead of buried in the table's last

@@ -67,6 +67,21 @@ export function toMinutes(hhmm: string | null | undefined): number | null {
   return mins >= 0 && mins < 24 * 60 ? mins : null;
 }
 
+// Whole (fractional) hours between two "HH:MM" wall-clock strings, rolling a
+// negative span over midnight (an overnight visit). Returns 0 when either time
+// is missing or unparseable - shared by the profile and utilization reports.
+export function spanHours(
+  start: string | null | undefined,
+  end: string | null | undefined
+): number {
+  const a = toMinutes(start ?? null);
+  const b = toMinutes(end ?? null);
+  if (a == null || b == null) return 0;
+  let diff = b - a;
+  if (diff < 0) diff += 24 * 60;
+  return diff / 60;
+}
+
 // Do two timed windows on the same day overlap? Used to warn (never block)
 // when a worker is double-booked. Only meaningful when both jobs have a start
 // time; a job with a start but no end is treated as a zero-length point, so
