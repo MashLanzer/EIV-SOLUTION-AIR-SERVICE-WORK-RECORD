@@ -148,9 +148,17 @@ export default async function ReceiptPage({
             </div>
           )}
 
-          <p className="border-t border-neutral-100 pt-4 text-center text-xs text-neutral-400">
-            {t.footer}
-          </p>
+          <div className="flex flex-col items-center gap-3 border-t border-neutral-100 pt-4">
+            <a
+              href={`/receipt/${token}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+            >
+              {t.downloadPdf}
+            </a>
+            <p className="text-center text-xs text-neutral-400">{t.footer}</p>
+          </div>
         </div>
       </div>
     </main>

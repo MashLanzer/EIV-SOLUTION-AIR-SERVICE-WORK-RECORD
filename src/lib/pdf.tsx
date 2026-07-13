@@ -10,6 +10,10 @@ import {
   WorkRecordPdfDocument,
   type PdfCompany,
 } from "@/components/pdf/WorkRecordPdfDocument";
+import {
+  ReceiptPdfDocument,
+  type ReceiptLabels,
+} from "@/components/pdf/ReceiptPdfDocument";
 import { prisma } from "@/lib/prisma";
 
 type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } | null };
@@ -45,6 +49,17 @@ export async function renderRecordsPdf(records: RecordWithWorker[], company: Pdf
 
 export async function renderPhotoReportPdf(data: PhotoReportData) {
   return renderToBuffer(<PhotoReportPdfDocument data={data} />);
+}
+
+export async function renderReceiptPdf(
+  record: WorkRecord & { photos?: WorkPhoto[] },
+  company: PdfCompany,
+  labels: ReceiptLabels,
+  locale: string
+) {
+  return renderToBuffer(
+    <ReceiptPdfDocument record={record} company={company} labels={labels} locale={locale} />
+  );
 }
 
 // Shared by the admin and worker single-record PDF routes, which differ
