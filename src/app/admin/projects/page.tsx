@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ChevronRight,
   ClipboardList,
+  Contact,
   FolderKanban,
   Image as ImageIcon,
   MapPin,
@@ -37,6 +38,7 @@ type ProjectRow = {
   status: ProjectStatus;
   latitude: number | null;
   longitude: number | null;
+  customer: { id: string; name: string } | null;
   team: { id: string; name: string; color: string | null } | null;
   _count: { records: number; photos: number };
   checklists: { items: { done: boolean }[] }[];
@@ -87,6 +89,12 @@ function ProjectCard({ project, t }: { project: ProjectRow; t: Dictionary["proje
                 <span className="text-neutral-400 dark:text-neutral-600">{t.noAddress}</span>
               )}
             </div>
+            {project.customer && (
+              <div className="mt-0.5 flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+                <Contact className="h-3.5 w-3.5 shrink-0" />
+                <span className="min-w-0 truncate">{project.customer.name}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -163,6 +171,7 @@ export default async function AdminProjectsPage({
               OR: [
                 { name: { contains: query, mode: "insensitive" as const } },
                 { address: { contains: query, mode: "insensitive" as const } },
+                { customer: { name: { contains: query, mode: "insensitive" as const } } },
               ],
             }
           : {}),
@@ -174,6 +183,7 @@ export default async function AdminProjectsPage({
       },
       orderBy: { updatedAt: "desc" },
       include: {
+        customer: { select: { id: true, name: true } },
         team: { select: { id: true, name: true, color: true } },
         _count: { select: { records: true, photos: true } },
         checklists: { select: { items: { select: { done: true } } } },

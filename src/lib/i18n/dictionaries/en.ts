@@ -290,7 +290,7 @@ export const en = {
     openAria: "Open {name}",
     // Admin list
     newProject: "New Project",
-    searchPlaceholder: "Search by name or address",
+    searchPlaceholder: "Search by name, address, or customer",
     searchAria: "Search projects by name or address",
     filterByTeam: "Filter by team",
     allTeams: "All teams",

@@ -291,7 +291,7 @@ export const es: Dictionary = {
     openAria: "Abrir {name}",
     // Admin list
     newProject: "Nuevo proyecto",
-    searchPlaceholder: "Buscar por nombre o dirección",
+    searchPlaceholder: "Buscar por nombre, dirección o cliente",
     searchAria: "Buscar proyectos por nombre o dirección",
     filterByTeam: "Filtrar por equipo",
     allTeams: "Todos los equipos",
