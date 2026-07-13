@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   CalendarDays,
   CalendarPlus,
+  CalendarArrowDown,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -14,15 +15,18 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { ScheduleJobCard, type ScheduleJobView } from "@/components/schedule/ScheduleJobCard";
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
+import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
 import { ScheduleJobForm } from "@/components/schedule/ScheduleJobForm";
 import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
 import {
   ScheduleMonthCalendar,
   type CalendarDay,
 } from "@/components/schedule/ScheduleMonthCalendar";
+import { cn } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getWeather, type WeatherDay } from "@/lib/weather";
 import { getT, getLocale } from "@/lib/i18n/server";
 import {
   addUtcDays,
@@ -104,6 +108,29 @@ function overloadPeak(dayJobs: ScheduleJobView[]): number {
   return peak;
 }
 
+// Best-effort weather for one day: find the first jobsite (project) that day
+// with coordinates, fetch its forecast, and return the entry for that date.
+// Returns null when nothing's geocoded or the day is past the forecast window.
+async function getDayWeather(
+  organizationId: string,
+  dayJobs: ScheduleJobView[],
+  dayIso: string
+): Promise<{ day: WeatherDay; placeLabel: string } | null> {
+  const projectIds = [...new Set(dayJobs.map((j) => j.projectId).filter((id): id is string => !!id))];
+  if (projectIds.length === 0) return null;
+
+  const project = await prisma.project.findFirst({
+    where: { organizationId, id: { in: projectIds }, latitude: { not: null }, longitude: { not: null } },
+    select: { name: true, latitude: true, longitude: true },
+  });
+  if (!project?.latitude || !project?.longitude) return null;
+
+  const weather = await getWeather(project.latitude, project.longitude);
+  const day = weather?.days.find((d) => d.date === dayIso);
+  if (!day) return null;
+  return { day, placeLabel: project.name };
+}
+
 export default async function SchedulePage({
   searchParams,
 }: {
@@ -116,7 +143,14 @@ export default async function SchedulePage({
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
 
   const { date, view: viewParam, worker: workerParam, new: newParam } = await searchParams;
-  const view = viewParam === "week" ? "week" : viewParam === "day" ? "day" : "month";
+  const view =
+    viewParam === "week"
+      ? "week"
+      : viewParam === "day"
+        ? "day"
+        : viewParam === "team"
+          ? "team"
+          : "month";
   const worker = workerParam?.trim() || undefined;
   const formOpen = newParam === "1";
   const selected = parseDateParam(date);
@@ -131,7 +165,7 @@ export default async function SchedulePage({
   if (view === "day") {
     from = selected;
     to = addUtcDays(selected, 1);
-  } else if (view === "week") {
+  } else if (view === "week" || view === "team") {
     const range = weekRange(selected);
     from = range.from;
     to = range.to;
@@ -201,6 +235,12 @@ export default async function SchedulePage({
   // lands there); for a plain week visit with no selection it falls to today.
   const formDefaultDate = selectedKey;
 
+  // Day view: best-effort weather for the selected day at its first geocoded
+  // jobsite. Only fetched in day view, and only shown when the day falls inside
+  // the short forecast window (getDayWeather returns null otherwise).
+  const dayWeather =
+    view === "day" ? await getDayWeather(organizationId, byDay.get(selectedKey) ?? [], selectedKey) : null;
+
   const intl = {
     month: new Intl.DateTimeFormat(intlLocale, { month: "long", year: "numeric", timeZone: "UTC" }),
     day: new Intl.DateTimeFormat(intlLocale, { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }),
@@ -218,13 +258,19 @@ export default async function SchedulePage({
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
           <CalendarDays className="h-5 w-5" />
         </span>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.subtitle}</p>
         </div>
+        <Button asChild variant="outline" size="sm">
+          <a href={worker ? `/admin/schedule/ics?worker=${worker}` : "/admin/schedule/ics"}>
+            <CalendarArrowDown className="h-4 w-4" />
+            <span className="hidden sm:inline">{t.addToCalendar}</span>
+          </a>
+        </Button>
       </div>
 
-      {/* Month / Week switch + worker filter */}
+      {/* View switch + worker filter */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <SegmentedNav
           ariaLabel={t.title}
@@ -232,6 +278,7 @@ export default async function SchedulePage({
             { label: t.month, href: schedHref({ view: "month", date: selectedKey, worker }), active: view === "month" },
             { label: t.week, href: schedHref({ view: "week", date: selectedKey, worker }), active: view === "week" },
             { label: t.day, href: schedHref({ view: "day", date: selectedKey, worker }), active: view === "day" },
+            { label: t.teamView, href: schedHref({ view: "team", date: selectedKey, worker }), active: view === "team" },
           ]}
         />
         <ScheduleWorkerFilter workers={workers} />
@@ -292,7 +339,20 @@ export default async function SchedulePage({
           projects={projects}
           overloadThreshold={overloadThreshold}
           dayLabel={intl.dayLong.format(selected)}
+          weather={dayWeather}
           count={count}
+          t={t}
+        />
+      ) : view === "team" ? (
+        <TeamView
+          from={from}
+          todayKey={todayKey}
+          byDay={byDay}
+          worker={worker}
+          workers={workers}
+          overloadThreshold={overloadThreshold}
+          weekOfFmt={intl.weekOf}
+          weekdayFmt={intl.weekday}
           t={t}
         />
       ) : (
@@ -480,6 +540,7 @@ function DayView({
   projects,
   overloadThreshold,
   dayLabel,
+  weather,
   count,
   t,
 }: {
@@ -494,6 +555,7 @@ function DayView({
   projects: Opt[];
   overloadThreshold: number;
   dayLabel: string;
+  weather: { day: WeatherDay; placeLabel: string } | null;
   count: (n: number) => string;
   t: SchedT;
 }) {
@@ -535,6 +597,10 @@ function DayView({
         conflictLabel={t.conflictBadge}
       />
 
+      {weather && (
+        <ScheduleDayWeather day={weather.day} placeLabel={weather.placeLabel} />
+      )}
+
       {selectedPeak >= overloadThreshold && (
         <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/70 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-2.5 text-amber-800 dark:text-amber-200">
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
@@ -558,6 +624,172 @@ function DayView({
         count={count}
         t={t}
       />
+    </>
+  );
+}
+
+// Team view: a worker × 7-day grid for the week - one row per worker (plus an
+// "unassigned" row), each cell the count of that day's non-canceled jobs.
+// Overloaded cells turn amber; tapping a cell opens that worker's day. Reads
+// "who's booked when" at a glance, complementing the overload alert.
+function TeamView({
+  from,
+  todayKey,
+  byDay,
+  worker,
+  workers,
+  overloadThreshold,
+  weekOfFmt,
+  weekdayFmt,
+  t,
+}: {
+  from: Date;
+  todayKey: string;
+  byDay: Map<string, ScheduleJobView[]>;
+  worker?: string;
+  workers: Opt[];
+  overloadThreshold: number;
+  weekOfFmt: Intl.DateTimeFormat;
+  weekdayFmt: Intl.DateTimeFormat;
+  t: SchedT;
+}) {
+  const days = Array.from({ length: 7 }, (_, i) => addUtcDays(from, i));
+  const prevKey = dayKey(addUtcDays(from, -7));
+  const nextKey = dayKey(addUtcDays(from, 7));
+
+  const counts = new Map<string, Map<string, number>>();
+  const unassigned = new Map<string, number>();
+  let hasUnassigned = false;
+  for (const d of days) {
+    const k = dayKey(d);
+    for (const j of byDay.get(k) ?? []) {
+      if (j.status === "CANCELED") continue;
+      if (j.assignedToId) {
+        let m = counts.get(j.assignedToId);
+        if (!m) {
+          m = new Map();
+          counts.set(j.assignedToId, m);
+        }
+        m.set(k, (m.get(k) ?? 0) + 1);
+      } else {
+        unassigned.set(k, (unassigned.get(k) ?? 0) + 1);
+        hasUnassigned = true;
+      }
+    }
+  }
+
+  const rowWorkers = worker ? workers.filter((w) => w.id === worker) : workers;
+  const rows: { id: string | null; name: string }[] = [
+    ...rowWorkers.map((w) => ({ id: w.id as string | null, name: w.name })),
+    ...(!worker && hasUnassigned ? [{ id: null, name: t.unassignedRow }] : []),
+  ];
+
+  const gridCols = "minmax(7rem, 1fr) repeat(7, 2.75rem)";
+  const cellFor = (rowId: string | null, k: string) =>
+    rowId ? counts.get(rowId)?.get(k) ?? 0 : unassigned.get(k) ?? 0;
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <Button asChild variant="outline" size="icon" aria-label={t.prevWeek}>
+          <Link href={schedHref({ view: "team", date: prevKey, worker })}>
+            <ChevronLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <div className="flex flex-1 items-center justify-center gap-2">
+          <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+            {t.weekOf.replace("{date}", weekOfFmt.format(from))}
+          </span>
+          <Button asChild variant="ghost" size="sm">
+            <Link href={schedHref({ view: "team", worker })}>{t.today}</Link>
+          </Button>
+        </div>
+        <Button asChild variant="outline" size="icon" aria-label={t.nextWeek}>
+          <Link href={schedHref({ view: "team", date: nextKey, worker })}>
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+
+      {rows.length === 0 ? (
+        <Card>
+          <CardContent className="p-0">
+            <EmptyState icon={CalendarDays} title={t.teamViewEmpty} />
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
+          <div className="min-w-max">
+            {/* Header: weekday + date */}
+            <div className="grid" style={{ gridTemplateColumns: gridCols }}>
+              <div className="sticky left-0 z-10 bg-white dark:bg-neutral-950" />
+              {days.map((d) => {
+                const isToday = dayKey(d) === todayKey;
+                return (
+                  <div
+                    key={dayKey(d)}
+                    className="flex flex-col items-center gap-0.5 py-2 text-[11px] tabular-nums"
+                  >
+                    <span className="uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                      {weekdayFmt.format(d)}
+                    </span>
+                    <span
+                      className={cn(
+                        "flex h-5 w-5 items-center justify-center rounded-full font-semibold",
+                        isToday ? "bg-primary text-primary-foreground" : "text-neutral-600 dark:text-neutral-300"
+                      )}
+                    >
+                      {d.getUTCDate()}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Rows */}
+            {rows.map((row) => (
+              <div
+                key={row.id ?? "unassigned"}
+                className="grid border-t border-neutral-100 dark:border-neutral-800"
+                style={{ gridTemplateColumns: gridCols }}
+              >
+                <div className="sticky left-0 z-10 flex items-center truncate bg-white px-3 py-2.5 text-sm text-neutral-800 dark:bg-neutral-950 dark:text-neutral-200">
+                  {row.name}
+                </div>
+                {days.map((d) => {
+                  const k = dayKey(d);
+                  const n = cellFor(row.id, k);
+                  if (n === 0) {
+                    return (
+                      <div
+                        key={k}
+                        className="flex items-center justify-center py-2.5 text-neutral-200 dark:text-neutral-700"
+                      >
+                        ·
+                      </div>
+                    );
+                  }
+                  const over = n >= overloadThreshold;
+                  return (
+                    <Link
+                      key={k}
+                      href={schedHref({ view: "day", date: k, worker: row.id ?? undefined })}
+                      className={cn(
+                        "flex items-center justify-center py-2.5 text-sm font-medium tabular-nums transition-colors",
+                        over
+                          ? "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30"
+                          : "text-neutral-800 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                      )}
+                    >
+                      {n}
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -1,5 +1,6 @@
-import { CalendarDays, TriangleAlert } from "lucide-react";
+import { CalendarArrowDown, CalendarDays, TriangleAlert } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { WorkerJobCard, type WorkerJobView } from "@/components/schedule/WorkerJobCard";
@@ -126,13 +127,24 @@ export default async function WorkerSchedulePage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          {t.title}
-        </h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          {t.workerSubtitle}
-        </p>
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
+            {t.title}
+          </h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            {t.workerSubtitle}
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          {/* Download endpoint (route handler), not a page - a hard <a> nav
+              lets the browser handle the .ics download; Link would break it. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/records/schedule/ics">
+            <CalendarArrowDown className="h-4 w-4" />
+            <span className="hidden sm:inline">{t.addToCalendar}</span>
+          </a>
+        </Button>
       </div>
 
       <ScheduleMonthCalendar
