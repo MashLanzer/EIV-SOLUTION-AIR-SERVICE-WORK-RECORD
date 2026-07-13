@@ -585,6 +585,9 @@ export const es: Dictionary = {
     emailSubject: "Tu recibo de servicio",
     shareMessage: "Aquí está el recibo de tu servicio:",
     downloadPdf: "Descargar PDF",
+    scanToOpen: "Escanea para abrir",
+    showQr: "Código QR",
+    hideQr: "Ocultar QR",
   },
   reviewQueue: {
     title: "Cola de revisión",

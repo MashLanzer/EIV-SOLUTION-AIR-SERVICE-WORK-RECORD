@@ -583,6 +583,9 @@ export const en = {
     emailSubject: "Your service receipt",
     shareMessage: "Here is the receipt for your service:",
     downloadPdf: "Download PDF",
+    scanToOpen: "Scan to open",
+    showQr: "QR code",
+    hideQr: "Hide QR",
   },
   reviewQueue: {
     title: "Review queue",

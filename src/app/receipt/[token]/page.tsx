@@ -1,6 +1,8 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
+import { qrToSvg } from "@/lib/qr";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +65,14 @@ export default async function ReceiptPage({
     timeZone: "UTC",
   }).format(record.date);
   const org = record.organization;
+
+  // Absolute URL for the QR, resolved from the request host (works behind the
+  // proxy). The QR is always dark-on-white for reliable scanning.
+  const hdrs = await headers();
+  const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host");
+  const proto = hdrs.get("x-forwarded-proto") ?? "https";
+  const receiptUrl = host ? `${proto}://${host}/receipt/${token}` : "";
+  const qrSvg = receiptUrl ? qrToSvg(receiptUrl, { pixels: 132, dark: "#0a0a0a", light: "#ffffff" }) : "";
 
   return (
     <main className="min-h-screen bg-neutral-100 px-4 py-8">
@@ -149,6 +159,17 @@ export default async function ReceiptPage({
           )}
 
           <div className="flex flex-col items-center gap-3 border-t border-neutral-100 pt-4">
+            {qrSvg && (
+              <div className="flex flex-col items-center gap-1.5">
+                <div
+                  className="h-32 w-32 rounded-lg border border-neutral-200 bg-white p-1"
+                  role="img"
+                  aria-label={t.scanToOpen}
+                  dangerouslySetInnerHTML={{ __html: qrSvg }}
+                />
+                <span className="text-xs text-neutral-400">{t.scanToOpen}</span>
+              </div>
+            )}
             <a
               href={`/receipt/${token}/pdf`}
               target="_blank"

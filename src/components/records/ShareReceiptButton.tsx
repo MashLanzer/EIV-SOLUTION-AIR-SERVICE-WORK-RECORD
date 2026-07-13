@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Check, Copy, ExternalLink, Mail, MessageCircle, Share2, X } from "lucide-react";
+import { useMemo, useState, useTransition } from "react";
+import { Check, Copy, ExternalLink, Mail, MessageCircle, QrCode, Share2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { shareRecordAction, unshareRecordAction } from "@/actions/records";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { qrToSvg } from "@/lib/qr";
 
 // Toggle the public customer receipt from the record detail. When shared, shows
 // the link with copy / open / stop-sharing controls, an optional expiry, and
@@ -29,11 +30,18 @@ export function ShareReceiptButton({
   const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
   const [expiryDays, setExpiryDays] = useState("0");
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const url = token
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/receipt/${token}`
     : "";
+  // Rendered once per URL; QR modules are always dark-on-white for scannability
+  // regardless of the app theme.
+  const qrSvg = useMemo(
+    () => (url ? qrToSvg(url, { pixels: 176, dark: "#0a0a0a", light: "#ffffff" }) : ""),
+    [url]
+  );
   const message = `${t.shareMessage} ${url}`;
   const phoneDigits = (customerPhone ?? "").replace(/\D/g, "");
   const whatsappUrl = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(message)}`;
@@ -140,6 +148,16 @@ export function ShareReceiptButton({
           type="button"
           variant="ghost"
           size="sm"
+          onClick={() => setShowQr((v) => !v)}
+          aria-expanded={showQr}
+        >
+          <QrCode className="h-3.5 w-3.5" />
+          {showQr ? t.hideQr : t.showQr}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
           disabled={pending}
           onClick={stop}
           className="text-destructive-text"
@@ -148,6 +166,18 @@ export function ShareReceiptButton({
           {t.stopSharing}
         </Button>
       </div>
+      {showQr && (
+        <div className="flex flex-col items-center gap-1.5 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white p-3">
+          {/* Self-contained inline SVG from our own encoder - no network. */}
+          <div
+            className="h-44 w-44"
+            aria-label={t.scanToOpen}
+            role="img"
+            dangerouslySetInnerHTML={{ __html: qrSvg }}
+          />
+          <span className="text-xs text-neutral-500">{t.scanToOpen}</span>
+        </div>
+      )}
       <p className="text-xs text-neutral-500 dark:text-neutral-400">
         {t.sharingHint} · {expiryNote}
       </p>
