@@ -21,7 +21,7 @@ export function ScheduleMonthCalendar({
   monthLabel,
   weekdayLabels,
   days,
-  basePath,
+  dayHref,
   prevHref,
   nextHref,
   todayHref,
@@ -32,7 +32,9 @@ export function ScheduleMonthCalendar({
   monthLabel: string;
   weekdayLabels: string[];
   days: CalendarDay[];
-  basePath: string;
+  // Builds the link for a given day key, so callers can carry filters (view,
+  // worker) through in the URL.
+  dayHref: (key: string) => string;
   prevHref: string;
   nextHref: string;
   todayHref: string;
@@ -88,7 +90,7 @@ export function ScheduleMonthCalendar({
         {days.map((d) => (
           <Link
             key={d.key}
-            href={`${basePath}?date=${d.key}`}
+            href={dayHref(d.key)}
             aria-current={d.isSelected ? "date" : undefined}
             className={cn(
               "flex min-h-[2.75rem] flex-col items-center justify-start gap-1 rounded-lg py-1.5 text-sm tabular-nums transition-colors",

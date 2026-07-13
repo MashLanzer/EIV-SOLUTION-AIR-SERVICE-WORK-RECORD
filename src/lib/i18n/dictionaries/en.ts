@@ -568,6 +568,7 @@ export const en = {
     nextMonth: "Next month",
     month: "Month",
     week: "Week",
+    allWorkers: "All workers",
     // New / edit job form
     newJob: "Schedule a job",
     editJob: "Edit job",

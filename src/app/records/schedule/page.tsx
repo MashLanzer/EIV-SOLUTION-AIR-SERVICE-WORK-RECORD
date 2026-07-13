@@ -129,7 +129,7 @@ export default async function WorkerSchedulePage({
         monthLabel={monthLabel}
         weekdayLabels={weekdayLabels}
         days={calendarDays}
-        basePath="/records/schedule"
+        dayHref={(key) => `/records/schedule?date=${key}`}
         prevHref={`/records/schedule?date=${prevMonthKey}`}
         nextHref={`/records/schedule?date=${nextMonthKey}`}
         todayHref="/records/schedule"

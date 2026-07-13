@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { ScheduleJobCard, type ScheduleJobView } from "@/components/schedule/ScheduleJobCard";
 import { ScheduleJobForm } from "@/components/schedule/ScheduleJobForm";
+import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
 import {
   ScheduleMonthCalendar,
   type CalendarDay,
@@ -38,6 +39,17 @@ function parseDateParam(value: string | undefined): Date {
     if (!Number.isNaN(d.getTime())) return d;
   }
   return startOfUtcDay(new Date());
+}
+
+// Build a /admin/schedule URL that carries the current view + worker filter,
+// so day taps, month/week nav and the switch never drop the filter.
+function schedHref(params: { view?: string; date?: string; worker?: string }): string {
+  const p = new URLSearchParams();
+  if (params.view) p.set("view", params.view);
+  if (params.date) p.set("date", params.date);
+  if (params.worker) p.set("worker", params.worker);
+  const qs = p.toString();
+  return qs ? `/admin/schedule?${qs}` : "/admin/schedule";
 }
 
 // Flag jobs where the same worker is double-booked with an overlapping timed
@@ -68,7 +80,7 @@ function conflictingIds(views: ScheduleJobView[]): Set<string> {
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; view?: string }>;
+  searchParams: Promise<{ date?: string; view?: string; worker?: string }>;
 }) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
@@ -76,8 +88,9 @@ export default async function SchedulePage({
   const locale = await getLocale();
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
 
-  const { date, view: viewParam } = await searchParams;
+  const { date, view: viewParam, worker: workerParam } = await searchParams;
   const view = viewParam === "week" ? "week" : "month";
+  const worker = workerParam?.trim() || undefined;
   const selected = parseDateParam(date);
   const selectedKey = dayKey(selected);
   const todayKey = dayKey(startOfUtcDay(new Date()));
@@ -90,7 +103,7 @@ export default async function SchedulePage({
   const to = range ? range.to : addUtcDays(gridDays[gridDays.length - 1], 1);
 
   const [jobs, workers, teams, customers, projects] = await Promise.all([
-    getScheduledJobs({ session, organizationId, from, to }),
+    getScheduledJobs({ session, organizationId, from, to, assignedToId: worker }),
     prisma.user.findMany({
       where: { organizationId, active: true },
       orderBy: { name: "asc" },
@@ -170,14 +183,17 @@ export default async function SchedulePage({
         </div>
       </div>
 
-      {/* Month / Week switch */}
-      <SegmentedNav
-        ariaLabel={t.title}
-        items={[
-          { label: t.month, href: `/admin/schedule?view=month&date=${selectedKey}`, active: view === "month" },
-          { label: t.week, href: `/admin/schedule?view=week&date=${selectedKey}`, active: view === "week" },
-        ]}
-      />
+      {/* Month / Week switch + worker filter */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <SegmentedNav
+          ariaLabel={t.title}
+          items={[
+            { label: t.month, href: schedHref({ view: "month", date: selectedKey, worker }), active: view === "month" },
+            { label: t.week, href: schedHref({ view: "week", date: selectedKey, worker }), active: view === "week" },
+          ]}
+        />
+        <ScheduleWorkerFilter workers={workers} />
+      </div>
 
       {/* New job (collapsed by default) */}
       <Card>
@@ -208,6 +224,7 @@ export default async function SchedulePage({
           todayKey={todayKey}
           gridDays={gridDays}
           byDay={byDay}
+          worker={worker}
           workers={workers}
           teams={teams}
           customers={customers}
@@ -223,6 +240,7 @@ export default async function SchedulePage({
           from={from}
           todayKey={todayKey}
           byDay={byDay}
+          worker={worker}
           workers={workers}
           teams={teams}
           customers={customers}
@@ -246,6 +264,7 @@ function MonthView({
   todayKey,
   gridDays,
   byDay,
+  worker,
   workers,
   teams,
   customers,
@@ -261,6 +280,7 @@ function MonthView({
   todayKey: string;
   gridDays: Date[];
   byDay: Map<string, ScheduleJobView[]>;
+  worker?: string;
   workers: Opt[];
   teams: Opt[];
   customers: Opt[];
@@ -295,10 +315,10 @@ function MonthView({
         monthLabel={monthLabel}
         weekdayLabels={weekdayLabels}
         days={calendarDays}
-        basePath="/admin/schedule"
-        prevHref={`/admin/schedule?view=month&date=${prevMonthKey}`}
-        nextHref={`/admin/schedule?view=month&date=${nextMonthKey}`}
-        todayHref="/admin/schedule?view=month"
+        dayHref={(key) => schedHref({ view: "month", date: key, worker })}
+        prevHref={schedHref({ view: "month", date: prevMonthKey, worker })}
+        nextHref={schedHref({ view: "month", date: nextMonthKey, worker })}
+        todayHref={schedHref({ view: "month", worker })}
         prevLabel={t.prevMonth}
         nextLabel={t.nextMonth}
         todayLabel={t.today}
@@ -322,6 +342,7 @@ function WeekView({
   from,
   todayKey,
   byDay,
+  worker,
   workers,
   teams,
   customers,
@@ -334,6 +355,7 @@ function WeekView({
   from: Date;
   todayKey: string;
   byDay: Map<string, ScheduleJobView[]>;
+  worker?: string;
   workers: Opt[];
   teams: Opt[];
   customers: Opt[];
@@ -353,7 +375,7 @@ function WeekView({
     <>
       <div className="flex items-center justify-between gap-2">
         <Button asChild variant="outline" size="icon" aria-label={t.prevWeek}>
-          <Link href={`/admin/schedule?view=week&date=${prevKey}`}>
+          <Link href={schedHref({ view: "week", date: prevKey, worker })}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -362,11 +384,11 @@ function WeekView({
             {t.weekOf.replace("{date}", weekOfFmt.format(from))}
           </span>
           <Button asChild variant="ghost" size="sm">
-            <Link href="/admin/schedule?view=week">{t.today}</Link>
+            <Link href={schedHref({ view: "week", worker })}>{t.today}</Link>
           </Button>
         </div>
         <Button asChild variant="outline" size="icon" aria-label={t.nextWeek}>
-          <Link href={`/admin/schedule?view=week&date=${nextKey}`}>
+          <Link href={schedHref({ view: "week", date: nextKey, worker })}>
             <ChevronRight className="h-4 w-4" />
           </Link>
         </Button>
