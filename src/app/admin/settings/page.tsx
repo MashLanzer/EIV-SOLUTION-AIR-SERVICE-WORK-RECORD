@@ -30,6 +30,7 @@ export default async function AdminSettingsPage({
       lockApprovedRecords: true,
       logoUrl: true,
       defaultWorkNotes: true,
+      scheduleOverloadThreshold: true,
     },
   });
   return (
@@ -54,6 +55,10 @@ export default async function AdminSettingsPage({
           lockApprovedRecords: org?.lockApprovedRecords ?? false,
           logoUrl: org?.logoUrl ?? null,
           defaultWorkNotes: org?.defaultWorkNotes ?? "",
+          overloadThreshold:
+            org?.scheduleOverloadThreshold != null
+              ? String(org.scheduleOverloadThreshold)
+              : "4",
         }}
       />
     </>

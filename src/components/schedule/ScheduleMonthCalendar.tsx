@@ -11,6 +11,9 @@ export interface CalendarDay {
   isSelected: boolean;
   // How many jobs are scheduled that day (shown as a small count).
   count: number;
+  // True when a worker is booked at or past the org's overload threshold that
+  // day; the count badge turns amber to flag it.
+  overloaded?: boolean;
 }
 
 // A month grid: seven weekday columns, six week rows. Each day links to
@@ -109,7 +112,9 @@ export function ScheduleMonthCalendar({
                   "flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none tabular-nums",
                   d.isSelected
                     ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "bg-accent-soft text-accent-text"
+                    : d.overloaded
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
+                      : "bg-accent-soft text-accent-text"
                 )}
               >
                 {d.count}

@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  TriangleAlert,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -86,6 +87,22 @@ function conflictingIds(views: ScheduleJobView[]): Set<string> {
   return ids;
 }
 
+// A day is "overloaded" when a single worker is booked for `threshold` or more
+// (non-canceled) jobs that day. Returns the peak per-worker count so callers can
+// show the busiest load. When a worker filter is active every job already
+// belongs to one worker, so this is just their day's count.
+function overloadPeak(dayJobs: ScheduleJobView[]): number {
+  const byWorker = new Map<string, number>();
+  let peak = 0;
+  for (const j of dayJobs) {
+    if (!j.assignedToId || j.status === "CANCELED") continue;
+    const n = (byWorker.get(j.assignedToId) ?? 0) + 1;
+    byWorker.set(j.assignedToId, n);
+    if (n > peak) peak = n;
+  }
+  return peak;
+}
+
 export default async function SchedulePage({
   searchParams,
 }: {
@@ -112,7 +129,7 @@ export default async function SchedulePage({
   const from = range ? range.from : gridDays[0];
   const to = range ? range.to : addUtcDays(gridDays[gridDays.length - 1], 1);
 
-  const [jobs, workers, teams, customers, projects] = await Promise.all([
+  const [jobs, workers, teams, customers, projects, org] = await Promise.all([
     getScheduledJobs({ session, organizationId, from, to, assignedToId: worker }),
     prisma.user.findMany({
       where: { organizationId, active: true },
@@ -134,7 +151,12 @@ export default async function SchedulePage({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { scheduleOverloadThreshold: true },
+    }),
   ]);
+  const overloadThreshold = org?.scheduleOverloadThreshold ?? 4;
 
   const views: ScheduleJobView[] = jobs.map((j) => ({
     id: j.id,
@@ -238,6 +260,7 @@ export default async function SchedulePage({
           teams={teams}
           customers={customers}
           projects={projects}
+          overloadThreshold={overloadThreshold}
           monthLabel={intl.month.format(selected)}
           weekdayLabels={weekdayLabels}
           selectedDayLabel={intl.dayLong.format(selected)}
@@ -311,6 +334,7 @@ function MonthView({
   teams,
   customers,
   projects,
+  overloadThreshold,
   monthLabel,
   weekdayLabels,
   selectedDayLabel,
@@ -327,6 +351,7 @@ function MonthView({
   teams: Opt[];
   customers: Opt[];
   projects: Opt[];
+  overloadThreshold: number;
   monthLabel: string;
   weekdayLabels: string[];
   selectedDayLabel: string;
@@ -344,10 +369,12 @@ function MonthView({
       isToday: key === todayKey,
       isSelected: key === selectedKey,
       count: dayJobs.length,
+      overloaded: overloadPeak(dayJobs) >= overloadThreshold,
     };
   });
   const selectedJobs = byDay.get(selectedKey) ?? [];
   const conflictIds = conflictingIds(selectedJobs);
+  const selectedPeak = overloadPeak(selectedJobs);
   const prevMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth - 1, 1));
   const nextMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth + 1, 1));
 
@@ -385,6 +412,16 @@ function MonthView({
         nextLabel={t.nextMonth}
         todayLabel={t.today}
       />
+      {selectedPeak >= overloadThreshold && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/70 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-2.5 text-amber-800 dark:text-amber-200">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          <p className="text-sm">
+            {t.overloadWarning
+              .replace("{n}", String(selectedPeak))
+              .replace("{threshold}", String(overloadThreshold))}
+          </p>
+        </div>
+      )}
       <DaySection
         heading={selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
         jobs={selectedJobs}

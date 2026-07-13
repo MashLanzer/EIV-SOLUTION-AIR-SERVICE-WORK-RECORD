@@ -106,7 +106,8 @@ export type CompanyField =
   | "license"
   | "leadPay"
   | "helperPay"
-  | "currency";
+  | "currency"
+  | "overloadThreshold";
 
 type CompanyFieldState = { error?: string; ok?: boolean } | undefined;
 
@@ -127,6 +128,18 @@ export async function updateCompanyFieldAction(
     // Short symbol; empty resets to the default "$" (currency can't be blank).
     const symbol = raw.slice(0, 3) || "$";
     data = { currencySymbol: symbol };
+  } else if (field === "overloadThreshold") {
+    // How many jobs in a day flags a worker as overloaded on the calendar.
+    // Blank resets to the default (4); otherwise a whole number clamped 1..50.
+    if (!raw) {
+      data = { scheduleOverloadThreshold: 4 };
+    } else {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1) {
+        return { error: "Enter a whole number of 1 or more." };
+      }
+      data = { scheduleOverloadThreshold: Math.min(50, n) };
+    }
   } else {
     // Pay defaults: blank clears; otherwise a non-negative amount.
     const amount = Number(raw);

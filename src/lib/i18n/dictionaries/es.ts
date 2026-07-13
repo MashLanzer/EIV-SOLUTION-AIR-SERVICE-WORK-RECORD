@@ -574,6 +574,8 @@ export const es: Dictionary = {
     summaryJobs: "Trabajos del mes",
     summaryCompleted: "Completados",
     summaryBusiest: "Más ocupado",
+    overloadWarning:
+      "Atención: {n} trabajos para un mismo trabajador este día, igual o por encima de tu aviso de sobrecarga de {threshold}.",
     // New / edit job form
     newJob: "Programar trabajo",
     editJob: "Editar trabajo",
@@ -1042,6 +1044,9 @@ export const es: Dictionary = {
       defaultHelperPay: "Pago ayudante por defecto",
       defaultHelperPayHelp:
         "Pre-llena el pago del ayudante en un registro nuevo; el trabajador puede cambiarlo.",
+      overloadThreshold: "Aviso de sobrecarga",
+      overloadThresholdHelp:
+        "Marca el día de un trabajador como sobrecargado en la agenda a partir de esta cantidad de trabajos. Déjalo en blanco para el valor por defecto (4).",
       workTypes: "Tipos de trabajo",
       workTypesHint:
         "Tipos de trabajo predefinidos que el equipo puede elegir, por categoría",

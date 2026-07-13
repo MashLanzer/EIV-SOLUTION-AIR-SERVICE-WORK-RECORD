@@ -572,6 +572,8 @@ export const en = {
     summaryJobs: "Jobs this month",
     summaryCompleted: "Completed",
     summaryBusiest: "Busiest",
+    overloadWarning:
+      "Heads up: {n} jobs for one worker this day — at or above your overload alert of {threshold}.",
     // New / edit job form
     newJob: "Schedule a job",
     editJob: "Edit job",
@@ -1038,6 +1040,9 @@ export const en = {
       defaultHelperPay: "Default helper pay",
       defaultHelperPayHelp:
         "Pre-fills the helper pay on a new record; workers can still change it.",
+      overloadThreshold: "Overload alert",
+      overloadThresholdHelp:
+        "Flags a worker's day on the schedule as overloaded at this many jobs or more. Leave blank for the default (4).",
       workTypes: "Work types",
       workTypesHint: "Predefined types of work the crew can pick, by category",
       defaultNotes: "Default work notes",

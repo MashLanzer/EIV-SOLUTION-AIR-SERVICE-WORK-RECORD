@@ -52,6 +52,9 @@ model Organization {
   // Optional default text pre-filled into a new record's "work performed"
   // notes, so a crew can start from a standard template.
   defaultWorkNotes String?  @db.Text
+  // Scheduler: a day is flagged "overloaded" for a worker when they have this
+  // many jobs (or more) that day. Admin-configurable in Settings.
+  scheduleOverloadThreshold Int @default(4)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   users     User[]

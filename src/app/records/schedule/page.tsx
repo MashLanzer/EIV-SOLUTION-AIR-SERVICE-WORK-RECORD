@@ -7,6 +7,7 @@ import {
   ScheduleMonthCalendar,
   type CalendarDay,
 } from "@/components/schedule/ScheduleMonthCalendar";
+import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 import { getT, getLocale } from "@/lib/i18n/server";
@@ -47,7 +48,14 @@ export default async function WorkerSchedulePage({
   const from = gridDays[0];
   const to = addUtcDays(gridDays[gridDays.length - 1], 1);
 
-  const jobs = await getScheduledJobs({ session, organizationId, from, to });
+  const [jobs, org] = await Promise.all([
+    getScheduledJobs({ session, organizationId, from, to }),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { scheduleOverloadThreshold: true },
+    }),
+  ]);
+  const overloadThreshold = org?.scheduleOverloadThreshold ?? 4;
 
   // Canceled visits are hidden - they're not something to act on.
   type Row = WorkerJobView & { day: string };
@@ -79,13 +87,15 @@ export default async function WorkerSchedulePage({
   const selectedMonth = selected.getUTCMonth();
   const calendarDays: CalendarDay[] = gridDays.map((d) => {
     const key = dayKey(d);
+    const dayCount = (byDay.get(key) ?? []).length;
     return {
       key,
       day: d.getUTCDate(),
       inMonth: d.getUTCMonth() === selectedMonth,
       isToday: key === todayKey,
       isSelected: key === selectedKey,
-      count: (byDay.get(key) ?? []).length,
+      count: dayCount,
+      overloaded: dayCount >= overloadThreshold,
     };
   });
 

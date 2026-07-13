@@ -8,6 +8,7 @@ import {
   Coins,
   DollarSign,
   FileText,
+  Gauge,
   Info,
   Lock,
   MapPin,
@@ -67,6 +68,7 @@ export interface CompanySettings {
   lockApprovedRecords: boolean;
   logoUrl: string | null;
   defaultWorkNotes: string;
+  overloadThreshold: string;
 }
 
 export function SettingsScreen({
@@ -213,6 +215,14 @@ export function SettingsScreen({
             placeholder="0.00"
             action={updateCompanyFieldAction.bind(null, "helperPay")}
             helpWhenEditing={s.workRecords.defaultHelperPayHelp}
+          />
+          <InlineEditRow
+            icon={Gauge}
+            label={s.workRecords.overloadThreshold}
+            value={company.overloadThreshold}
+            placeholder="4"
+            action={updateCompanyFieldAction.bind(null, "overloadThreshold")}
+            helpWhenEditing={s.workRecords.overloadThresholdHelp}
           />
           <SettingsRow
             icon={Tag}
