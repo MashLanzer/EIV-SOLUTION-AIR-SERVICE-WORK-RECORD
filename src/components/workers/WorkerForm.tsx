@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createWorkerAction, type WorkerFormState } from "@/actions/workers";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 export function WorkerForm({
@@ -22,26 +23,28 @@ export function WorkerForm({
   );
   const formRef = useRef<HTMLFormElement>(null);
   const [role, setRole] = useState<"WORKER" | "ADMIN">("WORKER");
+  const t = useT().workers;
+  const tc = useT().common;
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="name">Full name</Label>
+        <Label htmlFor="name">{t.fullName}</Label>
         <Input id="name" name="name" required autoFocus />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">{t.email}</Label>
         <Input id="email" name="email" type="email" placeholder="name@gmail.com" required />
       </div>
 
       {/* Role as a segmented toggle - clearer than a dropdown for two options */}
       <div className="flex flex-col gap-2">
-        <Label>Role</Label>
+        <Label>{t.role}</Label>
         <input type="hidden" name="role" value={role} />
         <div className="grid grid-cols-2 gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900 p-1">
           {([
-            { value: "WORKER", label: "Worker", icon: User, hint: "Submits records" },
-            { value: "ADMIN", label: "Admin", icon: Shield, hint: "Full access" },
+            { value: "WORKER", label: t.roleWorker, icon: User, hint: t.workerHint },
+            { value: "ADMIN", label: t.roleAdmin, icon: Shield, hint: t.adminHint },
           ] as const).map((opt) => {
             const active = role === opt.value;
             return (
@@ -73,9 +76,9 @@ export function WorkerForm({
       {teams.length > 0 && (
         <div className="flex flex-col gap-2">
           <Label>
-            Teams{" "}
+            {t.teams}{" "}
             <span className="font-normal text-neutral-400 dark:text-neutral-500">
-              (optional)
+              ({tc.optional})
             </span>
           </Label>
           <div className="flex flex-col divide-y divide-neutral-200 dark:divide-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-800">
@@ -95,20 +98,20 @@ export function WorkerForm({
       {state?.error && <Alert variant="error">{state.error}</Alert>}
       {role === "ADMIN" ? (
         <ConfirmDialog
-          title="Create an admin account?"
-          description="Admins can manage every worker, customer, and record - including deactivating other admins. Only grant this to someone who needs full access."
-          confirmLabel="Create admin account"
+          title={t.createAdminTitle}
+          description={t.createAdminDesc}
+          confirmLabel={t.createAdminConfirm}
           confirmVariant="default"
           trigger={
             <Button type="button" disabled={pending}>
-              {pending ? "Creating..." : "Create account"}
+              {pending ? t.creating : t.createAccount}
             </Button>
           }
           onConfirm={() => formRef.current?.requestSubmit()}
         />
       ) : (
         <Button type="submit" disabled={pending}>
-          {pending ? "Creating..." : "Create account"}
+          {pending ? t.creating : t.createAccount}
         </Button>
       )}
     </form>

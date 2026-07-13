@@ -11,6 +11,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 
 export function UpdateWorkerEmailForm({
@@ -26,6 +27,7 @@ export function UpdateWorkerEmailForm({
   >(updateWorkerEmailAction.bind(null, userId), undefined);
   const formRef = useRef<HTMLFormElement>(null);
   const [email, setEmail] = useState(currentEmail);
+  const t = useT().workers;
   // Guard against losing an edited (but not yet saved) email on reload/close.
   useBeforeUnloadGuard(email.trim() !== currentEmail && !pending);
 
@@ -44,13 +46,15 @@ export function UpdateWorkerEmailForm({
         className="sm:max-w-xs"
       />
       <ConfirmDialog
-        title="Change the authorized sign-in email?"
-        description={`Only ${email || "this address"} will be able to sign in to this account going forward. The previous email (${currentEmail}) immediately loses access.`}
-        confirmLabel="Update email"
+        title={t.changeEmailTitle}
+        description={t.changeEmailDesc
+          .replace("{email}", email || t.thisAddress)
+          .replace("{prev}", currentEmail)}
+        confirmLabel={t.updateEmail}
         trigger={
           <Button type="button" variant="outline" size="sm" disabled={pending}>
             <Pencil className="h-4 w-4" />
-            {pending ? "Saving..." : "Update email"}
+            {pending ? t.saving : t.updateEmail}
           </Button>
         }
         onConfirm={() => formRef.current?.requestSubmit()}

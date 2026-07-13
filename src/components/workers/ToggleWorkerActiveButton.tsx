@@ -5,6 +5,7 @@ import { Ban, CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { toggleWorkerActiveAction } from "@/actions/workers";
 
 export function ToggleWorkerActiveButton({
@@ -21,6 +22,7 @@ export function ToggleWorkerActiveButton({
   disableDeactivate?: boolean;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const t = useT().workers;
 
   // Reactivating is harmless - no confirmation needed.
   if (!active) {
@@ -28,7 +30,7 @@ export function ToggleWorkerActiveButton({
       <form action={toggleWorkerActiveAction.bind(null, workerId)}>
         <Button type="submit">
           <CheckCircle2 className="h-4 w-4" />
-          Reactivate
+          {t.reactivate}
         </Button>
       </form>
     );
@@ -39,11 +41,10 @@ export function ToggleWorkerActiveButton({
       <div className="flex flex-col gap-1">
         <Button type="button" variant="destructive" disabled>
           <Ban className="h-4 w-4" />
-          Deactivate
+          {t.deactivate}
         </Button>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          This is the last active admin, so they can&apos;t be deactivated.
-          Promote another worker to admin first.
+          {t.lastAdminDeactivateHint}
         </p>
       </div>
     );
@@ -52,13 +53,13 @@ export function ToggleWorkerActiveButton({
   return (
     <form ref={formRef} action={toggleWorkerActiveAction.bind(null, workerId)}>
       <ConfirmDialog
-        title={`Deactivate ${name}?`}
-        description="They won't be able to sign in anymore. Their submitted records are kept, and you can reactivate them at any time."
-        confirmLabel="Deactivate"
+        title={t.deactivateTitle.replace("{name}", name)}
+        description={t.deactivateDesc}
+        confirmLabel={t.deactivate}
         trigger={
           <Button type="button" variant="destructive">
             <Ban className="h-4 w-4" />
-            Deactivate
+            {t.deactivate}
           </Button>
         }
         onConfirm={() => formRef.current?.requestSubmit()}

@@ -9,6 +9,7 @@ import { WorkersSection, type WorkerStat } from "@/components/workers/WorkersTab
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 import type { Prisma } from "@prisma/client";
 
 function StatTile({
@@ -86,17 +87,18 @@ export default async function AdminWorkersPage({
   const admins = users.filter((u) => u.role === "ADMIN");
   const fieldWorkers = users.filter((u) => u.role !== "ADMIN");
   const activeCount = users.filter((u) => u.active).length;
+  const t = (await getT()).workers;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          Team
+          {t.team}
         </h1>
         <Button asChild>
           <Link href="/admin/workers/new">
             <UserPlus className="h-4 w-4" />
-            New Worker
+            {t.newWorker}
           </Link>
         </Button>
       </div>
@@ -105,9 +107,9 @@ export default async function AdminWorkersPage({
           whole roster rather than the filtered subset. */}
       {!query && users.length > 0 && (
         <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
-          <StatTile icon={Users} value={users.length} label="Members" />
-          <StatTile icon={Users} value={activeCount} label="Active" />
-          <StatTile icon={Shield} value={admins.length} label="Admins" />
+          <StatTile icon={Users} value={users.length} label={t.members} />
+          <StatTile icon={Users} value={activeCount} label={t.active} />
+          <StatTile icon={Shield} value={admins.length} label={t.admins} />
         </div>
       )}
 
@@ -116,10 +118,10 @@ export default async function AdminWorkersPage({
         <Input
           type="search"
           name="q"
-          placeholder="Search by name or email"
+          placeholder={t.searchPlaceholder}
           defaultValue={query}
           className="pl-9"
-          aria-label="Search team by name or email"
+          aria-label={t.searchAria}
         />
       </form>
 
@@ -127,32 +129,32 @@ export default async function AdminWorkersPage({
         query ? (
           <EmptyState
             icon={SearchX}
-            title="No matches"
-            description={`Nothing found for "${query}".`}
+            title={t.noMatches}
+            description={t.nothingFound.replace("{q}", query)}
             action={
               <Button asChild variant="outline" className="mt-2">
-                <Link href="/admin/workers">Clear search</Link>
+                <Link href="/admin/workers">{t.clearSearch}</Link>
               </Button>
             }
           />
         ) : (
           <EmptyState
             icon={Users}
-            title="No accounts yet"
-            description="Create one to get your team started."
+            title={t.noAccounts}
+            description={t.noAccountsDesc}
           />
         )
       ) : (
         <>
           <WorkersSection
-            title="Administrators"
+            title={t.administrators}
             workers={admins}
             stats={stats}
             className="animate-fade-up"
             style={{ animationDelay: "40ms", animationFillMode: "both" }}
           />
           <WorkersSection
-            title="Field workers"
+            title={t.fieldWorkers}
             workers={fieldWorkers}
             stats={stats}
             className="animate-fade-up"

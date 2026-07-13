@@ -314,6 +314,94 @@ export const es: Dictionary = {
       "ej. Falta la firma del instalador — vuelve a recogerla y reenvía.",
     returnN: "Devolver {n}",
   },
+  workers: {
+    // List page
+    team: "Equipo",
+    newWorker: "Nuevo trabajador",
+    members: "Miembros",
+    active: "Activos",
+    admins: "Administradores",
+    searchPlaceholder: "Buscar por nombre o correo",
+    searchAria: "Buscar equipo por nombre o correo",
+    noMatches: "Sin coincidencias",
+    nothingFound: 'No se encontró nada para "{q}".',
+    clearSearch: "Limpiar búsqueda",
+    noAccounts: "Aún no hay cuentas",
+    noAccountsDesc: "Crea una para empezar con tu equipo.",
+    administrators: "Administradores",
+    fieldWorkers: "Trabajadores de campo",
+    // Table
+    statusActive: "Activo",
+    statusInactive: "Inactivo",
+    nobodyHere: "Aún no hay nadie aquí.",
+    colName: "Nombre",
+    colEmail: "Correo",
+    colJobs: "Trabajos",
+    colLastActive: "Última actividad",
+    colStatus: "Estado",
+    colActions: "Acciones",
+    jobCountOne: "{n} trabajo",
+    jobCountMany: "{n} trabajos",
+    lastActivePrefix: "Última actividad {date}",
+    // Detail
+    roleAdmin: "Admin",
+    roleWorker: "Trabajador",
+    joined: "Se unió {date}",
+    recordsSubmitted: "Registros enviados",
+    manage: "Gestionar",
+    authorizedEmail: "Correo de Google autorizado",
+    role: "Rol",
+    deleteAccount: "Eliminar cuenta",
+    deleteFirstHint:
+      "Desactiva a este trabajador primero para eliminar su cuenta permanentemente.",
+    // New page
+    newWorkerTitle: "Nuevo trabajador",
+    newWorkerDesc:
+      "Pre-autoriza una cuenta de Google. Se unirá a tu empresa cuando inicie sesión por primera vez.",
+    // Delete button
+    deleteTitle: "¿Eliminar la cuenta de {name}?",
+    deleteDesc:
+      "Esto elimina permanentemente su cuenta y correo autorizado de la app. Sus registros de trabajo enviados se conservan, pero ya no mostrarán quién los envió. No se puede deshacer.",
+    // Toggle active
+    reactivate: "Reactivar",
+    deactivate: "Desactivar",
+    lastAdminDeactivateHint:
+      "Este es el último administrador activo, así que no se puede desactivar. Promueve a otro trabajador a administrador primero.",
+    deactivateTitle: "¿Desactivar a {name}?",
+    deactivateDesc:
+      "Ya no podrá iniciar sesión. Sus registros enviados se conservan, y puedes reactivarlo en cualquier momento.",
+    // Email form
+    changeEmailTitle: "¿Cambiar el correo de inicio de sesión autorizado?",
+    changeEmailDesc:
+      "Solo {email} podrá iniciar sesión en esta cuenta de ahora en adelante. El correo anterior ({prev}) pierde el acceso de inmediato.",
+    thisAddress: "esta dirección",
+    updateEmail: "Actualizar correo",
+    // Role form
+    promoteTitle: "¿Promover a administrador?",
+    removeAdminTitle: "¿Quitar acceso de administrador?",
+    promoteDesc:
+      "Podrá gestionar cada trabajador, cliente y registro, incluida la desactivación de otros administradores.",
+    removeAdminDesc:
+      "Perderá el acceso a las herramientas de administrador de inmediato y quedará limitado a enviar sus propios registros de trabajo.",
+    promoteConfirm: "Promover a administrador",
+    removeAdminConfirm: "Quitar administrador",
+    updateRole: "Actualizar rol",
+    lastAdminRoleHint:
+      "Este es el último administrador activo, así que su rol no se puede cambiar.",
+    // Create form
+    fullName: "Nombre completo",
+    email: "Correo",
+    workerHint: "Envía registros",
+    adminHint: "Acceso total",
+    teams: "Equipos",
+    createAdminTitle: "¿Crear una cuenta de administrador?",
+    createAdminDesc:
+      "Los administradores pueden gestionar cada trabajador, cliente y registro, incluida la desactivación de otros administradores. Otórgalo solo a quien necesite acceso total.",
+    createAdminConfirm: "Crear cuenta de administrador",
+    creating: "Creando...",
+    createAccount: "Crear cuenta",
+    saving: "Guardando...",
+  },
   nav: {
     dashboard: "Panel",
     home: "Inicio",

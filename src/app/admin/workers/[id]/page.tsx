@@ -13,9 +13,10 @@ import { UpdateWorkerRoleForm } from "@/components/workers/UpdateWorkerRoleForm"
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getLocale, getT } from "@/lib/i18n/server";
 
-function formatJoined(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatJoined(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -42,6 +43,9 @@ export default async function WorkerDetailPage({
   ]);
   const isLastActiveAdmin =
     worker.role === "ADMIN" && worker.active && otherActiveAdmins === 0;
+  const dict = await getT();
+  const t = dict.workers;
+  const locale = await getLocale();
 
   return (
     <div className="flex flex-col gap-4">
@@ -51,10 +55,10 @@ export default async function WorkerDetailPage({
             {worker.name}
           </h1>
           <Badge variant={worker.role === "ADMIN" ? "default" : "secondary"}>
-            {worker.role === "ADMIN" ? "Admin" : "Worker"}
+            {worker.role === "ADMIN" ? t.roleAdmin : t.roleWorker}
           </Badge>
           <Badge variant={worker.active ? "success" : "destructive"}>
-            {worker.active ? "Active" : "Inactive"}
+            {worker.active ? t.statusActive : t.statusInactive}
           </Badge>
         </div>
         <div className="mt-1 flex flex-col gap-1 text-sm text-neutral-500 dark:text-neutral-400">
@@ -67,7 +71,7 @@ export default async function WorkerDetailPage({
           </a>
           <span className="flex items-center gap-1.5">
             <CalendarDays className="h-4 w-4 shrink-0" />
-            Joined {formatJoined(worker.createdAt)}
+            {t.joined.replace("{date}", formatJoined(worker.createdAt, locale))}
           </span>
         </div>
       </div>
@@ -83,14 +87,14 @@ export default async function WorkerDetailPage({
                 {recordCount}
               </div>
               <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                Records submitted
+                {t.recordsSubmitted}
               </div>
             </div>
           </div>
           {recordCount > 0 && (
             <Button asChild variant="outline" size="sm">
               <Link href={`/admin/records?workerId=${worker.id}`}>
-                View
+                {dict.common.view}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -100,12 +104,12 @@ export default async function WorkerDetailPage({
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Manage
+          {t.manage}
         </h2>
         <Card>
           <CardContent className="flex flex-col gap-4 p-4">
             <div className="flex flex-col gap-2">
-              <Label>Authorized Google email</Label>
+              <Label>{t.authorizedEmail}</Label>
               <UpdateWorkerEmailForm
                 userId={worker.id}
                 currentEmail={worker.email}
@@ -113,7 +117,7 @@ export default async function WorkerDetailPage({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label>Role</Label>
+              <Label>{t.role}</Label>
               <UpdateWorkerRoleForm
                 userId={worker.id}
                 currentRole={worker.role}
@@ -135,10 +139,10 @@ export default async function WorkerDetailPage({
                 <div className="flex flex-col gap-1">
                   <Button type="button" variant="destructive" size="sm" disabled>
                     <Trash2 className="h-4 w-4" />
-                    Delete account
+                    {t.deleteAccount}
                   </Button>
                   <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                    Deactivate this worker first to permanently delete their account.
+                    {t.deleteFirstHint}
                   </p>
                 </div>
               ) : (

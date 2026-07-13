@@ -12,6 +12,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Select } from "@/components/ui/select";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 export function UpdateWorkerRoleForm({
   userId,
@@ -30,6 +31,7 @@ export function UpdateWorkerRoleForm({
   >(updateWorkerRoleAction.bind(null, userId), undefined);
   const formRef = useRef<HTMLFormElement>(null);
   const [role, setRole] = useState<Role>(currentRole);
+  const t = useT().workers;
 
   const isLockedAdmin = currentRole === "ADMIN" && disableDemote;
   const changed = role !== currentRole;
@@ -47,26 +49,18 @@ export function UpdateWorkerRoleForm({
         onChange={(e) => setRole(e.target.value as Role)}
         className="sm:max-w-[10rem]"
       >
-        <option value="WORKER">Worker</option>
-        <option value="ADMIN">Admin</option>
+        <option value="WORKER">{t.roleWorker}</option>
+        <option value="ADMIN">{t.roleAdmin}</option>
       </Select>
       {changed && !isLockedAdmin && (
         <ConfirmDialog
-          title={
-            role === "ADMIN"
-              ? "Promote to admin?"
-              : "Remove admin access?"
-          }
-          description={
-            role === "ADMIN"
-              ? "They'll be able to manage every worker, customer, and record, including deactivating other admins."
-              : "They'll lose access to admin tools immediately and be limited to submitting their own work records."
-          }
-          confirmLabel={role === "ADMIN" ? "Promote to admin" : "Remove admin"}
+          title={role === "ADMIN" ? t.promoteTitle : t.removeAdminTitle}
+          description={role === "ADMIN" ? t.promoteDesc : t.removeAdminDesc}
+          confirmLabel={role === "ADMIN" ? t.promoteConfirm : t.removeAdminConfirm}
           trigger={
             <Button type="button" variant="outline" size="sm" disabled={pending}>
               <ShieldCheck className="h-4 w-4" />
-              {pending ? "Saving..." : "Update role"}
+              {pending ? t.saving : t.updateRole}
             </Button>
           }
           onConfirm={() => formRef.current?.requestSubmit()}
@@ -74,7 +68,7 @@ export function UpdateWorkerRoleForm({
       )}
       {isLockedAdmin && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          This is the last active admin, so their role can&apos;t be changed.
+          {t.lastAdminRoleHint}
         </p>
       )}
       {state?.error && <Alert variant="error">{state.error}</Alert>}

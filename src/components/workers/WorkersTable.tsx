@@ -15,24 +15,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MobileCardList } from "@/components/ui/responsive-table";
+import { getLocale, getT } from "@/lib/i18n/server";
+import type { Dictionary } from "@/lib/i18n";
 
 export interface WorkerStat {
   jobs: number;
   lastActive: string | null;
 }
 
-function formatDate(iso: string) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(iso: string, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
   }).format(new Date(iso));
 }
 
-function StatusBadge({ active }: { active: boolean }) {
+function StatusBadge({ active, t }: { active: boolean; t: Dictionary["workers"] }) {
   return (
     <Badge variant={active ? "success" : "destructive"}>
-      {active ? "Active" : "Inactive"}
+      {active ? t.statusActive : t.statusInactive}
     </Badge>
   );
 }
@@ -40,7 +42,7 @@ function StatusBadge({ active }: { active: boolean }) {
 // One role group (Administrators or Field workers). The page renders it
 // twice; the section title carries its own count so the two lists read as
 // clearly separate rosters.
-export function WorkersSection({
+export async function WorkersSection({
   title,
   workers,
   stats,
@@ -53,6 +55,8 @@ export function WorkersSection({
   className?: string;
   style?: React.CSSProperties;
 }) {
+  const t = (await getT()).workers;
+  const locale = await getLocale();
   return (
     <section className={`flex flex-col gap-3 ${className ?? ""}`} style={style}>
       <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
@@ -62,7 +66,7 @@ export function WorkersSection({
       {workers.length === 0 ? (
         <Card>
           <CardContent className="p-4 text-sm text-neutral-500 dark:text-neutral-400">
-            Nobody here yet.
+            {t.nobodyHere}
           </CardContent>
         </Card>
       ) : (
@@ -73,12 +77,12 @@ export function WorkersSection({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead className="text-right">Jobs</TableHead>
-                      <TableHead>Last active</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>{t.colName}</TableHead>
+                      <TableHead>{t.colEmail}</TableHead>
+                      <TableHead className="text-right">{t.colJobs}</TableHead>
+                      <TableHead>{t.colLastActive}</TableHead>
+                      <TableHead>{t.colStatus}</TableHead>
+                      <TableHead className="text-right">{t.colActions}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -101,16 +105,16 @@ export function WorkersSection({
                             {stat?.jobs ?? 0}
                           </TableCell>
                           <TableCell className="text-neutral-500 dark:text-neutral-400">
-                            {stat?.lastActive ? formatDate(stat.lastActive) : "—"}
+                            {stat?.lastActive ? formatDate(stat.lastActive, locale) : "—"}
                           </TableCell>
                           <TableCell>
-                            <StatusBadge active={worker.active} />
+                            <StatusBadge active={worker.active} t={t} />
                           </TableCell>
                           <TableCell className="text-right">
                             <Button asChild variant="outline" size="sm">
                               <Link href={`/admin/workers/${worker.id}`}>
                                 <Settings className="h-4 w-4" />
-                                Manage
+                                {t.manage}
                               </Link>
                             </Button>
                           </TableCell>
@@ -138,15 +142,15 @@ export function WorkersSection({
                         <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
                           {worker.name}
                         </span>
-                        <StatusBadge active={worker.active} />
+                        <StatusBadge active={worker.active} t={t} />
                       </div>
                       <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
                         <Mail className="h-3.5 w-3.5 shrink-0" />
                         <span className="truncate">{worker.email}</span>
                       </div>
                       <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                        {stat?.jobs ?? 0} job{(stat?.jobs ?? 0) === 1 ? "" : "s"}
-                        {stat?.lastActive ? ` · Last active ${formatDate(stat.lastActive)}` : ""}
+                        {((stat?.jobs ?? 0) === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(stat?.jobs ?? 0))}
+                        {stat?.lastActive ? ` · ${t.lastActivePrefix.replace("{date}", formatDate(stat.lastActive, locale))}` : ""}
                       </div>
                     </div>
                     <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />

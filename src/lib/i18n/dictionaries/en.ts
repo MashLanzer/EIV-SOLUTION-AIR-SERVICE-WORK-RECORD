@@ -312,6 +312,94 @@ export const en = {
       "e.g. Missing installer signature — please re-collect and resubmit.",
     returnN: "Return {n}",
   },
+  workers: {
+    // List page
+    team: "Team",
+    newWorker: "New Worker",
+    members: "Members",
+    active: "Active",
+    admins: "Admins",
+    searchPlaceholder: "Search by name or email",
+    searchAria: "Search team by name or email",
+    noMatches: "No matches",
+    nothingFound: 'Nothing found for "{q}".',
+    clearSearch: "Clear search",
+    noAccounts: "No accounts yet",
+    noAccountsDesc: "Create one to get your team started.",
+    administrators: "Administrators",
+    fieldWorkers: "Field workers",
+    // Table
+    statusActive: "Active",
+    statusInactive: "Inactive",
+    nobodyHere: "Nobody here yet.",
+    colName: "Name",
+    colEmail: "Email",
+    colJobs: "Jobs",
+    colLastActive: "Last active",
+    colStatus: "Status",
+    colActions: "Actions",
+    jobCountOne: "{n} job",
+    jobCountMany: "{n} jobs",
+    lastActivePrefix: "Last active {date}",
+    // Detail
+    roleAdmin: "Admin",
+    roleWorker: "Worker",
+    joined: "Joined {date}",
+    recordsSubmitted: "Records submitted",
+    manage: "Manage",
+    authorizedEmail: "Authorized Google email",
+    role: "Role",
+    deleteAccount: "Delete account",
+    deleteFirstHint:
+      "Deactivate this worker first to permanently delete their account.",
+    // New page
+    newWorkerTitle: "New worker",
+    newWorkerDesc:
+      "Pre-authorize a Google account. They join your company when they first sign in.",
+    // Delete button
+    deleteTitle: "Delete {name}'s account?",
+    deleteDesc:
+      "This permanently removes their account and authorized email from the app. Their submitted work records are kept, but will no longer show who submitted them. This can't be undone.",
+    // Toggle active
+    reactivate: "Reactivate",
+    deactivate: "Deactivate",
+    lastAdminDeactivateHint:
+      "This is the last active admin, so they can't be deactivated. Promote another worker to admin first.",
+    deactivateTitle: "Deactivate {name}?",
+    deactivateDesc:
+      "They won't be able to sign in anymore. Their submitted records are kept, and you can reactivate them at any time.",
+    // Email form
+    changeEmailTitle: "Change the authorized sign-in email?",
+    changeEmailDesc:
+      "Only {email} will be able to sign in to this account going forward. The previous email ({prev}) immediately loses access.",
+    thisAddress: "this address",
+    updateEmail: "Update email",
+    // Role form
+    promoteTitle: "Promote to admin?",
+    removeAdminTitle: "Remove admin access?",
+    promoteDesc:
+      "They'll be able to manage every worker, customer, and record, including deactivating other admins.",
+    removeAdminDesc:
+      "They'll lose access to admin tools immediately and be limited to submitting their own work records.",
+    promoteConfirm: "Promote to admin",
+    removeAdminConfirm: "Remove admin",
+    updateRole: "Update role",
+    lastAdminRoleHint:
+      "This is the last active admin, so their role can't be changed.",
+    // Create form
+    fullName: "Full name",
+    email: "Email",
+    workerHint: "Submits records",
+    adminHint: "Full access",
+    teams: "Teams",
+    createAdminTitle: "Create an admin account?",
+    createAdminDesc:
+      "Admins can manage every worker, customer, and record - including deactivating other admins. Only grant this to someone who needs full access.",
+    createAdminConfirm: "Create admin account",
+    creating: "Creating...",
+    createAccount: "Create account",
+    saving: "Saving...",
+  },
   nav: {
     dashboard: "Dashboard",
     home: "Home",
