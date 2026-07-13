@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getCurrencySymbol } from "@/lib/currency";
 import { getSkillSuggestions } from "@/lib/orgSkills";
 import { addUtcDays, startOfUtcDay, toMinutes, utcDay, weekRange } from "@/lib/schedule";
 
@@ -36,6 +37,7 @@ export async function getProfileData(userId: string, organizationId: string) {
     needsAttention,
     trendRecords,
     skillSuggestions,
+    currency,
   ] = await Promise.all([
       prisma.workRecord.groupBy({
         by: ["status"],
@@ -54,7 +56,7 @@ export async function getProfileData(userId: string, organizationId: string) {
       }),
       prisma.user.findUnique({
         where: { id: userId },
-        select: { avatarUrl: true, skills: { select: { id: true, name: true } } },
+        select: { name: true, avatarUrl: true, skills: { select: { id: true, name: true } } },
       }),
       // "My week": jobs assigned to me from today through the next 7 days.
       prisma.scheduledJob.findMany({
@@ -91,7 +93,42 @@ export async function getProfileData(userId: string, organizationId: string) {
       // Skill autocomplete: the org catalog plus any free-text skills already in
       // use, so "HVAC" doesn't drift into "A/C", "hvac", etc.
       getSkillSuggestions(organizationId),
+      getCurrencySymbol(organizationId),
     ]);
+
+  // Approved pay this month, attributed by name the same way the admin pay
+  // report does: sum lead pay where this person is the lead installer plus
+  // helper pay where they're the helper. Org-scoped (names aren't unique across
+  // companies). Only counts APPROVED records, matching the pay report.
+  const name = userData?.name ?? "";
+  const payRecords = name
+    ? await prisma.workRecord.findMany({
+        where: {
+          organizationId,
+          status: "APPROVED",
+          date: { gte: monthStart },
+          OR: [
+            { leadInstallerName: { equals: name, mode: "insensitive" } },
+            { helperName: { equals: name, mode: "insensitive" } },
+          ],
+        },
+        select: {
+          leadInstallerName: true,
+          helperName: true,
+          leadInstallerPay: true,
+          helperPay: true,
+        },
+      })
+    : [];
+  const lowerName = name.toLowerCase();
+  let payThisMonth = 0;
+  for (const r of payRecords) {
+    if (r.leadInstallerName.toLowerCase() === lowerName) payThisMonth += Number(r.leadInstallerPay);
+    if (r.helperName && r.helperName.toLowerCase() === lowerName) {
+      payThisMonth += Number(r.helperPay ?? 0);
+    }
+  }
+  payThisMonth = Math.round(payThisMonth * 100) / 100;
 
   const totalRecords = statusCounts.reduce((acc, s) => acc + s._count, 0);
   const approvedRecords = statusCounts.find((s) => s.status === "APPROVED")?._count ?? 0;
@@ -116,6 +153,8 @@ export async function getProfileData(userId: string, organizationId: string) {
       hoursThisMonth: Math.round(hoursThisMonth),
       weekly,
     },
+    payThisMonth,
+    currency,
     teams: teams.map((t) => ({ id: t.team.id, name: t.team.name, color: t.team.color })),
     recentRecords,
     avatarUrl: userData?.avatarUrl ?? null,

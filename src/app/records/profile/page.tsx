@@ -53,6 +53,8 @@ export default async function WorkerProfilePage() {
       }))}
       skillSuggestions={data.skillSuggestions}
       skills={data.skills}
+      payThisMonth={data.payThisMonth}
+      currency={data.currency}
     />
   );
 }

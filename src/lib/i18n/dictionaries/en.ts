@@ -56,6 +56,7 @@ export const en = {
     pending: "Pending",
     approvalRate: "Approval rate",
     hoursThisMonth: "Hours this month",
+    payThisMonth: "Approved pay this month",
     trendLabel: "Records submitted, last 6 weeks",
     thisWeek: "This week",
     teams: "Teams",

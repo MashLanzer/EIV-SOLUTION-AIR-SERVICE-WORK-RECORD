@@ -56,6 +56,7 @@ export const es: Dictionary = {
     pending: "Pendientes",
     approvalRate: "Tasa de aprobación",
     hoursThisMonth: "Horas del mes",
+    payThisMonth: "Pago aprobado del mes",
     trendLabel: "Registros enviados, últimas 6 semanas",
     thisWeek: "Esta semana",
     teams: "Equipos",

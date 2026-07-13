@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, Camera, CheckCircle2, ChevronRight, Circle, Clock, ListTodo, Mail, MapPin, PenLine, Percent, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, Camera, CheckCircle2, ChevronRight, Circle, Clock, DollarSign, ListTodo, Mail, MapPin, PenLine, Percent, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, X } from "lucide-react";
 import Link from "next/link";
 import type { RecordStatus } from "@prisma/client";
 
@@ -78,6 +78,8 @@ export function ProfileScreen({
   upcomingJobs,
   skills,
   skillSuggestions,
+  payThisMonth,
+  currency,
 }: {
   name: string;
   email: string;
@@ -100,6 +102,10 @@ export function ProfileScreen({
   skills: SkillInfo[];
   // Distinct skill names already used in the org, to autocomplete the input.
   skillSuggestions: string[];
+  // This person's approved pay for the current month, and the org's currency
+  // symbol. Workers only.
+  payThisMonth: number;
+  currency: string;
 }) {
   const isAdmin = role === "ADMIN";
   const t = useT().profile;
@@ -373,6 +379,21 @@ export function ProfileScreen({
           description={t.statsDesc}
         >
           <div className="flex flex-col gap-2 px-4 pb-4">
+            {/* Approved pay this month - the figure a worker cares about most,
+                so it leads the stats. */}
+            <div className="flex items-center gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-accent-soft/40 p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+                <DollarSign className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                  {currency}{payThisMonth.toFixed(2)}
+                </div>
+                <div className="text-sm text-neutral-500 dark:text-neutral-400">
+                  {t.payThisMonth}
+                </div>
+              </div>
+            </div>
             <div className="flex gap-2">
               {statCard(ListTodo, t.total, String(stats.totalRecords), "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400")}
               {statCard(CheckCircle2, t.approved, String(stats.approvedRecords), "bg-success-soft text-success-text")}
