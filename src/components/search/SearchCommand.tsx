@@ -32,6 +32,8 @@ import {
   pushRecentQuery,
   type RecentItem,
 } from "@/components/search/search-recents";
+import { useT } from "@/components/i18n/LocaleProvider";
+import type { Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const GROUP_ICON: Record<SearchGroupType, LucideIcon> = {
@@ -42,11 +44,23 @@ const GROUP_ICON: Record<SearchGroupType, LucideIcon> = {
   teams: Users2,
 };
 
+function groupLabel(type: SearchGroupType, t: Dictionary["search"]): string {
+  const map: Record<SearchGroupType, string> = {
+    records: t.groupRecords,
+    customers: t.groupCustomers,
+    projects: t.groupProjects,
+    workers: t.groupWorkers,
+    teams: t.groupTeams,
+  };
+  return map[type];
+}
+
 // A command-palette style global search opened from the header. Results stream
 // in live (debounced) from the role-scoped server action; the palette never
 // leaves the current page. Cmd/Ctrl+K opens it from anywhere.
 export function SearchCommand() {
   const [open, setOpen] = useState(false);
+  const t = useT().search;
 
   // Global shortcut to open the palette (Cmd/Ctrl+K), like most desktop apps.
   useEffect(() => {
@@ -65,7 +79,7 @@ export function SearchCommand() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Search"
+        aria-label={t.searchAria}
         className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800 active:scale-95"
       >
         <Search className="h-4 w-4" />
@@ -77,6 +91,7 @@ export function SearchCommand() {
 
 function SearchDialog({ onClose }: { onClose: () => void }) {
   const router = useRouter();
+  const t = useT().search;
   const [query, setQuery] = useState("");
   const [groups, setGroups] = useState<SearchGroup[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -175,7 +190,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Search">
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={t.searchAria}>
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
@@ -194,14 +209,14 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
               onChange={(e) => run(e.target.value)}
               onKeyDown={onKeyDown}
               type="text"
-              placeholder="Search records, customers, projects…"
-              aria-label="Search"
+              placeholder={t.placeholder}
+              aria-label={t.searchAria}
               className="h-12 flex-1 bg-transparent text-base text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none"
             />
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close search"
+              aria-label={t.closeAria}
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
               <X className="h-4 w-4" />
@@ -224,13 +239,13 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
                   }}
                 />
               ) : (
-                <Hint text="Type at least 2 characters to search." />
+                <Hint text={t.typeToSearch} />
               )
             ) : groups.length === 0 && !pending ? (
               <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
                 <SearchX className="h-6 w-6 text-neutral-400 dark:text-neutral-500" />
                 <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  No results for “{trimmed}”.
+                  {t.noResults.replace("{q}", trimmed)}
                 </p>
               </div>
             ) : (
@@ -308,12 +323,13 @@ export function SearchResultsList({
   // Stable key (`type:id`) of the arrow-key-highlighted row, if any.
   activeKey?: string;
 }) {
+  const t = useT().search;
   return (
     <div className="flex flex-col gap-3">
       {groups.map((group) => (
         <div key={group.type} className="flex flex-col gap-1">
           <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-            {group.label}
+            {groupLabel(group.type, t)}
           </p>
           {group.items.map((item) => (
             <ResultRow
@@ -352,12 +368,13 @@ function RecentsView({
   onQuery: (q: string) => void;
   onPick: (item: RecentItem) => void;
 }) {
+  const t = useT().search;
   return (
     <div className="flex flex-col gap-3">
       {queries.length > 0 && (
         <div className="flex flex-col gap-1">
           <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-            Recent searches
+            {t.recentSearches}
           </p>
           {queries.map((q) => (
             <button
@@ -377,7 +394,7 @@ function RecentsView({
       {items.length > 0 && (
         <div className="flex flex-col gap-1">
           <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-            Recent
+            {t.recent}
           </p>
           {items.map((item) => (
             <ResultRow

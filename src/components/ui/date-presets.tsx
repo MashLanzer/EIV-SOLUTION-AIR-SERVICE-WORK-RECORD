@@ -3,6 +3,7 @@
 import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 // Quick date-range buttons that fill the From/To date inputs of the
 // surrounding filter form and submit it. Dates are computed at click time
@@ -21,6 +22,7 @@ export function DatePresets({
   toId?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const t = useT().datePresets;
 
   function apply(from: string, to: string) {
     const fromEl = document.getElementById(fromId);
@@ -32,7 +34,7 @@ export function DatePresets({
 
   const presets: { label: string; range: () => [string, string] }[] = [
     {
-      label: "This week",
+      label: t.thisWeek,
       range: () => {
         const now = new Date();
         const monday = new Date(now);
@@ -41,14 +43,14 @@ export function DatePresets({
       },
     },
     {
-      label: "This month",
+      label: t.thisMonth,
       range: () => {
         const now = new Date();
         return [iso(new Date(now.getFullYear(), now.getMonth(), 1)), iso(now)];
       },
     },
     {
-      label: "Last 30 days",
+      label: t.last30,
       range: () => {
         const now = new Date();
         const start = new Date(now);
@@ -57,7 +59,7 @@ export function DatePresets({
       },
     },
     {
-      label: "This quarter",
+      label: t.thisQuarter,
       range: () => {
         const now = new Date();
         const qStart = new Date(
@@ -68,7 +70,7 @@ export function DatePresets({
         return [iso(qStart), iso(now)];
       },
     },
-    { label: "All time", range: () => ["", ""] },
+    { label: t.allTime, range: () => ["", ""] },
   ];
 
   return (

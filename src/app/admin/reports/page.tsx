@@ -22,9 +22,10 @@ import { getCurrencySymbol } from "@/lib/currency";
 import { formatMoney } from "@/lib/format";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getLocale, getT } from "@/lib/i18n/server";
 
-function formatDate(iso: string) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(iso: string, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -44,6 +45,8 @@ export default async function AdminReportsPage({
   const def = defaultPayReportRange();
   const isCustomRange = dateFrom !== def.dateFrom || dateTo !== def.dateTo;
 
+  const t = (await getT()).reports;
+  const locale = await getLocale();
   const moneyString = (value: number) => formatMoney(value, currency);
   const money = (value: number) => (
     <span className="tabular-nums">{moneyString(value)}</span>
@@ -56,7 +59,7 @@ export default async function AdminReportsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Pay Report</h1>
+      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
 
       {/* Headline totals for the selected range - the payout number an admin
           actually cares about, up top instead of buried in the table's last
@@ -74,7 +77,7 @@ export default async function AdminReportsPage({
                 {money(report.grand.total)}
               </div>
               <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                Total to pay
+                {t.totalToPay}
               </div>
             </div>
           </CardContent>
@@ -89,7 +92,7 @@ export default async function AdminReportsPage({
                 {report.grand.jobs}
               </div>
               <div className="truncate text-xs text-neutral-500 dark:text-neutral-400 sm:text-sm">
-                Job payments
+                {t.jobPayments}
               </div>
             </div>
           </CardContent>
@@ -104,7 +107,7 @@ export default async function AdminReportsPage({
                 {report.rows.length}
               </div>
               <div className="truncate text-xs text-neutral-500 dark:text-neutral-400 sm:text-sm">
-                People paid
+                {t.peoplePaid}
               </div>
             </div>
           </CardContent>
@@ -121,12 +124,12 @@ export default async function AdminReportsPage({
           <summary className="flex cursor-pointer list-none flex-col gap-1 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <div className="flex items-center justify-between gap-2">
               <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                Date Range
+                {t.dateRange}
               </span>
               <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
             </div>
             <span className="text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
-              {formatDate(dateFrom)} – {formatDate(dateTo)}
+              {formatDate(dateFrom, locale)} – {formatDate(dateTo, locale)}
             </span>
           </summary>
           <div className="px-4 pb-4">
@@ -134,15 +137,15 @@ export default async function AdminReportsPage({
               <div className="col-span-2 sm:col-span-6">
                 <DatePresets />
               </div>
-              <FilterField label="From" htmlFor="dateFrom">
+              <FilterField label={t.from} htmlFor="dateFrom">
                 <Input id="dateFrom" name="dateFrom" type="date" defaultValue={dateFrom} />
               </FilterField>
-              <FilterField label="To" htmlFor="dateTo">
+              <FilterField label={t.to} htmlFor="dateTo">
                 <Input id="dateTo" name="dateTo" type="date" defaultValue={dateTo} />
               </FilterField>
               <FilterActions>
                 <Button type="submit" variant="outline" size="default">
-                  Apply
+                  {t.apply}
                 </Button>
               </FilterActions>
             </FilterBar>
@@ -154,11 +157,10 @@ export default async function AdminReportsPage({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {report.recordCount} Approved Record{report.recordCount === 1 ? "" : "s"}
+              {(report.recordCount === 1 ? t.approvedCountOne : t.approvedCountMany).replace("{n}", String(report.recordCount))}
             </h2>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Records still pending review or returned for changes aren&apos;t
-              counted until they&apos;re approved.
+              {t.pendingNote}
             </p>
           </div>
           <form method="GET" className="flex flex-wrap items-center gap-2">
@@ -166,7 +168,7 @@ export default async function AdminReportsPage({
             <input type="hidden" name="dateTo" value={dateTo} />
             <Button type="submit" variant="outline" size="sm" formAction="/admin/reports/export">
               <Sheet className="h-4 w-4" />
-              Export to Excel
+              {t.exportExcel}
             </Button>
           </form>
         </div>
@@ -175,7 +177,7 @@ export default async function AdminReportsPage({
           <Card>
             <CardContent className="flex flex-col gap-3 p-4">
               <h3 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                Pay by person
+                {t.payByPerson}
               </h3>
               <BarList data={chartData} formatValue={moneyString} labelWidth="7rem" />
             </CardContent>
@@ -187,8 +189,8 @@ export default async function AdminReportsPage({
             {report.rows.length === 0 ? (
               <EmptyState
                 icon={BarChart3}
-                title="No records in this range"
-                description="Adjust the date range to see pay totals."
+                title={t.noRecords}
+                description={t.noRecordsDesc}
               />
             ) : (
               <>
@@ -196,11 +198,11 @@ export default async function AdminReportsPage({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Person</TableHead>
-                        <TableHead>Jobs</TableHead>
-                        <TableHead className="text-right">Lead Pay</TableHead>
-                        <TableHead className="text-right">Helper Pay</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead>{t.colPerson}</TableHead>
+                        <TableHead>{t.colJobs}</TableHead>
+                        <TableHead className="text-right">{t.colLeadPay}</TableHead>
+                        <TableHead className="text-right">{t.colHelperPay}</TableHead>
+                        <TableHead className="text-right">{t.colTotal}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -223,7 +225,7 @@ export default async function AdminReportsPage({
                       ))}
                       <TableRow className="bg-neutral-50 dark:bg-neutral-800">
                         <TableCell className="font-semibold text-neutral-900 dark:text-neutral-100">
-                          Grand Total
+                          {t.grandTotal}
                         </TableCell>
                         <TableCell className="font-semibold tabular-nums">
                           {report.grand.jobs}
@@ -253,7 +255,7 @@ export default async function AdminReportsPage({
                               {row.name}
                             </div>
                             <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                              {row.jobs} job{row.jobs === 1 ? "" : "s"} · Lead {money(row.leadTotal)} · Helper {money(row.helperTotal)}
+                              {(row.jobs === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(row.jobs))} · {t.leadLabel} {money(row.leadTotal)} · {t.helperLabel} {money(row.helperTotal)}
                             </div>
                           </div>
                           <div className="shrink-0 text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
@@ -269,10 +271,10 @@ export default async function AdminReportsPage({
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="font-semibold text-neutral-900 dark:text-neutral-100">
-                            Grand Total
+                            {t.grandTotal}
                           </div>
                           <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                            {report.grand.jobs} job{report.grand.jobs === 1 ? "" : "s"} · Lead {money(report.grand.leadTotal)} · Helper {money(report.grand.helperTotal)}
+                            {(report.grand.jobs === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(report.grand.jobs))} · {t.leadLabel} {money(report.grand.leadTotal)} · {t.helperLabel} {money(report.grand.helperTotal)}
                           </div>
                         </div>
                         <div className="shrink-0 text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
