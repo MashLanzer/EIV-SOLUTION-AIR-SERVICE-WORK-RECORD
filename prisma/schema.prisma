@@ -66,6 +66,7 @@ model Organization {
   checklists         Checklist[]
   workTypeCategories WorkTypeCategory[]
   workTypes          WorkType[]
+  scheduledJobs      ScheduledJob[]
 }
 
 // A predefined "type of work" taxonomy, org-managed so the app fits any
@@ -110,6 +111,7 @@ model Team {
   color          String?
   memberships    TeamMembership[]
   projects       Project[]
+  scheduledJobs  ScheduledJob[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
@@ -138,6 +140,13 @@ enum ProjectStatus {
   COMPLETED
 }
 
+enum ScheduledJobStatus {
+  SCHEDULED
+  IN_PROGRESS
+  DONE
+  CANCELED
+}
+
 // A jobsite (CompanyCam-style): the container work records and - later -
 // photos hang off. Has an address geocoded to lat/lng so it can be pinned on
 // a map. Always scoped to one Organization.
@@ -155,6 +164,7 @@ model Project {
   teamId         String?
   team           Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
   records        WorkRecord[]
+  scheduledJobs  ScheduledJob[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -305,6 +315,8 @@ model User {
   comments         Comment[]     @relation("CommentAuthor")
   teamMemberships  TeamMembership[]
   skills           UserSkill[]
+  assignedJobs     ScheduledJob[] @relation("AssignedJobs")
+  createdJobs      ScheduledJob[] @relation("CreatedJobs")
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -343,6 +355,7 @@ model Customer {
   updatedAt      DateTime      @updatedAt
   records        WorkRecord[]
   projects       Project[]
+  scheduledJobs  ScheduledJob[]
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -401,6 +414,7 @@ model WorkRecord {
   projectId          String?
   project            Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   projectPhotos      Photo[]
+  scheduledJob       ScheduledJob?
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
@@ -413,4 +427,48 @@ model WorkRecord {
   // leftmost column, plus the status+date range scans the pay report and
   // dashboard run - replaces the old standalone @@index([status]).
   @@index([status, date])
+}
+
+// A planned visit on the calendar: who goes where, on what day, to do what.
+// This is the *before-the-fact* plan, independent of WorkRecord (the
+// after-the-fact record the crew fills out on site). When the crew finishes,
+// the job can be linked to the work record it produced (workRecordId). A job
+// can be assigned to a single worker and/or a whole team. Org-scoped.
+model ScheduledJob {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  notes          String?            @db.Text
+  // The calendar day the job is planned for (date-only, like WorkRecord.date).
+  scheduledFor   DateTime           @db.Date
+  // Optional wall-clock window as "HH:MM" strings, matching how WorkRecord
+  // stores arrival/departure - keeps the crew's local time exactly as entered.
+  startTime      String?
+  endTime        String?
+  status         ScheduledJobStatus @default(SCHEDULED)
+  // Who's going. A job can target one worker, a team, or both.
+  assignedToId   String?
+  assignedTo     User?              @relation("AssignedJobs", fields: [assignedToId], references: [id], onDelete: SetNull)
+  teamId         String?
+  team           Team?              @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  // What/where. Optional links to a saved customer and/or project so the
+  // worker can jump to the jobsite and pre-fill a record.
+  customerId     String?
+  customer       Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  projectId      String?
+  project        Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  // The work record this job produced once the crew filed it (one-to-one).
+  workRecordId   String?            @unique
+  workRecord     WorkRecord?        @relation(fields: [workRecordId], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdBy      User?              @relation("CreatedJobs", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([organizationId, scheduledFor])
+  @@index([assignedToId])
+  @@index([teamId])
+  @@index([customerId])
+  @@index([projectId])
 }
