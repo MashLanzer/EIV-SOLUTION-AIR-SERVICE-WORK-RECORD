@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  CalendarDays,
   ClipboardList,
   ListChecks,
   Users,
@@ -30,6 +31,7 @@ import { cn } from "@/lib/utils";
 function navItems(n: Dictionary["nav"]): TabItem[] {
   return [
   { href: "/admin", label: n.dashboard, shortLabel: n.home, icon: LayoutDashboard, exact: true },
+  { href: "/admin/schedule", label: n.schedule, shortLabel: n.schedule, icon: CalendarDays, exact: false },
   { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
   { href: "/admin/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
   { href: "/admin/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: false },
@@ -63,6 +65,7 @@ function createItems(n: Dictionary["nav"]): CreateItem[] {
 // the sheet's account header.
 function moreItems(n: Dictionary["nav"]): MoreItem[] {
   return [
+  { href: "/admin/schedule", label: n.schedule, icon: CalendarDays },
   { href: "/admin/customers", label: n.customers, icon: Contact },
   { href: "/admin/reports", label: n.payReport, icon: BarChart3 },
   { href: "/admin/workers", label: n.workers, icon: Users },
