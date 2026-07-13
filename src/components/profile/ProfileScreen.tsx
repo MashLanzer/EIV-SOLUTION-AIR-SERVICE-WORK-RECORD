@@ -17,6 +17,7 @@ import {
   SettingsSection,
 } from "@/components/settings/SettingsList";
 import { updateProfileNameAction, updateProfilePhoneAction, saveStoredSignatureAction, clearStoredSignatureAction, addSkillAction, removeSkillAction } from "@/actions/profile";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface ProfileStats {
@@ -68,6 +69,8 @@ export function ProfileScreen({
   skills: SkillInfo[];
 }) {
   const isAdmin = role === "ADMIN";
+  const t = useT().profile;
+  const tc = useT().common;
   const sigRef = useRef<SignaturePadHandle>(null);
   const [saving, setSaving] = useState(false);
   const [sigError, setSigError] = useState<string | null>(null);
@@ -98,10 +101,10 @@ export function ProfileScreen({
           className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {tc.back}
         </Link>
         <h1 className="mt-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          Profile
+          {t.title}
         </h1>
       </div>
 
@@ -110,51 +113,51 @@ export function ProfileScreen({
         <AvatarInitials name={name || email} className="h-16 w-16 text-lg" />
         <div className="min-w-0">
           <p className="truncate text-base font-semibold text-neutral-900 dark:text-neutral-100">
-            {name || "Your account"}
+            {name || t.yourAccount}
           </p>
           <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 text-xs font-medium text-neutral-600 dark:text-neutral-300">
             <ShieldCheck className="h-3.5 w-3.5" />
-            {isAdmin ? "Admin" : "Worker"}
+            {isAdmin ? t.admin : t.worker}
           </span>
         </div>
       </div>
 
       {/* Account */}
-      <SettingsSection title="Account">
+      <SettingsSection title={t.account}>
         <InlineEditRow
           icon={UserIcon}
-          label="Display name"
+          label={t.displayName}
           value={name}
-          placeholder="Your name"
+          placeholder={t.yourNamePlaceholder}
           action={updateProfileNameAction}
-          helpWhenEditing="Shown on your submitted records, comments and team lists."
+          helpWhenEditing={t.nameHelp}
         />
         <InlineEditRow
           icon={Phone}
-          label="Phone"
+          label={t.phone}
           value={phone ?? ""}
-          placeholder="(555) 123-4567"
+          placeholder={t.phonePlaceholder}
           action={updateProfilePhoneAction}
-          helpWhenEditing="Visible to your company admins and team members."
+          helpWhenEditing={t.phoneHelp}
         />
-        <SettingsRow icon={Mail} label={email} sublabel="Signed in with Google" />
+        <SettingsRow icon={Mail} label={email} sublabel={t.signedInGoogle} />
         <SettingsRow
           icon={ShieldCheck}
-          label={isAdmin ? "Admin" : "Worker"}
-          sublabel="Your access level"
+          label={isAdmin ? t.admin : t.worker}
+          sublabel={t.accessLevel}
         />
       </SettingsSection>
 
       {/* Stats - workers only; admins don't submit records so theirs are all 0. */}
       {!isAdmin && (
         <SettingsSection
-          title="Statistics"
-          description="Your work record overview."
+          title={t.statistics}
+          description={t.statsDesc}
         >
           <div className="flex gap-2 px-4 pb-4">
-            {statCard(ListTodo, "Total", stats.totalRecords, "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400")}
-            {statCard(CheckCircle2, "Approved", stats.approvedRecords, "bg-success-soft text-success-text")}
-            {statCard(Clock, "Pending", stats.pendingRecords, "bg-warning-soft text-warning-text")}
+            {statCard(ListTodo, t.total, stats.totalRecords, "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400")}
+            {statCard(CheckCircle2, t.approved, stats.approvedRecords, "bg-success-soft text-success-text")}
+            {statCard(Clock, t.pending, stats.pendingRecords, "bg-warning-soft text-warning-text")}
           </div>
         </SettingsSection>
       )}
@@ -162,8 +165,8 @@ export function ProfileScreen({
       {/* Teams */}
       {teams.length > 0 && (
         <SettingsSection
-          title="Teams"
-          description="The crews you belong to."
+          title={t.teams}
+          description={t.teamsDesc}
         >
           <div className="flex flex-wrap gap-2 px-4 pb-4">
             {teams.map((team) => (
@@ -185,8 +188,8 @@ export function ProfileScreen({
 
       {/* Stored signature */}
       <SettingsSection
-        title="Saved signature"
-        description="Save your signature so it's pre-filled on every work record."
+        title={t.savedSignature}
+        description={t.savedSigDesc}
       >
         <form
           action={async (formData) => {
@@ -201,7 +204,7 @@ export function ProfileScreen({
             <input type="hidden" name="signature" id="sig-hidden" />
             <SignaturePad
               ref={sigRef}
-              label="Your signature"
+              label={t.yourSignature}
               defaultValue={storedSignature ?? undefined}
             />
             {sigError && (
@@ -223,7 +226,7 @@ export function ProfileScreen({
                 }}
               >
                 <PenLine className="h-3.5 w-3.5" />
-                {storedSignature ? "Update" : "Save signature"}
+                {storedSignature ? t.update : t.saveSignature}
               </Button>
               {storedSignature && (
                 <Button
@@ -235,7 +238,7 @@ export function ProfileScreen({
                   }}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  Clear
+                  {t.clear}
                 </Button>
               )}
             </div>
@@ -246,8 +249,8 @@ export function ProfileScreen({
       {/* Recent activity */}
       {recentRecords.length > 0 && (
         <SettingsSection
-          title="Recent activity"
-          description="Your last 5 submitted records."
+          title={t.recentActivity}
+          description={t.recentActivityDesc}
         >
           <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
             {recentRecords.map((r) => (
@@ -276,8 +279,8 @@ export function ProfileScreen({
 
       {/* Skills */}
       <SettingsSection
-        title="Skills & certifications"
-        description="Your areas of expertise."
+        title={t.skills}
+        description={t.skillsDesc}
       >
         <form
           action={async (formData) => {
@@ -305,7 +308,7 @@ export function ProfileScreen({
                         await removeSkillAction(s.id);
                       }}
                       className="ml-0.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-                      aria-label={`Remove ${s.name}`}
+                      aria-label={t.removeSkillAria.replace("{name}", s.name)}
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -316,14 +319,14 @@ export function ProfileScreen({
             <div className="flex gap-2">
               <Input
                 name="name"
-                placeholder="e.g. Furnace install, Ductwork"
+                placeholder={t.skillsPlaceholder}
                 value={skillInput}
                 onChange={(e) => setSkillInput(e.target.value)}
                 className="flex-1"
               />
               <Button type="submit" variant="outline" size="default">
                 <Plus className="h-4 w-4" />
-                Add
+                {t.add}
               </Button>
             </div>
             {skillError && (
