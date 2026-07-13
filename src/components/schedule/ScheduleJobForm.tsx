@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { CalendarPlus, Save } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { CalendarPlus, Clock, MapPin, Save, Users } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,29 @@ export interface JobFormValues {
   customerId: string;
   projectId: string;
   notes: string;
+}
+
+// A labelled group of fields with a small icon eyebrow, matching the app's
+// section rhythm (Dashboard eyebrows, settings groups) so the form reads as
+// one system rather than a flat stack of inputs.
+function Group({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+      </div>
+      {children}
+    </div>
+  );
 }
 
 // The create/edit form for a scheduled job. In create mode it lives in the
@@ -68,6 +92,7 @@ export function ScheduleJobForm({
   );
   const formRef = useRef<HTMLFormElement>(null);
   const err = (name: string) => state?.fieldErrors?.[name]?.[0];
+  const uid = jobId ?? "new";
 
   // On a successful save: an inline editor collapses; the create form resets
   // so the next job starts blank. The list itself refreshes via revalidatePath.
@@ -81,126 +106,120 @@ export function ScheduleJobForm({
   }, [state?.ok, jobId, onDone]);
 
   return (
-    <form ref={formRef} action={formAction} className="flex flex-col gap-3">
+    <form ref={formRef} action={formAction} className="flex flex-col gap-5">
+      {/* Title - the headline field */}
       <div className="flex flex-col gap-2">
-        <Label htmlFor={`title-${jobId ?? "new"}`} required>
+        <Label htmlFor={`title-${uid}`} required>
           {t.jobTitle}
         </Label>
         <Input
-          id={`title-${jobId ?? "new"}`}
+          id={`title-${uid}`}
           name="title"
           required
           defaultValue={defaultValues?.title}
           placeholder={t.jobTitlePlaceholder}
           aria-invalid={err("title") ? true : undefined}
         />
-        <FieldError id={`title-${jobId ?? "new"}-error`} message={err("title")} />
+        <FieldError id={`title-${uid}-error`} message={err("title")} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`date-${jobId ?? "new"}`} required>
-            {t.date}
-          </Label>
-          <Input
-            id={`date-${jobId ?? "new"}`}
-            name="scheduledFor"
-            type="date"
-            required
-            defaultValue={defaultValues?.scheduledFor ?? defaultDate}
-            aria-invalid={err("scheduledFor") ? true : undefined}
-          />
-          <FieldError id={`date-${jobId ?? "new"}-error`} message={err("scheduledFor")} />
+      <Group icon={Clock} label={t.groupWhen}>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`date-${uid}`} required>
+              {t.date}
+            </Label>
+            <Input
+              id={`date-${uid}`}
+              name="scheduledFor"
+              type="date"
+              required
+              defaultValue={defaultValues?.scheduledFor ?? defaultDate}
+              aria-invalid={err("scheduledFor") ? true : undefined}
+            />
+            <FieldError id={`date-${uid}-error`} message={err("scheduledFor")} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`start-${uid}`}>{t.startTime}</Label>
+            <Input
+              id={`start-${uid}`}
+              name="startTime"
+              type="time"
+              defaultValue={defaultValues?.startTime}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`end-${uid}`}>{t.endTime}</Label>
+            <Input
+              id={`end-${uid}`}
+              name="endTime"
+              type="time"
+              defaultValue={defaultValues?.endTime}
+              aria-invalid={err("endTime") ? true : undefined}
+            />
+            <FieldError id={`end-${uid}-error`} message={err("endTime")} />
+          </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`start-${jobId ?? "new"}`}>{t.startTime}</Label>
-          <Input
-            id={`start-${jobId ?? "new"}`}
-            name="startTime"
-            type="time"
-            defaultValue={defaultValues?.startTime}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`end-${jobId ?? "new"}`}>{t.endTime}</Label>
-          <Input
-            id={`end-${jobId ?? "new"}`}
-            name="endTime"
-            type="time"
-            defaultValue={defaultValues?.endTime}
-            aria-invalid={err("endTime") ? true : undefined}
-          />
-          <FieldError id={`end-${jobId ?? "new"}-error`} message={err("endTime")} />
-        </div>
-      </div>
+      </Group>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`worker-${jobId ?? "new"}`}>{t.worker}</Label>
-          <Select
-            id={`worker-${jobId ?? "new"}`}
-            name="assignedToId"
-            defaultValue={defaultValues?.assignedToId ?? ""}
-          >
-            <option value="">{t.noWorker}</option>
-            {workers.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </Select>
+      <Group icon={Users} label={t.groupAssign}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`worker-${uid}`}>{t.worker}</Label>
+            <Select id={`worker-${uid}`} name="assignedToId" defaultValue={defaultValues?.assignedToId ?? ""}>
+              <option value="">{t.noWorker}</option>
+              {workers.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`team-${uid}`}>{t.team}</Label>
+            <Select id={`team-${uid}`} name="teamId" defaultValue={defaultValues?.teamId ?? ""}>
+              <option value="">{t.noTeam}</option>
+              {teams.map((tm) => (
+                <option key={tm.id} value={tm.id}>
+                  {tm.name}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`team-${jobId ?? "new"}`}>{t.team}</Label>
-          <Select
-            id={`team-${jobId ?? "new"}`}
-            name="teamId"
-            defaultValue={defaultValues?.teamId ?? ""}
-          >
-            <option value="">{t.noTeam}</option>
-            {teams.map((tm) => (
-              <option key={tm.id} value={tm.id}>
-                {tm.name}
-              </option>
-            ))}
-          </Select>
+      </Group>
+
+      <Group icon={MapPin} label={t.groupWhere}>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`customer-${uid}`}>{t.customer}</Label>
+            <Select id={`customer-${uid}`} name="customerId" defaultValue={defaultValues?.customerId ?? ""}>
+              <option value="">{t.noCustomer}</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`project-${uid}`}>{t.project}</Label>
+            <Select id={`project-${uid}`} name="projectId" defaultValue={defaultValues?.projectId ?? ""}>
+              <option value="">{t.noProject}</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`customer-${jobId ?? "new"}`}>{t.customer}</Label>
-          <Select
-            id={`customer-${jobId ?? "new"}`}
-            name="customerId"
-            defaultValue={defaultValues?.customerId ?? ""}
-          >
-            <option value="">{t.noCustomer}</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor={`project-${jobId ?? "new"}`}>{t.project}</Label>
-          <Select
-            id={`project-${jobId ?? "new"}`}
-            name="projectId"
-            defaultValue={defaultValues?.projectId ?? ""}
-          >
-            <option value="">{t.noProject}</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </Select>
-        </div>
-      </div>
+      </Group>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor={`notes-${jobId ?? "new"}`}>{t.notes}</Label>
+        <Label htmlFor={`notes-${uid}`}>{t.notes}</Label>
         <Textarea
-          id={`notes-${jobId ?? "new"}`}
+          id={`notes-${uid}`}
           name="notes"
           rows={2}
           defaultValue={defaultValues?.notes}

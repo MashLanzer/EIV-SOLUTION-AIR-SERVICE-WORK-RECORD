@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
+import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { RecordBulkBar } from "@/components/records/RecordBulkBar";
 import { RecordsFilterBar } from "@/components/records/RecordsFilterBar";
 import { RecordsTable } from "@/components/records/RecordsTable";
@@ -99,7 +100,8 @@ export default async function AdminRecordsPage({
     filters.status,
   ].filter(Boolean).length;
 
-  const t = (await getT()).adminRecords;
+  const dict = await getT();
+  const t = dict.adminRecords;
 
   // Quick status chips: one tap to filter by review state, keeping any other
   // active filters. "All" clears just the status.
@@ -123,6 +125,13 @@ export default async function AdminRecordsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <SegmentedNav
+        ariaLabel={dict.nav.dashboard}
+        items={[
+          { label: dict.nav.dashboard, href: "/admin", active: false },
+          { label: dict.nav.records, href: "/admin/records", active: true },
+        ]}
+      />
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.allRecords}</h1>
 
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
