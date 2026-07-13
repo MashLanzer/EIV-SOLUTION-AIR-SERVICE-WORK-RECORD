@@ -9,6 +9,9 @@ import {
   ArrowRight,
   ChevronRight,
   Clock3,
+  FolderPlus,
+  UserPlus,
+  CalendarPlus,
   CheckCircle2,
   TrendingUp,
   DollarSign,
@@ -276,6 +279,7 @@ export default async function AdminDashboardPage() {
   const t = dict.dashboard;
   const locale = await getLocale();
   const fmtMoney = (n: number) => `${currencySymbol}${moneyNumber.format(n)}`;
+  const isAdmin = session.user.role === "ADMIN";
 
   const tiles: {
     label: string;
@@ -323,8 +327,32 @@ export default async function AdminDashboardPage() {
         ]}
       />
       <div className="animate-fade-up" style={{ animationDelay: "0ms" }}>
-        <DashboardGreeting name={session.user.name} />
+        <DashboardGreeting
+          name={session.user.name}
+          pendingReview={pendingReview}
+          todayJobs={todayJobs}
+        />
       </div>
+
+      {isAdmin && (
+        <div className="flex flex-wrap gap-2 animate-fade-up" style={{ animationDelay: "20ms" }}>
+          {[
+            { href: "/admin/schedule", label: dict.nav.schedule, icon: CalendarPlus },
+            { href: "/admin/projects/new", label: dict.nav.newProject, icon: FolderPlus },
+            { href: "/admin/workers/new", label: dict.nav.newWorker, icon: UserPlus },
+            { href: "/admin/teams/new", label: dict.nav.newTeam, icon: Users2 },
+          ].map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            >
+              <a.icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+              {a.label}
+            </Link>
+          ))}
+        </div>
+      )}
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "40ms" }}>
         <div className="flex items-center justify-between gap-2">
