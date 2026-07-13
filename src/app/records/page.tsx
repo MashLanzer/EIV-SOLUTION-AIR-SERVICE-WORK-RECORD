@@ -93,11 +93,24 @@ export default async function RecordsPage({
     organizationId: requireOrgId(session),
     submittedById: session.user.id,
   };
+  // Per-status counts for the chips: honor the search term but not the status
+  // filter itself, so each chip shows how many it would land on.
+  const whereNoStatus = {
+    ...mine,
+    ...(query
+      ? {
+          OR: [
+            { jobNumber: { contains: query, mode: "insensitive" as const } },
+            { customerName: { contains: query, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
 
-  const [total, records, monthTotal, approvedThisMonth, needsChanges] =
+  const [total, records, monthTotal, approvedThisMonth, needsChanges, statusCounts] =
     await Promise.all([
       prisma.workRecord.count({ where }),
       prisma.workRecord.findMany({
@@ -120,8 +133,17 @@ export default async function RecordsPage({
         where: { ...mine, status: "APPROVED", date: { gte: monthStart } },
       }),
       prisma.workRecord.count({ where: { ...mine, status: "NEEDS_CHANGES" } }),
+      prisma.workRecord.groupBy({
+        by: ["status"],
+        where: whereNoStatus,
+        _count: { _all: true },
+      }),
     ]);
   const pages = pageCount(total);
+  const countByStatus = new Map<RecordStatus, number>(
+    statusCounts.map((s) => [s.status, s._count._all])
+  );
+  const allCount = statusCounts.reduce((sum, s) => sum + s._count._all, 0);
   // The summary is a "home" thing - hide it while searching or filtering.
   const showSummary = !query && !status;
 
@@ -222,19 +244,30 @@ export default async function RecordsPage({
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {statusChips.map((chip) => {
           const active = (chip.status ?? undefined) === (status ?? undefined);
+          const count = chip.status ? countByStatus.get(chip.status) ?? 0 : allCount;
           return (
             <Link
               key={chip.label}
               href={chipHref(chip.status)}
               aria-current={active ? "true" : undefined}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
                 active
                   ? "border-transparent bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
                   : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               )}
             >
               {chip.label}
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-xs tabular-nums",
+                  active
+                    ? "bg-white/20 dark:bg-neutral-900/20"
+                    : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                )}
+              >
+                {count}
+              </span>
             </Link>
           );
         })}
