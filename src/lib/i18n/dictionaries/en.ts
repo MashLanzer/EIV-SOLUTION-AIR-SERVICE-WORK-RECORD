@@ -951,6 +951,7 @@ export const en = {
     colAddress: "Address",
     colContact: "Contact",
     colJobs: "Jobs",
+    colLastVisit: "Last visit",
     colHistory: "History",
     jobCountOne: "{n} job",
     jobCountMany: "{n} jobs",

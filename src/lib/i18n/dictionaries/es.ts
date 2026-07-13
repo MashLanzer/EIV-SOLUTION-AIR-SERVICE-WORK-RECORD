@@ -954,6 +954,7 @@ export const es: Dictionary = {
     colAddress: "Dirección",
     colContact: "Contacto",
     colJobs: "Trabajos",
+    colLastVisit: "Última visita",
     colHistory: "Historial",
     jobCountOne: "{n} trabajo",
     jobCountMany: "{n} trabajos",

@@ -23,10 +23,19 @@ import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
-import { getT } from "@/lib/i18n/server";
+import { getLocale, getT } from "@/lib/i18n/server";
 import type { Prisma } from "@prisma/client";
 
 const CUSTOMER_SORTS = ["name", "address", "jobs"] as const;
+
+function formatDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
 
 function customerOrderBy(
   sort: (typeof CUSTOMER_SORTS)[number],
@@ -78,7 +87,11 @@ export default async function AdminCustomersPage({
     prisma.customer.count({ where }),
     prisma.customer.findMany({
       where,
-      include: { _count: { select: { records: true } } },
+      include: {
+        _count: { select: { records: true } },
+        // Most recent job date = last visit, for the at-a-glance column.
+        records: { orderBy: { date: "desc" }, take: 1, select: { date: true } },
+      },
       orderBy: customerOrderBy(sort, dir),
       ...paginationArgs(page),
     }),
@@ -92,6 +105,7 @@ export default async function AdminCustomersPage({
   };
   const dict = await getT();
   const t = dict.customers;
+  const locale = await getLocale();
 
   return (
     <div className="flex flex-col gap-4">
@@ -149,6 +163,7 @@ export default async function AdminCustomersPage({
                       <TableHead>
                         <SortHeader column="jobs" label={t.colJobs} {...sortProps} />
                       </TableHead>
+                      <TableHead>{t.colLastVisit}</TableHead>
                       <TableHead className="text-right">{t.colHistory}</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -186,6 +201,11 @@ export default async function AdminCustomersPage({
                           )}
                         </TableCell>
                         <TableCell className="tabular-nums">{customer._count.records}</TableCell>
+                        <TableCell className="whitespace-nowrap text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
+                          {customer.records[0]
+                            ? formatDate(customer.records[0].date, locale)
+                            : "—"}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button asChild variant="outline" size="sm">
                             <Link href={`/admin/customers/${customer.id}`}>
@@ -219,6 +239,11 @@ export default async function AdminCustomersPage({
                         {(customer._count.records === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(customer._count.records))}
                       </span>
                     </div>
+                    {customer.records[0] && (
+                      <div className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
+                        {t.colLastVisit}: {formatDate(customer.records[0].date, locale)}
+                      </div>
+                    )}
                     <div className="mt-0.5 flex items-start gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
                       <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       <span className="min-w-0">{customer.address}</span>
