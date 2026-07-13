@@ -9,6 +9,7 @@ declare module "next-auth" {
     organizationId: string | null;
     phone: string | null;
     storedSignature: string | null;
+    avatarUrl: string | null;
   }
 
   interface Session {
@@ -18,6 +19,7 @@ declare module "next-auth" {
       organizationId: string | null;
       phone: string | null;
       storedSignature: string | null;
+      avatarUrl: string | null;
     } & DefaultSession["user"];
   }
 }
@@ -29,5 +31,6 @@ declare module "next-auth/jwt" {
     organizationId: string | null;
     phone: string | null;
     storedSignature: string | null;
+    avatarUrl: string | null;
   }
 }

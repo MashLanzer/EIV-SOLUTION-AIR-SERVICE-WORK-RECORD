@@ -29,6 +29,7 @@ function parse(formData: FormData) {
     scheduledFor: formData.get("scheduledFor"),
     startTime: formData.get("startTime") || "",
     endTime: formData.get("endTime") || "",
+    requiredSkill: formData.get("requiredSkill") || "",
     notes: formData.get("notes") || "",
   });
 }
@@ -122,7 +123,7 @@ export async function createScheduledJobAction(
       fieldErrors: z.flattenError(parsed.error).fieldErrors,
     };
   }
-  const { title, scheduledFor, startTime, endTime, notes } = parsed.data;
+  const { title, scheduledFor, startTime, endTime, requiredSkill, notes } = parsed.data;
   const assignedToId = await resolveWorkerId(formData, organizationId);
   const teamId = await resolveTeamId(formData, organizationId);
   const customerId = await resolveCustomerId(formData, organizationId);
@@ -137,6 +138,7 @@ export async function createScheduledJobAction(
       scheduledFor: date,
       startTime: startTime || null,
       endTime: endTime || null,
+      requiredSkill: requiredSkill || null,
       assignedToId,
       teamId,
       customerId,
@@ -179,7 +181,7 @@ export async function updateScheduledJobAction(
       fieldErrors: z.flattenError(parsed.error).fieldErrors,
     };
   }
-  const { title, scheduledFor, startTime, endTime, notes } = parsed.data;
+  const { title, scheduledFor, startTime, endTime, requiredSkill, notes } = parsed.data;
   const assignedToId = await resolveWorkerId(formData, organizationId);
   const teamId = await resolveTeamId(formData, organizationId);
   const customerId = await resolveCustomerId(formData, organizationId);
@@ -194,6 +196,7 @@ export async function updateScheduledJobAction(
       scheduledFor: date,
       startTime: startTime || null,
       endTime: endTime || null,
+      requiredSkill: requiredSkill || null,
       assignedToId,
       teamId,
       customerId,

@@ -32,6 +32,7 @@ export default async function RecordsLayout({
       <SkipLink />
       <WorkerNav
         name={session.user.name ?? session.user.email ?? ""}
+        avatarUrl={session.user.avatarUrl ?? null}
         returnedCount={returnedCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}
       />

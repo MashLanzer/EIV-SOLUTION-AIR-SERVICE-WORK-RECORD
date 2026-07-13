@@ -181,7 +181,7 @@ export default async function SchedulePage({
     to = addUtcDays(gridDays[gridDays.length - 1], 1);
   }
 
-  const [jobs, workers, teams, customers, projects, org] = await Promise.all([
+  const [jobs, workers, teams, customers, projects, org, skillRows] = await Promise.all([
     getScheduledJobs({ session, organizationId, from, to, assignedToId: worker }),
     prisma.user.findMany({
       where: { organizationId, active: true },
@@ -207,12 +207,29 @@ export default async function SchedulePage({
       where: { id: organizationId },
       select: { scheduleOverloadThreshold: true },
     }),
+    prisma.userSkill.findMany({
+      where: { user: { organizationId } },
+      select: { userId: true, name: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
   // Each worker's effective overload threshold: their personal override when
   // set, otherwise the org default. A single lookup used by every view.
   const orgOverloadDefault = org?.scheduleOverloadThreshold ?? 4;
   const workerThreshold = new Map(workers.map((w) => [w.id, w.scheduleOverloadThreshold]));
   const thresholdFor = (id: string) => workerThreshold.get(id) ?? orgOverloadDefault;
+
+  // Skills per worker (for the assignment star + required-skill mismatch) and
+  // the distinct skill names (for the required-skill autocomplete).
+  const workerSkills: Record<string, string[]> = {};
+  const skillNameSet = new Set<string>();
+  for (const row of skillRows) {
+    (workerSkills[row.userId] ??= []).push(row.name);
+    skillNameSet.add(row.name);
+  }
+  const skillSuggestions = [...skillNameSet].sort((a, b) => a.localeCompare(b));
+  const workerHasSkill = (workerId: string, skill: string) =>
+    (workerSkills[workerId] ?? []).some((s) => s.toLowerCase() === skill.toLowerCase());
 
   const views: ScheduleJobView[] = jobs.map((j) => ({
     id: j.id,
@@ -221,6 +238,9 @@ export default async function SchedulePage({
     scheduledFor: dayKey(j.scheduledFor),
     startTime: j.startTime,
     endTime: j.endTime,
+    requiredSkill: j.requiredSkill,
+    // A mismatch: the job needs a skill but the assigned worker doesn't have it.
+    skillMismatch: !!j.requiredSkill && !!j.assignedToId && !workerHasSkill(j.assignedToId, j.requiredSkill),
     status: j.status,
     assignedToId: j.assignedToId,
     assignedToName: j.assignedTo?.name ?? null,
@@ -313,6 +333,8 @@ export default async function SchedulePage({
               teams={teams}
               customers={customers}
               projects={projects}
+              workerSkills={workerSkills}
+              skillSuggestions={skillSuggestions}
             />
           </div>
         </details>

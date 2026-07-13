@@ -15,6 +15,7 @@ import {
   Trash2,
   User as UserIcon,
   Users2,
+  Wrench,
   XCircle,
 } from "lucide-react";
 
@@ -36,6 +37,9 @@ export interface ScheduleJobView {
   scheduledFor: string; // YYYY-MM-DD
   startTime: string | null;
   endTime: string | null;
+  requiredSkill: string | null;
+  // True when the job needs a skill the assigned worker doesn't have.
+  skillMismatch: boolean;
   status: ScheduledJobStatus;
   assignedToId: string | null;
   assignedToName: string | null;
@@ -56,6 +60,8 @@ export function ScheduleJobCard({
   teams,
   customers,
   projects,
+  workerSkills,
+  skillSuggestions,
   conflict = false,
 }: {
   job: ScheduleJobView;
@@ -63,6 +69,8 @@ export function ScheduleJobCard({
   teams: JobOption[];
   customers: JobOption[];
   projects: JobOption[];
+  workerSkills?: Record<string, string[]>;
+  skillSuggestions?: string[];
   // The assigned worker has another timed job that overlaps this one this day.
   conflict?: boolean;
 }) {
@@ -91,6 +99,7 @@ export function ScheduleJobCard({
             scheduledFor: job.scheduledFor,
             startTime: job.startTime ?? "",
             endTime: job.endTime ?? "",
+            requiredSkill: job.requiredSkill ?? "",
             assignedToId: job.assignedToId ?? "",
             teamId: job.teamId ?? "",
             customerId: job.customerId ?? "",
@@ -101,6 +110,8 @@ export function ScheduleJobCard({
           teams={teams}
           customers={customers}
           projects={projects}
+          workerSkills={workerSkills}
+          skillSuggestions={skillSuggestions}
           onDone={() => setEditing(false)}
         />
       </div>
@@ -134,6 +145,12 @@ export function ScheduleJobCard({
             <Badge variant="warning" title={t.conflictTitle}>
               <AlertTriangle className="h-3 w-3" />
               {t.conflictBadge}
+            </Badge>
+          )}
+          {job.skillMismatch && !canceled && (
+            <Badge variant="warning" title={t.skillMismatchTitle}>
+              <AlertTriangle className="h-3 w-3" />
+              {t.skillMismatchBadge}
             </Badge>
           )}
         </div>
@@ -174,6 +191,19 @@ export function ScheduleJobCard({
             <MapPin className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
             {job.projectName}
           </Link>
+        )}
+        {job.requiredSkill && (
+          <span
+            className={
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium " +
+              (job.skillMismatch
+                ? "bg-warning-soft text-warning-text"
+                : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300")
+            }
+          >
+            <Wrench className="h-3 w-3 shrink-0" />
+            {job.requiredSkill}
+          </span>
         )}
       </div>
 

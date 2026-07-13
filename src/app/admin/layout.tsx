@@ -27,6 +27,7 @@ export default async function AdminLayout({
       <SkipLink />
       <AdminSidebar
         name={session.user.name ?? session.user.email ?? ""}
+        avatarUrl={session.user.avatarUrl ?? null}
         pendingReviewCount={pendingReviewCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}
       />

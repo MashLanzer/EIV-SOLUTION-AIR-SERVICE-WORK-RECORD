@@ -23,10 +23,12 @@ function initialsOf(name: string): string {
 // so the account lives in one predictable place on every screen.
 export function HeaderAccountMenu({
   name,
+  avatarUrl,
   profileHref,
   settingsHref,
 }: {
   name: string;
+  avatarUrl?: string | null;
   profileHref: string;
   settingsHref: string;
 }) {
@@ -64,12 +66,22 @@ export function HeaderAccountMenu({
         aria-label={t.menuAria}
         className="flex items-center gap-1 rounded-full py-0.5 pl-0.5 pr-1.5 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95"
       >
-        <span
-          aria-hidden="true"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-200 ring-1 ring-neutral-200 dark:ring-neutral-700"
-        >
-          {initialsOf(name)}
-        </span>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt=""
+            aria-hidden="true"
+            className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-neutral-200 dark:ring-neutral-700"
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-200 ring-1 ring-neutral-200 dark:ring-neutral-700"
+          >
+            {initialsOf(name)}
+          </span>
+        )}
         <ChevronDown
           className={cn(
             "h-4 w-4 text-neutral-400 dark:text-neutral-500 transition-transform duration-200",

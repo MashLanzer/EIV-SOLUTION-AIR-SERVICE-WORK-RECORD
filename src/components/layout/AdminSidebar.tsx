@@ -109,10 +109,12 @@ function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
 
 export function AdminSidebar({
   name,
+  avatarUrl = null,
   pendingReviewCount = 0,
   latestActivityAt = null,
 }: {
   name: string;
+  avatarUrl?: string | null;
   pendingReviewCount?: number;
   latestActivityAt?: number | null;
 }) {
@@ -144,6 +146,7 @@ export function AdminSidebar({
             <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
             <HeaderAccountMenu
               name={name}
+              avatarUrl={avatarUrl}
               profileHref="/admin/profile"
               settingsHref="/admin/settings"
             />
@@ -160,6 +163,7 @@ export function AdminSidebar({
           <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
           <HeaderAccountMenu
             name={name}
+            avatarUrl={avatarUrl}
             profileHref="/admin/profile"
             settingsHref="/admin/settings"
           />

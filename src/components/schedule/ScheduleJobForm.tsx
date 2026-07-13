@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { CalendarPlus, Clock, MapPin, Save, Users } from "lucide-react";
 
@@ -28,6 +28,7 @@ export interface JobFormValues {
   scheduledFor: string; // YYYY-MM-DD
   startTime: string;
   endTime: string;
+  requiredSkill: string;
   assignedToId: string;
   teamId: string;
   customerId: string;
@@ -69,6 +70,8 @@ export function ScheduleJobForm({
   teams,
   customers,
   projects,
+  workerSkills,
+  skillSuggestions,
   onDone,
 }: {
   jobId?: string;
@@ -79,10 +82,19 @@ export function ScheduleJobForm({
   teams: JobOption[];
   customers: JobOption[];
   projects: JobOption[];
+  // Skills per worker id + the org's skill names, so the required-skill field
+  // can autocomplete and the worker dropdown can flag who's qualified.
+  workerSkills?: Record<string, string[]>;
+  skillSuggestions?: string[];
   onDone?: () => void;
 }) {
   const t = useT().schedule;
   const tc = useT().common;
+  const [requiredSkill, setRequiredSkill] = useState(defaultValues?.requiredSkill ?? "");
+  const skillNeeded = requiredSkill.trim().toLowerCase();
+  const hasSkill = (id: string) =>
+    !!skillNeeded &&
+    (workerSkills?.[id] ?? []).some((s) => s.toLowerCase() === skillNeeded);
   const action = jobId
     ? updateScheduledJobAction.bind(null, jobId)
     : createScheduledJobAction;
@@ -163,6 +175,25 @@ export function ScheduleJobForm({
       </Group>
 
       <Group icon={Users} label={t.groupAssign}>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`skill-${uid}`}>{t.requiredSkill}</Label>
+          <Input
+            id={`skill-${uid}`}
+            name="requiredSkill"
+            value={requiredSkill}
+            onChange={(e) => setRequiredSkill(e.target.value)}
+            placeholder={t.requiredSkillPlaceholder}
+            list={`skill-list-${uid}`}
+            autoComplete="off"
+          />
+          {skillSuggestions && skillSuggestions.length > 0 && (
+            <datalist id={`skill-list-${uid}`}>
+              {skillSuggestions.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
+          )}
+        </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`worker-${uid}`}>{t.worker}</Label>
@@ -171,9 +202,13 @@ export function ScheduleJobForm({
               {workers.map((w) => (
                 <option key={w.id} value={w.id}>
                   {w.name}
+                  {hasSkill(w.id) ? " ★" : ""}
                 </option>
               ))}
             </Select>
+            {skillNeeded && (
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.skillStarHint}</p>
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`team-${uid}`}>{t.team}</Label>

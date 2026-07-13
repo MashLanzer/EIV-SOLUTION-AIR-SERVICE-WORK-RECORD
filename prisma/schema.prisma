@@ -453,6 +453,9 @@ model ScheduledJob {
   // stores arrival/departure - keeps the crew's local time exactly as entered.
   startTime      String?
   endTime        String?
+  // Optional skill the job needs, so the scheduler can flag when the assigned
+  // worker doesn't have it. Free text, matched against UserSkill names.
+  requiredSkill  String?
   status         ScheduledJobStatus @default(SCHEDULED)
   // Who's going. A job can target one worker, a team, or both.
   assignedToId   String?

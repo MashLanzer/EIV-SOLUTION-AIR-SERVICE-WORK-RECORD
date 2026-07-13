@@ -141,6 +141,7 @@ export const scheduledJobSchema = z
     scheduledFor: z.string().min(1, "A date is required"),
     startTime: z.string().optional().or(z.literal("")),
     endTime: z.string().optional().or(z.literal("")),
+    requiredSkill: z.string().trim().max(60, "Skill is too long").optional().or(z.literal("")),
     notes: z.string().max(2000, "Notes are too long").optional().or(z.literal("")),
   })
   .refine(

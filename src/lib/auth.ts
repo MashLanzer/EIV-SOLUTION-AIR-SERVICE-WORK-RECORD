@@ -60,6 +60,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.name = dbUser.name;
         token.phone = dbUser.phone;
         token.storedSignature = dbUser.storedSignature;
+        token.avatarUrl = dbUser.avatarUrl;
         token.organizationId = dbUser.organizationId;
         token.checkedAt = Date.now();
         return token;
@@ -79,6 +80,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.role = token.role as "ADMIN" | "WORKER";
       session.user.phone = (token.phone as string | null) ?? null;
       session.user.storedSignature = (token.storedSignature as string | null) ?? null;
+      session.user.avatarUrl = (token.avatarUrl as string | null) ?? null;
       session.user.organizationId =
         (token.organizationId as string | null) ?? null;
       return session;

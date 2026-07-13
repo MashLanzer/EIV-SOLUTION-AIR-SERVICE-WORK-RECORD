@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CalendarDays, ClipboardList, Mail, Trash2, Wrench } from "lucide-react";
 
+import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,7 +59,18 @@ export default async function WorkerDetailPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
+      <div className="flex items-start gap-3">
+        {worker.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={worker.avatarUrl}
+            alt=""
+            className="h-12 w-12 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <AvatarInitials name={worker.name || worker.email} className="h-12 w-12 shrink-0" />
+        )}
+        <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
             {worker.name}
@@ -82,6 +94,7 @@ export default async function WorkerDetailPage({
             <CalendarDays className="h-4 w-4 shrink-0" />
             {t.joined.replace("{date}", formatJoined(worker.createdAt, locale))}
           </span>
+        </div>
         </div>
       </div>
 

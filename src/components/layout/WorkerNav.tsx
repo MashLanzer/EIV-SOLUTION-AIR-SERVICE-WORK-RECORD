@@ -47,10 +47,12 @@ function isFocusedRecordFlow(pathname: string) {
 
 export function WorkerNav({
   name,
+  avatarUrl = null,
   returnedCount = 0,
   latestActivityAt = null,
 }: {
   name: string;
+  avatarUrl?: string | null;
   returnedCount?: number;
   latestActivityAt?: number | null;
 }) {
@@ -78,6 +80,7 @@ export function WorkerNav({
           <ActivityBell href="/records/activity" latestActivityAt={latestActivityAt} />
           <HeaderAccountMenu
             name={name}
+            avatarUrl={avatarUrl}
             profileHref="/records/profile"
             settingsHref="/records/settings"
           />
