@@ -70,6 +70,22 @@ model Organization {
   workTypeCategories WorkTypeCategory[]
   workTypes          WorkType[]
   scheduledJobs      ScheduledJob[]
+  orgSkills          OrgSkill[]
+}
+
+// The org's official skill catalog. Admin-curated so skill names stay
+// consistent (one "HVAC", not "hvac"/"A/C"); it feeds the autocomplete on the
+// profile skill input and the job's required-skill field. Workers still store
+// their own skills as free UserSkill rows - this is the suggestion source.
+model OrgSkill {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
 }
 
 // A predefined "type of work" taxonomy, org-managed so the app fits any

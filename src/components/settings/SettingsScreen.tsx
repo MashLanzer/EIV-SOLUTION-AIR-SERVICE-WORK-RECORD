@@ -18,6 +18,7 @@ import {
   Tag,
   Trash2,
   Users,
+  Wrench,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -229,6 +230,12 @@ export function SettingsScreen({
             label={s.workRecords.workTypes}
             sublabel={s.workRecords.workTypesHint}
             href="/admin/settings/work-types"
+          />
+          <SettingsRow
+            icon={Wrench}
+            label={s.skillsCatalog.title}
+            sublabel={s.skillsCatalog.rowHint}
+            href="/admin/settings/skills"
           />
           <DefaultNotesRow value={company.defaultWorkNotes} />
         </SettingsSection>

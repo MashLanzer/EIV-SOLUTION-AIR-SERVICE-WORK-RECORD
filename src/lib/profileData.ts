@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getSkillSuggestions } from "@/lib/orgSkills";
 import { addUtcDays, startOfUtcDay, toMinutes, utcDay, weekRange } from "@/lib/schedule";
 
 // Whole hours between two "HH:MM" wall-clock strings, rolling a negative span
@@ -34,7 +35,7 @@ export async function getProfileData(userId: string, organizationId: string) {
     upcomingJobs,
     needsAttention,
     trendRecords,
-    skillNames,
+    skillSuggestions,
   ] = await Promise.all([
       prisma.workRecord.groupBy({
         by: ["status"],
@@ -87,14 +88,9 @@ export async function getProfileData(userId: string, organizationId: string) {
         where: { submittedById: userId, date: { gte: trendStart } },
         select: { date: true, arrivalTime: true, departureTime: true },
       }),
-      // Distinct skill names already used across the org, to autocomplete the
-      // skill input so "HVAC" doesn't drift into "A/C", "hvac", etc.
-      prisma.userSkill.findMany({
-        where: { user: { organizationId } },
-        distinct: ["name"],
-        select: { name: true },
-        orderBy: { name: "asc" },
-      }),
+      // Skill autocomplete: the org catalog plus any free-text skills already in
+      // use, so "HVAC" doesn't drift into "A/C", "hvac", etc.
+      getSkillSuggestions(organizationId),
     ]);
 
   const totalRecords = statusCounts.reduce((acc, s) => acc + s._count, 0);
@@ -124,7 +120,7 @@ export async function getProfileData(userId: string, organizationId: string) {
     recentRecords,
     avatarUrl: userData?.avatarUrl ?? null,
     skills: userData?.skills ?? [],
-    skillSuggestions: skillNames.map((s) => s.name),
+    skillSuggestions,
     upcomingJobs,
     needsAttention,
   };

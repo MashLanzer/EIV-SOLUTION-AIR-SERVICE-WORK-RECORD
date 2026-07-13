@@ -1100,6 +1100,16 @@ export const es: Dictionary = {
       defaultNotesPlaceholder:
         "ej. Se realizó mantenimiento estándar. Se revisaron filtros, refrigerante y conexiones.",
     },
+    skillsCatalog: {
+      title: "Catálogo de habilidades",
+      description:
+        "Las habilidades oficiales de tu empresa. Se autocompletan en los perfiles y en la habilidad requerida de un trabajo, para que los nombres sean consistentes.",
+      rowHint: "Habilidades oficiales que se autocompletan en toda la app",
+      add: "Agregar",
+      placeholder: "ej. HVAC, Electricidad, Plomería",
+      removeAria: "Quitar {name}",
+      empty: "Aún no hay habilidades. Añade las que usa tu equipo.",
+    },
     invite: {
       section: "Código de invitación",
       allow: "Permitir unirse con código",

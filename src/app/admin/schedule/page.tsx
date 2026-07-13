@@ -23,6 +23,7 @@ import {
   type CalendarDay,
 } from "@/components/schedule/ScheduleMonthCalendar";
 import { cn } from "@/lib/utils";
+import { getSkillSuggestions } from "@/lib/orgSkills";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
@@ -181,7 +182,7 @@ export default async function SchedulePage({
     to = addUtcDays(gridDays[gridDays.length - 1], 1);
   }
 
-  const [jobs, workers, teams, customers, projects, org, skillRows] = await Promise.all([
+  const [jobs, workers, teams, customers, projects, org, skillRows, skillSuggestions] = await Promise.all([
     getScheduledJobs({ session, organizationId, from, to, assignedToId: worker }),
     prisma.user.findMany({
       where: { organizationId, active: true },
@@ -212,6 +213,7 @@ export default async function SchedulePage({
       select: { userId: true, name: true },
       orderBy: { name: "asc" },
     }),
+    getSkillSuggestions(organizationId),
   ]);
   // Each worker's effective overload threshold: their personal override when
   // set, otherwise the org default. A single lookup used by every view.
@@ -219,15 +221,12 @@ export default async function SchedulePage({
   const workerThreshold = new Map(workers.map((w) => [w.id, w.scheduleOverloadThreshold]));
   const thresholdFor = (id: string) => workerThreshold.get(id) ?? orgOverloadDefault;
 
-  // Skills per worker (for the assignment star + required-skill mismatch) and
-  // the distinct skill names (for the required-skill autocomplete).
+  // Skills per worker (for the assignment star + required-skill mismatch). The
+  // required-skill autocomplete uses skillSuggestions (catalog + in use).
   const workerSkills: Record<string, string[]> = {};
-  const skillNameSet = new Set<string>();
   for (const row of skillRows) {
     (workerSkills[row.userId] ??= []).push(row.name);
-    skillNameSet.add(row.name);
   }
-  const skillSuggestions = [...skillNameSet].sort((a, b) => a.localeCompare(b));
   const workerHasSkill = (workerId: string, skill: string) =>
     (workerSkills[workerId] ?? []).some((s) => s.toLowerCase() === skill.toLowerCase());
 

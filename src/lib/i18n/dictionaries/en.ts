@@ -1095,6 +1095,16 @@ export const en = {
       defaultNotesPlaceholder:
         "e.g. Performed standard maintenance. Checked filters, refrigerant and connections.",
     },
+    skillsCatalog: {
+      title: "Skills catalog",
+      description:
+        "Your company's official skills. They autocomplete on worker profiles and on a job's required skill, so names stay consistent.",
+      rowHint: "Official skills that autocomplete across the app",
+      add: "Add",
+      placeholder: "e.g. HVAC, Electrical, Plumbing",
+      removeAria: "Remove {name}",
+      empty: "No skills yet. Add the ones your crew uses.",
+    },
     invite: {
       section: "Team invite code",
       allow: "Allow joining by code",
