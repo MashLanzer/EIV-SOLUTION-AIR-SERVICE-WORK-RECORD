@@ -5,10 +5,15 @@ import { suggestNextJobNumber } from "@/lib/jobNumber";
 import { getWorkTypeGroups } from "@/lib/workTypes";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
+import { scheduleWhereForUser } from "@/lib/schedule";
 import { requireAuth } from "@/lib/session";
 import { getT } from "@/lib/i18n/server";
 
-export default async function NewRecordPage() {
+export default async function NewRecordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ jobId?: string }>;
+}) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
   // Workers can only tag a record to a project of one of their teams.
@@ -45,6 +50,42 @@ export default async function NewRecordPage() {
   const workTypeGroups = await getWorkTypeGroups(organizationId);
   const t = (await getT()).form;
 
+  // Coming from a scheduled job ("Start record"): pre-fill the customer and
+  // project from the plan so the crew doesn't retype them. Role-scoped so a
+  // worker can only seed from a job that's theirs. A saved draft still wins.
+  const { jobId } = await searchParams;
+  let jobPrefill: {
+    customerName?: string;
+    customerAddress?: string;
+    customerPhone?: string;
+    customerEmail?: string;
+    projectId?: string;
+  } = {};
+  if (jobId) {
+    const scope = await scheduleWhereForUser(session, organizationId);
+    const job = await prisma.scheduledJob.findFirst({
+      where: { AND: [{ id: jobId }, scope] },
+      select: {
+        projectId: true,
+        customer: { select: { name: true, address: true, phone: true, email: true } },
+      },
+    });
+    if (job) {
+      jobPrefill = {
+        customerName: job.customer?.name || undefined,
+        customerAddress: job.customer?.address || undefined,
+        customerPhone: job.customer?.phone || undefined,
+        customerEmail: job.customer?.email || undefined,
+        // Only seed the project when the worker may pick it (it's in the
+        // team-scoped list the form renders).
+        projectId:
+          job.projectId && projects.some((p) => p.id === job.projectId)
+            ? job.projectId
+            : undefined,
+      };
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
@@ -67,6 +108,8 @@ export default async function NewRecordPage() {
           // Company notes template (Settings) seeds the notes on a fresh
           // record; a saved draft still wins.
           workPerformedNotes: org?.defaultWorkNotes || undefined,
+          // Customer/project seeded from a scheduled job, when starting from one.
+          ...jobPrefill,
         }}
         submitLabel={t.submitRecord}
         draftKey={`new-record:${session.user.id}`}

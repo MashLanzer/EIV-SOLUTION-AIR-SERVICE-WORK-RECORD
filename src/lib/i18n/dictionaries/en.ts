@@ -614,6 +614,13 @@ export const en = {
     noJobsWeek: "No jobs scheduled this week",
     noJobsWeekDesc: "Use “Schedule a job” above to plan the crew's visits.",
     noJobsDay: "Nothing scheduled",
+    // Worker view
+    workerSubtitle: "Your upcoming visits. Open one to start its record.",
+    directions: "Directions",
+    startRecord: "Start record",
+    noUpcoming: "No upcoming jobs",
+    noUpcomingDesc:
+      "Jobs your admin schedules for you or your team show up here.",
   },
   dashboard: {
     greetingMorning: "Good morning",

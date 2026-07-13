@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ClipboardList, FilePlus2, FolderKanban, Images, Plus } from "lucide-react";
+import { CalendarDays, ClipboardList, FilePlus2, FolderKanban, Images, Plus } from "lucide-react";
 
 import { ActivityBell } from "@/components/activity/ActivityBell";
 import { AppTabBar } from "@/components/layout/AppTabBar";
@@ -17,6 +17,7 @@ import type { Dictionary } from "@/lib/i18n";
 function tabItems(n: Dictionary["nav"]): TabItem[] {
   return [
     { href: "/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: true },
+    { href: "/records/schedule", label: n.schedule, shortLabel: n.schedule, icon: CalendarDays, exact: false },
     { href: "/records/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
     { href: "/records/new", label: n.newRecord, shortLabel: n.newShort, icon: Plus, exact: true },
   ];
@@ -27,6 +28,7 @@ function tabItems(n: Dictionary["nav"]): TabItem[] {
 function appTabItems(n: Dictionary["nav"]): TabItem[] {
   return [
     { href: "/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: true },
+    { href: "/records/schedule", label: n.schedule, shortLabel: n.schedule, icon: CalendarDays, exact: false },
     { href: "/records/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
     { href: "/records/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
   ];

@@ -616,6 +616,13 @@ export const es: Dictionary = {
     noJobsWeek: "No hay trabajos programados esta semana",
     noJobsWeekDesc: "Usa “Programar trabajo” arriba para planificar las visitas del equipo.",
     noJobsDay: "Nada programado",
+    // Worker view
+    workerSubtitle: "Tus próximas visitas. Abre una para iniciar su registro.",
+    directions: "Cómo llegar",
+    startRecord: "Iniciar registro",
+    noUpcoming: "No hay trabajos próximos",
+    noUpcomingDesc:
+      "Los trabajos que tu administrador programe para ti o tu equipo aparecen aquí.",
   },
   dashboard: {
     greetingMorning: "Buenos días",
