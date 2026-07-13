@@ -4,6 +4,7 @@ import { Download, Pencil } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { RecordDetail } from "@/components/records/RecordDetail";
 import { ReviewTimeline } from "@/components/records/ReviewTimeline";
@@ -91,9 +92,11 @@ export default async function RecordDetailPage({
       <RecordDetail record={record} currency={currency} />
 
       {record.reviewEvents.length > 0 && (
-        <div className="rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-          <ReviewTimeline events={record.reviewEvents} />
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <ReviewTimeline events={record.reviewEvents} />
+          </CardContent>
+        </Card>
       )}
     </div>
   );
