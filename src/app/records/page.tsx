@@ -176,7 +176,7 @@ export default async function RecordsPage({
       </div>
 
       {showSummary && (
-        <div className="grid animate-fade-up grid-cols-3 gap-3">
+        <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
           <StatTile icon={ClipboardList} value={monthTotal} label={t.thisMonth} />
           <StatTile icon={CheckCircle2} value={approvedThisMonth} label={t.approved} tone="success" />
           <StatTile
