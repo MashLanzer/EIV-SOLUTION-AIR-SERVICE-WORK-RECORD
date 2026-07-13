@@ -21,6 +21,13 @@ export const es: Dictionary = {
     view: "Ver",
     manage: "Gestionar",
     close: "Cerrar",
+    confirm: "Confirmar",
+  },
+  pagination: {
+    previous: "Anterior",
+    next: "Siguiente",
+    pageOf: "Página {page} de {total}",
+    aria: "Paginación",
   },
   auth: {
     tagline: "Registro de instalación / servicio",

@@ -3,6 +3,7 @@
 import { useId, useRef, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 // Native <dialog>-based confirmation: modal, focus-trapped, Escape and
 // backdrop-click to dismiss - replaces window.confirm(), which isn't
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 export function ConfirmDialog({
   title,
   description,
-  confirmLabel = "Confirm",
+  confirmLabel,
   confirmVariant = "destructive",
   trigger,
   onConfirm,
@@ -31,6 +32,7 @@ export function ConfirmDialog({
   const id = useId();
   const titleId = `${id}-title`;
   const descriptionId = `${id}-description`;
+  const tc = useT().common;
 
   return (
     <>
@@ -62,7 +64,7 @@ export function ConfirmDialog({
             variant="outline"
             onClick={(e) => e.currentTarget.closest("dialog")?.close()}
           >
-            Cancel
+            {tc.cancel}
           </Button>
           <Button
             type="button"
@@ -72,7 +74,7 @@ export function ConfirmDialog({
               onConfirm();
             }}
           >
-            {confirmLabel}
+            {confirmLabel ?? tc.confirm}
           </Button>
         </div>
       </dialog>

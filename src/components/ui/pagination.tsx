@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
 // Server component: renders prev/next links that preserve the current
 // filter params. Hidden entirely when everything fits on one page.
-export function Pagination({
+export async function Pagination({
   page,
   pageCount,
   basePath,
@@ -17,6 +18,7 @@ export function Pagination({
   params?: Record<string, string | undefined>;
 }) {
   if (pageCount <= 1) return null;
+  const t = (await getT()).pagination;
 
   const hrefFor = (target: number) => {
     const search = new URLSearchParams();
@@ -35,7 +37,7 @@ export function Pagination({
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={t.aria}
       className="flex items-center justify-between gap-3"
     >
       <Link
@@ -44,17 +46,17 @@ export function Pagination({
         className={cn(linkClass, page <= 1 && disabledClass)}
       >
         <ChevronLeft className="h-4 w-4" />
-        Previous
+        {t.previous}
       </Link>
       <span className="text-sm text-neutral-500 dark:text-neutral-400">
-        Page {page} of {pageCount}
+        {t.pageOf.replace("{page}", String(page)).replace("{total}", String(pageCount))}
       </span>
       <Link
         href={hrefFor(page + 1)}
         aria-disabled={page >= pageCount}
         className={cn(linkClass, page >= pageCount && disabledClass)}
       >
-        Next
+        {t.next}
         <ChevronRight className="h-4 w-4" />
       </Link>
     </nav>

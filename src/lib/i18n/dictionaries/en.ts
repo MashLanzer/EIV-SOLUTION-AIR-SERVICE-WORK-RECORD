@@ -21,6 +21,13 @@ export const en = {
     view: "View",
     manage: "Manage",
     close: "Close",
+    confirm: "Confirm",
+  },
+  pagination: {
+    previous: "Previous",
+    next: "Next",
+    pageOf: "Page {page} of {total}",
+    aria: "Pagination",
   },
   auth: {
     tagline: "Installation / Service Work Record",
