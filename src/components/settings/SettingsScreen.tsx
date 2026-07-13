@@ -9,6 +9,7 @@ import {
   DollarSign,
   FileText,
   Gauge,
+  History,
   Info,
   Lock,
   MapPin,
@@ -236,6 +237,12 @@ export function SettingsScreen({
             label={s.skillsCatalog.title}
             sublabel={s.skillsCatalog.rowHint}
             href="/admin/settings/skills"
+          />
+          <SettingsRow
+            icon={History}
+            label={s.audit.title}
+            sublabel={s.audit.rowHint}
+            href="/admin/settings/audit"
           />
           <DefaultNotesRow value={company.defaultWorkNotes} />
         </SettingsSection>

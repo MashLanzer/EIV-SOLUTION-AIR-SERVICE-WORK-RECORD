@@ -275,6 +275,25 @@ export async function updateWorkerRoleAction(
     data: { role: parsed.data.role },
   });
 
+  // Audit trail: record who changed whose role, and from/to. Denormalizes the
+  // names so the log survives an account deletion. Best-effort.
+  try {
+    await prisma.roleChangeEvent.create({
+      data: {
+        organizationId,
+        targetId: user.id,
+        targetName: user.name,
+        actorId: session.user.id,
+        actorName: session.user.name?.trim() || "—",
+        fromRole: user.role,
+        toRole: parsed.data.role,
+      },
+    });
+  } catch {
+    /* audit is best-effort; never block the role change */
+  }
+
   revalidatePath(`/admin/workers/${userId}`);
   revalidatePath("/admin/workers");
+  revalidatePath("/admin/settings/audit");
 }

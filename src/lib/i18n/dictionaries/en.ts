@@ -1187,6 +1187,15 @@ export const en = {
       removeAria: "Remove {name}",
       empty: "No skills yet. Add the ones your crew uses.",
     },
+    audit: {
+      title: "Role change log",
+      rowHint: "Who changed whose role, and when",
+      description: "Every role change in your company, newest first.",
+      empty: "No role changes yet",
+      emptyDesc: "Changes to a worker's role will show up here.",
+      changed: "{actor} changed {target}",
+      fromTo: "{from} → {to}",
+    },
     invite: {
       section: "Team invite code",
       allow: "Allow joining by code",

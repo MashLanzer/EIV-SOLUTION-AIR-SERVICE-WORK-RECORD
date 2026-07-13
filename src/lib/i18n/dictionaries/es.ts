@@ -1192,6 +1192,15 @@ export const es: Dictionary = {
       removeAria: "Quitar {name}",
       empty: "Aún no hay habilidades. Añade las que usa tu equipo.",
     },
+    audit: {
+      title: "Registro de cambios de rol",
+      rowHint: "Quién cambió el rol de quién, y cuándo",
+      description: "Todos los cambios de rol en tu empresa, del más reciente primero.",
+      empty: "Aún no hay cambios de rol",
+      emptyDesc: "Los cambios en el rol de un trabajador aparecerán aquí.",
+      changed: "{actor} cambió a {target}",
+      fromTo: "{from} → {to}",
+    },
     invite: {
       section: "Código de invitación",
       allow: "Permitir unirse con código",
