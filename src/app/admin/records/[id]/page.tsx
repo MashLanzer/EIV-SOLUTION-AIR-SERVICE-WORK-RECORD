@@ -10,6 +10,7 @@ import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
 import { RecordDetail } from "@/components/records/RecordDetail";
 import { RequestChangesButton } from "@/components/records/RequestChangesButton";
+import { ShareReceiptButton } from "@/components/records/ShareReceiptButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -101,6 +102,7 @@ export default async function AdminReviewRecordPage({
                 {dict.records.downloadPdf}
               </a>
             </Button>
+            <ShareReceiptButton recordId={record.id} initialToken={record.publicToken} />
             <div className="ml-auto">
               <DeleteRecordButton recordId={record.id} />
             </div>

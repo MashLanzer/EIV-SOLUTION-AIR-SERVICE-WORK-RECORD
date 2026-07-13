@@ -404,6 +404,9 @@ model NativeHandoffCode {
 
 model WorkRecord {
   id                 String   @id @default(cuid())
+  // Unguessable token for the public customer receipt. Null = not shared;
+  // set when an admin shares the receipt, cleared when they stop sharing.
+  publicToken        String?  @unique
   date               DateTime @db.Date
   jobNumber          String
   leadInstallerName  String
