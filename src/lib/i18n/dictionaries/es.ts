@@ -623,6 +623,7 @@ export const es: Dictionary = {
     viewRecord: "Ver registro",
     jobCountOne: "{n} trabajo",
     jobCountMany: "{n} trabajos",
+    scheduleForDay: "Programar para este día",
     noJobsWeek: "No hay trabajos programados esta semana",
     noJobsWeekDesc: "Usa “Programar trabajo” arriba para planificar las visitas del equipo.",
     noJobsDay: "Nada programado",

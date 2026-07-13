@@ -621,6 +621,7 @@ export const en = {
     viewRecord: "View record",
     jobCountOne: "{n} job",
     jobCountMany: "{n} jobs",
+    scheduleForDay: "Schedule for this day",
     noJobsWeek: "No jobs scheduled this week",
     noJobsWeekDesc: "Use “Schedule a job” above to plan the crew's visits.",
     noJobsDay: "Nothing scheduled",

@@ -43,13 +43,22 @@ function parseDateParam(value: string | undefined): Date {
 
 // Build a /admin/schedule URL that carries the current view + worker filter,
 // so day taps, month/week nav and the switch never drop the filter.
-function schedHref(params: { view?: string; date?: string; worker?: string }): string {
+function schedHref(params: {
+  view?: string;
+  date?: string;
+  worker?: string;
+  create?: boolean;
+}): string {
   const p = new URLSearchParams();
   if (params.view) p.set("view", params.view);
   if (params.date) p.set("date", params.date);
   if (params.worker) p.set("worker", params.worker);
+  if (params.create) p.set("new", "1");
   const qs = p.toString();
-  return qs ? `/admin/schedule?${qs}` : "/admin/schedule";
+  const base = params.create
+    ? "/admin/schedule#new-job"
+    : "/admin/schedule";
+  return qs ? `/admin/schedule?${qs}${params.create ? "#new-job" : ""}` : base;
 }
 
 // Flag jobs where the same worker is double-booked with an overlapping timed
@@ -80,7 +89,7 @@ function conflictingIds(views: ScheduleJobView[]): Set<string> {
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; view?: string; worker?: string }>;
+  searchParams: Promise<{ date?: string; view?: string; worker?: string; new?: string }>;
 }) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
@@ -88,9 +97,10 @@ export default async function SchedulePage({
   const locale = await getLocale();
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
 
-  const { date, view: viewParam, worker: workerParam } = await searchParams;
+  const { date, view: viewParam, worker: workerParam, new: newParam } = await searchParams;
   const view = viewParam === "week" ? "week" : "month";
   const worker = workerParam?.trim() || undefined;
+  const formOpen = newParam === "1";
   const selected = parseDateParam(date);
   const selectedKey = dayKey(selected);
   const todayKey = dayKey(startOfUtcDay(new Date()));
@@ -154,11 +164,9 @@ export default async function SchedulePage({
     byDay.set(v.scheduledFor, list);
   }
 
-  const formDefaultDate = view === "week"
-    ? todayKey >= dayKey(from) && todayKey < dayKey(to)
-      ? todayKey
-      : dayKey(from)
-    : selectedKey;
+  // The create form opens on the selected day (so "Schedule for this day"
+  // lands there); for a plain week visit with no selection it falls to today.
+  const formDefaultDate = selectedKey;
 
   const intl = {
     month: new Intl.DateTimeFormat(intlLocale, { month: "long", year: "numeric", timeZone: "UTC" }),
@@ -195,9 +203,10 @@ export default async function SchedulePage({
         <ScheduleWorkerFilter workers={workers} />
       </div>
 
-      {/* New job (collapsed by default) */}
-      <Card>
-        <details className="group">
+      {/* New job (collapsed by default; opens when ?new=1, e.g. via the
+          "Schedule for this day" CTA on an empty day) */}
+      <Card id="new-job" className="scroll-mt-4">
+        <details className="group" open={formOpen}>
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <span className="flex items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">
               <CalendarPlus className="h-4 w-4" />
@@ -327,6 +336,7 @@ function MonthView({
         heading={selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
         jobs={selectedJobs}
         conflictIds={conflictIds}
+        emptyCtaHref={schedHref({ view: "month", date: selectedKey, worker, create: true })}
         workers={workers}
         teams={teams}
         customers={customers}
@@ -421,9 +431,13 @@ function WeekView({
                 )}
               </div>
               {dayJobs.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm text-neutral-400 dark:text-neutral-500">
-                  {t.noJobsDay}
-                </p>
+                <Link
+                  href={schedHref({ view: "week", date: key, worker, create: true })}
+                  className="flex items-center gap-1.5 rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm text-neutral-400 transition-colors hover:border-neutral-300 hover:text-neutral-600 dark:text-neutral-500 dark:hover:border-neutral-700 dark:hover:text-neutral-300"
+                >
+                  <CalendarPlus className="h-3.5 w-3.5" />
+                  {t.scheduleForDay}
+                </Link>
               ) : (
                 <div className="flex flex-col gap-2">
                   {dayJobs.map((job) => (
@@ -451,6 +465,7 @@ function DaySection({
   heading,
   jobs,
   conflictIds,
+  emptyCtaHref,
   workers,
   teams,
   customers,
@@ -461,6 +476,7 @@ function DaySection({
   heading: string;
   jobs: ScheduleJobView[];
   conflictIds: Set<string>;
+  emptyCtaHref: string;
   workers: Opt[];
   teams: Opt[];
   customers: Opt[];
@@ -478,8 +494,14 @@ function DaySection({
       </div>
       {jobs.length === 0 ? (
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="flex flex-col items-center gap-3 p-0 pb-6">
             <EmptyState icon={CalendarDays} title={t.noJobsDay} description={t.noJobsWeekDesc} />
+            <Button asChild size="sm">
+              <Link href={emptyCtaHref}>
+                <CalendarPlus className="h-4 w-4" />
+                {t.scheduleForDay}
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       ) : (
