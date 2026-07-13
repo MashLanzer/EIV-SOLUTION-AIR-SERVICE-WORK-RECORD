@@ -9,10 +9,8 @@ export interface CalendarDay {
   inMonth: boolean;
   isToday: boolean;
   isSelected: boolean;
+  // How many jobs are scheduled that day (shown as a small count).
   count: number;
-  // Up to a few dot colors (team colors, "" = default) hinting how busy the day
-  // is at a glance.
-  colors: string[];
 }
 
 // A month grid: seven weekday columns, six week rows. Each day links to
@@ -104,22 +102,15 @@ export function ScheduleMonthCalendar({
           >
             <span>{d.day}</span>
             {d.count > 0 && (
-              <span className="flex h-1.5 items-center gap-0.5">
-                {d.colors.slice(0, 3).map((c, i) => (
-                  <span
-                    key={i}
-                    aria-hidden="true"
-                    className={cn(
-                      "h-1.5 w-1.5 rounded-full",
-                      d.isSelected
-                        ? "bg-primary-foreground"
-                        : c
-                          ? ""
-                          : "bg-primary"
-                    )}
-                    style={!d.isSelected && c ? { backgroundColor: c } : undefined}
-                  />
-                ))}
+              <span
+                className={cn(
+                  "flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none tabular-nums",
+                  d.isSelected
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-accent-soft text-accent-text"
+                )}
+              >
+                {d.count}
               </span>
             )}
           </Link>

@@ -47,8 +47,10 @@ function appTabItems(n: Dictionary["nav"]): TabItem[] {
   return [
   { href: "/admin", label: n.dashboard, shortLabel: n.home, icon: LayoutDashboard, exact: true },
   { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
+  // Schedule takes the old Photos slot; Photos takes the old Records slot;
+  // Records leaves the bar and is reached from the dashboard / center menu.
+  { href: "/admin/schedule", label: n.schedule, shortLabel: n.schedule, icon: CalendarDays, exact: false },
   { href: "/admin/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
-  { href: "/admin/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: false },
   ];
 }
 
@@ -65,7 +67,8 @@ function createItems(n: Dictionary["nav"]): CreateItem[] {
 // the sheet's account header.
 function moreItems(n: Dictionary["nav"]): MoreItem[] {
   return [
-  { href: "/admin/schedule", label: n.schedule, icon: CalendarDays },
+  // Records is no longer a native tab, so it lives here (and on the dashboard).
+  { href: "/admin/records", label: n.records, icon: ClipboardList },
   { href: "/admin/customers", label: n.customers, icon: Contact },
   { href: "/admin/reports", label: n.payReport, icon: BarChart3 },
   { href: "/admin/workers", label: n.workers, icon: Users },
@@ -118,9 +121,10 @@ export function AdminSidebar({
   const items = navItems(t.nav).map((item) =>
     item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
   );
-  // Records is a native tab, so the review badge rides that tab.
+  // Records is no longer a native tab, so the review badge rides the Dashboard
+  // tab (where the review queue lives) in the APK bar.
   const appTabs = appTabItems(t.nav).map((item) =>
-    item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
+    item.href === "/admin" ? { ...item, badge: pendingReviewCount } : item
   );
 
   return (

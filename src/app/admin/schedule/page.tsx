@@ -111,12 +111,6 @@ export default async function SchedulePage({
   const calendarDays: CalendarDay[] = gridDays.map((d) => {
     const key = dayKey(d);
     const dayJobs = (byDay.get(key) ?? []).filter((j) => j.status !== "CANCELED");
-    const colors: string[] = [];
-    for (const j of dayJobs) {
-      const c = j.teamColor ?? "";
-      if (!colors.includes(c)) colors.push(c);
-      if (colors.length >= 3) break;
-    }
     return {
       key,
       day: d.getUTCDate(),
@@ -124,7 +118,6 @@ export default async function SchedulePage({
       isToday: key === todayKey,
       isSelected: key === selectedKey,
       count: dayJobs.length,
-      colors,
     };
   });
 
@@ -208,9 +201,9 @@ export default async function SchedulePage({
         todayLabel={t.today}
       />
 
-      {/* New job (defaults to the selected day) */}
+      {/* New job (collapsed by default; opens on tap, defaults to the day) */}
       <Card>
-        <details className="group" open={selectedJobs.length === 0}>
+        <details className="group">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <span className="flex items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">
               <CalendarPlus className="h-4 w-4" />
