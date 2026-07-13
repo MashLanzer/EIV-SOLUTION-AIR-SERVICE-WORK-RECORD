@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
+import { StatTile } from "@/components/ui/stat-tile";
 import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { RecordCard } from "@/components/records/RecordCard";
 import { MorningBriefDialog } from "@/components/schedule/MorningBriefDialog";
@@ -25,38 +26,6 @@ import { addUtcDays, dayKey, getScheduledJobs, startOfUtcDay } from "@/lib/sched
 import { getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 import type { RecordStatus } from "@prisma/client";
-
-// Compact summary tile for the worker's home, matching the admin dashboard.
-function StatTile({
-  icon: Icon,
-  value,
-  label,
-  tone,
-}: {
-  icon: typeof ClipboardList;
-  value: number;
-  label: string;
-  tone?: "warning";
-}) {
-  return (
-    <div className="flex flex-col gap-1 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-3">
-      <span
-        className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-lg",
-          tone === "warning" && value > 0
-            ? "bg-warning-soft text-warning-text"
-            : "bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
-        )}
-      >
-        <Icon className="h-4 w-4" />
-      </span>
-      <span className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-        {value}
-      </span>
-      <span className="text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
-    </div>
-  );
-}
 
 const WORKER_STATUSES: RecordStatus[] = ["SUBMITTED", "APPROVED", "NEEDS_CHANGES"];
 
@@ -209,12 +178,12 @@ export default async function RecordsPage({
       {showSummary && (
         <div className="grid animate-fade-up grid-cols-3 gap-3">
           <StatTile icon={ClipboardList} value={monthTotal} label={t.thisMonth} />
-          <StatTile icon={CheckCircle2} value={approvedThisMonth} label={t.approved} />
+          <StatTile icon={CheckCircle2} value={approvedThisMonth} label={t.approved} tone="success" />
           <StatTile
             icon={AlertTriangle}
             value={needsChanges}
             label={t.toFix}
-            tone="warning"
+            tone={needsChanges > 0 ? "warning" : "default"}
           />
         </div>
       )}

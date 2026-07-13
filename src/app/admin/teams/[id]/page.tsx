@@ -27,6 +27,8 @@ import { getLocale, getT } from "@/lib/i18n/server";
 
 const SECTION_ORDER: ProjectStatus[] = ["ACTIVE", "ON_HOLD", "COMPLETED"];
 
+// Compact stat, shown 4-up inside the team header card (nested context, so it
+// stays a light bordered cell rather than a full Card tile).
 function StatTile({
   icon: Icon,
   value,

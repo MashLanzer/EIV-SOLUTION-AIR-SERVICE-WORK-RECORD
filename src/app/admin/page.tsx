@@ -26,6 +26,7 @@ import type { LucideIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BarList } from "@/components/charts/BarList";
+import { StatTile } from "@/components/ui/stat-tile";
 import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
 import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
@@ -93,55 +94,6 @@ function timeAgo(date: Date, justNow: string) {
 // Whole-number money with grouping; the org's currency symbol is prefixed by
 // the caller (currency is a configurable symbol, not a locale currency code).
 const moneyNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-
-// Uniform metric tile: small icon (with a chevron when it links somewhere),
-// then the number and its label stacked - the vertical layout keeps long
-// labels from crowding the figure the way the old side-by-side cards did.
-function StatTile({
-  icon: Icon,
-  value,
-  label,
-  href,
-}: {
-  icon: LucideIcon;
-  value: number;
-  label: string;
-  href?: string;
-}) {
-  const body = (
-    <CardContent className="flex h-full flex-col gap-2 p-3">
-      <div className="flex items-center justify-between">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-          <Icon className="h-4 w-4" />
-        </span>
-        {href && <ArrowRight className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />}
-      </div>
-      <div>
-        <div className="text-xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-          {value}
-        </div>
-        <div className="text-xs text-neutral-500 dark:text-neutral-400">{label}</div>
-      </div>
-    </CardContent>
-  );
-  const card = (
-    <Card
-      className={cn(
-        "h-full",
-        href && "transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
-      )}
-    >
-      {body}
-    </Card>
-  );
-  return href ? (
-    <Link href={href} className="block">
-      {card}
-    </Link>
-  ) : (
-    card
-  );
-}
 
 export default async function AdminDashboardPage() {
   const session = await requireReviewer();

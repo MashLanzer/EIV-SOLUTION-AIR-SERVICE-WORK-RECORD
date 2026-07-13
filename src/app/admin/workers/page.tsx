@@ -2,44 +2,16 @@ import Link from "next/link";
 import { Search, Shield, UserPlus, Users, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatTile } from "@/components/ui/stat-tile";
 import { WorkersSection, type WorkerStat } from "@/components/workers/WorkersTable";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { getT } from "@/lib/i18n/server";
 import type { Prisma } from "@prisma/client";
-
-function StatTile({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: typeof Users;
-  value: number;
-  label: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="flex items-center gap-3 p-3 sm:p-4">
-        <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent sm:flex">
-          <Icon className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <div className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100 sm:text-2xl">
-            {value}
-          </div>
-          <div className="truncate text-xs text-neutral-500 dark:text-neutral-400 sm:text-sm">
-            {label}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default async function AdminWorkersPage({
   searchParams,
