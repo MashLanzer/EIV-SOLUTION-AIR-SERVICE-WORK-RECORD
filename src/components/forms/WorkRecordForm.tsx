@@ -587,6 +587,14 @@ export function WorkRecordForm({
             );
           })}
         </div>
+        {/* Overall progress: how many steps have passed their completion
+            check. Purely visual; the dots above carry the per-step state. */}
+        <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+          <div
+            className="h-full rounded-full bg-neutral-900 transition-all duration-300 dark:bg-neutral-100"
+            style={{ width: `${(completed.filter(Boolean).length / STEPS.length) * 100}%` }}
+          />
+        </div>
         <div className="mt-2 flex items-baseline justify-between">
           <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
             {stepTitles[step]}
