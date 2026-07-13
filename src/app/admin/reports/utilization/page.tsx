@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterChip } from "@/components/ui/filter-chip";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
@@ -38,23 +39,6 @@ function parseDate(value: string | undefined): Date {
 function usedPct(planned: number, logged: number): number | null {
   if (planned <= 0) return null;
   return Math.round((logged / planned) * 100);
-}
-
-// Small pill toggle used for both the period and grouping switches.
-function Toggle({ active, label, to }: { active: boolean; label: string; to: string }) {
-  return (
-    <Link
-      href={to}
-      className={cn(
-        "rounded-full px-3 py-1 text-sm font-medium transition-colors",
-        active
-          ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
-          : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
-      )}
-    >
-      {label}
-    </Link>
-  );
 }
 
 export default async function UtilizationReportPage({
@@ -117,12 +101,20 @@ export default async function UtilizationReportPage({
       {/* Period + grouping toggles */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <Toggle active={period === "week"} label={t.periodWeek} to={href({ period: "week" })} />
-          <Toggle active={period === "month"} label={t.periodMonth} to={href({ period: "month" })} />
+          <FilterChip active={period === "week"} href={href({ period: "week" })}>
+            {t.periodWeek}
+          </FilterChip>
+          <FilterChip active={period === "month"} href={href({ period: "month" })}>
+            {t.periodMonth}
+          </FilterChip>
         </div>
         <div className="flex items-center gap-1.5">
-          <Toggle active={group === "person"} label={t.byPerson} to={href({ group: "person" })} />
-          <Toggle active={group === "team"} label={t.byTeam} to={href({ group: "team" })} />
+          <FilterChip active={group === "person"} href={href({ group: "person" })}>
+            {t.byPerson}
+          </FilterChip>
+          <FilterChip active={group === "team"} href={href({ group: "team" })}>
+            {t.byTeam}
+          </FilterChip>
         </div>
       </div>
 

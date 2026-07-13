@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
+import { FilterChip } from "@/components/ui/filter-chip";
 import { StatTile } from "@/components/ui/stat-tile";
 import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { RecordCard } from "@/components/records/RecordCard";
@@ -24,7 +25,6 @@ import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 import { addUtcDays, dayKey, getScheduledJobs, startOfUtcDay } from "@/lib/schedule";
 import { getT } from "@/lib/i18n/server";
-import { cn } from "@/lib/utils";
 import type { RecordStatus } from "@prisma/client";
 
 const WORKER_STATUSES: RecordStatus[] = ["SUBMITTED", "APPROVED", "NEEDS_CHANGES"];
@@ -215,29 +215,9 @@ export default async function RecordsPage({
           const active = (chip.status ?? undefined) === (status ?? undefined);
           const count = chip.status ? countByStatus.get(chip.status) ?? 0 : allCount;
           return (
-            <Link
-              key={chip.label}
-              href={chipHref(chip.status)}
-              aria-current={active ? "true" : undefined}
-              className={cn(
-                "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-                active
-                  ? "border-transparent bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
-                  : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              )}
-            >
+            <FilterChip key={chip.label} href={chipHref(chip.status)} active={active} count={count}>
               {chip.label}
-              <span
-                className={cn(
-                  "rounded-full px-1.5 text-xs tabular-nums",
-                  active
-                    ? "bg-white/20 dark:bg-neutral-900/20"
-                    : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
-                )}
-              >
-                {count}
-              </span>
-            </Link>
+            </FilterChip>
           );
         })}
       </div>

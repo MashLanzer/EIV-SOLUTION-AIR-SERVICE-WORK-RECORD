@@ -3,6 +3,7 @@ import { Search, Shield, UserPlus, Users, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterChip } from "@/components/ui/filter-chip";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
@@ -123,34 +124,18 @@ export default async function AdminWorkersPage({
           qualified for a job. */}
       {skillNames.length > 0 && (
         <div className="-mx-1 flex flex-wrap gap-1.5 px-1">
-          <Link
-            href={skillHref()}
-            className={
-              "rounded-full px-3 py-1 text-sm font-medium transition-colors " +
-              (!skill
-                ? "bg-primary text-primary-foreground"
-                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700")
-            }
-          >
+          <FilterChip href={skillHref()} active={!skill}>
             {t.allSkills}
-          </Link>
-          {skillNames.map((s) => {
-            const active = skill?.toLowerCase() === s.name.toLowerCase();
-            return (
-              <Link
-                key={s.name}
-                href={skillHref(s.name)}
-                className={
-                  "rounded-full px-3 py-1 text-sm font-medium transition-colors " +
-                  (active
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700")
-                }
-              >
-                {s.name}
-              </Link>
-            );
-          })}
+          </FilterChip>
+          {skillNames.map((s) => (
+            <FilterChip
+              key={s.name}
+              href={skillHref(s.name)}
+              active={skill?.toLowerCase() === s.name.toLowerCase()}
+            >
+              {s.name}
+            </FilterChip>
+          ))}
         </div>
       )}
 
