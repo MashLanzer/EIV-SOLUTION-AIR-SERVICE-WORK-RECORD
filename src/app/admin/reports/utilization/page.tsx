@@ -41,6 +41,34 @@ function usedPct(planned: number, logged: number): number | null {
   return Math.round((logged / planned) * 100);
 }
 
+// The utilization % as a number plus a thin proportional bar, so a reviewer
+// can scan the column at a glance. The bar caps its fill at 100% (anything
+// over planned still reads as "full") and hides on narrow screens to keep
+// the table compact.
+function UtilCell({ pct, strong }: { pct: number | null; strong?: boolean }) {
+  const fill = pct == null ? 0 : Math.min(pct, 100);
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <div className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800 sm:block">
+        <div
+          className="h-full rounded-full bg-neutral-900 dark:bg-neutral-100"
+          style={{ width: `${fill}%` }}
+        />
+      </div>
+      <span
+        className={cn(
+          "tabular-nums",
+          strong
+            ? "font-semibold text-neutral-900 dark:text-neutral-100"
+            : "text-neutral-500 dark:text-neutral-400"
+        )}
+      >
+        {pct == null ? "—" : `${pct}%`}
+      </span>
+    </div>
+  );
+}
+
 export default async function UtilizationReportPage({
   searchParams,
 }: {
@@ -141,7 +169,7 @@ export default async function UtilizationReportPage({
       </div>
 
       {/* Trend: planned (light) vs logged (dark) totals over trailing periods */}
-      <Card>
+      <Card className="animate-fade-up">
         <CardContent className="flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
@@ -216,8 +244,8 @@ export default async function UtilizationReportPage({
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{h(row.plannedHours)}</TableCell>
                       <TableCell className="text-right tabular-nums">{h(row.loggedHours)}</TableCell>
-                      <TableCell className="text-right tabular-nums text-neutral-500 dark:text-neutral-400">
-                        {pct == null ? "—" : `${pct}%`}
+                      <TableCell className="text-right">
+                        <UtilCell pct={pct} />
                       </TableCell>
                     </TableRow>
                   );
@@ -232,10 +260,11 @@ export default async function UtilizationReportPage({
                   <TableCell className="text-right font-semibold tabular-nums">
                     {h(report.totals.loggedHours)}
                   </TableCell>
-                  <TableCell className="text-right font-semibold tabular-nums text-neutral-500 dark:text-neutral-400">
-                    {usedPct(report.totals.plannedHours, report.totals.loggedHours) == null
-                      ? "—"
-                      : `${usedPct(report.totals.plannedHours, report.totals.loggedHours)}%`}
+                  <TableCell className="text-right">
+                    <UtilCell
+                      pct={usedPct(report.totals.plannedHours, report.totals.loggedHours)}
+                      strong
+                    />
                   </TableCell>
                 </TableRow>
               </TableBody>
