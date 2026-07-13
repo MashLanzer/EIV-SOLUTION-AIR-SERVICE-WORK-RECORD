@@ -60,13 +60,17 @@ export default async function AdminRecordsPage({
   const rawParams = await searchParams;
   const filters = parseRecordFilterParams(rawParams);
   const where = buildRecordWhereClause(filters, organizationId);
+  // Counts for the status chips reflect the other active filters (date, worker,
+  // customer…) but ignore the status filter itself, so each chip shows how many
+  // records it would land on.
+  const whereNoStatus = buildRecordWhereClause({ ...filters, status: undefined }, organizationId);
   const page = parsePage(rawParams.page);
   const { sort, dir } = parseSort(rawParams.sort, rawParams.dir, RECORD_SORTS, {
     sort: "date",
     dir: "desc",
   });
 
-  const [total, records, workers] = await Promise.all([
+  const [total, records, workers, statusCounts] = await Promise.all([
     prisma.workRecord.count({ where }),
     prisma.workRecord.findMany({
       where,
@@ -89,7 +93,16 @@ export default async function AdminRecordsPage({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
+    prisma.workRecord.groupBy({
+      by: ["status"],
+      where: whereNoStatus,
+      _count: { _all: true },
+    }),
   ]);
+  const countByStatus = new Map<RecordStatus, number>(
+    statusCounts.map((s) => [s.status, s._count._all])
+  );
+  const allCount = statusCounts.reduce((sum, s) => sum + s._count._all, 0);
   const pages = pageCount(total);
   const activeFilterCount = [
     filters.dateFrom,
@@ -137,19 +150,30 @@ export default async function AdminRecordsPage({
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {statusChips.map((chip) => {
           const active = (chip.status ?? undefined) === (filters.status ?? undefined);
+          const count = chip.status ? countByStatus.get(chip.status) ?? 0 : allCount;
           return (
             <Link
               key={chip.label}
               href={chipHref(chip.status)}
               aria-current={active ? "true" : undefined}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                "flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
                 active
                   ? "border-transparent bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
                   : "border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800"
               )}
             >
               {chip.label}
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-xs tabular-nums",
+                  active
+                    ? "bg-white/20 dark:bg-neutral-900/20"
+                    : "bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+                )}
+              >
+                {count}
+              </span>
             </Link>
           );
         })}
