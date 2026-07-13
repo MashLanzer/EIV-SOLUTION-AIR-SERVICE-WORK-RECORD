@@ -1231,6 +1231,7 @@ export const es: Dictionary = {
     about: {
       section: "Acerca de",
       admin: "Administrador",
+      supervisor: "Supervisor",
       worker: "Trabajador",
       accessLevel: "Tu nivel de acceso",
       version: "Versión",

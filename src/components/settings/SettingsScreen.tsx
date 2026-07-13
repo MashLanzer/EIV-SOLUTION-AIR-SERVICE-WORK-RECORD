@@ -256,7 +256,7 @@ export function SettingsScreen({
       <SettingsSection title={s.about.section}>
         <SettingsRow
           icon={ShieldCheck}
-          label={isAdmin ? s.about.admin : s.about.worker}
+          label={role === "ADMIN" ? s.about.admin : role === "SUPERVISOR" ? s.about.supervisor : s.about.worker}
           sublabel={s.about.accessLevel}
         />
         <SettingsRow

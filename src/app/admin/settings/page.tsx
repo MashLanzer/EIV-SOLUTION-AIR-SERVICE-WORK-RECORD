@@ -2,7 +2,7 @@ import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requireReviewer } from "@/lib/session";
 import { getT } from "@/lib/i18n/server";
 
 export default async function AdminSettingsPage({
@@ -10,10 +10,14 @@ export default async function AdminSettingsPage({
 }: {
   searchParams: Promise<{ reset?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requireReviewer();
+  const isAdmin = session.user.role === "ADMIN";
   const t = await getT();
   const { reset } = await searchParams;
-  const org = await prisma.organization.findUnique({
+  // Supervisors reach this page for appearance/language + sign out, but see no
+  // company settings, so only admins pay for the org query.
+  const org = isAdmin
+    ? await prisma.organization.findUnique({
     where: { id: requireOrgId(session) },
     select: {
       name: true,
@@ -32,34 +36,39 @@ export default async function AdminSettingsPage({
       defaultWorkNotes: true,
       scheduleOverloadThreshold: true,
     },
-  });
+  })
+    : null;
   return (
     <>
       {reset && <SuccessToast message={t.settings.resetToast} />}
       <SettingsScreen
-        role="ADMIN"
+        role={session.user.role}
         backHref="/admin"
-        inviteCode={org?.joinCode ?? null}
-        company={{
-          name: org?.name ?? "",
-          phone: org?.companyPhone ?? "",
-          address: org?.companyAddress ?? "",
-          license: org?.licenseNumber ?? "",
-          leadPay: org?.defaultLeadPay != null ? String(org.defaultLeadPay) : "",
-          helperPay:
-            org?.defaultHelperPay != null ? String(org.defaultHelperPay) : "",
-          currency: org?.currencySymbol || "$",
-          requirePhoto: org?.requirePhoto ?? false,
-          requireHelper: org?.requireHelper ?? false,
-          requireCustomerSignature: org?.requireCustomerSignature ?? true,
-          lockApprovedRecords: org?.lockApprovedRecords ?? false,
-          logoUrl: org?.logoUrl ?? null,
-          defaultWorkNotes: org?.defaultWorkNotes ?? "",
-          overloadThreshold:
-            org?.scheduleOverloadThreshold != null
-              ? String(org.scheduleOverloadThreshold)
-              : "4",
-        }}
+        inviteCode={isAdmin ? org?.joinCode ?? null : undefined}
+        company={
+          isAdmin
+            ? {
+                name: org?.name ?? "",
+                phone: org?.companyPhone ?? "",
+                address: org?.companyAddress ?? "",
+                license: org?.licenseNumber ?? "",
+                leadPay: org?.defaultLeadPay != null ? String(org.defaultLeadPay) : "",
+                helperPay:
+                  org?.defaultHelperPay != null ? String(org.defaultHelperPay) : "",
+                currency: org?.currencySymbol || "$",
+                requirePhoto: org?.requirePhoto ?? false,
+                requireHelper: org?.requireHelper ?? false,
+                requireCustomerSignature: org?.requireCustomerSignature ?? true,
+                lockApprovedRecords: org?.lockApprovedRecords ?? false,
+                logoUrl: org?.logoUrl ?? null,
+                defaultWorkNotes: org?.defaultWorkNotes ?? "",
+                overloadThreshold:
+                  org?.scheduleOverloadThreshold != null
+                    ? String(org.scheduleOverloadThreshold)
+                    : "4",
+              }
+            : undefined
+        }
       />
     </>
   );

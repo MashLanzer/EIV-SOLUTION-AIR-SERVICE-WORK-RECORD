@@ -1226,6 +1226,7 @@ export const en = {
     about: {
       section: "About",
       admin: "Admin",
+      supervisor: "Supervisor",
       worker: "Worker",
       accessLevel: "Your access level",
       version: "Version",
