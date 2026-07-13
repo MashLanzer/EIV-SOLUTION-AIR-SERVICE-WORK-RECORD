@@ -328,7 +328,7 @@ export function SearchResultsList({
     <div className="flex flex-col gap-3">
       {groups.map((group) => (
         <div key={group.type} className="flex flex-col gap-1">
-          <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+          <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {groupLabel(group.type, t)}
           </p>
           {group.items.map((item) => (
@@ -373,7 +373,7 @@ function RecentsView({
     <div className="flex flex-col gap-3">
       {queries.length > 0 && (
         <div className="flex flex-col gap-1">
-          <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+          <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {t.recentSearches}
           </p>
           {queries.map((q) => (
@@ -393,7 +393,7 @@ function RecentsView({
       )}
       {items.length > 0 && (
         <div className="flex flex-col gap-1">
-          <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+          <p className="px-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {t.recent}
           </p>
           {items.map((item) => (
