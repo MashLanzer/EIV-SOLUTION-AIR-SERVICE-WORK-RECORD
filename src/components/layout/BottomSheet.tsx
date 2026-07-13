@@ -4,6 +4,8 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
 
+import { useT } from "@/components/i18n/LocaleProvider";
+
 // A native-style bottom sheet: dimmed scrim + a panel that slides up from the
 // bottom, respecting the safe-area inset. Shared chrome for the create sheet
 // and the "More" sheet so both feel identical. Only ever shown at mobile width
@@ -23,6 +25,7 @@ export function BottomSheet({
   label: string;
   children: ReactNode;
 }) {
+  const tc = useT().common;
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -40,7 +43,7 @@ export function BottomSheet({
       {/* Scrim */}
       <button
         type="button"
-        aria-label="Close"
+        aria-label={tc.close}
         onClick={onClose}
         className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
           open ? "opacity-100" : "opacity-0"
@@ -61,7 +64,7 @@ export function BottomSheet({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label={tc.close}
             className="absolute right-3 top-2 flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200"
           >
             <X className="h-5 w-5" />

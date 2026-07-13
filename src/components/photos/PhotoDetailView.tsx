@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { PhotoDeleteButton } from "@/components/photos/PhotoDeleteButton";
 import { PhotoDownloadButton } from "@/components/photos/PhotoDownloadButton";
 import { ZoomableImage } from "@/components/photos/ZoomableImage";
+import { getT, getLocale } from "@/lib/i18n/server";
+import type { Dictionary } from "@/lib/i18n";
 import {
   addCommentAction,
   addTagAction,
@@ -16,22 +18,22 @@ import {
   removeTagAction,
 } from "@/actions/photoMeta";
 
-function fmtDateTime(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function fmtDateTime(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
 }
 
-function timeAgo(date: Date): string {
+function timeAgo(date: Date, t: Dictionary["photoDetail"], locale: string): string {
   const mins = Math.floor((Date.now() - date.getTime()) / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t.justNow;
+  if (mins < 60) return t.minutesAgo.replace("{n}", String(mins));
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
+  if (hrs < 24) return t.hoursAgo.replace("{n}", String(hrs));
   const days = Math.floor(hrs / 24);
-  if (days < 7) return `${days}d ago`;
-  return fmtDateTime(date);
+  if (days < 7) return t.daysAgo.replace("{n}", String(days));
+  return fmtDateTime(date, locale);
 }
 
 export interface PhotoDetailData {
@@ -56,7 +58,7 @@ export interface PhotoDetailData {
 // Shared photo detail (tags + comments) used by the admin and worker areas.
 // Capability flags decide what a worker may do: view tags but not edit them,
 // comment, and delete only their own comment / photo.
-export function PhotoDetailView({
+export async function PhotoDetailView({
   photo,
   orgTags,
   basePath,
@@ -71,6 +73,8 @@ export function PhotoDetailView({
   currentUserId: string;
   isAdmin: boolean;
 }) {
+  const t = (await getT()).photoDetail;
+  const locale = await getLocale();
   const canDelete = isAdmin || photo.takenById === currentUserId;
 
   return (
@@ -83,7 +87,7 @@ export function PhotoDetailView({
         {photo.project.name}
       </Link>
 
-      <ZoomableImage src={photo.url} alt="Jobsite photo" />
+      <ZoomableImage src={photo.url} alt={t.jobsitePhoto} />
 
       {/* Who/when + GPS, and the photo actions */}
       <div className="flex flex-col gap-3">
@@ -94,7 +98,7 @@ export function PhotoDetailView({
             )}
             <span>
               {photo.takenBy?.name ? `${photo.takenBy.name} · ` : ""}
-              {timeAgo(photo.takenAt)}
+              {timeAgo(photo.takenAt, t, locale)}
             </span>
           </span>
           {photo.latitude != null && photo.longitude != null && (
@@ -105,7 +109,7 @@ export function PhotoDetailView({
               className="flex items-center gap-1 hover:text-primary"
             >
               <MapPin className="h-4 w-4" />
-              View location
+              {t.viewLocation}
             </a>
           )}
         </div>
@@ -120,14 +124,14 @@ export function PhotoDetailView({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TagIcon className="h-4 w-4" />
-            Tags
+            {t.tags}
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
           <div className="flex flex-wrap gap-2">
             {photo.photoTags.length === 0 && (
               <span className="text-sm text-neutral-500 dark:text-neutral-400">
-                No tags yet.
+                {t.noTagsYet}
               </span>
             )}
             {photo.photoTags.map(({ tag }) =>
@@ -136,7 +140,7 @@ export function PhotoDetailView({
                   <button
                     type="submit"
                     className="flex items-center gap-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 px-3 py-1 text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    aria-label={`Remove tag ${tag.name}`}
+                    aria-label={t.removeTag.replace("{name}", tag.name)}
                   >
                     <TagIcon className="h-3 w-3" />
                     {tag.name}
@@ -159,17 +163,17 @@ export function PhotoDetailView({
               <Input
                 name="name"
                 list="org-tags"
-                placeholder="Add a tag (e.g. before, roof, damage)"
+                placeholder={t.addTagPlaceholder}
                 autoComplete="off"
                 maxLength={30}
               />
               <datalist id="org-tags">
-                {orgTags.map((t) => (
-                  <option key={t.name} value={t.name} />
+                {orgTags.map((tag) => (
+                  <option key={tag.name} value={tag.name} />
                 ))}
               </datalist>
               <Button type="submit" variant="outline">
-                Add
+                {t.add}
               </Button>
             </form>
           )}
@@ -180,7 +184,7 @@ export function PhotoDetailView({
       <Card>
         <CardHeader>
           <CardTitle>
-            Comments{" "}
+            {t.comments}{" "}
             <span className="tabular-nums text-neutral-400">
               ({photo.comments.length})
             </span>
@@ -189,13 +193,13 @@ export function PhotoDetailView({
         <CardContent className="flex flex-col gap-4">
           {photo.comments.length === 0 ? (
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Be the first to comment.
+              {t.beFirst}
             </p>
           ) : (
             <ul className="flex flex-col gap-4">
               {photo.comments.map((c) => {
                 const canRemove = isAdmin || c.authorId === currentUserId;
-                const name = c.author?.name ?? "Someone";
+                const name = c.author?.name ?? t.someone;
                 return (
                   <li key={c.id} className="flex items-start gap-3">
                     <AvatarInitials name={name} className="h-8 w-8" />
@@ -206,7 +210,7 @@ export function PhotoDetailView({
                             {name}
                           </span>
                           <span className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400">
-                            {timeAgo(c.createdAt)}
+                            {timeAgo(c.createdAt, t, locale)}
                           </span>
                         </div>
                         <p className="whitespace-pre-wrap break-words text-sm text-neutral-800 dark:text-neutral-200">
@@ -220,7 +224,7 @@ export function PhotoDetailView({
                             className="flex items-center gap-1 text-xs text-neutral-400 hover:text-destructive"
                           >
                             <Trash2 className="h-3 w-3" />
-                            Delete
+                            {t.delete}
                           </button>
                         </form>
                       )}
@@ -240,10 +244,10 @@ export function PhotoDetailView({
               required
               rows={2}
               maxLength={2000}
-              placeholder="Add a comment..."
+              placeholder={t.addComment}
               className="flex-1"
             />
-            <Button type="submit" size="icon" aria-label="Post comment">
+            <Button type="submit" size="icon" aria-label={t.postComment}>
               <Send className="h-4 w-4" />
             </Button>
           </form>

@@ -3,8 +3,12 @@
 import { useEffect, useState } from "react";
 import { Maximize2, X } from "lucide-react";
 
+import { useT } from "@/components/i18n/LocaleProvider";
+
 // The photo, tappable to open full-screen (fit-to-screen) for a closer look.
 export function ZoomableImage({ src, alt }: { src: string; alt: string }) {
+  const t = useT().photos;
+  const tc = useT().common;
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -22,7 +26,7 @@ export function ZoomableImage({ src, alt }: { src: string; alt: string }) {
         type="button"
         onClick={() => setOpen(true)}
         className="group relative block w-full"
-        aria-label="View photo full screen"
+        aria-label={t.viewFullScreen}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -45,7 +49,7 @@ export function ZoomableImage({ src, alt }: { src: string; alt: string }) {
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="Close"
+            aria-label={tc.close}
             className="absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
           >
             <X className="h-5 w-5" />

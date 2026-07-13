@@ -5,6 +5,7 @@ import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { deleteTemplateAction } from "@/actions/checklists";
 
 export function DeleteTemplateButton({
@@ -14,23 +15,24 @@ export function DeleteTemplateButton({
   templateId: string;
   templateName: string;
 }) {
+  const t = useT().checklists;
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
     <form ref={formRef} action={deleteTemplateAction.bind(null, templateId)}>
       <ConfirmDialog
-        title="Delete this template?"
-        description={`"${templateName}" will be removed. Projects that already used it keep their checklist.`}
-        confirmLabel="Delete"
+        title={t.deleteTitle}
+        description={t.deleteDesc.replace("{name}", templateName)}
+        confirmLabel={t.deleteConfirm}
         trigger={
           <Button
             type="button"
             variant="outline"
             size="sm"
-            aria-label={`Delete template ${templateName}`}
+            aria-label={t.deleteAria.replace("{name}", templateName)}
           >
             <Trash2 className="h-4 w-4" />
-            Delete
+            {t.deleteConfirm}
           </Button>
         }
         onConfirm={() => formRef.current?.requestSubmit()}

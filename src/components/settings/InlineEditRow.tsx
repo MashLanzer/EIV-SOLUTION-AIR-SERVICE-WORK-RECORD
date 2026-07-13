@@ -55,7 +55,7 @@ export function InlineEditRow({
       if (result?.ok) {
         setEditing(false);
       } else {
-        setError(result?.error ?? "Couldn't save. Try again.");
+        setError(result?.error ?? t.common.saveError);
       }
     });
   }
@@ -77,7 +77,7 @@ export function InlineEditRow({
         <button
           type="button"
           onClick={open}
-          aria-label={`Edit ${label.toLowerCase()}`}
+          aria-label={t.common.editField.replace("{field}", label.toLowerCase())}
           className="flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium text-neutral-500 dark:text-neutral-400 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100"
         >
           <Pencil className="h-3.5 w-3.5" />
@@ -111,7 +111,7 @@ export function InlineEditRow({
             type="submit"
             size="icon"
             disabled={pending || draft.trim().length === 0}
-            aria-label="Save"
+            aria-label={t.common.save}
           >
             <Check className="h-4 w-4" />
           </Button>
@@ -120,7 +120,7 @@ export function InlineEditRow({
             size="icon"
             variant="outline"
             onClick={() => setEditing(false)}
-            aria-label="Cancel"
+            aria-label={t.common.cancel}
           >
             <X className="h-4 w-4" />
           </Button>

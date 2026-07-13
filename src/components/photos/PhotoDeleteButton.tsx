@@ -5,6 +5,7 @@ import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { deletePhotoAndReturnAction } from "@/actions/photos";
 
 // Delete a photo from its detail page, then return to the project. The server
@@ -16,18 +17,19 @@ export function PhotoDeleteButton({
   photoId: string;
   basePath: string;
 }) {
+  const t = useT().photoDetail;
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
     <form ref={formRef} action={deletePhotoAndReturnAction.bind(null, photoId, basePath)}>
       <ConfirmDialog
-        title="Delete this photo?"
-        description="This permanently removes the photo, its tags and comments. This cannot be undone."
-        confirmLabel="Delete"
+        title={t.deletePhotoTitle}
+        description={t.deletePhotoDesc}
+        confirmLabel={t.delete}
         trigger={
-          <Button type="button" variant="outline" size="sm" aria-label="Delete photo">
+          <Button type="button" variant="outline" size="sm" aria-label={t.deletePhotoAria}>
             <Trash2 className="h-4 w-4" />
-            Delete
+            {t.delete}
           </Button>
         }
         onConfirm={() => formRef.current?.requestSubmit()}

@@ -183,7 +183,7 @@ export default async function AdminProjectPage({
     .filter((p) => p.latitude != null && p.longitude != null)
     .map((p) => ({
       id: p.id,
-      name: "Photo",
+      name: dict.photos.photoPinLabel,
       latitude: p.latitude as number,
       longitude: p.longitude as number,
       kind: "photo" as const,

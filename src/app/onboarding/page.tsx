@@ -4,9 +4,11 @@ import { AeroMark } from "@/components/brand/AeroMark";
 import { AeroWordmark } from "@/components/brand/AeroWordmark";
 import { OnboardingForms } from "@/components/onboarding/OnboardingForms";
 import { requireAuth } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 
 export default async function OnboardingPage() {
   const session = await requireAuth();
+  const t = (await getT()).onboarding;
   // Already in a company - straight to the app.
   if (session.user.organizationId) {
     redirect(session.user.role === "ADMIN" ? "/admin" : "/records");
@@ -21,8 +23,10 @@ export default async function OnboardingPage() {
             <AeroWordmark />
           </h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {session.user.name ? `Welcome, ${session.user.name.split(" ")[0]}. ` : ""}
-            Join your company with an invite code, or start a new one.
+            {session.user.name
+              ? t.welcome.replace("{name}", session.user.name.split(" ")[0])
+              : ""}
+            {t.pageSubtitle}
           </p>
         </div>
 

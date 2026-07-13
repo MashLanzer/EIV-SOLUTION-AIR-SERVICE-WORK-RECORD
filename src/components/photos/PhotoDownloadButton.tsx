@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 // Save the original photo to the device. Fetches the blob and triggers a
 // download; if that's blocked (e.g. cross-origin CORS in some WebViews) it
 // falls back to opening the image so the user can long-press to save.
 export function PhotoDownloadButton({ url }: { url: string }) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
 
   async function handle() {
@@ -35,7 +37,7 @@ export function PhotoDownloadButton({ url }: { url: string }) {
   return (
     <Button type="button" variant="outline" size="sm" onClick={handle} disabled={busy}>
       <Download className="h-4 w-4" />
-      {busy ? "Saving..." : "Download"}
+      {busy ? t.common.saving : t.photoDetail.download}
     </Button>
   );
 }

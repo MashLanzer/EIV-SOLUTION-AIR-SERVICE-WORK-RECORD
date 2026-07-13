@@ -11,6 +11,7 @@ import SignatureCanvas from "react-signature-canvas";
 import { Eraser, PenLine } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 export interface SignaturePadHandle {
@@ -27,6 +28,7 @@ interface SignaturePadProps {
 
 export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
   function SignaturePad({ label, defaultValue, className, error, id }, ref) {
+    const t = useT().form;
     const sigRef = useRef<SignatureCanvas>(null);
     const [mode, setMode] = useState<"preview" | "draw">(
       defaultValue ? "preview" : "draw"
@@ -81,7 +83,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
               }}
             >
               <Eraser className="h-3.5 w-3.5" />
-              Clear
+              {t.clearSignature}
             </Button>
           ) : (
             <Button
@@ -91,7 +93,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
               onClick={() => setMode("draw")}
             >
               <PenLine className="h-3.5 w-3.5" />
-              Re-sign
+              {t.reSign}
             </Button>
           )}
         </div>
@@ -108,7 +110,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={defaultValue}
-              alt={`${label} preview`}
+              alt={t.signaturePreview.replace("{label}", label)}
               className="h-40 w-full object-contain"
             />
           ) : (
@@ -119,7 +121,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
                   className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 text-neutral-300"
                 >
                   <PenLine className="h-6 w-6" />
-                  <span className="text-xs">Sign here</span>
+                  <span className="text-xs">{t.signHere}</span>
                 </div>
               )}
               {/* Freehand drawing has no meaningful screen-reader
@@ -133,7 +135,7 @@ export const SignaturePad = forwardRef<SignaturePadHandle, SignaturePadProps>(
                 canvasProps={{
                   className: "w-full h-40 rounded-md",
                   style: { touchAction: "none" },
-                  "aria-label": `${label} - draw your signature with your finger, mouse, or stylus`,
+                  "aria-label": t.drawSignatureHint.replace("{label}", label),
                 }}
               />
             </>

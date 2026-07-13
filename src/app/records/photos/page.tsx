@@ -67,7 +67,8 @@ export default async function WorkerPhotosPage({
     }),
   ]);
 
-  const usableTags = tags.map((t) => ({ name: t.name }));
+  const t = (await getT()).photos;
+  const usableTags = tags.map((tag) => ({ name: tag.name }));
   const photos = photoRows.map((p) => ({
     id: p.id,
     url: p.url,
@@ -84,7 +85,7 @@ export default async function WorkerPhotosPage({
     .filter((p) => p.latitude != null && p.longitude != null)
     .map((p) => ({
       id: p.id,
-      name: "Photo",
+      name: t.photoPinLabel,
       latitude: p.latitude as number,
       longitude: p.longitude as number,
       kind: "photo" as const,
@@ -94,7 +95,6 @@ export default async function WorkerPhotosPage({
     }));
 
   const isFiltered = Boolean(activeTag || activeProject);
-  const t = (await getT()).photos;
 
   return (
     <div className="flex flex-col gap-4">

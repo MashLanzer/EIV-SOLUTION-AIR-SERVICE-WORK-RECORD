@@ -15,6 +15,7 @@ import {
   joinOrganizationAction,
   type OnboardingState,
 } from "@/actions/onboarding";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 interface Account {
@@ -26,6 +27,7 @@ interface Account {
 type Mode = "join" | "create";
 
 export function OnboardingForms({ account }: { account: Account }) {
+  const t = useT().onboarding;
   const [mode, setMode] = useState<Mode>("join");
   const [createState, createAction, creating] = useActionState<
     OnboardingState,
@@ -54,7 +56,7 @@ export function OnboardingForms({ account }: { account: Account }) {
           )}
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
-              {account.name ?? "Signed in"}
+              {account.name ?? t.signedIn}
             </div>
             {account.email && (
               <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
@@ -68,7 +70,7 @@ export function OnboardingForms({ account }: { account: Account }) {
             className="flex shrink-0 items-center gap-1 text-xs font-medium text-neutral-500 hover:text-primary dark:text-neutral-400"
           >
             <LogOut className="h-3.5 w-3.5" />
-            Not you?
+            {t.notYou}
           </button>
         </CardContent>
       </Card>
@@ -93,7 +95,7 @@ export function OnboardingForms({ account }: { account: Account }) {
             )}
           >
             {m === "join" ? <Ticket className="h-4 w-4" /> : <Building2 className="h-4 w-4" />}
-            {m === "join" ? "Join" : "Create"}
+            {m === "join" ? t.join : t.create}
           </button>
         ))}
       </div>
@@ -107,29 +109,29 @@ export function OnboardingForms({ account }: { account: Account }) {
               </span>
               <div>
                 <h2 className="font-semibold text-neutral-900 dark:text-neutral-100">
-                  Join your company
+                  {t.joinTitle}
                 </h2>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  Enter the invite code they gave you.
+                  {t.joinSubtitle}
                 </p>
               </div>
             </div>
             <form action={joinAction} className="flex flex-col gap-3">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="code">Invite code</Label>
+                <Label htmlFor="code">{t.inviteCode}</Label>
                 <Input
                   id="code"
                   name="code"
                   required
                   autoCapitalize="characters"
                   autoComplete="off"
-                  placeholder="e.g. ABCD2345"
+                  placeholder={t.inviteCodePlaceholder}
                   className="text-center text-lg uppercase tracking-[0.3em]"
                 />
               </div>
               {joinState?.error && <Alert variant="error">{joinState.error}</Alert>}
               <Button type="submit" size="lg" disabled={joining}>
-                {joining ? "Joining..." : "Join company"}
+                {joining ? t.joining : t.joinCompany}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </form>
@@ -144,29 +146,29 @@ export function OnboardingForms({ account }: { account: Account }) {
               </span>
               <div>
                 <h2 className="font-semibold text-neutral-900 dark:text-neutral-100">
-                  Start a new company
+                  {t.createTitle}
                 </h2>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  You&apos;ll be its first admin.
+                  {t.createSubtitle}
                 </p>
               </div>
             </div>
             <form action={createAction} className="flex flex-col gap-3">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="name">Company name</Label>
+                <Label htmlFor="name">{t.companyName}</Label>
                 <Input
                   id="name"
                   name="name"
                   required
                   autoComplete="organization"
-                  placeholder="e.g. Acme HVAC"
+                  placeholder={t.companyNamePlaceholder}
                 />
               </div>
               {createState?.error && (
                 <Alert variant="error">{createState.error}</Alert>
               )}
               <Button type="submit" size="lg" disabled={creating}>
-                {creating ? "Creating..." : "Create company"}
+                {creating ? t.creating : t.createCompany}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </form>

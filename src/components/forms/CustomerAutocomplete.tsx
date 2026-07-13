@@ -10,6 +10,7 @@ import {
 import { MapPin } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { useT } from "@/components/i18n/LocaleProvider";
 
 interface CustomerSuggestion {
   id: string;
@@ -46,6 +47,7 @@ export const CustomerAutocomplete = forwardRef<
   { defaultValue, addressInputId, phoneInputId, emailInputId, invalid, describedBy },
   ref
 ) {
+  const t = useT().form;
   const [value, setValue] = useState(defaultValue ?? "");
 
   useImperativeHandle(ref, () => ({ setName: (name: string) => setValue(name) }), []);
@@ -154,7 +156,7 @@ export const CustomerAutocomplete = forwardRef<
         <ul
           id={LISTBOX_ID}
           role="listbox"
-          aria-label="Customer suggestions"
+          aria-label={t.customerSuggestions}
           className="absolute inset-x-0 top-full z-30 mt-1 max-h-64 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg"
         >
           {suggestions.map((s, index) => (

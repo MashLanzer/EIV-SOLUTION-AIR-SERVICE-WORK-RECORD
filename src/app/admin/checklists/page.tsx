@@ -15,10 +15,12 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 
 export default async function ChecklistTemplatesPage() {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
+  const t = (await getT()).checklists;
 
   const templates = await prisma.checklistTemplate.findMany({
     where: { organizationId },
@@ -36,7 +38,7 @@ export default async function ChecklistTemplatesPage() {
           className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
         >
           <ArrowLeft className="h-4 w-4" />
-          Projects
+          {t.projects}
         </Link>
         <div className="mt-2 flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
@@ -44,10 +46,10 @@ export default async function ChecklistTemplatesPage() {
           </span>
           <div>
             <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-              Checklist templates
+              {t.title}
             </h1>
             <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Reusable step lists you can drop onto any project.
+              {t.subtitle}
             </p>
           </div>
         </div>
@@ -59,30 +61,30 @@ export default async function ChecklistTemplatesPage() {
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <span className="flex items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">
               <Plus className="h-4 w-4" />
-              New template
+              {t.newTemplate}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
           </summary>
           <form action={createTemplateAction} className="flex flex-col gap-3 px-4 pb-4">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-neutral-500 dark:text-neutral-400">Template name</span>
-              <Input name="name" placeholder="e.g. Furnace install" maxLength={80} required />
+              <span className="text-neutral-500 dark:text-neutral-400">{t.templateName}</span>
+              <Input name="name" placeholder={t.templateNamePlaceholder} maxLength={80} required />
             </label>
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-neutral-500 dark:text-neutral-400">
-                Steps — one per line
+                {t.steps}
               </span>
               <Textarea
                 name="items"
                 rows={6}
                 required
-                placeholder={"Shut off power\nDisconnect old unit\nSet new unit\nConnect line set\nStart-up test"}
+                placeholder={t.stepsPlaceholder}
               />
             </label>
             <div className="flex justify-end">
               <Button type="submit" size="sm">
                 <Plus className="h-4 w-4" />
-                Save template
+                {t.saveTemplate}
               </Button>
             </div>
           </form>
@@ -94,8 +96,8 @@ export default async function ChecklistTemplatesPage() {
           <CardContent className="p-0">
             <EmptyState
               icon={ListChecks}
-              title="No templates yet"
-              description="Create a template above so your crew can apply a standard checklist in one click."
+              title={t.noTemplatesYet}
+              description={t.noTemplatesDesc}
             />
           </CardContent>
         </Card>
@@ -109,7 +111,10 @@ export default async function ChecklistTemplatesPage() {
                     {template.name}
                   </h3>
                   <span className="shrink-0 rounded-full bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 text-xs font-medium tabular-nums text-neutral-600 dark:text-neutral-300">
-                    {template.items.length} step{template.items.length === 1 ? "" : "s"}
+                    {(template.items.length === 1 ? t.stepCountOne : t.stepCountMany).replace(
+                      "{n}",
+                      String(template.items.length)
+                    )}
                   </span>
                 </div>
                 <ol className="flex flex-col gap-1.5">
@@ -132,7 +137,7 @@ export default async function ChecklistTemplatesPage() {
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-3 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
                   <span className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     <Pencil className="h-3.5 w-3.5" />
-                    Edit
+                    {t.edit}
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
                 </summary>
@@ -141,7 +146,7 @@ export default async function ChecklistTemplatesPage() {
                   className="flex flex-col gap-3 px-4 pb-4"
                 >
                   <label className="flex flex-col gap-1 text-sm">
-                    <span className="text-neutral-500 dark:text-neutral-400">Template name</span>
+                    <span className="text-neutral-500 dark:text-neutral-400">{t.templateName}</span>
                     <Input
                       name="name"
                       defaultValue={template.name}
@@ -151,7 +156,7 @@ export default async function ChecklistTemplatesPage() {
                   </label>
                   <label className="flex flex-col gap-1 text-sm">
                     <span className="text-neutral-500 dark:text-neutral-400">
-                      Steps — one per line
+                      {t.steps}
                     </span>
                     <Textarea
                       name="items"
@@ -163,7 +168,7 @@ export default async function ChecklistTemplatesPage() {
                   <div className="flex justify-end">
                     <Button type="submit" size="sm">
                       <Pencil className="h-4 w-4" />
-                      Save changes
+                      {t.saveChanges}
                     </Button>
                   </div>
                 </form>
@@ -173,7 +178,7 @@ export default async function ChecklistTemplatesPage() {
                 <form action={duplicateTemplateAction.bind(null, template.id)}>
                   <Button type="submit" variant="outline" size="sm">
                     <Copy className="h-4 w-4" />
-                    Duplicate
+                    {t.duplicate}
                   </Button>
                 </form>
                 <div className="ml-auto">

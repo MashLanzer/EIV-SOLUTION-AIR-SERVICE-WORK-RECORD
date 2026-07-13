@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Camera, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { MAX_PHOTOS } from "@/lib/validations";
 
 // Compress on-device before upload: phone camera shots are 3-10MB, but a
@@ -39,6 +40,7 @@ async function compressToDataUrl(file: File): Promise<string> {
 }
 
 export function PhotoField({ defaultPhotos }: { defaultPhotos?: string[] }) {
+  const t = useT().form;
   const [photos, setPhotos] = useState<string[]>(defaultPhotos ?? []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,21 +74,22 @@ export function PhotoField({ defaultPhotos }: { defaultPhotos?: string[] }) {
       const notices: string[] = [];
       if (overflow > 0) {
         notices.push(
-          `Only ${MAX_PHOTOS} photos are allowed per record, so ${overflow} file${
-            overflow === 1 ? " was" : "s were"
-          } skipped.`
+          (overflow === 1 ? t.overflowNoticeOne : t.overflowNoticeMany)
+            .replace("{max}", String(MAX_PHOTOS))
+            .replace("{n}", String(overflow))
         );
       }
       if (skippedNonImage > 0) {
         notices.push(
-          `${skippedNonImage} file${
-            skippedNonImage === 1 ? " wasn't an image and was" : "s weren't images and were"
-          } skipped.`
+          (skippedNonImage === 1 ? t.nonImageNoticeOne : t.nonImageNoticeMany).replace(
+            "{n}",
+            String(skippedNonImage)
+          )
         );
       }
       if (notices.length > 0) setError(notices.join(" "));
     } catch {
-      setError("Could not process that photo. Try a different one.");
+      setError(t.photoProcessError);
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -106,14 +109,14 @@ export function PhotoField({ defaultPhotos }: { defaultPhotos?: string[] }) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo}
-                alt={`Work photo ${i + 1}`}
+                alt={t.workPhotoAlt.replace("{n}", String(i + 1))}
                 className="aspect-square w-full rounded-lg border border-neutral-200 dark:border-neutral-800 object-cover"
               />
               <Button
                 type="button"
                 variant="destructive"
                 size="icon"
-                aria-label={`Remove photo ${i + 1}`}
+                aria-label={t.removePhotoAria.replace("{n}", String(i + 1))}
                 onClick={() =>
                   setPhotos((prev) => prev.filter((_, idx) => idx !== i))
                 }
@@ -143,7 +146,7 @@ export function PhotoField({ defaultPhotos }: { defaultPhotos?: string[] }) {
           onClick={() => inputRef.current?.click()}
         >
           <Camera className="h-4 w-4" />
-          {busy ? "Processing..." : "Add Photo"}
+          {busy ? t.processing : t.addPhoto}
         </Button>
         <span className="text-sm text-neutral-500 dark:text-neutral-400">
           {photos.length}/{MAX_PHOTOS}

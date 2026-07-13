@@ -19,9 +19,10 @@ import { getWeather } from "@/lib/weather";
 import { requireOrgId } from "@/lib/orgScope";
 import { canAccessProject } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
+import { getT, getLocale } from "@/lib/i18n/server";
 
-function formatDate(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -29,8 +30,8 @@ function formatDate(date: Date) {
   }).format(date);
 }
 
-function formatSince(date: Date) {
-  return new Intl.DateTimeFormat("en-US", {
+function formatSince(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -46,6 +47,10 @@ export default async function WorkerProjectPage({
   const organizationId = requireOrgId(session);
   const { id } = await params;
   const isAdmin = session.user.role === "ADMIN";
+  const dict = await getT();
+  const tp = dict.projects;
+  const tr = dict.records;
+  const locale = await getLocale();
 
   if (!(await canAccessProject(session, id))) notFound();
 
@@ -130,12 +135,12 @@ export default async function WorkerProjectPage({
     .filter((p) => p.latitude != null && p.longitude != null)
     .map((p) => ({
       id: p.id,
-      name: "Photo",
+      name: dict.photos.photoPinLabel,
       latitude: p.latitude as number,
       longitude: p.longitude as number,
       kind: "photo" as const,
       thumbnail: p.url,
-      subtitle: `${p.takenBy?.name ? `${p.takenBy.name} · ` : ""}${formatSince(p.takenAt)}`,
+      subtitle: `${p.takenBy?.name ? `${p.takenBy.name} · ` : ""}${formatSince(p.takenAt, locale)}`,
       href: `/records/projects/${project.id}/photos/${p.id}`,
     }));
   const hasMap = projectPins.length > 0 || photoPins.length > 0;
@@ -147,7 +152,7 @@ export default async function WorkerProjectPage({
         className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
       >
         <ArrowLeft className="h-4 w-4" />
-        Projects
+        {tp.title}
       </Link>
 
       {/* Header - read-only project identity */}
@@ -174,7 +179,7 @@ export default async function WorkerProjectPage({
             )}
             <span className="flex items-center gap-1.5">
               <CalendarDays className="h-4 w-4 shrink-0" />
-              Created {formatSince(project.createdAt)}
+              {tp.created.replace("{date}", formatSince(project.createdAt, locale))}
             </span>
           </div>
         </CardContent>
@@ -193,7 +198,7 @@ export default async function WorkerProjectPage({
       {/* Checklists - workers can only check items off */}
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Checklists
+          {tp.tabChecklists}
         </h2>
         <ProjectChecklists
           projectId={project.id}
@@ -206,7 +211,7 @@ export default async function WorkerProjectPage({
       {/* Photos - upload; delete only your own */}
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Photos
+          {tp.tabPhotos}
         </h2>
         <ProjectPhotos
           projectId={project.id}
@@ -220,15 +225,15 @@ export default async function WorkerProjectPage({
       {/* Work records on this project */}
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          Work records ({records.length})
+          {tp.workRecords} ({records.length})
         </h2>
         {records.length === 0 ? (
           <Card>
             <CardContent className="p-0">
               <EmptyState
                 icon={ClipboardList}
-                title="No work records yet"
-                description="Records linked to this project will show up here."
+                title={tp.noWorkRecords}
+                description={tp.noWorkRecordsDesc}
               />
             </CardContent>
           </Card>
@@ -244,7 +249,7 @@ export default async function WorkerProjectPage({
                       <Button asChild variant="outline" size="icon">
                         <Link
                           href={`/records/${record.id}`}
-                          aria-label={`Open record ${record.jobNumber}`}
+                          aria-label={tp.openRecordAria.replace("{n}", record.jobNumber)}
                         >
                           <ArrowRight className="h-4 w-4" />
                         </Link>
@@ -254,14 +259,14 @@ export default async function WorkerProjectPage({
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                      Job #{record.jobNumber}
+                      {tr.jobNumber}{record.jobNumber}
                     </span>
                     <StatusBadge status={record.status} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <DataField label="Date" value={formatDate(record.date)} />
-                    <DataField label="Type of Work" value={record.typeOfWork} />
-                    <DataField label="Submitted By" value={record.submittedBy?.name ?? "—"} />
+                    <DataField label={tr.date} value={formatDate(record.date, locale)} />
+                    <DataField label={tr.typeOfWork} value={record.typeOfWork} />
+                    <DataField label={tp.submittedBy} value={record.submittedBy?.name ?? "—"} />
                   </div>
                 </MobileCardRow>
               );

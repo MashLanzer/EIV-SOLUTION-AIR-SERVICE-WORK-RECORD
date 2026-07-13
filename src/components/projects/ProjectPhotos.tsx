@@ -7,6 +7,8 @@ import { Camera, MapPin, MessageSquare, Tag as TagIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/components/i18n/LocaleProvider";
+import type { Dictionary } from "@/lib/i18n";
 import { deletePhotoAction } from "@/actions/photos";
 
 export interface ProjectPhoto {
@@ -25,13 +27,13 @@ export interface ProjectPhoto {
 const MAX_DIMENSION = 1600;
 const JPEG_QUALITY = 0.72;
 
-async function compressToBlob(file: File): Promise<Blob> {
+async function compressToBlob(file: File, t: Dictionary["photos"]): Promise<Blob> {
   const objectUrl = URL.createObjectURL(file);
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const el = new Image();
       el.onload = () => resolve(el);
-      el.onerror = () => reject(new Error("Could not read image"));
+      el.onerror = () => reject(new Error(t.readError));
       el.src = objectUrl;
     });
     const scale = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
@@ -39,13 +41,13 @@ async function compressToBlob(file: File): Promise<Blob> {
     canvas.width = Math.round(img.width * scale);
     canvas.height = Math.round(img.height * scale);
     const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Could not process image");
+    if (!ctx) throw new Error(t.processError);
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     return await new Promise<Blob>((resolve, reject) =>
       canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error("Could not encode image"))),
+        (b) => (b ? resolve(b) : reject(new Error(t.encodeError))),
         "image/jpeg",
         JPEG_QUALITY
       )
@@ -66,14 +68,14 @@ function getGps(): Promise<{ lat: number; lng: number } | null> {
   });
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: Dictionary["photos"]): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
+  if (m < 1) return t.justNow;
+  if (m < 60) return t.minutesAgo.replace("{n}", String(m));
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  if (h < 24) return t.hoursAgo.replace("{n}", String(h));
+  return t.daysAgo.replace("{n}", String(Math.floor(h / 24)));
 }
 
 export function ProjectPhotos({
@@ -92,6 +94,7 @@ export function ProjectPhotos({
   // Route prefix for the photo detail link (admin vs worker area).
   basePath?: string;
 }) {
+  const t = useT().photos;
   const [photos, setPhotos] = useState<ProjectPhoto[]>(initialPhotos);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +110,7 @@ export function ProjectPhotos({
     try {
       for (const file of Array.from(files)) {
         if (!file.type.startsWith("image/")) continue;
-        const blob = await compressToBlob(file);
+        const blob = await compressToBlob(file, t);
         const fd = new FormData();
         fd.append("file", blob, "photo.jpg");
         if (gps) {
@@ -120,7 +123,7 @@ export function ProjectPhotos({
         });
         if (!res.ok) {
           const body = (await res.json().catch(() => null)) as { error?: string } | null;
-          throw new Error(body?.error ?? "Upload failed");
+          throw new Error(body?.error ?? t.uploadFailed);
         }
         const { photo } = (await res.json()) as { photo: ProjectPhoto };
         setPhotos((prev) => [
@@ -129,7 +132,7 @@ export function ProjectPhotos({
         ]);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't upload that photo.");
+      setError(e instanceof Error ? e.message : t.uploadGenericError);
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -160,11 +163,14 @@ export function ProjectPhotos({
           disabled={busy}
         >
           <Camera className="h-4 w-4" />
-          {busy ? "Uploading..." : "Add photos"}
+          {busy ? t.uploading : t.addPhotos}
         </Button>
         {photos.length > 0 && (
           <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
-            {photos.length} photo{photos.length === 1 ? "" : "s"}
+            {(photos.length === 1 ? t.countOne : t.countMany).replace(
+              "{n}",
+              String(photos.length)
+            )}
           </span>
         )}
       </div>
@@ -180,8 +186,8 @@ export function ProjectPhotos({
           <CardContent className="p-0">
             <EmptyState
               icon={Camera}
-              title="No photos yet"
-              description="Snap jobsite photos - they're time-stamped and geotagged automatically."
+              title={t.noYet}
+              description={t.noPhotosProjectDesc}
             />
           </CardContent>
         </Card>
@@ -196,12 +202,12 @@ export function ProjectPhotos({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
-                  alt="Jobsite photo"
+                  alt={t.jobsitePhoto}
                   className="aspect-square w-full rounded-lg border border-neutral-200 dark:border-neutral-800 object-cover"
                 />
               </Link>
               <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 rounded-b-lg bg-gradient-to-t from-black/60 to-transparent px-2 py-1 text-[10px] text-white">
-                <span className="tabular-nums">{timeAgo(photo.takenAt)}</span>
+                <span className="tabular-nums">{timeAgo(photo.takenAt, t)}</span>
                 <span className="flex items-center gap-1.5">
                   {photo.tagCount ? (
                     <span className="flex items-center gap-0.5">
@@ -223,7 +229,7 @@ export function ProjectPhotos({
                   type="button"
                   variant="destructive"
                   size="icon"
-                  aria-label="Delete photo"
+                  aria-label={t.deletePhoto}
                   onClick={() => remove(photo.id)}
                   className="absolute -right-2 -top-2 h-7 w-7 rounded-full opacity-0 shadow transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                 >

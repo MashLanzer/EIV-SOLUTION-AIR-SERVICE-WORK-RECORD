@@ -3,6 +3,7 @@ import { SuccessToast } from "@/components/ui/success-toast";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 
 export default async function AdminSettingsPage({
   searchParams,
@@ -10,6 +11,7 @@ export default async function AdminSettingsPage({
   searchParams: Promise<{ reset?: string }>;
 }) {
   const session = await requireAdmin();
+  const t = await getT();
   const { reset } = await searchParams;
   const org = await prisma.organization.findUnique({
     where: { id: requireOrgId(session) },
@@ -32,7 +34,7 @@ export default async function AdminSettingsPage({
   });
   return (
     <>
-      {reset && <SuccessToast message="All history was reset" />}
+      {reset && <SuccessToast message={t.settings.resetToast} />}
       <SettingsScreen
         role="ADMIN"
         backHref="/admin"

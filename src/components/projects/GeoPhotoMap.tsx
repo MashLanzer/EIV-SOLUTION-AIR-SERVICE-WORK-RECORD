@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
 import type { MapPin } from "@/components/projects/ProjectsMap";
+import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | "project" | "photos";
@@ -18,6 +19,7 @@ export function GeoPhotoMap({
   projectPins: MapPin[];
   photoPins: MapPin[];
 }) {
+  const t = useT().photos;
   const both = projectPins.length > 0 && photoPins.length > 0;
   const [filter, setFilter] = useState<Filter>("all");
 
@@ -32,9 +34,9 @@ export function GeoPhotoMap({
         : [...projectPins, ...photoPins];
 
   const options: { value: Filter; label: string }[] = [
-    { value: "all", label: "All" },
-    { value: "project", label: "Project" },
-    { value: "photos", label: `Photos (${photoPins.length})` },
+    { value: "all", label: t.mapAll },
+    { value: "project", label: t.mapProject },
+    { value: "photos", label: t.mapPhotos.replace("{n}", String(photoPins.length)) },
   ];
 
   return (
@@ -42,7 +44,7 @@ export function GeoPhotoMap({
       {both && (
         <div
           role="radiogroup"
-          aria-label="Map filter"
+          aria-label={t.mapFilter}
           className="grid grid-cols-3 gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900 p-1"
         >
           {options.map((opt) => {

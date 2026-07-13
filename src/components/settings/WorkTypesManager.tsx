@@ -6,6 +6,7 @@ import { Plus, Sparkles, Tag, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useT } from "@/components/i18n/LocaleProvider";
 import type { WorkTypeGroup } from "@/lib/workTypes";
 import {
   applyStarterPackAction,
@@ -25,6 +26,7 @@ function AddInline({
   placeholder: string;
   onAdd: (formData: FormData) => Promise<WorkTypeState>;
 }) {
+  const t = useT().workTypes;
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -52,7 +54,7 @@ function AddInline({
           placeholder={placeholder}
           className="flex-1"
         />
-        <Button type="submit" size="icon" disabled={pending || value.trim().length === 0} aria-label="Add">
+        <Button type="submit" size="icon" disabled={pending || value.trim().length === 0} aria-label={t.add}>
           <Plus className="h-4 w-4" />
         </Button>
       </div>
@@ -68,6 +70,7 @@ export function WorkTypesManager({
   groups: WorkTypeGroup[];
   packs: { id: string; label: string }[];
 }) {
+  const t = useT().workTypes;
   const [pending, startTransition] = useTransition();
 
   function run(fn: () => Promise<unknown>) {
@@ -83,11 +86,11 @@ export function WorkTypesManager({
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
           <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-            Start from a template
+            {t.startFromTemplate}
           </h2>
         </div>
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
-          Add a ready-made set for your trade. Everything stays editable and you can mix packs.
+          {t.startFromTemplateDesc}
         </p>
         <div className="flex flex-wrap gap-2 pt-1">
           {packs.map((p) => (
@@ -110,8 +113,8 @@ export function WorkTypesManager({
       {groups.length === 0 ? (
         <EmptyState
           icon={Tag}
-          title="No work types yet"
-          description="Add a starter pack above, or create your first category below."
+          title={t.noWorkTypesYet}
+          description={t.noWorkTypesDesc}
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -128,11 +131,11 @@ export function WorkTypesManager({
                   type="button"
                   disabled={pending}
                   onClick={() => run(() => deleteWorkTypeCategoryAction(group.id))}
-                  aria-label={`Delete category ${group.name}`}
+                  aria-label={t.deleteCategoryAria.replace("{name}", group.name)}
                   className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-neutral-500 dark:text-neutral-400 transition-colors hover:bg-destructive-soft hover:text-destructive-text disabled:opacity-50"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  Delete
+                  {t.delete}
                 </button>
               </div>
 
@@ -148,7 +151,7 @@ export function WorkTypesManager({
                         type="button"
                         disabled={pending}
                         onClick={() => run(() => deleteWorkTypeAction(item.id))}
-                        aria-label={`Remove ${item.name}`}
+                        aria-label={t.removeAria.replace("{name}", item.name)}
                         className="flex h-5 w-5 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-neutral-200 dark:hover:bg-neutral-800 hover:text-neutral-700 dark:hover:text-neutral-200 disabled:opacity-50"
                       >
                         <X className="h-3 w-3" />
@@ -159,7 +162,7 @@ export function WorkTypesManager({
               )}
 
               <AddInline
-                placeholder="Add a work type…"
+                placeholder={t.addWorkTypePlaceholder}
                 onAdd={(fd) => createWorkTypeAction(group.id, undefined, fd)}
               />
             </section>
@@ -170,10 +173,10 @@ export function WorkTypesManager({
       {/* Add category */}
       <section className="flex flex-col gap-2 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-4">
         <h2 className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-          Add a category
+          {t.addCategory}
         </h2>
         <AddInline
-          placeholder="e.g. Installation, Service…"
+          placeholder={t.addCategoryPlaceholder}
           onAdd={(fd) => createWorkTypeCategoryAction(undefined, fd)}
         />
       </section>

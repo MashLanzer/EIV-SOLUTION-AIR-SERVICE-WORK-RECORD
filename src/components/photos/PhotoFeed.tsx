@@ -13,6 +13,9 @@ import {
   X,
 } from "lucide-react";
 
+import { useT, useLocale } from "@/components/i18n/LocaleProvider";
+import type { Dictionary } from "@/lib/i18n";
+
 export interface FeedPhoto {
   id: string;
   url: string;
@@ -25,27 +28,27 @@ export interface FeedPhoto {
   commentCount: number;
 }
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, t: Dictionary["photos"]): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
+  if (m < 1) return t.justNow;
+  if (m < 60) return t.minutesAgo.replace("{n}", String(m));
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  if (h < 24) return t.hoursAgo.replace("{n}", String(h));
+  return t.daysAgo.replace("{n}", String(Math.floor(h / 24)));
 }
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
 
-function dayLabel(iso: string): string {
+function dayLabel(iso: string, t: Dictionary["photos"], locale: string): string {
   const d = new Date(iso);
   const now = new Date();
   const diff = Math.round((startOfDay(now) - startOfDay(d)) / 86400000);
-  if (diff === 0) return "Today";
-  if (diff === 1) return "Yesterday";
-  return new Intl.DateTimeFormat("en-US", {
+  if (diff === 0) return t.today;
+  if (diff === 1) return t.yesterday;
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -85,18 +88,21 @@ export function PhotoFeed({
   photos: FeedPhoto[];
   basePath: string;
 }) {
+  const t = useT().photos;
+  const tc = useT().common;
+  const locale = useLocale();
   const [open, setOpen] = useState<number | null>(null);
 
   const groups = useMemo(() => {
     const map = new Map<number, { label: string; items: FeedPhoto[] }>();
     for (const p of photos) {
       const key = startOfDay(new Date(p.takenAt));
-      if (!map.has(key)) map.set(key, { label: dayLabel(p.takenAt), items: [] });
+      if (!map.has(key)) map.set(key, { label: dayLabel(p.takenAt, t, locale), items: [] });
       map.get(key)!.items.push(p);
     }
     // photos arrive newest-first, so insertion order is already correct
     return Array.from(map.values());
-  }, [photos]);
+  }, [photos, t, locale]);
 
   const close = useCallback(() => setOpen(null), []);
   const go = useCallback(
@@ -142,7 +148,7 @@ export function PhotoFeed({
                       type="button"
                       onClick={() => setOpen(index)}
                       className="group relative aspect-square overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800"
-                      aria-label={`Open photo from ${photo.projectName}`}
+                      aria-label={t.openPhotoFrom.replace("{name}", photo.projectName)}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
@@ -180,14 +186,14 @@ export function PhotoFeed({
                     {active.takenByName}
                   </span>
                 )}
-                <span>{timeAgo(active.takenAt)}</span>
+                <span>{timeAgo(active.takenAt, t)}</span>
                 <MetaCounts photo={active} light />
               </div>
             </div>
             <button
               type="button"
               onClick={close}
-              aria-label="Close"
+              aria-label={tc.close}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"
             >
               <X className="h-5 w-5" />
@@ -201,7 +207,7 @@ export function PhotoFeed({
                 <button
                   type="button"
                   onClick={() => go(-1)}
-                  aria-label="Previous"
+                  aria-label={t.previousPhoto}
                   className="absolute left-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
                 >
                   <ChevronLeft className="h-6 w-6" />
@@ -209,7 +215,7 @@ export function PhotoFeed({
                 <button
                   type="button"
                   onClick={() => go(1)}
-                  aria-label="Next"
+                  aria-label={t.nextPhoto}
                   className="absolute right-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
                 >
                   <ChevronRight className="h-6 w-6" />
@@ -234,7 +240,7 @@ export function PhotoFeed({
               className="flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
             >
               <ExternalLink className="h-4 w-4" />
-              View details
+              {t.viewDetails}
             </Link>
           </div>
         </div>

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
+import { useT } from "@/components/i18n/LocaleProvider";
+
 interface RecordPhoto {
   id: string;
   dataUrl: string;
@@ -13,6 +15,8 @@ interface RecordPhoto {
 // prev/next. A base64 data: URL doesn't reliably open in a new tab inside the
 // Android WebView, so we show it in an in-app overlay instead.
 export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
+  const t = useT().photos;
+  const tc = useT().common;
   const [open, setOpen] = useState<number | null>(null);
 
   const close = useCallback(() => setOpen(null), []);
@@ -45,12 +49,12 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
             type="button"
             onClick={() => setOpen(i)}
             className="group relative aspect-square overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800"
-            aria-label={`Open photo ${photo.position + 1}`}
+            aria-label={t.openPhoto.replace("{n}", String(photo.position + 1))}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photo.dataUrl}
-              alt={`Work photo ${photo.position + 1}`}
+              alt={t.workPhoto.replace("{n}", String(photo.position + 1))}
               className="h-full w-full object-cover transition-transform group-active:scale-95"
             />
           </button>
@@ -67,7 +71,7 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
           <button
             type="button"
             onClick={close}
-            aria-label="Close"
+            aria-label={tc.close}
             className="absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
           >
             <X className="h-5 w-5" />
@@ -77,7 +81,7 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); go(-1); }}
-                aria-label="Previous photo"
+                aria-label={t.previousPhoto}
                 className="absolute left-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
               >
                 <ChevronLeft className="h-6 w-6" />
@@ -85,7 +89,7 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); go(1); }}
-                aria-label="Next photo"
+                aria-label={t.nextPhoto}
                 className="absolute right-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
               >
                 <ChevronRight className="h-6 w-6" />
@@ -95,7 +99,7 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photos[open].dataUrl}
-            alt={`Work photo ${photos[open].position + 1}`}
+            alt={t.workPhoto.replace("{n}", String(photos[open].position + 1))}
             onClick={(e) => e.stopPropagation()}
             className="max-h-full max-w-full rounded-lg object-contain"
           />

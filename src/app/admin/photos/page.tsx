@@ -8,6 +8,7 @@ import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { getT } from "@/lib/i18n/server";
 
 export default async function AdminPhotosPage({
   searchParams,
@@ -16,6 +17,7 @@ export default async function AdminPhotosPage({
 }) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
+  const t = (await getT()).photos;
   const { tag, project } = await searchParams;
   const activeTag = tag?.trim().toLowerCase() || null;
   const activeProject = project?.trim() || null;
@@ -72,7 +74,7 @@ export default async function AdminPhotosPage({
     .filter((p) => p.latitude != null && p.longitude != null)
     .map((p) => ({
       id: p.id,
-      name: "Photo",
+      name: t.photoPinLabel,
       latitude: p.latitude as number,
       longitude: p.longitude as number,
       kind: "photo" as const,
@@ -87,10 +89,13 @@ export default async function AdminPhotosPage({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          Photos
+          {t.title}
         </h1>
         <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
-          {photos.length} photo{photos.length === 1 ? "" : "s"}
+          {(photos.length === 1 ? t.countOne : t.countMany).replace(
+            "{n}",
+            String(photos.length)
+          )}
         </span>
       </div>
 
@@ -111,12 +116,8 @@ export default async function AdminPhotosPage({
           <CardContent className="p-0">
             <EmptyState
               icon={Images}
-              title={isFiltered ? "No photos match" : "No photos yet"}
-              description={
-                isFiltered
-                  ? "Try a different tag or project, or clear the filters."
-                  : "Photos snapped on any project's jobsite show up here, newest first."
-              }
+              title={isFiltered ? t.noMatch : t.noYet}
+              description={isFiltered ? t.tryDifferent : t.adminFeedHint}
             />
           </CardContent>
         </Card>
