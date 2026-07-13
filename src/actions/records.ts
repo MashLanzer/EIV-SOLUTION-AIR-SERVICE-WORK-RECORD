@@ -12,7 +12,7 @@ import {
   notifyWorkerReturned,
 } from "@/lib/notifications";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin, requireAuth } from "@/lib/session";
+import { requireAdmin, requireAuth, requireReviewer } from "@/lib/session";
 import { scheduleWhereForUser, schedulePaths } from "@/lib/schedule";
 import { workRecordSchema } from "@/lib/validations";
 
@@ -410,7 +410,7 @@ export async function unshareRecordAction(recordId: string): Promise<void> {
 }
 
 export async function approveRecordAction(recordId: string) {
-  const session = await requireAdmin();
+  const session = await requireReviewer();
   const organizationId = requireOrgId(session);
   await prisma.workRecord.updateMany({
     where: { id: recordId, organizationId },
@@ -429,7 +429,7 @@ export async function approveRecordAction(recordId: string) {
 
 // Send a record back to the worker with a note explaining what to fix.
 export async function requestChangesAction(recordId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requireReviewer();
   const organizationId = requireOrgId(session);
   const note = (formData.get("reviewNote") as string | null)?.trim() || null;
   await prisma.workRecord.updateMany({
@@ -455,7 +455,7 @@ export async function requestChangesAction(recordId: string, formData: FormData)
 export async function bulkApproveRecordsAction(
   ids: string[]
 ): Promise<{ count: number }> {
-  const session = await requireAdmin();
+  const session = await requireReviewer();
   const organizationId = requireOrgId(session);
   const clean = [...new Set(ids.filter(Boolean))];
   if (clean.length === 0) return { count: 0 };
@@ -488,7 +488,7 @@ export async function bulkRequestChangesAction(
   ids: string[],
   note: string
 ): Promise<{ count: number }> {
-  const session = await requireAdmin();
+  const session = await requireReviewer();
   const organizationId = requireOrgId(session);
   const clean = [...new Set(ids.filter(Boolean))];
   const trimmed = note.trim();

@@ -24,7 +24,7 @@ function slugify(name: string): string {
 async function attachCurrentUser(
   session: Awaited<ReturnType<typeof requireAuth>>,
   organizationId: string,
-  role: "ADMIN" | "WORKER"
+  role: "ADMIN" | "SUPERVISOR" | "WORKER"
 ) {
   const email = session.user.email?.toLowerCase();
   if (!email) throw new Error("Missing email on session");

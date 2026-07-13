@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requireReviewer } from "@/lib/session";
 import { addUtcDays, startOfUtcDay } from "@/lib/schedule";
 import { getLocale, getT } from "@/lib/i18n/server";
 
@@ -137,7 +137,7 @@ function StatTile({
 }
 
 export default async function AdminDashboardPage() {
-  const session = await requireAdmin();
+  const session = await requireReviewer();
   const organizationId = requireOrgId(session);
   const thisWeekMonday = startOfWeek();
   const windowStart = new Date(thisWeekMonday.getTime() - (WEEKS_BACK - 1) * 7 * DAY_MS);

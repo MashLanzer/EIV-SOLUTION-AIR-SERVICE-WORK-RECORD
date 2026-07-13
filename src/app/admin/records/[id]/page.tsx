@@ -15,7 +15,7 @@ import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requireReviewer } from "@/lib/session";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 function formatDateTime(date: Date, locale: string) {
@@ -33,7 +33,7 @@ export default async function AdminReviewRecordPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ saved?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requireReviewer();
   const { id } = await params;
   const { saved } = await searchParams;
   const record = await prisma.workRecord.findFirst({

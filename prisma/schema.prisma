@@ -9,6 +9,9 @@ datasource db {
 
 enum Role {
   ADMIN
+  // Can review records (approve/return) and see the dashboard/reports, but
+  // cannot manage workers, customers, teams, projects or settings.
+  SUPERVISOR
   WORKER
 }
 

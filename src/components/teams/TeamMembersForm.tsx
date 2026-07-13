@@ -12,7 +12,7 @@ interface OrgUser {
   id: string;
   name: string;
   email: string;
-  role: "ADMIN" | "WORKER";
+  role: "ADMIN" | "SUPERVISOR" | "WORKER";
 }
 
 export function TeamMembersForm({

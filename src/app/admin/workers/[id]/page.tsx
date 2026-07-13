@@ -76,7 +76,11 @@ export default async function WorkerDetailPage({
             {worker.name}
           </h1>
           <Badge variant={worker.role === "ADMIN" ? "default" : "secondary"}>
-            {worker.role === "ADMIN" ? t.roleAdmin : t.roleWorker}
+            {worker.role === "ADMIN"
+              ? t.roleAdmin
+              : worker.role === "SUPERVISOR"
+                ? t.roleSupervisor
+                : t.roleWorker}
           </Badge>
           <Badge variant={worker.active ? "success" : "destructive"}>
             {worker.active ? t.statusActive : t.statusInactive}

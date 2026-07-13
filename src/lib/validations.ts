@@ -102,7 +102,7 @@ export const updateWorkerEmailSchema = z.object({
 });
 
 export const updateWorkerRoleSchema = z.object({
-  role: z.enum(["ADMIN", "WORKER"]),
+  role: z.enum(["ADMIN", "SUPERVISOR", "WORKER"]),
 });
 
 export const updateProfileNameSchema = z.object({

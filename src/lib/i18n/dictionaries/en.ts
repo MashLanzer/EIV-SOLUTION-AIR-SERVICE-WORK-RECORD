@@ -35,6 +35,7 @@ export const en = {
     title: "Profile",
     yourAccount: "Your account",
     admin: "Admin",
+    supervisor: "Supervisor",
     worker: "Worker",
     addPhoto: "Add photo",
     changePhoto: "Change photo",
@@ -976,6 +977,7 @@ export const en = {
     lastActivePrefix: "Last active {date}",
     // Detail
     roleAdmin: "Admin",
+    roleSupervisor: "Supervisor",
     roleWorker: "Worker",
     joined: "Joined {date}",
     recordsSubmitted: "Records submitted",

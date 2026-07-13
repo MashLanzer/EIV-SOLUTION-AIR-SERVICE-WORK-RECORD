@@ -107,25 +107,33 @@ function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
   );
 }
 
+// Supervisors only get the review scope; management destinations are hidden
+// (and their pages fail closed via requireAdmin anyway).
+const SUPERVISOR_HREFS = new Set(["/admin", "/admin/records", "/admin/reports"]);
+
 export function AdminSidebar({
   name,
   avatarUrl = null,
+  isSupervisor = false,
   pendingReviewCount = 0,
   latestActivityAt = null,
 }: {
   name: string;
   avatarUrl?: string | null;
+  isSupervisor?: boolean;
   pendingReviewCount?: number;
   latestActivityAt?: number | null;
 }) {
   const pathname = usePathname();
   const t = useT();
-  const items = navItems(t.nav).map((item) =>
+  const forRole = (list: TabItem[]) =>
+    isSupervisor ? list.filter((item) => SUPERVISOR_HREFS.has(item.href)) : list;
+  const items = forRole(navItems(t.nav)).map((item) =>
     item.href === "/admin/records" ? { ...item, badge: pendingReviewCount } : item
   );
   // Records is no longer a native tab, so the review badge rides the Dashboard
   // tab (where the review queue lives) in the APK bar.
-  const appTabs = appTabItems(t.nav).map((item) =>
+  const appTabs = forRole(appTabItems(t.nav)).map((item) =>
     item.href === "/admin" ? { ...item, badge: pendingReviewCount } : item
   );
 
@@ -174,8 +182,8 @@ export function AdminSidebar({
       <AppTabBar
         items={appTabs}
         pathname={pathname}
-        createItems={createItems(t.nav)}
-        moreItems={moreItems(t.nav)}
+        createItems={isSupervisor ? [] : createItems(t.nav)}
+        moreItems={isSupervisor ? moreItems(t.nav).filter((m) => SUPERVISOR_HREFS.has(m.href)) : moreItems(t.nav)}
       />
     </>
   );

@@ -3,14 +3,16 @@ import { SkipLink } from "@/components/layout/SkipLink";
 import { getLatestActivityAt } from "@/lib/activity";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requireReviewer } from "@/lib/session";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await requireAdmin();
+  // Reviewers (admins + supervisors) can enter the admin area; management pages
+  // inside keep their own requireAdmin guard, so supervisor access fails closed.
+  const session = await requireReviewer();
   const organizationId = requireOrgId(session);
   const scope = { organizationId, userId: session.user.id, isAdmin: true };
   // Badge on the Records tab: how many records are waiting for review. Plus the
@@ -28,6 +30,7 @@ export default async function AdminLayout({
       <AdminSidebar
         name={session.user.name ?? session.user.email ?? ""}
         avatarUrl={session.user.avatarUrl ?? null}
+        isSupervisor={session.user.role === "SUPERVISOR"}
         pendingReviewCount={pendingReviewCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}
       />

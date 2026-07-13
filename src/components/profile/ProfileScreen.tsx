@@ -83,7 +83,7 @@ export function ProfileScreen({
   email: string;
   phone: string | null;
   storedSignature: string | null;
-  role: "ADMIN" | "WORKER";
+  role: "ADMIN" | "SUPERVISOR" | "WORKER";
   backHref: string;
   // Base path for record links, so they resolve to the caller's area
   // ("/records" for workers, "/admin/records" for admins).
@@ -104,6 +104,7 @@ export function ProfileScreen({
   const isAdmin = role === "ADMIN";
   const t = useT().profile;
   const tc = useT().common;
+  const roleLabel = role === "ADMIN" ? t.admin : role === "SUPERVISOR" ? t.supervisor : t.worker;
 
   // Profile "completeness": the fields that actually make the profile useful to
   // the rest of the app. Signature pre-fills every record; phone reaches the
@@ -171,7 +172,7 @@ export function ProfileScreen({
           </p>
           <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 text-xs font-medium text-neutral-600 dark:text-neutral-300">
             <ShieldCheck className="h-3.5 w-3.5" />
-            {isAdmin ? t.admin : t.worker}
+            {roleLabel}
           </span>
         </div>
         <form
@@ -360,7 +361,7 @@ export function ProfileScreen({
         <SettingsRow icon={Mail} label={email} sublabel={t.signedInGoogle} />
         <SettingsRow
           icon={ShieldCheck}
-          label={isAdmin ? t.admin : t.worker}
+          label={roleLabel}
           sublabel={t.accessLevel}
         />
       </SettingsSection>

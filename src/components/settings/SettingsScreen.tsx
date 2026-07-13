@@ -78,7 +78,7 @@ export function SettingsScreen({
   company,
   inviteCode,
 }: {
-  role: "ADMIN" | "WORKER";
+  role: "ADMIN" | "SUPERVISOR" | "WORKER";
   backHref: string;
   // Present for admins only.
   company?: CompanySettings;

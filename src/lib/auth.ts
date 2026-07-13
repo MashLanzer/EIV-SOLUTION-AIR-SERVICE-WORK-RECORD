@@ -77,7 +77,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     session({ session, token }) {
       session.user.id = token.id as string;
-      session.user.role = token.role as "ADMIN" | "WORKER";
+      session.user.role = token.role as "ADMIN" | "SUPERVISOR" | "WORKER";
       session.user.phone = (token.phone as string | null) ?? null;
       session.user.storedSignature = (token.storedSignature as string | null) ?? null;
       session.user.avatarUrl = (token.avatarUrl as string | null) ?? null;

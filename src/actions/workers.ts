@@ -261,7 +261,7 @@ export async function updateWorkerRoleAction(
   if (
     user.active &&
     user.role === "ADMIN" &&
-    parsed.data.role === "WORKER" &&
+    parsed.data.role !== "ADMIN" &&
     (await isLastActiveAdmin(userId, organizationId))
   ) {
     return {

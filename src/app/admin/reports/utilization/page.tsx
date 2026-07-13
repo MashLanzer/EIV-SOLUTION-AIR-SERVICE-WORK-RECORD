@@ -15,7 +15,7 @@ import {
 import { getUtilization } from "@/lib/utilization";
 import { addUtcDays, dayKey, startOfUtcDay, weekRange } from "@/lib/schedule";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requireReviewer } from "@/lib/session";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 function parseWeek(value: string | undefined): Date {
@@ -37,7 +37,7 @@ export default async function UtilizationReportPage({
 }: {
   searchParams: Promise<{ week?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requireReviewer();
   const organizationId = requireOrgId(session);
   const { week } = await searchParams;
   const selected = parseWeek(week);

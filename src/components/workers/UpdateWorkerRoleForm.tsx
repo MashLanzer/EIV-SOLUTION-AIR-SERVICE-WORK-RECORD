@@ -35,6 +35,9 @@ export function UpdateWorkerRoleForm({
 
   const isLockedAdmin = currentRole === "ADMIN" && disableDemote;
   const changed = role !== currentRole;
+  // A confirmation is only worth it when admin access is granted or removed;
+  // worker <-> supervisor is a low-stakes change and saves directly.
+  const involvesAdmin = role === "ADMIN" || currentRole === "ADMIN";
 
   return (
     <form
@@ -50,9 +53,10 @@ export function UpdateWorkerRoleForm({
         className="sm:max-w-[10rem]"
       >
         <option value="WORKER">{t.roleWorker}</option>
+        <option value="SUPERVISOR">{t.roleSupervisor}</option>
         <option value="ADMIN">{t.roleAdmin}</option>
       </Select>
-      {changed && !isLockedAdmin && (
+      {changed && !isLockedAdmin && involvesAdmin && (
         <ConfirmDialog
           title={role === "ADMIN" ? t.promoteTitle : t.removeAdminTitle}
           description={role === "ADMIN" ? t.promoteDesc : t.removeAdminDesc}
@@ -65,6 +69,12 @@ export function UpdateWorkerRoleForm({
           }
           onConfirm={() => formRef.current?.requestSubmit()}
         />
+      )}
+      {changed && !isLockedAdmin && !involvesAdmin && (
+        <Button type="submit" variant="outline" size="sm" disabled={pending}>
+          <ShieldCheck className="h-4 w-4" />
+          {pending ? t.saving : t.updateRole}
+        </Button>
       )}
       {isLockedAdmin && (
         <p className="text-xs text-neutral-500 dark:text-neutral-400">

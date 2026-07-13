@@ -35,6 +35,7 @@ export const es: Dictionary = {
     title: "Perfil",
     yourAccount: "Tu cuenta",
     admin: "Admin",
+    supervisor: "Supervisor",
     worker: "Trabajador",
     addPhoto: "Añadir foto",
     changePhoto: "Cambiar foto",
@@ -979,6 +980,7 @@ export const es: Dictionary = {
     lastActivePrefix: "Última actividad {date}",
     // Detail
     roleAdmin: "Admin",
+    roleSupervisor: "Supervisor",
     roleWorker: "Trabajador",
     joined: "Se unió {date}",
     recordsSubmitted: "Registros enviados",
