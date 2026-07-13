@@ -236,6 +236,27 @@ export const es: Dictionary = {
     geocodeStillMissing: "Aún sin coincidencia — revisa la dirección por errores.",
     retry: "Reintentar",
     retrying: "Reintentando",
+    // Checklists
+    addChecklist: "Agregar una lista",
+    fromTemplate: "Desde plantilla (opcional)",
+    blankChecklist: "Lista en blanco",
+    checklistNameLabel: "Nombre",
+    nameOptionalTemplate: "(opcional si se elige una plantilla)",
+    checklistNamePlaceholder: "ej. Instalación de horno",
+    manageTemplates: "Gestionar plantillas",
+    addChecklistBtn: "Agregar lista",
+    noChecklists: "Aún no hay listas",
+    noChecklistsManage:
+      "Agrega una lista para seguir los pasos de este trabajo; cada elemento se puede marcar en sitio.",
+    noChecklistsWorker:
+      "Tu administrador aún no ha agregado una lista a este proyecto.",
+    doneCount: "{done}/{total} hechos",
+    deleteChecklistAria: "Eliminar lista {name}",
+    markDone: 'Marcar "{text}" como hecho',
+    markNotDone: 'Marcar "{text}" como no hecho',
+    deleteItemAria: "Eliminar elemento {text}",
+    addItemPlaceholder: "Agregar un elemento",
+    addItem: "Agregar",
   },
   photos: {
     title: "Fotos",

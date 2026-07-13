@@ -17,6 +17,7 @@ import {
 
 import type { Weather, WeatherIcon } from "@/lib/weather";
 import { toUnit, useTempUnit } from "@/lib/tempUnit";
+import { useLocale } from "@/components/i18n/LocaleProvider";
 
 const ICONS: Record<WeatherIcon, LucideIcon> = {
   "clear-day": Sun,
@@ -31,13 +32,6 @@ const ICONS: Record<WeatherIcon, LucideIcon> = {
   thunder: CloudLightning,
 };
 
-const weekdayFmt = new Intl.DateTimeFormat("en-US", { weekday: "short" });
-
-function weekday(date: string) {
-  // Parse as local midnight so the weekday isn't shifted by timezone.
-  return weekdayFmt.format(new Date(`${date}T00:00:00`));
-}
-
 // Current jobsite conditions plus a short forecast, so a tech or admin can see
 // at a glance whether the weather suits the visit. Hidden entirely when the
 // forecast can't be fetched (getWeather returns null).
@@ -45,7 +39,14 @@ export function WeatherCard({ weather }: { weather: Weather }) {
   const CurrentIcon = ICONS[weather.current.icon];
   const forecast = weather.days.slice(1, 4);
   const unit = useTempUnit();
+  const locale = useLocale();
   const t = (f: number) => toUnit(f, unit);
+  const weekdayFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    weekday: "short",
+  });
+  const weekday = (date: string) =>
+    // Parse as local midnight so the weekday isn't shifted by timezone.
+    weekdayFmt.format(new Date(`${date}T00:00:00`));
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-4">

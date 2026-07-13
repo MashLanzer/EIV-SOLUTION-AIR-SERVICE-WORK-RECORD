@@ -12,6 +12,7 @@ import {
   deleteChecklistItemAction,
   toggleChecklistItemAction,
 } from "@/actions/checklists";
+import { getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
 export interface ChecklistItemView {
@@ -26,7 +27,7 @@ export interface ChecklistView {
   items: ChecklistItemView[];
 }
 
-export function ProjectChecklists({
+export async function ProjectChecklists({
   projectId,
   checklists,
   templates,
@@ -39,6 +40,8 @@ export function ProjectChecklists({
   // check items off.
   canManage?: boolean;
 }) {
+  const dict = await getT();
+  const t = dict.projects;
   return (
     <div className="flex flex-col gap-3">
       {/* Add checklist - collapsed disclosure so it stays out of the way */}
@@ -48,7 +51,7 @@ export function ProjectChecklists({
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
             <span className="flex items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">
               <Plus className="h-4 w-4" />
-              Add a checklist
+              {t.addChecklist}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
           </summary>
@@ -59,17 +62,17 @@ export function ProjectChecklists({
             {templates.length > 0 && (
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-neutral-500 dark:text-neutral-400">
-                  From template (optional)
+                  {t.fromTemplate}
                 </span>
                 <select
                   name="templateId"
                   defaultValue=""
                   className="h-10 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 px-3 text-sm text-neutral-900 dark:text-neutral-100 focus:border-primary focus:outline-none"
                 >
-                  <option value="">Blank checklist</option>
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
+                  <option value="">{t.blankChecklist}</option>
+                  {templates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.name}
                     </option>
                   ))}
                 </select>
@@ -77,23 +80,23 @@ export function ProjectChecklists({
             )}
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-neutral-500 dark:text-neutral-400">
-                Name{" "}
+                {t.checklistNameLabel}{" "}
                 <span className="text-neutral-400">
-                  (optional if a template is chosen)
+                  {t.nameOptionalTemplate}
                 </span>
               </span>
-              <Input name="name" placeholder="e.g. Furnace install" maxLength={80} />
+              <Input name="name" placeholder={t.checklistNamePlaceholder} maxLength={80} />
             </label>
             <div className="flex items-center justify-between gap-2">
               <Link
                 href="/admin/checklists"
                 className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-primary"
               >
-                Manage templates
+                {t.manageTemplates}
               </Link>
               <Button type="submit" size="sm">
                 <Plus className="h-4 w-4" />
-                Add checklist
+                {t.addChecklistBtn}
               </Button>
             </div>
           </form>
@@ -106,12 +109,8 @@ export function ProjectChecklists({
           <CardContent className="p-0">
             <EmptyState
               icon={ListChecks}
-              title="No checklists yet"
-              description={
-                canManage
-                  ? "Add a checklist to track the steps for this job - each item can be checked off on site."
-                  : "Your admin hasn't added a checklist to this project yet."
-              }
+              title={t.noChecklists}
+              description={canManage ? t.noChecklistsManage : t.noChecklistsWorker}
             />
           </CardContent>
         </Card>
@@ -129,14 +128,14 @@ export function ProjectChecklists({
                       {checklist.name}
                     </h3>
                     <p className="text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                      {done}/{total} done
+                      {t.doneCount.replace("{done}", String(done)).replace("{total}", String(total))}
                     </p>
                   </div>
                   {canManage && (
                     <form action={deleteChecklistAction.bind(null, checklist.id)}>
                       <button
                         type="submit"
-                        aria-label={`Delete checklist ${checklist.name}`}
+                        aria-label={t.deleteChecklistAria.replace("{name}", checklist.name)}
                         className="shrink-0 text-neutral-400 hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -163,7 +162,7 @@ export function ProjectChecklists({
                         <button
                           type="submit"
                           aria-label={
-                            item.done ? `Mark "${item.text}" not done` : `Mark "${item.text}" done`
+                            (item.done ? t.markNotDone : t.markDone).replace("{text}", item.text)
                           }
                           className={cn(
                             "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors",
@@ -189,7 +188,7 @@ export function ProjectChecklists({
                         <form action={deleteChecklistItemAction.bind(null, item.id)}>
                           <button
                             type="submit"
-                            aria-label={`Delete item ${item.text}`}
+                            aria-label={t.deleteItemAria.replace("{text}", item.text)}
                             className="shrink-0 text-neutral-300 dark:text-neutral-600 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -205,9 +204,9 @@ export function ProjectChecklists({
                     action={addChecklistItemAction.bind(null, checklist.id)}
                     className="flex gap-2"
                   >
-                    <Input name="text" placeholder="Add an item" maxLength={200} />
+                    <Input name="text" placeholder={t.addItemPlaceholder} maxLength={200} />
                     <Button type="submit" variant="outline" size="sm">
-                      Add
+                      {t.addItem}
                     </Button>
                   </form>
                 )}

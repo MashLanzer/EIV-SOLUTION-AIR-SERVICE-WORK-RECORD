@@ -235,6 +235,27 @@ export const en = {
     geocodeStillMissing: "Still no match — check the address for typos.",
     retry: "Retry",
     retrying: "Retrying",
+    // Checklists
+    addChecklist: "Add a checklist",
+    fromTemplate: "From template (optional)",
+    blankChecklist: "Blank checklist",
+    checklistNameLabel: "Name",
+    nameOptionalTemplate: "(optional if a template is chosen)",
+    checklistNamePlaceholder: "e.g. Furnace install",
+    manageTemplates: "Manage templates",
+    addChecklistBtn: "Add checklist",
+    noChecklists: "No checklists yet",
+    noChecklistsManage:
+      "Add a checklist to track the steps for this job - each item can be checked off on site.",
+    noChecklistsWorker:
+      "Your admin hasn't added a checklist to this project yet.",
+    doneCount: "{done}/{total} done",
+    deleteChecklistAria: "Delete checklist {name}",
+    markDone: 'Mark "{text}" done',
+    markNotDone: 'Mark "{text}" not done',
+    deleteItemAria: "Delete item {text}",
+    addItemPlaceholder: "Add an item",
+    addItem: "Add",
   },
   photos: {
     title: "Photos",
