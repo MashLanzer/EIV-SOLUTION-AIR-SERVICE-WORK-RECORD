@@ -30,6 +30,7 @@ import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { prisma } from "@/lib/prisma";
+import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireReviewer } from "@/lib/session";
 import { addUtcDays, startOfUtcDay } from "@/lib/schedule";
@@ -71,6 +72,11 @@ function formatDate(date: Date, locale: string) {
   }).format(date);
 }
 
+// Whole days a record has been waiting - used to escalate the review-queue tone.
+function daysWaiting(date: Date) {
+  return Math.floor((Date.now() - date.getTime()) / DAY_MS);
+}
+
 // Coarse "how long has this been waiting" label for the review queue.
 function timeAgo(date: Date, justNow: string) {
   const mins = Math.floor((Date.now() - date.getTime()) / 60000);
@@ -81,11 +87,9 @@ function timeAgo(date: Date, justNow: string) {
   return `${Math.floor(hrs / 24)}d`;
 }
 
-const money = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  maximumFractionDigits: 0,
-});
+// Whole-number money with grouping; the org's currency symbol is prefixed by
+// the caller (currency is a configurable symbol, not a locale currency code).
+const moneyNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 
 // Uniform metric tile: small icon (with a chevron when it links somewhere),
 // then the number and its label stacked - the vertical layout keeps long
@@ -160,6 +164,8 @@ export default async function AdminDashboardPage() {
     recentPhotos,
     recentActiveProjects,
     todayJobs,
+    todaySchedule,
+    currencySymbol,
   ] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId } }),
     prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
@@ -238,6 +244,30 @@ export default async function AdminDashboardPage() {
         },
       },
     }),
+    // The actual jobs planned for today, timed ones first, so the dashboard can
+    // show a glanceable "what's on today" list, not just a count.
+    prisma.scheduledJob.findMany({
+      where: {
+        organizationId,
+        status: { not: "CANCELED" },
+        scheduledFor: {
+          gte: startOfUtcDay(new Date()),
+          lt: addUtcDays(startOfUtcDay(new Date()), 1),
+        },
+      },
+      orderBy: [{ startTime: "asc" }, { createdAt: "asc" }],
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        startTime: true,
+        endTime: true,
+        assignedTo: { select: { name: true } },
+        team: { select: { name: true } },
+        customer: { select: { name: true } },
+      },
+    }),
+    getCurrencySymbol(organizationId),
   ]);
 
   // One unified metrics grid: a headline "Total Records" hero, then the
@@ -245,6 +275,7 @@ export default async function AdminDashboardPage() {
   const dict = await getT();
   const t = dict.dashboard;
   const locale = await getLocale();
+  const fmtMoney = (n: number) => `${currencySymbol}${moneyNumber.format(n)}`;
 
   const tiles: {
     label: string;
@@ -326,14 +357,25 @@ export default async function AdminDashboardPage() {
         ) : (
           <Card>
             <CardContent className="flex flex-col divide-y divide-neutral-100 p-4 dark:divide-neutral-800">
-              {pendingQueue.map((record) => (
+              {pendingQueue.map((record) => {
+                // 3+ days waiting reads as urgent (amber icon), matching the
+                // review queue's own aging cue.
+                const stale = daysWaiting(record.createdAt) >= 3;
+                return (
                 <Link
                   key={record.id}
                   href={`/admin/records/${record.id}`}
                   className="group -mx-3 flex items-center justify-between gap-3 rounded-lg px-3 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+                    <span
+                      className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                        stale
+                          ? "bg-warning-soft text-warning-text"
+                          : "bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+                      )}
+                    >
                       <Clock3 className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
@@ -351,11 +393,60 @@ export default async function AdminDashboardPage() {
                   </span>
                   <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500 sm:hidden" />
                 </Link>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         )}
       </section>
+
+      {todaySchedule.length > 0 && (
+        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "60ms" }}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.todaySchedule}
+            </h2>
+            <Link
+              href="/admin/schedule"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              {t.viewAll}
+            </Link>
+          </div>
+          <Card>
+            <CardContent className="flex flex-col divide-y divide-neutral-100 p-4 dark:divide-neutral-800">
+              {todaySchedule.map((job) => {
+                const who = job.assignedTo?.name ?? job.team?.name ?? t.unassigned;
+                const when = job.startTime
+                  ? `${formatTime(job.startTime)}${job.endTime ? `–${formatTime(job.endTime)}` : ""}`
+                  : t.allDay;
+                return (
+                  <Link
+                    key={job.id}
+                    href="/admin/schedule"
+                    className="group -mx-3 flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  >
+                    <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
+                      <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                      {when}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
+                        {job.title}
+                      </div>
+                      <div className="truncate text-sm text-neutral-500 dark:text-neutral-400">
+                        {who}
+                        {job.customer?.name ? ` · ${job.customer.name}` : ""}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
@@ -387,7 +478,7 @@ export default async function AdminDashboardPage() {
                 </div>
                 <div className="min-w-0">
                   <div className="truncate text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-                    {money.format(payReport.grand.total)}
+                    {fmtMoney(payReport.grand.total)}
                   </div>
                   <div className="text-sm text-neutral-500 dark:text-neutral-400">{t.toPayThisMonth}</div>
                 </div>
@@ -580,7 +671,7 @@ export default async function AdminDashboardPage() {
             <CardContent>
               <BarList
                 data={payData}
-                formatValue={(v) => money.format(v)}
+                formatValue={fmtMoney}
                 emptyLabel={t.noPayMonth}
               />
             </CardContent>
