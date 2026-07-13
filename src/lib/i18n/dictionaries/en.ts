@@ -1013,6 +1013,7 @@ export const en = {
     noAccounts: "No accounts yet",
     noAccountsDesc: "Create one to get your team started.",
     administrators: "Administrators",
+    supervisors: "Supervisors",
     fieldWorkers: "Field workers",
     // Table
     statusActive: "Active",

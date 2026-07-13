@@ -1016,6 +1016,7 @@ export const es: Dictionary = {
     noAccounts: "Aún no hay cuentas",
     noAccountsDesc: "Crea una para empezar con tu equipo.",
     administrators: "Administradores",
+    supervisors: "Supervisores",
     fieldWorkers: "Trabajadores de campo",
     // Table
     statusActive: "Activo",

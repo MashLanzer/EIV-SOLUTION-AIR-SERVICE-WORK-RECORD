@@ -104,7 +104,8 @@ export default async function AdminWorkersPage({
   }
 
   const admins = users.filter((u) => u.role === "ADMIN");
-  const fieldWorkers = users.filter((u) => u.role !== "ADMIN");
+  const supervisors = users.filter((u) => u.role === "SUPERVISOR");
+  const fieldWorkers = users.filter((u) => u.role === "WORKER");
   const activeCount = users.filter((u) => u.active).length;
   const t = (await getT()).workers;
 
@@ -208,12 +209,23 @@ export default async function AdminWorkersPage({
             className="animate-fade-up"
             style={{ animationDelay: "40ms", animationFillMode: "both" }}
           />
+          {/* Only surfaced once at least one supervisor exists, so orgs that
+              don't use the role don't see an empty section. */}
+          {supervisors.length > 0 && (
+            <WorkersSection
+              title={t.supervisors}
+              workers={supervisors}
+              stats={stats}
+              className="animate-fade-up"
+              style={{ animationDelay: "80ms", animationFillMode: "both" }}
+            />
+          )}
           <WorkersSection
             title={t.fieldWorkers}
             workers={fieldWorkers}
             stats={stats}
             className="animate-fade-up"
-            style={{ animationDelay: "80ms", animationFillMode: "both" }}
+            style={{ animationDelay: "120ms", animationFillMode: "both" }}
           />
         </>
       )}
