@@ -7,6 +7,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit";
 import { generateJoinCode } from "@/lib/joinCode";
+import { planFeatureFlags } from "@/lib/billing";
 import { PLANS, PLAN_KEYS } from "@/lib/plans";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 
@@ -132,15 +133,9 @@ export async function setOrgPlanAction(orgId: string, plan: string) {
   const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { name: true } });
   if (!org) return;
 
-  const modules = PLANS[key].modules;
   await prisma.organization.update({
     where: { id: orgId },
-    data: {
-      plan: key,
-      featureInvoicing: modules.invoicing,
-      featureEstimates: modules.estimates,
-      featurePortal: modules.portal,
-    },
+    data: { plan: key, ...planFeatureFlags(key) },
   });
   await superAudit(orgId, email, "organization.plan", `Set plan to ${PLANS[key].name} for ${org.name}`);
   revalidatePath(`/super/orgs/${orgId}`);

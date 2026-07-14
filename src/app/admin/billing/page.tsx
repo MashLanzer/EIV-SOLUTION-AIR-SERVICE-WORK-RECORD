@@ -1,22 +1,38 @@
-import { Check, CreditCard, X } from "lucide-react";
+import { ArrowUpCircle, Check, CreditCard, Settings2, X } from "lucide-react";
 
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import { createBillingPortalSessionAction, createCheckoutSessionAction } from "@/actions/billing";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
+import { stripeEnabled } from "@/lib/stripe";
 import { PLANS, planLabel, planMaxUsers } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
-export default async function BillingPage() {
+export default async function BillingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ upgraded?: string; error?: string }>;
+}) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
+  const { upgraded, error } = await searchParams;
 
   const [org, userCount] = await Promise.all([
     prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { plan: true, featureInvoicing: true, featureEstimates: true, featurePortal: true },
+      select: {
+        plan: true,
+        featureInvoicing: true,
+        featureEstimates: true,
+        featurePortal: true,
+        stripeCustomerId: true,
+        subscriptionStatus: true,
+      },
     }),
     prisma.user.count({ where: { organizationId } }),
   ]);
@@ -30,9 +46,21 @@ export default async function BillingPage() {
     { label: "Customer portal", on: org?.featurePortal ?? true },
   ];
 
+  const isPro = plan === "PRO";
+  const hasCustomer = Boolean(org?.stripeCustomerId);
+  const pastDue = org?.subscriptionStatus === "past_due" || org?.subscriptionStatus === "unpaid";
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader title="Plan & billing" />
+
+      {upgraded && <Alert variant="success">You&apos;re on Pro — thanks! It may take a moment to reflect.</Alert>}
+      {error === "unconfigured" && (
+        <Alert variant="warning">Online billing isn&apos;t available yet. Please contact us.</Alert>
+      )}
+      {pastDue && (
+        <Alert variant="warning">Your last payment failed. Update your card to keep Pro.</Alert>
+      )}
 
       <Card>
         <CardContent className="flex flex-col gap-4 p-4">
@@ -94,10 +122,39 @@ export default async function BillingPage() {
       </div>
 
       <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            To change your plan, contact us. Online self-serve upgrades are coming soon.
-          </p>
+        <CardContent className="flex flex-col gap-3 p-4">
+          {!stripeEnabled ? (
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              To change your plan, contact us. Online self-serve upgrades are coming soon.
+            </p>
+          ) : hasCustomer ? (
+            <>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Manage your subscription, payment method and invoices.
+              </p>
+              <form action={createBillingPortalSessionAction}>
+                <Button type="submit" variant="outline">
+                  <Settings2 className="h-4 w-4" />
+                  Manage billing
+                </Button>
+              </form>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                Upgrade to Pro for invoicing, estimates, the customer portal and unlimited users.
+              </p>
+              <form action={createCheckoutSessionAction}>
+                <Button type="submit">
+                  <ArrowUpCircle className="h-4 w-4" />
+                  Upgrade to Pro — ${PLANS.PRO.priceMonthly}/mo
+                </Button>
+              </form>
+            </>
+          )}
+          {isPro && !hasCustomer && (
+            <p className="text-xs text-neutral-400">Your Pro plan was set manually by support.</p>
+          )}
         </CardContent>
       </Card>
     </div>

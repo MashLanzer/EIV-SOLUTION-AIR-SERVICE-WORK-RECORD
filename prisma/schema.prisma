@@ -46,8 +46,14 @@ model Organization {
   featureEstimates Boolean  @default(true)
   featurePortal    Boolean  @default(true)
   // Subscription plan. Null = legacy/grandfathered (no plan limits); set to a
-  // real plan when assigned from the console (or, later, via Stripe checkout).
+  // real plan when assigned from the console or via Stripe checkout.
   plan             Plan?
+  // Stripe billing linkage (Fase B). Null until the company starts a checkout.
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?
+  // Raw Stripe subscription status: active, trialing, past_due, canceled, …
+  subscriptionStatus   String?
+  currentPeriodEnd     DateTime?
   // When true, a work record can't be submitted without at least one photo.
   requirePhoto     Boolean  @default(false)
   // When true, a work record requires a helper name to be submitted.
