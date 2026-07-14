@@ -36,6 +36,10 @@ model Organization {
   defaultHelperPay Decimal? @db.Decimal(10, 2)
   // Currency symbol shown before money amounts (defaults to "$").
   currencySymbol   String   @default("$")
+  // Platform-level on/off switch, toggled only from the super-admin console.
+  // True = normal. False = suspended (enforcement wired in a follow-up).
+  active           Boolean  @default(true)
+  suspendedAt      DateTime?
   // When true, a work record can't be submitted without at least one photo.
   requirePhoto     Boolean  @default(false)
   // When true, a work record requires a helper name to be submitted.
