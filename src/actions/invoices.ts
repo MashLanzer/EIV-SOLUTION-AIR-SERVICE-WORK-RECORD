@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { INVOICE_STATUSES } from "@/lib/invoices";
+import { getT } from "@/lib/i18n/server";
 
 export type InvoiceFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
@@ -98,6 +99,33 @@ function itemRows(items: z.infer<typeof lineItemSchema>[]) {
   }));
 }
 
+// Create an invoice with the next per-org number. The unique (org, number)
+// constraint guards against a race; retry a few times on collision.
+async function allocateInvoice(
+  organizationId: string,
+  data: Omit<Prisma.InvoiceUncheckedCreateInput, "number" | "organizationId">
+): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const agg = await prisma.invoice.aggregate({
+      where: { organizationId },
+      _max: { number: true },
+    });
+    const number = (agg._max.number ?? 0) + 1;
+    try {
+      const created = await prisma.invoice.create({
+        data: { ...data, number, organizationId },
+        select: { id: true },
+      });
+      return created.id;
+    } catch (e) {
+      const err = e as Prisma.PrismaClientKnownRequestError;
+      if (err?.code === "P2002" && attempt < 4) continue;
+      throw e;
+    }
+  }
+  throw new Error("Could not allocate an invoice number");
+}
+
 export async function createInvoiceAction(
   _prev: InvoiceFormState,
   formData: FormData
@@ -116,44 +144,81 @@ export async function createInvoiceAction(
   const customerId = await resolveCustomerId(data.customerId, organizationId);
   const projectId = await resolveProjectId(data.projectId, organizationId);
 
-  let newId: string | null = null;
-  // Allocate the next per-org number as max()+1. The unique (org, number)
-  // constraint guards against a race; retry a few times on collision.
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const agg = await prisma.invoice.aggregate({
-      where: { organizationId },
-      _max: { number: true },
-    });
-    const number = (agg._max.number ?? 0) + 1;
-    try {
-      const created = await prisma.invoice.create({
-        data: {
-          number,
-          organizationId,
-          customerId,
-          projectId,
-          customerName: data.customerName,
-          customerAddress: data.customerAddress ?? null,
-          issueDate: utcDate(data.issueDate),
-          dueDate: data.dueDate ? utcDate(data.dueDate) : null,
-          taxRate: data.taxRate,
-          notes: data.notes ?? null,
-          createdById: session.user.id,
-          lineItems: { create: itemRows(data.items) },
-        },
-        select: { id: true },
-      });
-      newId = created.id;
-      break;
-    } catch (e) {
-      const err = e as Prisma.PrismaClientKnownRequestError;
-      if (err?.code === "P2002" && attempt < 4) continue; // number taken, retry
-      throw e;
-    }
-  }
+  const newId = await allocateInvoice(organizationId, {
+    customerId,
+    projectId,
+    customerName: data.customerName,
+    customerAddress: data.customerAddress ?? null,
+    issueDate: utcDate(data.issueDate),
+    dueDate: data.dueDate ? utcDate(data.dueDate) : null,
+    taxRate: data.taxRate,
+    notes: data.notes ?? null,
+    createdById: session.user.id,
+    lineItems: { create: itemRows(data.items) },
+  });
 
   revalidatePath("/admin/invoices");
-  redirect(newId ? `/admin/invoices/${newId}` : "/admin/invoices");
+  redirect(`/admin/invoices/${newId}`);
+}
+
+// Generate a draft invoice pre-filled from an approved work record: the
+// customer + project links, a labour line priced at the record's pay total,
+// and today's date. If the record was already invoiced, jump to that invoice
+// instead of creating a duplicate. Lands on the editor so the admin can
+// price/adjust before sending.
+export async function createInvoiceFromRecordAction(recordId: string) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  const record = await prisma.workRecord.findFirst({
+    where: { id: recordId, organizationId },
+    select: {
+      id: true,
+      jobNumber: true,
+      typeOfWork: true,
+      customerName: true,
+      customerAddress: true,
+      customerId: true,
+      projectId: true,
+      leadInstallerPay: true,
+      helperPay: true,
+    },
+  });
+  if (!record) return;
+
+  const existing = await prisma.invoice.findFirst({
+    where: { organizationId, workRecordId: record.id },
+    select: { id: true },
+    orderBy: { createdAt: "asc" },
+  });
+  if (existing) redirect(`/admin/invoices/${existing.id}/edit`);
+
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { defaultTaxRate: true },
+  });
+  const t = (await getT()).invoices;
+  const labour = Number(record.leadInstallerPay) + Number(record.helperPay ?? 0);
+  const description = t.laborLine
+    .replace("{type}", record.typeOfWork)
+    .replace("{job}", record.jobNumber);
+
+  const newId = await allocateInvoice(organizationId, {
+    customerId: record.customerId,
+    projectId: record.projectId,
+    workRecordId: record.id,
+    customerName: record.customerName,
+    customerAddress: record.customerAddress,
+    issueDate: new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00.000Z`),
+    taxRate: org?.defaultTaxRate != null ? Number(org.defaultTaxRate) : 0,
+    createdById: session.user.id,
+    lineItems: {
+      create: [{ description, quantity: 1, unitPrice: labour, position: 0 }],
+    },
+  });
+
+  revalidatePath("/admin/invoices");
+  redirect(`/admin/invoices/${newId}/edit`);
 }
 
 export async function updateInvoiceAction(

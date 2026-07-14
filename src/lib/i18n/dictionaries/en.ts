@@ -678,6 +678,9 @@ export const en = {
     delete: "Delete invoice",
     deleteConfirm: "Delete this invoice? This can't be undone.",
     lockedNote: "Paid or void invoices are read-only. Reopen to edit.",
+    laborLine: "Labor — {type} (Job {job})",
+    createInvoice: "Create invoice",
+    invoicedAs: "Invoiced: {number}",
   },
   reports: {
     title: "Pay Report",

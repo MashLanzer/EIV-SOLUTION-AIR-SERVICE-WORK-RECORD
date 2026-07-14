@@ -509,6 +509,7 @@ model WorkRecord {
   projectPhotos      Photo[]
   scheduledJob       ScheduledJob?
   reviewEvents       RecordReviewEvent[]
+  invoices           Invoice[]
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
@@ -591,6 +592,10 @@ model Invoice {
   customer        Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   projectId       String?
   project         Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  // Optional source work record when the invoice was generated from one, so
+  // the record can show it's been billed and we avoid double-invoicing.
+  workRecordId    String?
+  workRecord      WorkRecord?   @relation(fields: [workRecordId], references: [id], onDelete: SetNull)
   status          InvoiceStatus @default(DRAFT)
   issueDate       DateTime      @db.Date
   dueDate         DateTime?     @db.Date
@@ -614,6 +619,7 @@ model Invoice {
   @@index([status])
   @@index([customerId])
   @@index([projectId])
+  @@index([workRecordId])
 }
 
 model InvoiceLineItem {

@@ -673,6 +673,9 @@ export const es: Dictionary = {
     delete: "Eliminar factura",
     deleteConfirm: "¿Eliminar esta factura? No se puede deshacer.",
     lockedNote: "Las facturas pagadas o anuladas son de solo lectura. Reábrela para editar.",
+    laborLine: "Mano de obra — {type} (Trabajo {job})",
+    createInvoice: "Crear factura",
+    invoicedAs: "Facturado: {number}",
   },
   reports: {
     title: "Reporte de pago",

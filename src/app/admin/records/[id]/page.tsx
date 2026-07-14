@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Download, Pencil } from "lucide-react";
+import { Download, Pencil, Receipt } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import { RequestChangesButton } from "@/components/records/RequestChangesButton"
 import { ReviewTimeline } from "@/components/records/ReviewTimeline";
 import { ShareReceiptButton } from "@/components/records/ShareReceiptButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
+import { createInvoiceFromRecordAction } from "@/actions/invoices";
+import { formatInvoiceNumber } from "@/lib/invoices";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
@@ -47,9 +49,17 @@ export default async function AdminReviewRecordPage({
         orderBy: { createdAt: "desc" },
         select: { id: true, action: true, note: true, actorName: true, createdAt: true },
       },
+      // The invoice generated from this record, if any (admins only act on it).
+      invoices: {
+        orderBy: { createdAt: "asc" },
+        take: 1,
+        select: { id: true, number: true },
+      },
     },
   });
   if (!record) notFound();
+  const isAdmin = session.user.role === "ADMIN";
+  const linkedInvoice = record.invoices[0] ?? null;
   const currency = await getCurrencySymbol(requireOrgId(session));
   const dict = await getT();
   const t = dict.adminRecords;
@@ -115,6 +125,25 @@ export default async function AdminReviewRecordPage({
               customerPhone={record.customer?.phone ?? null}
               customerEmail={record.customer?.email ?? null}
             />
+            {isAdmin &&
+              (linkedInvoice ? (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/admin/invoices/${linkedInvoice.id}`}>
+                    <Receipt className="h-4 w-4" />
+                    {dict.invoices.invoicedAs.replace(
+                      "{number}",
+                      formatInvoiceNumber(linkedInvoice.number)
+                    )}
+                  </Link>
+                </Button>
+              ) : (
+                <form action={createInvoiceFromRecordAction.bind(null, record.id)}>
+                  <Button type="submit" variant="outline" size="sm">
+                    <Receipt className="h-4 w-4" />
+                    {dict.invoices.createInvoice}
+                  </Button>
+                </form>
+              ))}
             <div className="ml-auto">
               <DeleteRecordButton recordId={record.id} />
             </div>
