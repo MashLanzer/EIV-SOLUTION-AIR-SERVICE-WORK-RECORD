@@ -1,5 +1,6 @@
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { ImpersonationBanner } from "@/components/super/ImpersonationBanner";
 import { getLatestActivityAt } from "@/lib/activity";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -26,6 +27,9 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-background">
+      {session.user.impersonating && (
+        <ImpersonationBanner orgName={session.user.impersonating.name} />
+      )}
       <SkipLink />
       <AdminSidebar
         name={session.user.name ?? session.user.email ?? ""}

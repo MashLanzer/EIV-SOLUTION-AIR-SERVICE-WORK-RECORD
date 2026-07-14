@@ -20,6 +20,10 @@ declare module "next-auth" {
       phone: string | null;
       storedSignature: string | null;
       avatarUrl: string | null;
+      // Set only while a platform owner is in "support mode" for a company.
+      // The org/role above are overridden to that company for the request; id
+      // and email stay the real owner's.
+      impersonating?: { orgId: string; name: string } | null;
     } & DefaultSession["user"];
   }
 }

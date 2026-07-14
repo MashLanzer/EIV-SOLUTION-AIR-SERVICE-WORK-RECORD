@@ -2,10 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Building2, ClipboardList, DollarSign, FolderKanban, Receipt, Users } from "lucide-react";
 
+import { LogIn } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
 import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
+import { enterOrgAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgDetail } from "@/lib/platform";
 
@@ -45,13 +49,21 @@ export default async function SuperOrgDetailPage({
           <ArrowLeft className="h-4 w-4" />
           Companies
         </Link>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{org.name}</h1>
-          {org.active ? (
-            <Badge variant="success">Active</Badge>
-          ) : (
-            <Badge variant="destructive">Suspended</Badge>
-          )}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{org.name}</h1>
+            {org.active ? (
+              <Badge variant="success">Active</Badge>
+            ) : (
+              <Badge variant="destructive">Suspended</Badge>
+            )}
+          </div>
+          <form action={enterOrgAction.bind(null, org.id)}>
+            <Button type="submit" size="sm" variant="outline">
+              <LogIn className="h-4 w-4" />
+              Enter as support
+            </Button>
+          </form>
         </div>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           /{org.slug} · created {dateFmt.format(org.createdAt)}
