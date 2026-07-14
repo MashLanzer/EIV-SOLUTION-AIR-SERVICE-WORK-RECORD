@@ -22,8 +22,14 @@ declare module "next-auth" {
       avatarUrl: string | null;
       // Set only while a platform owner is in "support mode" for a company.
       // The org/role above are overridden to that company for the request; id
-      // and email stay the real owner's.
-      impersonating?: { orgId: string; name: string } | null;
+      // and email stay the real owner's. readOnly maps to supervisor-level
+      // access; expiresAt is an ISO string for the banner countdown.
+      impersonating?: {
+        orgId: string;
+        name: string;
+        readOnly: boolean;
+        expiresAt: string;
+      } | null;
     } & DefaultSession["user"];
   }
 }

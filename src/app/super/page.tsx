@@ -1,16 +1,23 @@
 import Link from "next/link";
-import { Building2, ClipboardList, Receipt, TrendingUp, Users } from "lucide-react";
+import { Building2, ClipboardList, Eye, LifeBuoy, Receipt, TrendingUp, Users } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
+import { endSupportSessionAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgSummaries, getPlatformOverview } from "@/lib/platform";
+import { getActiveSupportSessions } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
 
 export default async function SuperOverviewPage() {
   await requireSuperAdmin();
-  const [o, orgs] = await Promise.all([getPlatformOverview(), getOrgSummaries()]);
+  const [o, orgs, support] = await Promise.all([
+    getPlatformOverview(),
+    getOrgSummaries(),
+    getActiveSupportSessions(),
+  ]);
 
   const dateFmt = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -41,6 +48,48 @@ export default async function SuperOverviewPage() {
         <StatTile icon={TrendingUp} value={`+${o.newRecords}`} label="New records (30d)" />
         <StatTile icon={Receipt} value={String(o.paidInvoices)} label="Paid invoices" />
       </div>
+
+      {support.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            <LifeBuoy className="h-4 w-4" />
+            Active support sessions ({support.length})
+          </h2>
+          <Card>
+            <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+              {support.map((s) => (
+                <div key={s.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/super/orgs/${s.organizationId}`}
+                        className="truncate font-medium text-neutral-900 hover:text-primary dark:text-neutral-100"
+                      >
+                        {s.organizationName}
+                      </Link>
+                      {s.readOnly && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                          <Eye className="h-3 w-3" />
+                          View only
+                        </span>
+                      )}
+                    </div>
+                    <span className="truncate text-xs text-neutral-400">
+                      {s.actorEmail} · until{" "}
+                      {s.expiresAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                    </span>
+                  </div>
+                  <form action={endSupportSessionAction.bind(null, s.id)}>
+                    <Button type="submit" size="sm" variant="ghost" className="text-destructive-text">
+                      End
+                    </Button>
+                  </form>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">

@@ -4,11 +4,12 @@ import type { Session } from "next-auth";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { normalizeEmailForDuplicateCheck } from "@/lib/email";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 
-// Cookie a platform owner sets to view a company in "support mode". Present
-// only during an active impersonation; absent for every normal request.
-export const IMPERSONATE_COOKIE = "impersonate_org";
+// Cookie holding the id of an active support session. Present only during an
+// active impersonation; absent for every normal request.
+export const IMPERSONATE_COOKIE = "impersonate_sid";
 
 export async function requireAuth() {
   const session = await auth();
@@ -24,8 +25,8 @@ export async function requireAuth() {
 // to before. The real user id/email are never changed, so requireSuperAdmin
 // and audit attribution still resolve to the owner.
 async function applyImpersonation(session: Session): Promise<Session> {
-  const orgId = (await cookies()).get(IMPERSONATE_COOKIE)?.value;
-  if (!orgId) return session;
+  const sid = (await cookies()).get(IMPERSONATE_COOKIE)?.value;
+  if (!sid) return session;
 
   const me = await prisma.user.findUnique({
     where: { id: session.user.id },
@@ -33,19 +34,36 @@ async function applyImpersonation(session: Session): Promise<Session> {
   });
   if (!isSuperAdminEmail(me?.email)) return session;
 
-  const org = await prisma.organization.findUnique({
-    where: { id: orgId },
-    select: { id: true, name: true },
+  const support = await prisma.impersonationSession.findUnique({
+    where: { id: sid },
+    include: { organization: { select: { id: true, name: true } } },
   });
-  if (!org) return session;
+  // Valid only if it's this owner's own session, still open, and not expired.
+  if (
+    !support ||
+    support.endedAt ||
+    support.expiresAt <= new Date() ||
+    normalizeEmailForDuplicateCheck(support.actorEmail) !==
+      normalizeEmailForDuplicateCheck(me!.email!)
+  ) {
+    return session;
+  }
 
+  const readOnly = support.mode === "READ_ONLY";
   return {
     ...session,
     user: {
       ...session.user,
-      organizationId: org.id,
-      role: "ADMIN",
-      impersonating: { orgId: org.id, name: org.name },
+      organizationId: support.organization.id,
+      // Read-only support maps to supervisor-level access (view dashboards,
+      // records and reports; management pages fail closed via requireAdmin).
+      role: readOnly ? "SUPERVISOR" : "ADMIN",
+      impersonating: {
+        orgId: support.organization.id,
+        name: support.organization.name,
+        readOnly,
+        expiresAt: support.expiresAt.toISOString(),
+      },
     },
   };
 }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Building2, ClipboardList, DollarSign, FolderKanban, Receipt, Users } from "lucide-react";
 
-import { LogIn } from "lucide-react";
+import { Eye, LogIn } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,12 +58,20 @@ export default async function SuperOrgDetailPage({
               <Badge variant="destructive">Suspended</Badge>
             )}
           </div>
-          <form action={enterOrgAction.bind(null, org.id)}>
-            <Button type="submit" size="sm" variant="outline">
-              <LogIn className="h-4 w-4" />
-              Enter as support
-            </Button>
-          </form>
+          <div className="flex items-center gap-2">
+            <form action={enterOrgAction.bind(null, org.id, "READ_ONLY")}>
+              <Button type="submit" size="sm" variant="outline">
+                <Eye className="h-4 w-4" />
+                View only
+              </Button>
+            </form>
+            <form action={enterOrgAction.bind(null, org.id, "FULL")}>
+              <Button type="submit" size="sm" variant="outline">
+                <LogIn className="h-4 w-4" />
+                Enter as support
+              </Button>
+            </form>
+          </div>
         </div>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           /{org.slug} · created {dateFmt.format(org.createdAt)}

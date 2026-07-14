@@ -1,11 +1,13 @@
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { ImpersonationBanner } from "@/components/super/ImpersonationBanner";
+import { SupportActiveNotice } from "@/components/super/SupportActiveNotice";
 import { getLatestActivityAt } from "@/lib/activity";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireReviewer } from "@/lib/session";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
+import { getActiveSupportSessionForOrg } from "@/lib/support";
 
 export default async function AdminLayout({
   children,
@@ -20,6 +22,11 @@ export default async function AdminLayout({
   // Platform owners get a discreet link to the /super console from their
   // account menu, so the hidden route is reachable inside the mobile app too.
   const isSuperAdmin = isSuperAdminEmail(session.user.email);
+  // For the company's own admins: is a platform support session open right now?
+  // (Skipped while impersonating — the owner already sees the amber banner.)
+  const supportActive = session.user.impersonating
+    ? null
+    : await getActiveSupportSessionForOrg(organizationId);
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
   const [pendingReviewCount, latestActivityAt] = await Promise.all([
@@ -32,8 +39,13 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-background">
       {session.user.impersonating && (
-        <ImpersonationBanner orgName={session.user.impersonating.name} />
+        <ImpersonationBanner
+          orgName={session.user.impersonating.name}
+          readOnly={session.user.impersonating.readOnly}
+          expiresAt={session.user.impersonating.expiresAt}
+        />
       )}
+      {supportActive && <SupportActiveNotice expiresAt={supportActive.expiresAt.toISOString()} />}
       <SkipLink />
       <AdminSidebar
         name={session.user.name ?? session.user.email ?? ""}
