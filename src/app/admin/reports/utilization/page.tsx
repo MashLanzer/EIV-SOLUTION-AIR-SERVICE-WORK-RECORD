@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Download } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -117,6 +117,13 @@ export default async function UtilizationReportPage({
     ...report.trend.map((p) => Math.max(p.plannedHours, p.loggedHours))
   );
 
+  // Excel export of exactly what's on screen (same period, grouping, date).
+  const exportParams = new URLSearchParams();
+  exportParams.set("date", dayKey(start));
+  if (period !== "week") exportParams.set("period", period);
+  if (group !== "person") exportParams.set("group", group);
+  const exportHref = `/admin/reports/utilization/export?${exportParams.toString()}`;
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -124,6 +131,16 @@ export default async function UtilizationReportPage({
         backLabel={t.title}
         title={t.utilizationTitle}
         description={t.utilizationDesc}
+        action={
+          report.rows.length > 0 ? (
+            <Button asChild variant="outline" size="sm">
+              <a href={exportHref}>
+                <Download className="h-4 w-4" />
+                {t.exportExcel}
+              </a>
+            </Button>
+          ) : undefined
+        }
       />
 
       {/* Period + grouping toggles */}

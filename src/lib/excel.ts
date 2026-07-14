@@ -1,6 +1,8 @@
 import ExcelJS from "exceljs";
 import type { WorkRecord } from "@prisma/client";
 
+import type { UtilGroup, UtilizationReport } from "@/lib/utilization";
+
 type RecordWithWorker = WorkRecord & { submittedBy?: { name: string } | null };
 
 export async function buildWorkbook(records: RecordWithWorker[], currency = "$") {
@@ -46,6 +48,52 @@ export async function buildWorkbook(records: RecordWithWorker[], currency = "$")
   const moneyFmt = `"${currency}"#,##0.00`;
   sheet.getColumn("leadInstallerPay").numFmt = moneyFmt;
   sheet.getColumn("helperPay").numFmt = moneyFmt;
+
+  return workbook.xlsx.writeBuffer();
+}
+
+// Utilization report (planned vs logged hours per person or team) as a
+// single-sheet workbook, mirroring what the on-screen table shows plus a
+// grand-total row. Percentages are stored as fractions with a % number
+// format so they sort and compute correctly in the spreadsheet.
+export async function buildUtilizationWorkbook(
+  report: UtilizationReport,
+  opts: { group: UtilGroup; noTeamLabel?: string }
+) {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Utilization");
+
+  sheet.columns = [
+    { header: opts.group === "team" ? "Team" : "Person", key: "name", width: 28 },
+    { header: "Planned Hours", key: "planned", width: 16 },
+    { header: "Logged Hours", key: "logged", width: 16 },
+    { header: "Utilization", key: "pct", width: 14 },
+  ];
+  sheet.getRow(1).font = { bold: true };
+
+  const pctOf = (planned: number, logged: number): number | null =>
+    planned > 0 ? logged / planned : null;
+
+  for (const row of report.rows) {
+    const pct = pctOf(row.plannedHours, row.loggedHours);
+    sheet.addRow({
+      name: row.name === "__none__" ? opts.noTeamLabel ?? "No team" : row.name,
+      planned: row.plannedHours,
+      logged: row.loggedHours,
+      pct: pct == null ? "—" : pct,
+    });
+  }
+
+  const totalPct = pctOf(report.totals.plannedHours, report.totals.loggedHours);
+  const totalRow = sheet.addRow({
+    name: "Grand Total",
+    planned: report.totals.plannedHours,
+    logged: report.totals.loggedHours,
+    pct: totalPct == null ? "—" : totalPct,
+  });
+  totalRow.font = { bold: true };
+
+  sheet.getColumn("pct").numFmt = "0%";
 
   return workbook.xlsx.writeBuffer();
 }
