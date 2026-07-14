@@ -1,6 +1,8 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { Star } from "lucide-react";
 
+import { ReceiptRatingForm } from "@/components/records/ReceiptRatingForm";
 import { prisma } from "@/lib/prisma";
 import { qrToSvg } from "@/lib/qr";
 import { getLocale, getT } from "@/lib/i18n/server";
@@ -156,6 +158,32 @@ export default async function ReceiptPage({
                 className="h-24 rounded-lg border border-neutral-200 bg-white object-contain p-2"
               />
             </div>
+          )}
+
+          {/* Customer satisfaction: rate once, then it's read-only. */}
+          {record.customerRating ? (
+            <div className="flex flex-col items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-5 text-center">
+              <span className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                {t.yourRating}
+              </span>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star
+                    key={n}
+                    className={
+                      n <= record.customerRating!
+                        ? "h-6 w-6 fill-amber-400 text-amber-400"
+                        : "h-6 w-6 text-neutral-300"
+                    }
+                  />
+                ))}
+              </div>
+              {record.customerFeedback && (
+                <p className="text-sm text-neutral-600">{record.customerFeedback}</p>
+              )}
+            </div>
+          ) : (
+            <ReceiptRatingForm token={token} />
           )}
 
           <div className="flex flex-col items-center gap-3 border-t border-neutral-100 pt-4">

@@ -490,6 +490,11 @@ model WorkRecord {
   installerSignature String       @db.Text
   status             RecordStatus @default(SUBMITTED)
   reviewNote         String?      @db.Text
+  // Customer satisfaction, captured from the public receipt (1-5 stars +
+  // optional comment). Null until the customer rates the visit.
+  customerRating     Int?
+  customerFeedback   String?      @db.Text
+  customerRatedAt    DateTime?
   approvedAt         DateTime?
   approvedById       String?
   approvedBy         User?        @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)

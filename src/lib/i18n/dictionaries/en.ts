@@ -589,6 +589,13 @@ export const en = {
     scanToOpen: "Scan to open",
     showQr: "QR code",
     hideQr: "Hide QR",
+    rateTitle: "How was our service?",
+    rateHint: "Tap a star to rate your visit.",
+    starAria: "{n} of 5 stars",
+    feedbackPlaceholder: "Anything you'd like us to know? (optional)",
+    submitRating: "Send feedback",
+    ratingThanks: "Thank you for your feedback!",
+    yourRating: "Your rating",
   },
   reviewQueue: {
     title: "Review queue",
@@ -929,6 +936,7 @@ export const en = {
     clear: "Clear",
     // Review page
     returnedToWorker: "Returned to worker:",
+    customerRatingLabel: "Customer rating",
     approvedByOn: "Approved by {name} on {date}.",
     approvedOn: "Approved on {date}.",
     // Approve button

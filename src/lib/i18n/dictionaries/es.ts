@@ -591,6 +591,13 @@ export const es: Dictionary = {
     scanToOpen: "Escanea para abrir",
     showQr: "Código QR",
     hideQr: "Ocultar QR",
+    rateTitle: "¿Cómo estuvo nuestro servicio?",
+    rateHint: "Toca una estrella para calificar tu visita.",
+    starAria: "{n} de 5 estrellas",
+    feedbackPlaceholder: "¿Algo que quieras comentarnos? (opcional)",
+    submitRating: "Enviar comentario",
+    ratingThanks: "¡Gracias por tu comentario!",
+    yourRating: "Tu calificación",
   },
   reviewQueue: {
     title: "Cola de revisión",
@@ -923,6 +930,7 @@ export const es: Dictionary = {
     clear: "Limpiar",
     // Review page
     returnedToWorker: "Devuelto al trabajador:",
+    customerRatingLabel: "Calificación del cliente",
     approvedByOn: "Aprobado por {name} el {date}.",
     approvedOn: "Aprobado el {date}.",
     // Approve button

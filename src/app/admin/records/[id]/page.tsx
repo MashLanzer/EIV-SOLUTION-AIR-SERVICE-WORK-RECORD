@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Download, Pencil, Receipt } from "lucide-react";
+import { Download, Pencil, Receipt, Star } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -163,6 +163,33 @@ export default async function AdminReviewRecordPage({
             .replace("{name}", record.approvedBy?.name ?? "")
             .replace("{date}", formatDateTime(record.approvedAt, locale))}
         </Alert>
+      )}
+
+      {record.customerRating && (
+        <Card>
+          <CardContent className="flex flex-wrap items-center gap-3 p-4">
+            <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.customerRatingLabel}
+            </span>
+            <span className="flex items-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Star
+                  key={n}
+                  className={
+                    n <= record.customerRating!
+                      ? "h-4 w-4 fill-amber-400 text-amber-400"
+                      : "h-4 w-4 text-neutral-300 dark:text-neutral-600"
+                  }
+                />
+              ))}
+            </span>
+            {record.customerFeedback && (
+              <span className="w-full text-sm text-neutral-600 dark:text-neutral-300">
+                “{record.customerFeedback}”
+              </span>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       <RecordDetail record={record} currency={currency} />
