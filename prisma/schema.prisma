@@ -99,6 +99,18 @@ enum SupportMode {
   READ_ONLY
 }
 
+// A platform-wide announcement banner shown to every company's admins. Only
+// the most recent active one is displayed; set/cleared from the super-admin
+// console. Global (no organizationId).
+model Announcement {
+  id        String   @id @default(cuid())
+  message   String   @db.Text
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([active, createdAt])
+}
+
 // A record of a platform owner entering "support mode" for a company. Persisted
 // (not just a cookie) so support sessions can expire server-side, be listed
 // while active, force-ended, and shown to the company's own admins.

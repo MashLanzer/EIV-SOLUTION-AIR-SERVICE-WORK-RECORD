@@ -2,13 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Building2, ClipboardList, DollarSign, FolderKanban, Receipt, Users } from "lucide-react";
 
-import { Eye, LogIn } from "lucide-react";
+import { Download, Eye, LogIn } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
 import { OrgFeatureToggles } from "@/components/super/OrgFeatureToggles";
+import { InviteAdminForm } from "@/components/super/InviteAdminForm";
 import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
 import { enterOrgAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
@@ -59,7 +60,13 @@ export default async function SuperOrgDetailPage({
               <Badge variant="destructive">Suspended</Badge>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild size="sm" variant="outline">
+              <a href={`/super/orgs/${org.id}/export`}>
+                <Download className="h-4 w-4" />
+                Export
+              </a>
+            </Button>
             <form action={enterOrgAction.bind(null, org.id, "READ_ONLY")}>
               <Button type="submit" size="sm" variant="outline">
                 <Eye className="h-4 w-4" />
@@ -112,6 +119,8 @@ export default async function SuperOrgDetailPage({
           </CardContent>
         </Card>
       </section>
+
+      <InviteAdminForm orgId={org.id} />
 
       <OrgFeatureToggles
         orgId={org.id}

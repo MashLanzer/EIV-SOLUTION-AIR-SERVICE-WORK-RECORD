@@ -4,19 +4,22 @@ import { Building2, ClipboardList, Eye, LifeBuoy, Receipt, TrendingUp, Users } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
+import { AnnouncementControls } from "@/components/super/AnnouncementControls";
 import { endSupportSessionAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgSummaries, getPlatformOverview } from "@/lib/platform";
 import { getActiveSupportSessions } from "@/lib/support";
+import { getActiveAnnouncement } from "@/lib/announcements";
 
 export const dynamic = "force-dynamic";
 
 export default async function SuperOverviewPage() {
   await requireSuperAdmin();
-  const [o, orgs, support] = await Promise.all([
+  const [o, orgs, support, announcement] = await Promise.all([
     getPlatformOverview(),
     getOrgSummaries(),
     getActiveSupportSessions(),
+    getActiveAnnouncement(),
   ]);
 
   const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -48,6 +51,8 @@ export default async function SuperOverviewPage() {
         <StatTile icon={TrendingUp} value={`+${o.newRecords}`} label="New records (30d)" />
         <StatTile icon={Receipt} value={String(o.paidInvoices)} label="Paid invoices" />
       </div>
+
+      <AnnouncementControls current={announcement?.message ?? null} />
 
       {support.length > 0 && (
         <section className="flex flex-col gap-3">

@@ -161,6 +161,74 @@ export async function regenerateJoinCodeAction(orgId: string) {
   revalidatePath(`/super/orgs/${orgId}`);
 }
 
+// Seed a company's first admin: creates an ADMIN user for the org so that when
+// that person signs in with the matching Google email they land straight in
+// the admin area (no join code, no manual promotion).
+const inviteSchema = z.object({
+  name: z.string().trim().min(1, "A name is required").max(120),
+  email: z.string().trim().toLowerCase().email("Enter a valid email"),
+});
+
+export async function inviteOrgAdminAction(
+  orgId: string,
+  _prev: SuperFormState,
+  formData: FormData
+): Promise<SuperFormState> {
+  const { email } = await requireSuperAdmin();
+  const parsed = inviteSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+
+  const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { name: true } });
+  if (!org) return { error: "Company not found." };
+
+  const existing = await prisma.user.findUnique({
+    where: { email: parsed.data.email },
+    select: { id: true },
+  });
+  if (existing) return { error: "That email already has an account." };
+
+  await prisma.user.create({
+    data: {
+      email: parsed.data.email,
+      name: parsed.data.name,
+      role: "ADMIN",
+      organizationId: orgId,
+      active: true,
+    },
+  });
+  await superAudit(orgId, email, "organization.invite_admin", `Invited admin ${parsed.data.email}`);
+  revalidatePath(`/super/orgs/${orgId}`);
+  return undefined;
+}
+
+// Set or replace the global announcement banner: deactivate any prior one and
+// create a fresh active message.
+export async function setAnnouncementAction(
+  _prev: SuperFormState,
+  formData: FormData
+): Promise<SuperFormState> {
+  await requireSuperAdmin();
+  const message = String(formData.get("message") ?? "").trim();
+  if (!message) return { error: "Enter a message." };
+  if (message.length > 400) return { error: "Message is too long (400 max)." };
+
+  await prisma.$transaction([
+    prisma.announcement.updateMany({ where: { active: true }, data: { active: false } }),
+    prisma.announcement.create({ data: { message } }),
+  ]);
+  revalidatePath("/super");
+  return undefined;
+}
+
+export async function clearAnnouncementAction() {
+  await requireSuperAdmin();
+  await prisma.announcement.updateMany({ where: { active: true }, data: { active: false } });
+  revalidatePath("/super");
+}
+
 // Hard delete cascades to every child row (users, records, invoices, …), so it
 // requires the company to be suspended first — the same "must be inactive to
 // delete" guard used for workers. Irreversible.

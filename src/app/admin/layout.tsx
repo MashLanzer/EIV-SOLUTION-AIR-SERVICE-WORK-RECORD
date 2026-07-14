@@ -2,6 +2,8 @@ import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { ImpersonationBanner } from "@/components/super/ImpersonationBanner";
 import { SupportActiveNotice } from "@/components/super/SupportActiveNotice";
+import { AnnouncementBanner } from "@/components/super/AnnouncementBanner";
+import { getActiveAnnouncement } from "@/lib/announcements";
 import { getLatestActivityAt } from "@/lib/activity";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -30,12 +32,13 @@ export default async function AdminLayout({
     : await getActiveSupportSessionForOrg(organizationId);
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
-  const [pendingReviewCount, latestActivityAt, features] = await Promise.all([
+  const [pendingReviewCount, latestActivityAt, features, announcement] = await Promise.all([
     prisma.workRecord.count({
       where: { organizationId, status: "SUBMITTED" },
     }),
     getLatestActivityAt(scope),
     getOrgFeatures(organizationId),
+    getActiveAnnouncement(),
   ]);
 
   return (
@@ -48,6 +51,7 @@ export default async function AdminLayout({
         />
       )}
       {supportActive && <SupportActiveNotice expiresAt={supportActive.expiresAt.toISOString()} />}
+      {announcement && <AnnouncementBanner id={announcement.id} message={announcement.message} />}
       <SkipLink />
       <AdminSidebar
         name={session.user.name ?? session.user.email ?? ""}
