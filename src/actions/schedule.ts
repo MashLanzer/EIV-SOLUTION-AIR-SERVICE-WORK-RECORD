@@ -240,10 +240,31 @@ export async function setJobStatusAction(jobId: string, status: string) {
   const parsed = z.enum(SCHEDULED_JOB_STATUSES).safeParse(status);
   if (!parsed.success) return;
   if (!(await canAccessJob(session, jobId, organizationId))) return;
+
+  // Only record history when the status actually changes, so repeated taps
+  // don't clutter the trail.
+  const current = await prisma.scheduledJob.findFirst({
+    where: { id: jobId, organizationId },
+    select: { status: true },
+  });
+  if (!current) return;
+
   await prisma.scheduledJob.updateMany({
     where: { id: jobId, organizationId },
     data: { status: parsed.data },
   });
+
+  if (current.status !== parsed.data) {
+    await prisma.jobStatusEvent.create({
+      data: {
+        jobId,
+        status: parsed.data,
+        actorId: session.user.id,
+        actorName: session.user.name || "—",
+      },
+    });
+  }
+
   revalidatePath(SCHEDULE_PATH);
   revalidatePath(WORKER_SCHEDULE_PATH);
 }

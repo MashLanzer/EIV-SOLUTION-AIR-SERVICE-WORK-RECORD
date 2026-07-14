@@ -6,8 +6,10 @@ import type { ScheduledJobStatus } from "@prisma/client";
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   Clock,
   ExternalLink,
+  History,
   MapPin,
   Pencil,
   PlayCircle,
@@ -22,6 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { JobStatusTimeline } from "@/components/schedule/JobStatusTimeline";
 import { ScheduleStatusBadge } from "@/components/schedule/ScheduleStatusBadge";
 import {
   ScheduleJobForm,
@@ -52,6 +55,7 @@ export interface ScheduleJobView {
   projectName: string | null;
   workRecordId: string | null;
   workRecordJobNumber: string | null;
+  statusHistory: { status: ScheduledJobStatus; actorName: string; time: string }[];
 }
 
 export function ScheduleJobCard({
@@ -215,13 +219,13 @@ export function ScheduleJobCard({
 
       {/* Actions */}
       <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-neutral-100 dark:border-neutral-800 pt-3">
-        {job.status === "SCHEDULED" && (
+        {(job.status === "SCHEDULED" || job.status === "EN_ROUTE") && (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("IN_PROGRESS")}>
             <PlayCircle className="h-3.5 w-3.5" />
             {t.markInProgress}
           </Button>
         )}
-        {(job.status === "SCHEDULED" || job.status === "IN_PROGRESS") && (
+        {(job.status === "SCHEDULED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("DONE")}>
             <CheckCircle2 className="h-3.5 w-3.5" />
             {t.markDone}
@@ -243,7 +247,7 @@ export function ScheduleJobCard({
         )}
 
         <div className="ml-auto flex items-center gap-1.5">
-          {(job.status === "SCHEDULED" || job.status === "IN_PROGRESS") && (
+          {(job.status === "SCHEDULED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
             <Button type="button" variant="ghost" size="sm" disabled={pending} onClick={() => setStatus("CANCELED")}>
               <XCircle className="h-3.5 w-3.5" />
               {t.markCanceled}
@@ -271,6 +275,19 @@ export function ScheduleJobCard({
           />
         </div>
       </div>
+
+      {job.statusHistory.length > 0 && (
+        <details className="group mt-3 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 [&::-webkit-details-marker]:hidden">
+            <History className="h-3.5 w-3.5" />
+            {t.statusHistory}
+            <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="mt-3 pl-1">
+            <JobStatusTimeline events={job.statusHistory} />
+          </div>
+        </details>
+      )}
     </div>
   );
 }

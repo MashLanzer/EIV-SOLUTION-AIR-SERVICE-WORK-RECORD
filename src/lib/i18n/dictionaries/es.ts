@@ -785,6 +785,7 @@ export const es: Dictionary = {
     statsVisits: "Visitas",
     statsPhotos: "Fotos",
     statsInvoices: "Facturas",
+    liveTitle: "Estado en vivo",
     visitsTitle: "Historial de servicio",
     visitsEmpty: "Aún no hay visitas completadas.",
     photosTitle: "Fotos",
@@ -905,6 +906,7 @@ export const es: Dictionary = {
       "Atención — este trabajador ya tiene otro trabajo que se solapa ese día. Se guardó igualmente.",
     // Statuses
     statusScheduled: "Programado",
+    statusEnRoute: "En camino",
     statusInProgress: "En curso",
     statusDone: "Hecho",
     statusCanceled: "Cancelado",
@@ -919,9 +921,11 @@ export const es: Dictionary = {
     noSkilledWorker: "Ningún trabajador activo tiene esta habilidad todavía.",
     skillMismatchBadge: "Falta habilidad",
     skillMismatchTitle: "El trabajador asignado no tiene la habilidad requerida",
+    markEnRoute: "Voy en camino",
     markInProgress: "Iniciar",
     markDone: "Marcar hecho",
     markCanceled: "Cancelar trabajo",
+    statusHistory: "Historial de estados",
     reopen: "Reabrir",
     edit: "Editar",
     // Delete

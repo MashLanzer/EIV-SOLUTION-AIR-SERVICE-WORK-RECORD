@@ -11,6 +11,7 @@ import {
   MapPin,
   Navigation,
   PlayCircle,
+  Truck,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -95,12 +96,18 @@ export function WorkerJobCard({ job }: { job: WorkerJobView }) {
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-neutral-100 dark:border-neutral-800 pt-3">
         {job.status === "SCHEDULED" && (
+          <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("EN_ROUTE")}>
+            <Truck className="h-3.5 w-3.5" />
+            {t.markEnRoute}
+          </Button>
+        )}
+        {(job.status === "SCHEDULED" || job.status === "EN_ROUTE") && (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("IN_PROGRESS")}>
             <PlayCircle className="h-3.5 w-3.5" />
             {t.markInProgress}
           </Button>
         )}
-        {(job.status === "SCHEDULED" || job.status === "IN_PROGRESS") && (
+        {(job.status === "SCHEDULED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
           <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("DONE")}>
             <CheckCircle2 className="h-3.5 w-3.5" />
             {t.markDone}

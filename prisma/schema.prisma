@@ -201,6 +201,9 @@ enum ProjectStatus {
 
 enum ScheduledJobStatus {
   SCHEDULED
+  // The crew is heading to the jobsite (live "on the way" status the customer
+  // and the office can see). Sits between SCHEDULED and IN_PROGRESS.
+  EN_ROUTE
   IN_PROGRESS
   DONE
   CANCELED
@@ -577,6 +580,7 @@ model ScheduledJob {
   workRecord     WorkRecord?        @relation(fields: [workRecordId], references: [id], onDelete: SetNull)
   createdById    String?
   createdBy      User?              @relation("CreatedJobs", fields: [createdById], references: [id], onDelete: SetNull)
+  statusEvents   JobStatusEvent[]
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
@@ -585,6 +589,22 @@ model ScheduledJob {
   @@index([teamId])
   @@index([customerId])
   @@index([projectId])
+}
+
+// Append-only trail of a scheduled job's live status changes, so the office
+// and the customer can see the timeline: scheduled → on the way → working →
+// done, with who moved it and when.
+model JobStatusEvent {
+  id        String             @id @default(cuid())
+  jobId     String
+  job       ScheduledJob       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status    ScheduledJobStatus
+  // Denormalized actor name so the trail survives a worker's account deletion.
+  actorId   String?
+  actorName String
+  createdAt DateTime           @default(now())
+
+  @@index([jobId, createdAt])
 }
 
 enum InvoiceStatus {

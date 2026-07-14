@@ -1,7 +1,7 @@
 "use client";
 
 import type { ScheduledJobStatus } from "@prisma/client";
-import { CalendarClock, CheckCircle2, PlayCircle, XCircle } from "lucide-react";
+import { CalendarClock, CheckCircle2, PlayCircle, Truck, XCircle } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { useT } from "@/components/i18n/LocaleProvider";
@@ -11,6 +11,14 @@ import { useT } from "@/components/i18n/LocaleProvider";
 // while a crew is on it, success when done, muted/destructive when called off.
 export function ScheduleStatusBadge({ status }: { status: ScheduledJobStatus }) {
   const t = useT().schedule;
+  if (status === "EN_ROUTE") {
+    return (
+      <Badge variant="warning">
+        <Truck className="h-3 w-3" />
+        {t.statusEnRoute}
+      </Badge>
+    );
+  }
   if (status === "IN_PROGRESS") {
     return (
       <Badge variant="warning">

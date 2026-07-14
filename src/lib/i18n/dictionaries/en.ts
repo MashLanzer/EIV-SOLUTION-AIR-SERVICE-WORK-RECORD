@@ -791,6 +791,7 @@ export const en = {
     statsVisits: "Visits",
     statsPhotos: "Photos",
     statsInvoices: "Invoices",
+    liveTitle: "Live status",
     visitsTitle: "Service history",
     visitsEmpty: "No completed visits yet.",
     photosTitle: "Photos",
@@ -911,6 +912,7 @@ export const en = {
       "Heads up — this worker already has an overlapping job that day. Saved anyway.",
     // Statuses
     statusScheduled: "Scheduled",
+    statusEnRoute: "On the way",
     statusInProgress: "In progress",
     statusDone: "Done",
     statusCanceled: "Canceled",
@@ -925,9 +927,11 @@ export const en = {
     noSkilledWorker: "No active worker has this skill yet.",
     skillMismatchBadge: "Skill gap",
     skillMismatchTitle: "The assigned worker doesn't have the required skill",
+    markEnRoute: "On my way",
     markInProgress: "Start",
     markDone: "Mark done",
     markCanceled: "Cancel job",
+    statusHistory: "Status history",
     reopen: "Reopen",
     edit: "Edit",
     // Delete

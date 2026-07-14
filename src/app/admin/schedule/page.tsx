@@ -278,6 +278,14 @@ export default async function SchedulePage({
   const workerHasSkill = (workerId: string, skill: string) =>
     (workerSkills[workerId] ?? []).some((s) => s.toLowerCase() === skill.toLowerCase());
 
+  // Timestamp format for the status-history trail (local clock, short date).
+  const eventTimeFmt = new Intl.DateTimeFormat(intlLocale, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
   const views: ScheduleJobView[] = jobs.map((j) => ({
     id: j.id,
     title: j.title,
@@ -300,6 +308,11 @@ export default async function SchedulePage({
     projectName: j.project?.name ?? null,
     workRecordId: j.workRecordId,
     workRecordJobNumber: j.workRecord?.jobNumber ?? null,
+    statusHistory: j.statusEvents.map((e) => ({
+      status: e.status,
+      actorName: e.actorName,
+      time: eventTimeFmt.format(e.createdAt),
+    })),
   }));
 
   const byDay = new Map<string, ScheduleJobView[]>();

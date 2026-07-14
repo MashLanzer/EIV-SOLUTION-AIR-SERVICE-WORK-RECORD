@@ -1,5 +1,7 @@
-import { CalendarDays, Camera, ClipboardList, Receipt } from "lucide-react";
+import { Activity, CalendarDays, Camera, ClipboardList, Receipt } from "lucide-react";
 
+import { JobStatusTimeline } from "@/components/schedule/JobStatusTimeline";
+import { ScheduleStatusBadge } from "@/components/schedule/ScheduleStatusBadge";
 import { prisma } from "@/lib/prisma";
 import { computeTotals, formatInvoiceNumber } from "@/lib/invoices";
 import { getLocale, getT } from "@/lib/i18n/server";
@@ -35,6 +37,21 @@ export default async function CustomerPortalPage({
           lineItems: { select: { quantity: true, unitPrice: true } },
         },
       },
+      scheduledJobs: {
+        where: { status: { not: "CANCELED" } },
+        orderBy: { scheduledFor: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          title: true,
+          scheduledFor: true,
+          status: true,
+          statusEvents: {
+            orderBy: { createdAt: "asc" },
+            select: { status: true, actorName: true, createdAt: true },
+          },
+        },
+      },
     },
   });
 
@@ -62,6 +79,13 @@ export default async function CustomerPortalPage({
     year: "numeric",
     timeZone: "UTC",
   });
+  const eventFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const liveJobs = customer.scheduledJobs;
 
   const allPhotos = customer.records.flatMap((r) => r.photos);
   const invDict = dict.invoices;
@@ -109,6 +133,38 @@ export default async function CustomerPortalPage({
             </div>
           </div>
         </div>
+
+        {/* Live status of upcoming/active visits */}
+        {liveJobs.length > 0 && (
+          <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+            <h2 className="flex items-center gap-2 border-b border-neutral-200 px-6 py-4 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+              <Activity className="h-4 w-4" />
+              {t.liveTitle}
+            </h2>
+            <ul className="divide-y divide-neutral-100">
+              {liveJobs.map((job) => (
+                <li key={job.id} className="flex flex-col gap-3 px-6 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-neutral-900">{job.title || t.jobLabel}</p>
+                      <p className="text-xs text-neutral-400 tabular-nums">{dateFmt.format(job.scheduledFor)}</p>
+                    </div>
+                    <ScheduleStatusBadge status={job.status} />
+                  </div>
+                  {job.statusEvents.length > 0 && (
+                    <JobStatusTimeline
+                      events={job.statusEvents.map((e) => ({
+                        status: e.status,
+                        actorName: e.actorName,
+                        time: eventFmt.format(e.createdAt),
+                      }))}
+                    />
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Service history */}
         <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">

@@ -127,6 +127,10 @@ const jobInclude = {
   customer: { select: { id: true, name: true, address: true } },
   project: { select: { id: true, name: true, address: true } },
   workRecord: { select: { id: true, jobNumber: true, status: true } },
+  statusEvents: {
+    orderBy: { createdAt: "asc" },
+    select: { status: true, actorName: true, createdAt: true },
+  },
 } satisfies Prisma.ScheduledJobInclude;
 
 export type ScheduledJobRow = Prisma.ScheduledJobGetPayload<{ include: typeof jobInclude }>;
