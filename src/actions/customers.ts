@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { customerSchema } from "@/lib/validations";
+import { logAudit } from "@/lib/audit";
 
 export type CustomerFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
@@ -67,6 +68,14 @@ export async function updateCustomerAction(
       : []),
   ]);
 
+  await logAudit({
+    organizationId,
+    actor: { id: session.user.id, name: session.user.name },
+    action: "customer.update",
+    entityType: "customer",
+    entityId: customerId,
+    summary: `Edited customer ${name}`,
+  });
   revalidatePath("/admin/customers");
   revalidatePath(`/admin/customers/${customerId}`);
   if (applyToExistingRecords) {
@@ -108,6 +117,14 @@ export async function mergeCustomerAction(
     prisma.customer.delete({ where: { id: sourceId } }),
   ]);
 
+  await logAudit({
+    organizationId,
+    actor: { id: session.user.id, name: session.user.name },
+    action: "customer.merge",
+    entityType: "customer",
+    entityId: targetId,
+    summary: "Merged two customers",
+  });
   revalidatePath("/admin/customers");
   redirect(`/admin/customers/${targetId}?merged=1`);
 }
@@ -115,10 +132,24 @@ export async function mergeCustomerAction(
 export async function deleteCustomerAction(customerId: string) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
+  const existing = await prisma.customer.findFirst({
+    where: { id: customerId, organizationId },
+    select: { name: true },
+  });
   // Records keep their denormalized name/address; the FK is set null.
   // deleteMany with the org filter is a no-op if the customer isn't in the
   // caller's org, so an admin can never delete another company's customer.
   await prisma.customer.deleteMany({ where: { id: customerId, organizationId } });
+  if (existing) {
+    await logAudit({
+      organizationId,
+      actor: { id: session.user.id, name: session.user.name },
+      action: "customer.delete",
+      entityType: "customer",
+      entityId: customerId,
+      summary: `Deleted customer ${existing.name}`,
+    });
+  }
   revalidatePath("/admin/customers");
   redirect("/admin/customers");
 }

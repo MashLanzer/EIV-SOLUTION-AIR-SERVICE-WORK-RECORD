@@ -618,6 +618,13 @@ export const es: Dictionary = {
     returnedAgoMany: "devuelto hace {n} días",
     returnedToday: "devuelto hoy",
   },
+  audit: {
+    title: "Registro de auditoría",
+    desc: "Cada cambio a clientes, proyectos y facturas — quién y cuándo.",
+    empty: "Aún no hay registros",
+    emptyDesc: "Los cambios de administrador aparecerán aquí a medida que ocurran.",
+    by: "por {name}",
+  },
   invoices: {
     title: "Facturas",
     newInvoice: "Nueva factura",
@@ -1206,6 +1213,7 @@ export const es: Dictionary = {
     schedule: "Agenda",
     workers: "Trabajadores",
     checklistTemplates: "Plantillas de listas",
+    audit: "Auditoría",
     newProject: "Nuevo proyecto",
     newWorker: "Nuevo trabajador",
     newTeam: "Nuevo equipo",

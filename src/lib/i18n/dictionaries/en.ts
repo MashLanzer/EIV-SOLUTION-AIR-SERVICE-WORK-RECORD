@@ -616,6 +616,13 @@ export const en = {
     returnedAgoMany: "returned {n} days ago",
     returnedToday: "returned today",
   },
+  audit: {
+    title: "Audit log",
+    desc: "Every change to customers, projects and invoices — who and when.",
+    empty: "Nothing logged yet",
+    emptyDesc: "Admin changes will appear here as they happen.",
+    by: "by {name}",
+  },
   invoices: {
     title: "Invoices",
     newInvoice: "New invoice",
@@ -1211,6 +1218,7 @@ export const en = {
     schedule: "Schedule",
     workers: "Workers",
     checklistTemplates: "Checklist templates",
+    audit: "Audit log",
     newProject: "New project",
     newWorker: "New worker",
     newTeam: "New team",

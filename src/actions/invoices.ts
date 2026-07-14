@@ -8,8 +8,13 @@ import type { InvoiceStatus, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
-import { INVOICE_STATUSES } from "@/lib/invoices";
+import { INVOICE_STATUSES, formatInvoiceNumber } from "@/lib/invoices";
+import { logAudit } from "@/lib/audit";
 import { getT } from "@/lib/i18n/server";
+
+function auditActor(session: { user: { id: string; name?: string | null } }) {
+  return { id: session.user.id, name: session.user.name };
+}
 
 export type InvoiceFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
@@ -157,6 +162,14 @@ export async function createInvoiceAction(
     lineItems: { create: itemRows(data.items) },
   });
 
+  await logAudit({
+    organizationId,
+    actor: auditActor(session),
+    action: "invoice.create",
+    entityType: "invoice",
+    entityId: newId,
+    summary: `Created an invoice for ${data.customerName}`,
+  });
   revalidatePath("/admin/invoices");
   redirect(`/admin/invoices/${newId}`);
 }
@@ -217,6 +230,14 @@ export async function createInvoiceFromRecordAction(recordId: string) {
     },
   });
 
+  await logAudit({
+    organizationId,
+    actor: auditActor(session),
+    action: "invoice.create",
+    entityType: "invoice",
+    entityId: newId,
+    summary: `Created an invoice from job ${record.jobNumber}`,
+  });
   revalidatePath("/admin/invoices");
   redirect(`/admin/invoices/${newId}/edit`);
 }
@@ -280,7 +301,7 @@ export async function setInvoiceStatusAction(invoiceId: string, status: InvoiceS
 
   const owned = await prisma.invoice.findFirst({
     where: { id: invoiceId, organizationId },
-    select: { id: true },
+    select: { id: true, number: true },
   });
   if (!owned) return;
 
@@ -293,6 +314,14 @@ export async function setInvoiceStatusAction(invoiceId: string, status: InvoiceS
     },
   });
 
+  await logAudit({
+    organizationId,
+    actor: auditActor(session),
+    action: `invoice.${status.toLowerCase()}`,
+    entityType: "invoice",
+    entityId: invoiceId,
+    summary: `Set ${formatInvoiceNumber(owned.number)} to ${status}`,
+  });
   revalidatePath("/admin/invoices");
   revalidatePath(`/admin/invoices/${invoiceId}`);
 }
@@ -334,11 +363,19 @@ export async function deleteInvoiceAction(invoiceId: string) {
 
   const owned = await prisma.invoice.findFirst({
     where: { id: invoiceId, organizationId },
-    select: { id: true },
+    select: { id: true, number: true },
   });
   if (!owned) return;
 
   await prisma.invoice.delete({ where: { id: invoiceId } });
+  await logAudit({
+    organizationId,
+    actor: auditActor(session),
+    action: "invoice.delete",
+    entityType: "invoice",
+    entityId: invoiceId,
+    summary: `Deleted ${formatInvoiceNumber(owned.number)}`,
+  });
   revalidatePath("/admin/invoices");
   redirect("/admin/invoices");
 }

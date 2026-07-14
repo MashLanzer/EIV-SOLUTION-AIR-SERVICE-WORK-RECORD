@@ -14,6 +14,7 @@ import {
   BarChart3,
   FolderKanban,
   FolderPlus,
+  History,
   Images,
   Receipt,
   UserPlus,
@@ -79,6 +80,7 @@ function moreItems(n: Dictionary["nav"]): MoreItem[] {
   { href: "/admin/reports", label: n.payReport, icon: BarChart3 },
   { href: "/admin/workers", label: n.workers, icon: Users },
   { href: "/admin/checklists", label: n.checklistTemplates, icon: ListChecks },
+  { href: "/admin/audit", label: n.audit, icon: History },
   ];
 }
 

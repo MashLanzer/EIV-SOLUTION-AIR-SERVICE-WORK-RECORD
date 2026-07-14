@@ -10,6 +10,7 @@ import { requireAdmin } from "@/lib/session";
 import { geocodeAddress } from "@/lib/geocode";
 import { projectDetailPaths } from "@/lib/projectAccess";
 import { PROJECT_STATUSES, projectSchema } from "@/lib/validations";
+import { logAudit } from "@/lib/audit";
 
 export type ProjectFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
@@ -84,6 +85,14 @@ export async function createProjectAction(
     select: { id: true },
   });
 
+  await logAudit({
+    organizationId,
+    actor: { id: session.user.id, name: session.user.name },
+    action: "project.create",
+    entityType: "project",
+    entityId: project.id,
+    summary: `Created project ${name}`,
+  });
   revalidatePath("/admin/projects");
   redirect(`/admin/projects/${project.id}`);
 }
@@ -183,8 +192,22 @@ export async function retryGeocodeAction(
 export async function deleteProjectAction(projectId: string) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
+  const existing = await prisma.project.findFirst({
+    where: { id: projectId, organizationId },
+    select: { name: true },
+  });
   // Records keep their data; their projectId is nulled by the FK.
   await prisma.project.deleteMany({ where: { id: projectId, organizationId } });
+  if (existing) {
+    await logAudit({
+      organizationId,
+      actor: { id: session.user.id, name: session.user.name },
+      action: "project.delete",
+      entityType: "project",
+      entityId: projectId,
+      summary: `Deleted project ${existing.name}`,
+    });
+  }
   revalidatePath("/admin/projects");
   redirect("/admin/projects");
 }

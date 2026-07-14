@@ -80,6 +80,7 @@ model Organization {
   reviewEvents       RecordReviewEvent[]
   roleChangeEvents   RoleChangeEvent[]
   invoices           Invoice[]
+  auditEvents        AuditEvent[]
 }
 
 // The org's official skill catalog. Admin-curated so skill names stay
@@ -403,6 +404,7 @@ model User {
   roleChangesMade  RoleChangeEvent[]   @relation("RoleChangeActor")
   roleChangesGot   RoleChangeEvent[]   @relation("RoleChangeTarget")
   createdInvoices  Invoice[]           @relation("InvoiceCreatedBy")
+  auditEvents      AuditEvent[]        @relation("AuditActor")
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -638,4 +640,27 @@ model InvoiceLineItem {
   createdAt   DateTime @default(now())
 
   @@index([invoiceId])
+}
+
+// A generic, append-only audit trail of admin mutations (customers,
+// projects, invoices, settings…). Complements the record review and role
+// change logs with a single "who changed what, when" timeline. actorName is
+// denormalized so the entry survives account deletion.
+model AuditEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actorId        String?
+  actor          User?        @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorName      String
+  // Machine key like "invoice.void" or "customer.delete".
+  action         String
+  // The kind of thing changed: "customer" | "project" | "invoice" | "settings".
+  entityType     String
+  entityId       String?
+  // Human-readable one-liner shown in the log.
+  summary        String
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
 }
