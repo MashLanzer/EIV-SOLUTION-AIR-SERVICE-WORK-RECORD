@@ -604,6 +604,12 @@ export const es: Dictionary = {
     waitingOne: "{n} día en espera",
     waitingMany: "{n} días en espera",
     review: "Revisar",
+    returnedTitle: "Devueltos — esperando correcciones",
+    returnedCountOne: "{n} registro devuelto",
+    returnedCountMany: "{n} registros devueltos",
+    returnedAgoOne: "devuelto hace {n} día",
+    returnedAgoMany: "devuelto hace {n} días",
+    returnedToday: "devuelto hoy",
   },
   reports: {
     title: "Reporte de pago",

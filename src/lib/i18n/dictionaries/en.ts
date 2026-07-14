@@ -602,6 +602,12 @@ export const en = {
     waitingOne: "{n} day waiting",
     waitingMany: "{n} days waiting",
     review: "Review",
+    returnedTitle: "Returned — awaiting fixes",
+    returnedCountOne: "{n} returned record",
+    returnedCountMany: "{n} returned records",
+    returnedAgoOne: "returned {n} day ago",
+    returnedAgoMany: "returned {n} days ago",
+    returnedToday: "returned today",
   },
   reports: {
     title: "Pay Report",
