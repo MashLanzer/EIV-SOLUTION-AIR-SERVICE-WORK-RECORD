@@ -758,6 +758,8 @@ export const en = {
     nextMonth: "Next month",
     prevDay: "Previous day",
     nextDay: "Next day",
+    routeTitle: "Suggested route",
+    routeOpen: "Open in Maps",
     month: "Month",
     week: "Week",
     day: "Day",

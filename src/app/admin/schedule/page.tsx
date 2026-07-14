@@ -6,6 +6,8 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Navigation,
+  Route,
   TriangleAlert,
 } from "lucide-react";
 
@@ -29,6 +31,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { getWeather, type WeatherDay } from "@/lib/weather";
+import { orderByRoute } from "@/lib/route";
 import { getT, getLocale } from "@/lib/i18n/server";
 import {
   addUtcDays,
@@ -138,6 +141,50 @@ async function getDayWeather(
   const day = weather?.days.find((d) => d.date === dayIso);
   if (!day) return null;
   return { day, placeLabel: project.name };
+}
+
+export type DayRoute = {
+  stops: { id: string; title: string; place: string; lat: number; lng: number }[];
+  mapsUrl: string;
+};
+
+// Suggested driving order for the day's geocoded jobsites: nearest-neighbour
+// from the first job, plus a Google Maps link chaining every stop. Null when
+// fewer than two of the day's jobs have a geocoded project.
+async function getDayRoute(
+  organizationId: string,
+  dayJobs: ScheduleJobView[]
+): Promise<DayRoute | null> {
+  const withProject = dayJobs.filter((j) => j.status !== "CANCELED" && j.projectId);
+  const projectIds = [...new Set(withProject.map((j) => j.projectId as string))];
+  if (projectIds.length === 0) return null;
+
+  const projects = await prisma.project.findMany({
+    where: {
+      organizationId,
+      id: { in: projectIds },
+      latitude: { not: null },
+      longitude: { not: null },
+    },
+    select: { id: true, latitude: true, longitude: true, name: true },
+  });
+  const coord = new Map(projects.map((p) => [p.id, p]));
+
+  const points = withProject
+    .map((j) => {
+      const p = coord.get(j.projectId as string);
+      return p
+        ? { id: j.id, title: j.title, place: p.name, lat: p.latitude as number, lng: p.longitude as number }
+        : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x != null);
+  if (points.length < 2) return null;
+
+  const stops = orderByRoute(points);
+  const mapsUrl = `https://www.google.com/maps/dir/${stops
+    .map((s) => `${s.lat},${s.lng}`)
+    .join("/")}`;
+  return { stops, mapsUrl };
 }
 
 export default async function SchedulePage({
@@ -284,6 +331,8 @@ export default async function SchedulePage({
   // the short forecast window (getDayWeather returns null otherwise).
   const dayWeather =
     view === "day" ? await getDayWeather(organizationId, byDay.get(selectedKey) ?? [], selectedKey) : null;
+  const dayRoute =
+    view === "day" ? await getDayRoute(organizationId, byDay.get(selectedKey) ?? []) : null;
 
   const intl = {
     month: new Intl.DateTimeFormat(intlLocale, { month: "long", year: "numeric", timeZone: "UTC" }),
@@ -387,6 +436,7 @@ export default async function SchedulePage({
           thresholdFor={thresholdFor}
           dayLabel={intl.dayLong.format(selected)}
           weather={dayWeather}
+          route={dayRoute}
           count={count}
           t={t}
         />
@@ -574,6 +624,7 @@ function DayView({
   thresholdFor,
   dayLabel,
   weather,
+  route,
   count,
   t,
 }: {
@@ -589,6 +640,7 @@ function DayView({
   thresholdFor: (id: string) => number;
   dayLabel: string;
   weather: { day: WeatherDay; placeLabel: string } | null;
+  route: DayRoute | null;
   count: (n: number) => string;
   t: SchedT;
 }) {
@@ -632,6 +684,36 @@ function DayView({
 
       {weather && (
         <ScheduleDayWeather day={weather.day} placeLabel={weather.placeLabel} />
+      )}
+
+      {route && (
+        <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              <Route className="h-4 w-4" />
+              {t.routeTitle}
+            </span>
+            <Button asChild variant="outline" size="sm">
+              <a href={route.mapsUrl} target="_blank" rel="noopener noreferrer">
+                <Navigation className="h-4 w-4" />
+                {t.routeOpen}
+              </a>
+            </Button>
+          </div>
+          <ol className="flex flex-col gap-1.5">
+            {route.stops.map((s, i) => (
+              <li key={s.id} className="flex items-center gap-2.5 text-sm">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white dark:bg-neutral-100 dark:text-neutral-900 tabular-nums">
+                  {i + 1}
+                </span>
+                <span className="min-w-0 truncate text-neutral-900 dark:text-neutral-100">
+                  {s.title}
+                  <span className="text-neutral-500 dark:text-neutral-400"> · {s.place}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
 
       {overload && (

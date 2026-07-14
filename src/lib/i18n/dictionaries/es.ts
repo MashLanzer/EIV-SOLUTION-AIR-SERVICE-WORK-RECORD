@@ -752,6 +752,8 @@ export const es: Dictionary = {
     nextMonth: "Mes siguiente",
     prevDay: "Día anterior",
     nextDay: "Día siguiente",
+    routeTitle: "Ruta sugerida",
+    routeOpen: "Abrir en Maps",
     month: "Mes",
     week: "Semana",
     day: "Día",
