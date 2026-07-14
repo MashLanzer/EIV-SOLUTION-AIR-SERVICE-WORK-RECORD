@@ -5,6 +5,7 @@ import { getLatestActivityAt } from "@/lib/activity";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireReviewer } from "@/lib/session";
+import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 
 export default async function AdminLayout({
   children,
@@ -16,6 +17,9 @@ export default async function AdminLayout({
   const session = await requireReviewer();
   const organizationId = requireOrgId(session);
   const scope = { organizationId, userId: session.user.id, isAdmin: true };
+  // Platform owners get a discreet link to the /super console from their
+  // account menu, so the hidden route is reachable inside the mobile app too.
+  const isSuperAdmin = isSuperAdminEmail(session.user.email);
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
   const [pendingReviewCount, latestActivityAt] = await Promise.all([
@@ -35,6 +39,7 @@ export default async function AdminLayout({
         name={session.user.name ?? session.user.email ?? ""}
         avatarUrl={session.user.avatarUrl ?? null}
         isSupervisor={session.user.role === "SUPERVISOR"}
+        isSuperAdmin={isSuperAdmin}
         pendingReviewCount={pendingReviewCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}
       />

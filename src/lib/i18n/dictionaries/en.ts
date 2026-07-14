@@ -30,6 +30,7 @@ export const en = {
     yourAccount: "Your account",
     profile: "Profile",
     settings: "Settings",
+    platformConsole: "Platform console",
   },
   profile: {
     title: "Profile",

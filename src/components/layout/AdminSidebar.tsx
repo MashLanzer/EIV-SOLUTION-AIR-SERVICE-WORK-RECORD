@@ -131,15 +131,18 @@ export function AdminSidebar({
   name,
   avatarUrl = null,
   isSupervisor = false,
+  isSuperAdmin = false,
   pendingReviewCount = 0,
   latestActivityAt = null,
 }: {
   name: string;
   avatarUrl?: string | null;
   isSupervisor?: boolean;
+  isSuperAdmin?: boolean;
   pendingReviewCount?: number;
   latestActivityAt?: number | null;
 }) {
+  const platformHref = isSuperAdmin ? "/super" : null;
   const pathname = usePathname();
   const t = useT();
   const forRole = (list: TabItem[]) =>
@@ -173,6 +176,7 @@ export function AdminSidebar({
               avatarUrl={avatarUrl}
               profileHref="/admin/profile"
               settingsHref="/admin/settings"
+              platformHref={platformHref}
             />
           </div>
         </div>
