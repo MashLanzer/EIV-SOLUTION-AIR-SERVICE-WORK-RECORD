@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  GripVertical,
   Navigation,
   Route,
   TriangleAlert,
@@ -21,6 +22,7 @@ import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
 import { ScheduleJobForm } from "@/components/schedule/ScheduleJobForm";
 import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
+import { WeekBoard } from "@/components/schedule/WeekBoard";
 import {
   ScheduleMonthCalendar,
   type CalendarDay,
@@ -477,7 +479,6 @@ export default async function SchedulePage({
           projects={projects}
           dayFmt={intl.day}
           weekOfFmt={intl.weekOf}
-          count={count}
           t={t}
         />
       )}
@@ -933,7 +934,6 @@ function WeekView({
   projects,
   dayFmt,
   weekOfFmt,
-  count,
   t,
 }: {
   from: Date;
@@ -946,7 +946,6 @@ function WeekView({
   projects: Opt[];
   dayFmt: Intl.DateTimeFormat;
   weekOfFmt: Intl.DateTimeFormat;
-  count: (n: number) => string;
   t: SchedT;
 }) {
   const days = Array.from({ length: 7 }, (_, i) => addUtcDays(from, i));
@@ -985,51 +984,34 @@ function WeekView({
           </CardContent>
         </Card>
       ) : (
-        days.map((d) => {
-          const key = dayKey(d);
-          const dayJobs = byDay.get(key) ?? [];
-          const isToday = key === todayKey;
-          return (
-            <section key={key} className="flex flex-col gap-2">
-              <div className="flex items-center gap-2">
-                <h2 className={"text-xs font-semibold uppercase tracking-wide " + (isToday ? "text-primary" : "text-neutral-500 dark:text-neutral-400")}>
-                  {dayFmt.format(d)}
-                </h2>
-                {isToday && (
-                  <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-text">
-                    {t.today}
-                  </span>
-                )}
-                {dayJobs.length > 0 && (
-                  <span className="text-xs tabular-nums text-neutral-400 dark:text-neutral-500">{count(dayJobs.length)}</span>
-                )}
-              </div>
-              {dayJobs.length === 0 ? (
-                <Link
-                  href={schedHref({ view: "week", date: key, worker, create: true })}
-                  className="flex items-center gap-1.5 rounded-lg border border-dashed border-neutral-200 dark:border-neutral-800 px-3 py-2 text-sm text-neutral-400 transition-colors hover:border-neutral-300 hover:text-neutral-600 dark:text-neutral-500 dark:hover:border-neutral-700 dark:hover:text-neutral-300"
-                >
-                  <CalendarPlus className="h-3.5 w-3.5" />
-                  {t.scheduleForDay}
-                </Link>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {dayJobs.map((job) => (
-                    <ScheduleJobCard
-                      key={job.id}
-                      job={job}
-                      workers={workers}
-                      teams={teams}
-                      customers={customers}
-                      projects={projects}
-                      conflict={conflictIds.has(job.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })
+        <>
+          <p className="flex items-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-500">
+            <GripVertical className="h-3.5 w-3.5" />
+            {t.dragToReschedule}
+          </p>
+          <WeekBoard
+            days={days.map((d) => {
+              const key = dayKey(d);
+              return {
+                key,
+                label: dayFmt.format(d),
+                isToday: key === todayKey,
+                createHref: schedHref({ view: "week", date: key, worker, create: true }),
+              };
+            })}
+            initialJobsByDay={Object.fromEntries(
+              days.map((d) => {
+                const key = dayKey(d);
+                return [key, byDay.get(key) ?? []];
+              })
+            )}
+            workers={workers}
+            teams={teams}
+            customers={customers}
+            projects={projects}
+            conflictIds={[...conflictIds]}
+          />
+        </>
       )}
     </>
   );

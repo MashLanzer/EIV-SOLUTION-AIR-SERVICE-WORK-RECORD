@@ -926,6 +926,10 @@ export const es: Dictionary = {
     markDone: "Marcar hecho",
     markCanceled: "Cancelar trabajo",
     statusHistory: "Historial de estados",
+    dragToReschedule: "Arrastra un trabajo a otro día para reprogramar, o a un trabajador para reasignar.",
+    reassignHint: "Suelta sobre un trabajador para reasignar",
+    unassignChip: "Sin asignar",
+    dragHandle: "Arrastra para mover",
     reopen: "Reabrir",
     edit: "Editar",
     // Delete

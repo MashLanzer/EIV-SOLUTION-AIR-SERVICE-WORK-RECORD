@@ -232,6 +232,31 @@ export async function rescheduleJobAction(jobId: string, dateStr: string) {
   revalidatePath(WORKER_SCHEDULE_PATH);
 }
 
+// Quick reassign to another worker (drag/drop). Empty string unassigns. The
+// target worker must be an active member of the caller's org, so a bad or
+// cross-tenant id can't stick a job on someone else's crew.
+export async function reassignJobAction(jobId: string, workerId: string) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  let assignedToId: string | null = null;
+  if (workerId) {
+    const worker = await prisma.user.findFirst({
+      where: { id: workerId, organizationId, active: true },
+      select: { id: true },
+    });
+    if (!worker) return;
+    assignedToId = worker.id;
+  }
+
+  await prisma.scheduledJob.updateMany({
+    where: { id: jobId, organizationId },
+    data: { assignedToId },
+  });
+  revalidatePath(SCHEDULE_PATH);
+  revalidatePath(WORKER_SCHEDULE_PATH);
+}
+
 // Status change. Admins can set any status on any job; a worker only on a job
 // assigned to them or their team (to start/finish/cancel their own visit).
 export async function setJobStatusAction(jobId: string, status: string) {
