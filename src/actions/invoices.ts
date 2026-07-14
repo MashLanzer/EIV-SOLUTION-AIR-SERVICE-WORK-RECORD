@@ -1,0 +1,248 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import type { InvoiceStatus, Prisma } from "@prisma/client";
+
+import { prisma } from "@/lib/prisma";
+import { requireOrgId } from "@/lib/orgScope";
+import { requireAdmin } from "@/lib/session";
+import { INVOICE_STATUSES } from "@/lib/invoices";
+
+export type InvoiceFormState =
+  | { error?: string; fieldErrors?: Record<string, string[]> }
+  | undefined;
+
+const lineItemSchema = z.object({
+  description: z.string().trim().min(1).max(300),
+  quantity: z.coerce.number().min(0).max(1_000_000),
+  unitPrice: z.coerce.number().min(-1_000_000).max(1_000_000),
+});
+
+const invoiceSchema = z.object({
+  customerId: z.string().trim().optional(),
+  projectId: z.string().trim().optional(),
+  customerName: z.string().trim().min(1, "Customer name is required").max(200),
+  customerAddress: z.string().trim().max(300).optional(),
+  issueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick an issue date"),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional()
+    .or(z.literal("")),
+  taxRate: z.coerce.number().min(0).max(100),
+  notes: z.string().trim().max(2000).optional(),
+  items: z.array(lineItemSchema).max(200),
+});
+
+function parseForm(formData: FormData) {
+  let items: unknown = [];
+  const raw = formData.get("items");
+  if (typeof raw === "string" && raw) {
+    try {
+      items = JSON.parse(raw);
+    } catch {
+      items = [];
+    }
+  }
+  return invoiceSchema.safeParse({
+    customerId: formData.get("customerId") || undefined,
+    projectId: formData.get("projectId") || undefined,
+    customerName: formData.get("customerName"),
+    customerAddress: formData.get("customerAddress") || undefined,
+    issueDate: formData.get("issueDate"),
+    dueDate: formData.get("dueDate") || undefined,
+    taxRate: formData.get("taxRate"),
+    notes: formData.get("notes") || undefined,
+    items,
+  });
+}
+
+function utcDate(iso: string): Date {
+  return new Date(`${iso}T00:00:00.000Z`);
+}
+
+// A saved customer must belong to the caller's org; otherwise drop the link
+// but keep the typed snapshot so cross-org ids can never attach.
+async function resolveCustomerId(
+  id: string | undefined,
+  organizationId: string
+): Promise<string | null> {
+  if (!id) return null;
+  const owned = await prisma.customer.findFirst({
+    where: { id, organizationId },
+    select: { id: true },
+  });
+  return owned ? id : null;
+}
+
+async function resolveProjectId(
+  id: string | undefined,
+  organizationId: string
+): Promise<string | null> {
+  if (!id) return null;
+  const owned = await prisma.project.findFirst({
+    where: { id, organizationId },
+    select: { id: true },
+  });
+  return owned ? id : null;
+}
+
+function itemRows(items: z.infer<typeof lineItemSchema>[]) {
+  return items.map((it, i) => ({
+    description: it.description,
+    quantity: it.quantity,
+    unitPrice: it.unitPrice,
+    position: i,
+  }));
+}
+
+export async function createInvoiceAction(
+  _prev: InvoiceFormState,
+  formData: FormData
+): Promise<InvoiceFormState> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  const parsed = parseForm(formData);
+  if (!parsed.success) {
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+  const data = parsed.data;
+  const customerId = await resolveCustomerId(data.customerId, organizationId);
+  const projectId = await resolveProjectId(data.projectId, organizationId);
+
+  let newId: string | null = null;
+  // Allocate the next per-org number as max()+1. The unique (org, number)
+  // constraint guards against a race; retry a few times on collision.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const agg = await prisma.invoice.aggregate({
+      where: { organizationId },
+      _max: { number: true },
+    });
+    const number = (agg._max.number ?? 0) + 1;
+    try {
+      const created = await prisma.invoice.create({
+        data: {
+          number,
+          organizationId,
+          customerId,
+          projectId,
+          customerName: data.customerName,
+          customerAddress: data.customerAddress ?? null,
+          issueDate: utcDate(data.issueDate),
+          dueDate: data.dueDate ? utcDate(data.dueDate) : null,
+          taxRate: data.taxRate,
+          notes: data.notes ?? null,
+          createdById: session.user.id,
+          lineItems: { create: itemRows(data.items) },
+        },
+        select: { id: true },
+      });
+      newId = created.id;
+      break;
+    } catch (e) {
+      const err = e as Prisma.PrismaClientKnownRequestError;
+      if (err?.code === "P2002" && attempt < 4) continue; // number taken, retry
+      throw e;
+    }
+  }
+
+  revalidatePath("/admin/invoices");
+  redirect(newId ? `/admin/invoices/${newId}` : "/admin/invoices");
+}
+
+export async function updateInvoiceAction(
+  invoiceId: string,
+  _prev: InvoiceFormState,
+  formData: FormData
+): Promise<InvoiceFormState> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  const owned = await prisma.invoice.findFirst({
+    where: { id: invoiceId, organizationId },
+    select: { id: true, status: true },
+  });
+  if (!owned) return { error: "Invoice not found." };
+  if (owned.status === "PAID" || owned.status === "VOID") {
+    return { error: "Paid or void invoices can't be edited. Reopen it first." };
+  }
+
+  const parsed = parseForm(formData);
+  if (!parsed.success) {
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+  const data = parsed.data;
+  const customerId = await resolveCustomerId(data.customerId, organizationId);
+  const projectId = await resolveProjectId(data.projectId, organizationId);
+
+  // Replace the line items wholesale (simplest consistent editor model).
+  await prisma.$transaction([
+    prisma.invoiceLineItem.deleteMany({ where: { invoiceId } }),
+    prisma.invoice.update({
+      where: { id: invoiceId },
+      data: {
+        customerId,
+        projectId,
+        customerName: data.customerName,
+        customerAddress: data.customerAddress ?? null,
+        issueDate: utcDate(data.issueDate),
+        dueDate: data.dueDate ? utcDate(data.dueDate) : null,
+        taxRate: data.taxRate,
+        notes: data.notes ?? null,
+        lineItems: { create: itemRows(data.items) },
+      },
+    }),
+  ]);
+
+  revalidatePath("/admin/invoices");
+  revalidatePath(`/admin/invoices/${invoiceId}`);
+  redirect(`/admin/invoices/${invoiceId}`);
+}
+
+export async function setInvoiceStatusAction(invoiceId: string, status: InvoiceStatus) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  if (!INVOICE_STATUSES.includes(status)) return;
+
+  const owned = await prisma.invoice.findFirst({
+    where: { id: invoiceId, organizationId },
+    select: { id: true },
+  });
+  if (!owned) return;
+
+  await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: {
+      status,
+      // Stamp/clear the paid time so it reflects the current status.
+      paidAt: status === "PAID" ? new Date() : null,
+    },
+  });
+
+  revalidatePath("/admin/invoices");
+  revalidatePath(`/admin/invoices/${invoiceId}`);
+}
+
+export async function deleteInvoiceAction(invoiceId: string) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+
+  const owned = await prisma.invoice.findFirst({
+    where: { id: invoiceId, organizationId },
+    select: { id: true },
+  });
+  if (!owned) return;
+
+  await prisma.invoice.delete({ where: { id: invoiceId } });
+  revalidatePath("/admin/invoices");
+  redirect("/admin/invoices");
+}

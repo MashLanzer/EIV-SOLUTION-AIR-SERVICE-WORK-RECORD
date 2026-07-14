@@ -58,6 +58,9 @@ model Organization {
   // Scheduler: a day is flagged "overloaded" for a worker when they have this
   // many jobs (or more) that day. Admin-configurable in Settings.
   scheduleOverloadThreshold Int @default(4)
+  // Default sales-tax rate (percent, e.g. 8.25) pre-filled on new invoices.
+  // Null = no default; each invoice can still set its own rate.
+  defaultTaxRate   Decimal? @db.Decimal(5, 2)
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   users     User[]
@@ -76,6 +79,7 @@ model Organization {
   orgSkills          OrgSkill[]
   reviewEvents       RecordReviewEvent[]
   roleChangeEvents   RoleChangeEvent[]
+  invoices           Invoice[]
 }
 
 // The org's official skill catalog. Admin-curated so skill names stay
@@ -218,6 +222,7 @@ model Project {
   team           Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
   records        WorkRecord[]
   scheduledJobs  ScheduledJob[]
+  invoices       Invoice[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -397,6 +402,7 @@ model User {
   reviewEvents     RecordReviewEvent[] @relation("ReviewActor")
   roleChangesMade  RoleChangeEvent[]   @relation("RoleChangeActor")
   roleChangesGot   RoleChangeEvent[]   @relation("RoleChangeTarget")
+  createdInvoices  Invoice[]           @relation("InvoiceCreatedBy")
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -436,6 +442,7 @@ model Customer {
   records        WorkRecord[]
   projects       Project[]
   scheduledJobs  ScheduledJob[]
+  invoices       Invoice[]
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -561,4 +568,63 @@ model ScheduledJob {
   @@index([teamId])
   @@index([customerId])
   @@index([projectId])
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  VOID
+}
+
+// A customer invoice: line items (labour, materials, etc.) plus a tax rate,
+// with subtotal/tax/total computed from the items. Financial record, so the
+// customer name/address are snapshotted and survive customer edits/deletes.
+model Invoice {
+  id              String        @id @default(cuid())
+  // Sequential per organization, shown as "INV-0001". Uniqueness enforced by
+  // the composite constraint below; allocation is max()+1 at create time.
+  number          Int
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId      String?
+  customer        Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  projectId       String?
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  status          InvoiceStatus @default(DRAFT)
+  issueDate       DateTime      @db.Date
+  dueDate         DateTime?     @db.Date
+  // Percent, e.g. 8.25. Stored per invoice so historical rates stay correct.
+  taxRate         Decimal       @default(0) @db.Decimal(5, 2)
+  notes           String?       @db.Text
+  // Snapshot of who's billed, independent of the live Customer row.
+  customerName    String
+  customerAddress String?
+  // Unguessable token for the public customer view (null = not shared).
+  publicToken     String?       @unique
+  paidAt          DateTime?
+  createdById     String?
+  createdBy       User?         @relation("InvoiceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  lineItems       InvoiceLineItem[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([organizationId, number])
+  @@index([organizationId])
+  @@index([status])
+  @@index([customerId])
+  @@index([projectId])
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal  @default(0) @db.Decimal(10, 2)
+  position    Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  @@index([invoiceId])
 }
