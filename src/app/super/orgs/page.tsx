@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { Building2, ChevronRight, Plus } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Building2 } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgSummaries } from "@/lib/platform";
 
@@ -22,11 +22,19 @@ export default async function SuperOrgsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Companies</h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          {orgs.length} {orgs.length === 1 ? "company" : "companies"} on the platform.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Companies</h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            {orgs.length} {orgs.length === 1 ? "company" : "companies"} on the platform.
+          </p>
+        </div>
+        <Button asChild size="sm">
+          <Link href="/super/orgs/new">
+            <Plus className="h-4 w-4" />
+            New company
+          </Link>
+        </Button>
       </div>
 
       {orgs.length === 0 ? (

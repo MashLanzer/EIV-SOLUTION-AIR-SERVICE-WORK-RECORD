@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
 import { prisma } from "@/lib/prisma";
+import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -23,12 +24,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const dbUser = await prisma.user.findUnique({
         where: { email: user.email.toLowerCase() },
+        include: { organization: { select: { active: true } } },
       });
       // A pre-approved account that's been deactivated stays blocked. An
       // unknown email is now allowed through so the person can create or join
       // a company on the onboarding screen (they get no data access until
       // they do - see the jwt callback and requireOrgId).
       if (dbUser && !dbUser.active) return false;
+      // Members of a suspended company are blocked too, except platform owners
+      // (who need to reach /super to reactivate it).
+      if (
+        dbUser?.organization &&
+        !dbUser.organization.active &&
+        !isSuperAdminEmail(user.email)
+      ) {
+        return false;
+      }
       return true;
     },
     async jwt({ token, user }) {
@@ -52,9 +63,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return token;
       }
 
-      const dbUser = await prisma.user.findUnique({ where: { email } });
+      const dbUser = await prisma.user.findUnique({
+        where: { email },
+        include: { organization: { select: { active: true } } },
+      });
       if (dbUser) {
         if (!dbUser.active) return null;
+        // A suspended company blocks its members — except platform owners, who
+        // must still reach /super to un-suspend it.
+        if (dbUser.organization && !dbUser.organization.active && !isSuperAdminEmail(email)) {
+          return null;
+        }
         token.id = dbUser.id;
         token.role = dbUser.role;
         token.name = dbUser.name;

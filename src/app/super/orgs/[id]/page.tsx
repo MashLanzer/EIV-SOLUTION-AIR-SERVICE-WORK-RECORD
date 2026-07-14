@@ -5,6 +5,7 @@ import { ArrowLeft, Building2, ClipboardList, DollarSign, FolderKanban, Receipt,
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
+import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgDetail } from "@/lib/platform";
 
@@ -90,6 +91,8 @@ export default async function SuperOrgDetailPage({
           </CardContent>
         </Card>
       </section>
+
+      <OrgLifecycleControls orgId={org.id} name={org.name} active={org.active} />
     </div>
   );
 }
