@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ChevronRight,
   CircleDollarSign,
+  Download,
   Plus,
   Receipt,
   Search,
@@ -126,6 +127,12 @@ export default async function AdminInvoicesPage({
     return true;
   });
 
+  // The CSV export mirrors the active search + status filter.
+  const exportParams = new URLSearchParams();
+  if (query) exportParams.set("q", q!.trim());
+  if (status) exportParams.set("status", status);
+  const exportQuery = exportParams.toString() ? `?${exportParams.toString()}` : "";
+
   const chipHref = (next?: InvoiceStatus) => {
     const p = new URLSearchParams();
     if (query) p.set("q", q!.trim());
@@ -148,12 +155,22 @@ export default async function AdminInvoicesPage({
       <PageHeader
         title={t.title}
         action={
-          <Button asChild>
-            <Link href="/admin/invoices/new">
-              <Plus className="h-4 w-4" />
-              {t.newInvoice}
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {invoices.length > 0 && (
+              <Button asChild variant="outline">
+                <a href={`/admin/invoices/export${exportQuery}`}>
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t.exportCsv}</span>
+                </a>
+              </Button>
+            )}
+            <Button asChild>
+              <Link href="/admin/invoices/new">
+                <Plus className="h-4 w-4" />
+                {t.newInvoice}
+              </Link>
+            </Button>
+          </div>
         }
       />
 

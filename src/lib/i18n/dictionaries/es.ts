@@ -632,6 +632,7 @@ export const es: Dictionary = {
     backToInvoices: "Facturas",
     searchPlaceholder: "Buscar por número o cliente",
     searchAria: "Buscar facturas",
+    exportCsv: "Exportar CSV",
     outstanding: "Por cobrar",
     paidThisMonth: "Cobrado este mes",
     overdueCount: "Vencidas",

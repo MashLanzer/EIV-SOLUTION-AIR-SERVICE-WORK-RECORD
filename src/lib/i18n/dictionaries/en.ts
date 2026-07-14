@@ -630,6 +630,7 @@ export const en = {
     backToInvoices: "Invoices",
     searchPlaceholder: "Search by number or customer",
     searchAria: "Search invoices",
+    exportCsv: "Export CSV",
     // Summary tiles
     outstanding: "Outstanding",
     paidThisMonth: "Paid this month",
