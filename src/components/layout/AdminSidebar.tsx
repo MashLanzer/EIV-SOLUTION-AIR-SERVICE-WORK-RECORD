@@ -12,6 +12,7 @@ import {
   Users2,
   Contact,
   BarChart3,
+  FileText,
   FolderKanban,
   FolderPlus,
   History,
@@ -40,6 +41,7 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
   { href: "/admin/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
   { href: "/admin/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: false },
   { href: "/admin/customers", label: n.customers, shortLabel: n.customers, icon: Contact, exact: false },
+  { href: "/admin/estimates", label: n.estimates, shortLabel: n.estimates, icon: FileText, exact: false },
   { href: "/admin/invoices", label: n.invoices, shortLabel: n.invoices, icon: Receipt, exact: false },
   { href: "/admin/reports", label: n.payReport, shortLabel: n.pay, icon: BarChart3, exact: false },
   { href: "/admin/workers", label: n.workers, shortLabel: n.workers, icon: Users, exact: false },
@@ -76,6 +78,7 @@ function moreItems(n: Dictionary["nav"]): MoreItem[] {
   // Records is no longer a native tab, so it lives here (and on the dashboard).
   { href: "/admin/records", label: n.records, icon: ClipboardList },
   { href: "/admin/customers", label: n.customers, icon: Contact },
+  { href: "/admin/estimates", label: n.estimates, icon: FileText },
   { href: "/admin/invoices", label: n.invoices, icon: Receipt },
   { href: "/admin/reports", label: n.payReport, icon: BarChart3 },
   { href: "/admin/workers", label: n.workers, icon: Users },
