@@ -772,6 +772,8 @@ export const en = {
     greetingEvening: "Good evening",
     needsAttention: "Needs your attention",
     reviewAll: "Review all ({n})",
+    returnedStuckOne: "{n} returned record awaiting fixes",
+    returnedStuckMany: "{n} returned records awaiting fixes",
     allCaughtUp: "All caught up",
     nothingWaiting: "No records are waiting for review.",
     waiting: "waiting {ago}",

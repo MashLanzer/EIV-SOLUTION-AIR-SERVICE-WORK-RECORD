@@ -774,6 +774,8 @@ export const es: Dictionary = {
     greetingEvening: "Buenas noches",
     needsAttention: "Necesita tu atención",
     reviewAll: "Revisar todo ({n})",
+    returnedStuckOne: "{n} registro devuelto esperando correcciones",
+    returnedStuckMany: "{n} registros devueltos esperando correcciones",
     allCaughtUp: "Todo al día",
     nothingWaiting: "No hay registros esperando revisión.",
     waiting: "esperando {ago}",

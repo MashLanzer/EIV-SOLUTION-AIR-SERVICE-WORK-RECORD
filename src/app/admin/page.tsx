@@ -121,6 +121,7 @@ export default async function AdminDashboardPage() {
     todayJobs,
     todaySchedule,
     currencySymbol,
+    returnedCount,
   ] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId } }),
     prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
@@ -223,6 +224,9 @@ export default async function AdminDashboardPage() {
       },
     }),
     getCurrencySymbol(organizationId),
+    // Records the reviewer returned that the worker hasn't resubmitted - a
+    // pipeline cue so stuck records are visible from the landing page.
+    prisma.workRecord.count({ where: { organizationId, status: "NEEDS_CHANGES" } }),
   ]);
 
   // One unified metrics grid: a headline "Total Records" hero, then the
@@ -377,6 +381,20 @@ export default async function AdminDashboardPage() {
               })}
             </CardContent>
           </Card>
+        )}
+        {returnedCount > 0 && (
+          <Link
+            href="/admin/review"
+            className="group flex items-center justify-between gap-2 rounded-lg px-1 text-sm text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            <span>
+              {(returnedCount === 1 ? t.returnedStuckOne : t.returnedStuckMany).replace(
+                "{n}",
+                String(returnedCount)
+              )}
+            </span>
+            <ArrowRight className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         )}
       </section>
 
