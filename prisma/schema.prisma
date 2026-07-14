@@ -719,9 +719,13 @@ model AuditEvent {
   entityId       String?
   // Human-readable one-liner shown in the log.
   summary        String
+  // True when performed by a platform owner (super-admin) rather than a
+  // company user — lets the platform console filter its own actions.
+  isPlatform     Boolean      @default(false)
   createdAt      DateTime     @default(now())
 
   @@index([organizationId, createdAt])
+  @@index([isPlatform, createdAt])
 }
 
 enum EstimateStatus {

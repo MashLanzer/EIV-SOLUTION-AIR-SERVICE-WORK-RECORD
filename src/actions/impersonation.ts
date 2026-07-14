@@ -39,11 +39,12 @@ export async function enterOrgAction(orgId: string, mode: Mode = "FULL") {
 
   await logAudit({
     organizationId: org.id,
-    actor: { id: "platform", name: `Platform (${email})` },
+    actor: { id: null, name: `Platform (${email})` },
     action: "organization.impersonate.enter",
     entityType: "organization",
     entityId: org.id,
     summary: `Platform owner entered support mode (${mode === "READ_ONLY" ? "read-only" : "full"})`,
+    isPlatform: true,
   });
 
   redirect("/admin");
@@ -68,11 +69,12 @@ export async function exitOrgAction() {
       });
       await logAudit({
         organizationId: support.organizationId,
-        actor: { id: "platform", name: `Platform (${email})` },
+        actor: { id: null, name: `Platform (${email})` },
         action: "organization.impersonate.exit",
         entityType: "organization",
         entityId: support.organizationId,
         summary: `Platform owner left support mode`,
+        isPlatform: true,
       });
     }
   }
@@ -96,11 +98,12 @@ export async function endSupportSessionAction(sessionId: string) {
     });
     await logAudit({
       organizationId: support.organizationId,
-      actor: { id: "platform", name: `Platform (${email})` },
+      actor: { id: null, name: `Platform (${email})` },
       action: "organization.impersonate.force_end",
       entityType: "organization",
       entityId: support.organizationId,
       summary: `Platform owner force-ended a support session`,
+      isPlatform: true,
     });
   }
   revalidatePath("/super");

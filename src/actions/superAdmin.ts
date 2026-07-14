@@ -34,11 +34,12 @@ async function superAudit(
 ) {
   await logAudit({
     organizationId,
-    actor: { id: "platform", name: `Platform (${email})` },
+    actor: { id: null, name: `Platform (${email})` },
     action,
     entityType: "organization",
     entityId: organizationId,
     summary,
+    isPlatform: true,
   });
 }
 

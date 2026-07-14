@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { Building2, LayoutDashboard, ScrollText, ShieldCheck } from "lucide-react";
 
 import { requireSuperAdmin } from "@/lib/superAdmin";
 
@@ -32,6 +32,13 @@ export default async function SuperLayout({ children }: { children: React.ReactN
               >
                 <Building2 className="h-4 w-4" />
                 Companies
+              </Link>
+              <Link
+                href="/super/audit"
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              >
+                <ScrollText className="h-4 w-4" />
+                Audit
               </Link>
             </nav>
           </div>
