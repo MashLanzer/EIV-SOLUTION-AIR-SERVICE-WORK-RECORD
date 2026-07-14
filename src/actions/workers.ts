@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { normalizeEmailForDuplicateCheck } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { planMaxUsers } from "@/lib/plans";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import {
@@ -58,6 +59,22 @@ export async function createWorkerAction(
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  // Plan user cap (legacy/null plans are unlimited). Counts current members;
+  // an at-cap company must upgrade before adding another user.
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { plan: true },
+  });
+  const cap = planMaxUsers(org?.plan ?? null);
+  if (cap !== null) {
+    const memberCount = await prisma.user.count({ where: { organizationId } });
+    if (memberCount >= cap) {
+      return {
+        error: `Your plan allows up to ${cap} users. Upgrade to add more.`,
+      };
+    }
   }
 
   const email = parsed.data.email.trim().toLowerCase();

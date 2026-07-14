@@ -1,3 +1,5 @@
+import type { Plan } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 import { computeTotals } from "@/lib/invoices";
 
@@ -29,6 +31,7 @@ export type OrgSummary = {
   slug: string;
   createdAt: Date;
   active: boolean;
+  plan: Plan | null;
   users: number;
   records: number;
   invoices: number;
@@ -43,6 +46,7 @@ export async function getOrgSummaries(): Promise<OrgSummary[]> {
       slug: true,
       createdAt: true,
       active: true,
+      plan: true,
       _count: { select: { users: true, records: true, invoices: true } },
     },
   });
@@ -52,6 +56,7 @@ export async function getOrgSummaries(): Promise<OrgSummary[]> {
     slug: o.slug,
     createdAt: o.createdAt,
     active: o.active,
+    plan: o.plan,
     users: o._count.users,
     records: o._count.records,
     invoices: o._count.invoices,
@@ -140,6 +145,7 @@ export async function getOrgDetail(id: string) {
       slug: true,
       joinCode: true,
       active: true,
+      plan: true,
       createdAt: true,
       currencySymbol: true,
       featureInvoicing: true,

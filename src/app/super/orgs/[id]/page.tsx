@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
 import { OrgFeatureToggles } from "@/components/super/OrgFeatureToggles";
+import { OrgPlanSelect } from "@/components/super/OrgPlanSelect";
 import { InviteAdminForm } from "@/components/super/InviteAdminForm";
 import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
+import { planLabel } from "@/lib/plans";
 import { enterOrgAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgDetail } from "@/lib/platform";
@@ -59,6 +61,7 @@ export default async function SuperOrgDetailPage({
             ) : (
               <Badge variant="destructive">Suspended</Badge>
             )}
+            <Badge variant="secondary">{planLabel(org.plan)}</Badge>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button asChild size="sm" variant="outline">
@@ -119,6 +122,8 @@ export default async function SuperOrgDetailPage({
           </CardContent>
         </Card>
       </section>
+
+      <OrgPlanSelect orgId={org.id} current={org.plan} />
 
       <InviteAdminForm orgId={org.id} />
 

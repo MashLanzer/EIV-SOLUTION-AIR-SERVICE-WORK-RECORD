@@ -145,6 +145,8 @@ export function AdminSidebar({
   latestActivityAt?: number | null;
 }) {
   const platformHref = isSuperAdmin ? "/super" : null;
+  // Billing is an admin-only page (supervisors are blocked by requireAdmin).
+  const billingHref = isSupervisor ? null : "/admin/billing";
   const pathname = usePathname();
   const t = useT();
   // Hrefs to hide because their module is turned off for this company.
@@ -185,6 +187,7 @@ export function AdminSidebar({
               profileHref="/admin/profile"
               settingsHref="/admin/settings"
               platformHref={platformHref}
+              billingHref={billingHref}
             />
           </div>
         </div>

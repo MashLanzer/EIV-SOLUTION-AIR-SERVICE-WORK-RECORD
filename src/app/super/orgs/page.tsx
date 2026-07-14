@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgSummaries } from "@/lib/platform";
+import { planLabel } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,9 @@ export default async function SuperOrgsPage() {
                         Suspended
                       </span>
                     )}
+                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                      {planLabel(org.plan)}
+                    </span>
                   </div>
                   <span className="text-xs text-neutral-400">
                     /{org.slug} · {dateFmt.format(org.createdAt)}

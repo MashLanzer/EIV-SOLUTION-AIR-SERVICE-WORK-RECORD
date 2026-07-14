@@ -7,6 +7,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit";
 import { generateJoinCode } from "@/lib/joinCode";
+import { PLANS, PLAN_KEYS } from "@/lib/plans";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 
 export type SuperFormState = { error?: string } | undefined;
@@ -58,7 +59,16 @@ export async function createOrgAction(
       attempt === 0 ? slugify(name) : `${slugify(name)}-${generateJoinCode(4).toLowerCase()}`;
     try {
       created = await prisma.organization.create({
-        data: { name, slug, joinCode: generateJoinCode() },
+        data: {
+          name,
+          slug,
+          joinCode: generateJoinCode(),
+          // New companies start on Free with the Free module set.
+          plan: "FREE",
+          featureInvoicing: PLANS.FREE.modules.invoicing,
+          featureEstimates: PLANS.FREE.modules.estimates,
+          featurePortal: PLANS.FREE.modules.portal,
+        },
         select: { id: true },
       });
     } catch {
@@ -108,6 +118,31 @@ export async function setOrgActiveAction(orgId: string, active: boolean) {
     active ? "organization.reactivate" : "organization.suspend",
     active ? `Reactivated company ${org.name}` : `Suspended company ${org.name}`
   );
+  revalidatePath(`/super/orgs/${orgId}`);
+  revalidatePath("/super/orgs");
+}
+
+// Assign a plan from the console: sets the plan and applies that plan's module
+// entitlements to the feature flags (super-admin can still fine-tune individual
+// modules afterward). Fase B will also drive this from Stripe webhooks.
+export async function setOrgPlanAction(orgId: string, plan: string) {
+  const { email } = await requireSuperAdmin();
+  if (!PLAN_KEYS.includes(plan as (typeof PLAN_KEYS)[number])) return;
+  const key = plan as (typeof PLAN_KEYS)[number];
+  const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { name: true } });
+  if (!org) return;
+
+  const modules = PLANS[key].modules;
+  await prisma.organization.update({
+    where: { id: orgId },
+    data: {
+      plan: key,
+      featureInvoicing: modules.invoicing,
+      featureEstimates: modules.estimates,
+      featurePortal: modules.portal,
+    },
+  });
+  await superAudit(orgId, email, "organization.plan", `Set plan to ${PLANS[key].name} for ${org.name}`);
   revalidatePath(`/super/orgs/${orgId}`);
   revalidatePath("/super/orgs");
 }

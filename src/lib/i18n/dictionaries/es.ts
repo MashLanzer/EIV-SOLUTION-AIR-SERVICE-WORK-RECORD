@@ -30,6 +30,7 @@ export const es: Dictionary = {
     yourAccount: "Tu cuenta",
     profile: "Perfil",
     settings: "Ajustes",
+    billing: "Plan y facturación",
     platformConsole: "Consola de plataforma",
   },
   profile: {

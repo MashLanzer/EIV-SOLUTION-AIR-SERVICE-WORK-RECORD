@@ -45,6 +45,9 @@ model Organization {
   featureInvoicing Boolean  @default(true)
   featureEstimates Boolean  @default(true)
   featurePortal    Boolean  @default(true)
+  // Subscription plan. Null = legacy/grandfathered (no plan limits); set to a
+  // real plan when assigned from the console (or, later, via Stripe checkout).
+  plan             Plan?
   // When true, a work record can't be submitted without at least one photo.
   requirePhoto     Boolean  @default(false)
   // When true, a work record requires a helper name to be submitted.
@@ -97,6 +100,11 @@ model Organization {
 enum SupportMode {
   FULL
   READ_ONLY
+}
+
+enum Plan {
+  FREE
+  PRO
 }
 
 // A platform-wide announcement banner shown to every company's admins. Only
