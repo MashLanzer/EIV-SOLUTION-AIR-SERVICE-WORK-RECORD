@@ -28,7 +28,13 @@ export default async function WorkerProjectsPage() {
       ...(isAdmin ? {} : { teamId: { in: teamIds ?? [] } }),
     },
     orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
-    select: { id: true, name: true, address: true, status: true },
+    select: {
+      id: true,
+      name: true,
+      address: true,
+      status: true,
+      customer: { select: { name: true } },
+    },
   });
 
   const hasTeam = isAdmin || (teamIds?.length ?? 0) > 0;
@@ -69,19 +75,22 @@ export default async function WorkerProjectsPage() {
                 </span>
                 <ProjectStatusBadge status={p.status} />
               </div>
-              <DataField
-                label={t.address}
-                value={
-                  p.address ? (
-                    <span className="flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 shrink-0" />
-                      {p.address}
-                    </span>
-                  ) : (
-                    "—"
-                  )
-                }
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <DataField label={t.customer} value={p.customer?.name ?? t.noCustomer} />
+                <DataField
+                  label={t.address}
+                  value={
+                    p.address ? (
+                      <span className="flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                        {p.address}
+                      </span>
+                    ) : (
+                      "—"
+                    )
+                  }
+                />
+              </div>
             </MobileCardRow>
           ))}
         </MobileCardList>
