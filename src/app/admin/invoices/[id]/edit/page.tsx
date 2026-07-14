@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { requireOrgId } from "@/lib/orgScope";
+import { requireFeature } from "@/lib/features";
 import { requireAdmin } from "@/lib/session";
 import { getT } from "@/lib/i18n/server";
 
@@ -20,6 +21,7 @@ export default async function EditInvoicePage({
 }) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
+  await requireFeature(organizationId, "invoicing");
   const { id } = await params;
 
   const invoice = await prisma.invoice.findFirst({

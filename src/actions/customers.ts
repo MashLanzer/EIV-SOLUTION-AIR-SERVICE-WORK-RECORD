@@ -9,6 +9,7 @@ import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { customerSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
+import { getOrgFeatures } from "@/lib/features";
 
 export type CustomerFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
@@ -161,6 +162,8 @@ export async function shareCustomerPortalAction(
 ): Promise<{ token: string } | undefined> {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
+  // Portal module must be enabled for this company.
+  if (!(await getOrgFeatures(organizationId)).portal) return undefined;
   const customer = await prisma.customer.findFirst({
     where: { id: customerId, organizationId },
     select: { portalToken: true, name: true },

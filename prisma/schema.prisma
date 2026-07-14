@@ -40,6 +40,11 @@ model Organization {
   // True = normal. False = suspended (enforcement wired in a follow-up).
   active           Boolean  @default(true)
   suspendedAt      DateTime?
+  // Per-company module toggles (feature flags), managed from the super-admin
+  // console. Default on so every existing org keeps all modules.
+  featureInvoicing Boolean  @default(true)
+  featureEstimates Boolean  @default(true)
+  featurePortal    Boolean  @default(true)
   // When true, a work record can't be submitted without at least one photo.
   requirePhoto     Boolean  @default(false)
   // When true, a work record requires a helper name to be submitted.

@@ -132,6 +132,7 @@ export function AdminSidebar({
   avatarUrl = null,
   isSupervisor = false,
   isSuperAdmin = false,
+  features,
   pendingReviewCount = 0,
   latestActivityAt = null,
 }: {
@@ -139,14 +140,21 @@ export function AdminSidebar({
   avatarUrl?: string | null;
   isSupervisor?: boolean;
   isSuperAdmin?: boolean;
+  features?: { invoicing: boolean; estimates: boolean; portal: boolean };
   pendingReviewCount?: number;
   latestActivityAt?: number | null;
 }) {
   const platformHref = isSuperAdmin ? "/super" : null;
   const pathname = usePathname();
   const t = useT();
+  // Hrefs to hide because their module is turned off for this company.
+  const disabledHrefs = new Set<string>();
+  if (features && !features.invoicing) disabledHrefs.add("/admin/invoices");
+  if (features && !features.estimates) disabledHrefs.add("/admin/estimates");
+  const byFeature = <T extends { href: string }>(list: T[]) =>
+    disabledHrefs.size ? list.filter((i) => !disabledHrefs.has(i.href)) : list;
   const forRole = (list: TabItem[]) =>
-    isSupervisor ? list.filter((item) => SUPERVISOR_HREFS.has(item.href)) : list;
+    byFeature(isSupervisor ? list.filter((item) => SUPERVISOR_HREFS.has(item.href)) : list);
   const items = forRole(navItems(t.nav)).map((item) =>
     item.href === "/admin/review" ? { ...item, badge: pendingReviewCount } : item
   );
@@ -203,7 +211,7 @@ export function AdminSidebar({
         items={appTabs}
         pathname={pathname}
         createItems={isSupervisor ? [] : createItems(t.nav)}
-        moreItems={isSupervisor ? moreItems(t.nav).filter((m) => SUPERVISOR_HREFS.has(m.href)) : moreItems(t.nav)}
+        moreItems={byFeature(isSupervisor ? moreItems(t.nav).filter((m) => SUPERVISOR_HREFS.has(m.href)) : moreItems(t.nav))}
       />
     </>
   );

@@ -34,6 +34,7 @@ import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
 import { DeleteCustomerButton } from "@/components/customers/DeleteCustomerButton";
 import { MergeCustomerForm } from "@/components/customers/MergeCustomerForm";
 import { ShareCustomerPortalButton } from "@/components/customers/ShareCustomerPortalButton";
+import { getOrgFeatures } from "@/lib/features";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
@@ -73,6 +74,7 @@ export default async function AdminCustomerPage({
 }) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
+  const { portal: portalEnabled } = await getOrgFeatures(organizationId);
   const { id } = await params;
   const { saved, merged, error, page: rawPage } = await searchParams;
   const page = parsePage(rawPage);
@@ -414,21 +416,23 @@ export default async function AdminCustomerPage({
       </section>
 
       {/* Customer portal - private, login-free link to the customer's own
-          history, photos and invoices. */}
-      <section
-        className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "150ms", animationFillMode: "both" }}
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          {dict.portal.title}
-        </h2>
-        <Card>
-          <CardContent className="flex flex-col gap-3 p-4">
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">{dict.portal.desc}</p>
-            <ShareCustomerPortalButton customerId={customer.id} initialToken={customer.portalToken} />
-          </CardContent>
-        </Card>
-      </section>
+          history, photos and invoices. Hidden when the module is off. */}
+      {portalEnabled && (
+        <section
+          className="flex animate-fade-up flex-col gap-3"
+          style={{ animationDelay: "150ms", animationFillMode: "both" }}
+        >
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {dict.portal.title}
+          </h2>
+          <Card>
+            <CardContent className="flex flex-col gap-3 p-4">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{dict.portal.desc}</p>
+              <ShareCustomerPortalButton customerId={customer.id} initialToken={customer.portalToken} />
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {/* Manage - editing collapsed by default, secondary to viewing */}
       <section

@@ -8,6 +8,7 @@ import { requireOrgId } from "@/lib/orgScope";
 import { requireReviewer } from "@/lib/session";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 import { getActiveSupportSessionForOrg } from "@/lib/support";
+import { getOrgFeatures } from "@/lib/features";
 
 export default async function AdminLayout({
   children,
@@ -29,11 +30,12 @@ export default async function AdminLayout({
     : await getActiveSupportSessionForOrg(organizationId);
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
-  const [pendingReviewCount, latestActivityAt] = await Promise.all([
+  const [pendingReviewCount, latestActivityAt, features] = await Promise.all([
     prisma.workRecord.count({
       where: { organizationId, status: "SUBMITTED" },
     }),
     getLatestActivityAt(scope),
+    getOrgFeatures(organizationId),
   ]);
 
   return (
@@ -52,6 +54,7 @@ export default async function AdminLayout({
         avatarUrl={session.user.avatarUrl ?? null}
         isSupervisor={session.user.role === "SUPERVISOR"}
         isSuperAdmin={isSuperAdmin}
+        features={features}
         pendingReviewCount={pendingReviewCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}
       />

@@ -69,6 +69,9 @@ export async function getOrgDetail(id: string) {
       active: true,
       createdAt: true,
       currencySymbol: true,
+      featureInvoicing: true,
+      featureEstimates: true,
+      featurePortal: true,
       _count: {
         select: {
           users: true,

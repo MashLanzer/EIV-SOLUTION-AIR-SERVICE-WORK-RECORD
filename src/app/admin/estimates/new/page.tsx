@@ -3,12 +3,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
+import { requireFeature } from "@/lib/features";
 import { requireAdmin } from "@/lib/session";
 import { getT } from "@/lib/i18n/server";
 
 export default async function NewEstimatePage() {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
+  await requireFeature(organizationId, "estimates");
 
   const [customers, org, currency] = await Promise.all([
     prisma.customer.findMany({

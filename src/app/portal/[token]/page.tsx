@@ -24,6 +24,7 @@ export default async function CustomerPortalPage({
           companyPhone: true,
           companyAddress: true,
           currencySymbol: true,
+          featurePortal: true,
         },
       },
       records: {
@@ -58,7 +59,9 @@ export default async function CustomerPortalPage({
   const dict = await getT();
   const t = dict.portal;
 
-  if (!customer) {
+  // If the company's portal module is turned off, the link reads as retired —
+  // same friendly not-found as an unknown/revoked token.
+  if (!customer || !customer.organization?.featurePortal) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-neutral-100 px-4 py-8">
         <div className="mx-auto max-w-sm rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-sm">

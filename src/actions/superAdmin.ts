@@ -112,6 +112,34 @@ export async function setOrgActiveAction(orgId: string, active: boolean) {
   revalidatePath("/super/orgs");
 }
 
+const FEATURE_COLUMN = {
+  invoicing: "featureInvoicing",
+  estimates: "featureEstimates",
+  portal: "featurePortal",
+} as const;
+type FeatureKey = keyof typeof FEATURE_COLUMN;
+
+// Toggle a company's module (feature flag) on or off from the console.
+export async function setOrgFeatureAction(orgId: string, feature: string, enabled: boolean) {
+  const { email } = await requireSuperAdmin();
+  if (!(feature in FEATURE_COLUMN)) return;
+  const column = FEATURE_COLUMN[feature as FeatureKey];
+  const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { name: true } });
+  if (!org) return;
+
+  await prisma.organization.update({
+    where: { id: orgId },
+    data: { [column]: enabled },
+  });
+  await superAudit(
+    orgId,
+    email,
+    "organization.feature",
+    `${enabled ? "Enabled" : "Disabled"} ${feature} for ${org.name}`
+  );
+  revalidatePath(`/super/orgs/${orgId}`);
+}
+
 export async function regenerateJoinCodeAction(orgId: string) {
   const { email } = await requireSuperAdmin();
   const org = await prisma.organization.findUnique({ where: { id: orgId }, select: { name: true } });

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
+import { OrgFeatureToggles } from "@/components/super/OrgFeatureToggles";
 import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
 import { enterOrgAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
@@ -111,6 +112,15 @@ export default async function SuperOrgDetailPage({
           </CardContent>
         </Card>
       </section>
+
+      <OrgFeatureToggles
+        orgId={org.id}
+        features={{
+          invoicing: org.featureInvoicing,
+          estimates: org.featureEstimates,
+          portal: org.featurePortal,
+        }}
+      />
 
       <OrgLifecycleControls orgId={org.id} name={org.name} active={org.active} />
     </div>
