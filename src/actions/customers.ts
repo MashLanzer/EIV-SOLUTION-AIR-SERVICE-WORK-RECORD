@@ -153,3 +153,55 @@ export async function deleteCustomerAction(customerId: string) {
   revalidatePath("/admin/customers");
   redirect("/admin/customers");
 }
+
+// Generate (or reuse) the private portal link for a customer. Idempotent: if a
+// token already exists we keep it so an already-shared link never breaks.
+export async function shareCustomerPortalAction(
+  customerId: string
+): Promise<{ token: string } | undefined> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId, organizationId },
+    select: { portalToken: true, name: true },
+  });
+  if (!customer) return undefined;
+  const token =
+    customer.portalToken ??
+    `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+  await prisma.customer.update({ where: { id: customerId }, data: { portalToken: token } });
+  await logAudit({
+    organizationId,
+    actor: { id: session.user.id, name: session.user.name },
+    action: "customer.portal.share",
+    entityType: "customer",
+    entityId: customerId,
+    summary: `Enabled portal link for ${customer.name}`,
+  });
+  revalidatePath(`/admin/customers/${customerId}`);
+  return { token };
+}
+
+export async function unshareCustomerPortalAction(customerId: string): Promise<void> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const customer = await prisma.customer.findFirst({
+    where: { id: customerId, organizationId },
+    select: { name: true },
+  });
+  await prisma.customer.updateMany({
+    where: { id: customerId, organizationId },
+    data: { portalToken: null },
+  });
+  if (customer) {
+    await logAudit({
+      organizationId,
+      actor: { id: session.user.id, name: session.user.name },
+      action: "customer.portal.unshare",
+      entityType: "customer",
+      entityId: customerId,
+      summary: `Revoked portal link for ${customer.name}`,
+    });
+  }
+  revalidatePath(`/admin/customers/${customerId}`);
+}

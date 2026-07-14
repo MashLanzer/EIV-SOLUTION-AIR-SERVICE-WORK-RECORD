@@ -775,6 +775,32 @@ export const en = {
     declinedNote: "You've declined this estimate.",
     publicFooter: "Questions? Reply to the message this link came from.",
   },
+  portal: {
+    // Admin-side controls on the customer detail page
+    title: "Customer portal",
+    desc: "A private link where this customer sees their own visits, photos and invoices — no login.",
+    share: "Create portal link",
+    stopSharing: "Disable portal",
+    copyLink: "Copy link",
+    copied: "Copied",
+    shareHint: "Anyone with this link can view this customer's history.",
+    // Public portal page (light-only, no auth)
+    greeting: "Hi {name}",
+    intro: "Here's everything on file for your service with us.",
+    statsVisits: "Visits",
+    statsPhotos: "Photos",
+    statsInvoices: "Invoices",
+    visitsTitle: "Service history",
+    visitsEmpty: "No completed visits yet.",
+    photosTitle: "Photos",
+    invoicesTitle: "Invoices",
+    invoicesEmpty: "No invoices yet.",
+    viewInvoice: "View",
+    jobLabel: "Job",
+    footer: "This is your private page. Please don't share the link.",
+    notFoundTitle: "Link unavailable",
+    notFoundDesc: "This portal link is no longer active. Ask us for a fresh one.",
+  },
   reports: {
     title: "Pay Report",
     // Utilization report

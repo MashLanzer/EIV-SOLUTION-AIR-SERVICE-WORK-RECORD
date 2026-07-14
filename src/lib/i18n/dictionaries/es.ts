@@ -769,6 +769,32 @@ export const es: Dictionary = {
     declinedNote: "Has rechazado este presupuesto.",
     publicFooter: "¿Dudas? Responde al mensaje por el que recibiste este enlace.",
   },
+  portal: {
+    // Controles del lado admin en el detalle del cliente
+    title: "Portal del cliente",
+    desc: "Un enlace privado donde este cliente ve sus visitas, fotos y facturas — sin iniciar sesión.",
+    share: "Crear enlace del portal",
+    stopSharing: "Desactivar portal",
+    copyLink: "Copiar enlace",
+    copied: "Copiado",
+    shareHint: "Cualquiera con este enlace puede ver el historial de este cliente.",
+    // Página pública del portal (solo claro, sin auth)
+    greeting: "Hola {name}",
+    intro: "Aquí está todo lo que tenemos registrado de tu servicio con nosotros.",
+    statsVisits: "Visitas",
+    statsPhotos: "Fotos",
+    statsInvoices: "Facturas",
+    visitsTitle: "Historial de servicio",
+    visitsEmpty: "Aún no hay visitas completadas.",
+    photosTitle: "Fotos",
+    invoicesTitle: "Facturas",
+    invoicesEmpty: "Aún no hay facturas.",
+    viewInvoice: "Ver",
+    jobLabel: "Trabajo",
+    footer: "Esta es tu página privada. Por favor no compartas el enlace.",
+    notFoundTitle: "Enlace no disponible",
+    notFoundDesc: "Este enlace del portal ya no está activo. Pídenos uno nuevo.",
+  },
   reports: {
     title: "Reporte de pago",
     // Reporte de utilización

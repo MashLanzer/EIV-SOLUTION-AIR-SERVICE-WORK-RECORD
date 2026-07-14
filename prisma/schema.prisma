@@ -442,6 +442,11 @@ model Customer {
   address        String
   phone          String?
   email          String?
+  // Unguessable token for the private customer portal (/portal/[token]),
+  // where a customer sees their own work history, photos and invoices with
+  // no login. Null = no portal link; set when an admin shares it, cleared
+  // when they revoke it.
+  portalToken    String?       @unique
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   records        WorkRecord[]
