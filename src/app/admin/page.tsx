@@ -19,6 +19,7 @@ import {
   FolderKanban,
   Image as ImageIcon,
   Images,
+  Receipt,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -33,6 +34,7 @@ import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
+import { computeTotals } from "@/lib/invoices";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
@@ -122,6 +124,7 @@ export default async function AdminDashboardPage() {
     todaySchedule,
     currencySymbol,
     returnedCount,
+    sentInvoices,
   ] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId } }),
     prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
@@ -227,6 +230,11 @@ export default async function AdminDashboardPage() {
     // Records the reviewer returned that the worker hasn't resubmitted - a
     // pipeline cue so stuck records are visible from the landing page.
     prisma.workRecord.count({ where: { organizationId, status: "NEEDS_CHANGES" } }),
+    // Sent-but-unpaid invoices, to surface the outstanding balance as a tile.
+    prisma.invoice.findMany({
+      where: { organizationId, status: "SENT" },
+      select: { taxRate: true, lineItems: { select: { quantity: true, unitPrice: true } } },
+    }),
   ]);
 
   // One unified metrics grid: a headline "Total Records" hero, then the
@@ -237,9 +245,22 @@ export default async function AdminDashboardPage() {
   const fmtMoney = (n: number) => `${currencySymbol}${moneyNumber.format(n)}`;
   const isAdmin = session.user.role === "ADMIN";
 
+  const outstandingTotal = sentInvoices.reduce(
+    (sum, inv) =>
+      sum +
+      computeTotals(
+        inv.lineItems.map((li) => ({
+          quantity: Number(li.quantity),
+          unitPrice: Number(li.unitPrice),
+        })),
+        Number(inv.taxRate)
+      ).total,
+    0
+  );
+
   const tiles: {
     label: string;
-    value: number;
+    value: number | string;
     icon: LucideIcon;
     href?: string;
   }[] = [
@@ -251,6 +272,15 @@ export default async function AdminDashboardPage() {
     { label: t.tilePhotos, value: photoCount, icon: Images, href: "/admin/photos" },
     { label: t.tileTeams, value: teamCount, icon: Users2, href: "/admin/teams" },
   ];
+  // Money tile for admins only (invoices are an admin surface).
+  if (isAdmin) {
+    tiles.push({
+      label: t.tileOutstanding,
+      value: `${currencySymbol}${outstandingTotal.toFixed(2)}`,
+      icon: Receipt,
+      href: "/admin/invoices",
+    });
+  }
 
   // Bucket records into WEEKS_BACK weekly columns ending this week.
   const weekBuckets: { label: string; value: number }[] = Array.from(

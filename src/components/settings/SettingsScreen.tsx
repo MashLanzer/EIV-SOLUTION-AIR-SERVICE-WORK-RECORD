@@ -14,6 +14,7 @@ import {
   Lock,
   MapPin,
   PenLine,
+  Percent,
   Phone,
   ShieldCheck,
   Tag,
@@ -64,6 +65,7 @@ export interface CompanySettings {
   leadPay: string;
   helperPay: string;
   currency: string;
+  taxRate: string;
   requirePhoto: boolean;
   requireHelper: boolean;
   requireCustomerSignature: boolean;
@@ -163,6 +165,14 @@ export function SettingsScreen({
             placeholder="$"
             action={updateCompanyFieldAction.bind(null, "currency")}
             helpWhenEditing={s.company.currencyHelp}
+          />
+          <InlineEditRow
+            icon={Percent}
+            label={s.company.taxRate}
+            value={company.taxRate}
+            placeholder="0"
+            action={updateCompanyFieldAction.bind(null, "taxRate")}
+            helpWhenEditing={s.company.taxRateHelp}
           />
         </SettingsSection>
       )}

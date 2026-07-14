@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { InvoiceStatusBadge } from "@/components/invoices/InvoiceStatusBadge";
 import { InvoiceStatusControls } from "@/components/invoices/InvoiceStatusControls";
+import { ShareInvoiceButton } from "@/components/invoices/ShareInvoiceButton";
 import { DeleteInvoiceButton } from "@/components/invoices/DeleteInvoiceButton";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -232,6 +233,7 @@ export default async function InvoiceDetailPage({
             ? t.createdBy.replace("{name}", invoice.createdBy.name)
             : formatInvoiceNumber(invoice.number)}
         </h2>
+        <ShareInvoiceButton invoiceId={invoice.id} initialToken={invoice.publicToken} />
         <div>
           <DeleteInvoiceButton invoiceId={invoice.id} />
         </div>

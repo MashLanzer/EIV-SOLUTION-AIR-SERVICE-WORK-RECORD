@@ -28,6 +28,7 @@ export default async function AdminSettingsPage({
       defaultLeadPay: true,
       defaultHelperPay: true,
       currencySymbol: true,
+      defaultTaxRate: true,
       requirePhoto: true,
       requireHelper: true,
       requireCustomerSignature: true,
@@ -56,6 +57,7 @@ export default async function AdminSettingsPage({
                 helperPay:
                   org?.defaultHelperPay != null ? String(org.defaultHelperPay) : "",
                 currency: org?.currencySymbol || "$",
+                taxRate: org?.defaultTaxRate != null ? String(Number(org.defaultTaxRate)) : "",
                 requirePhoto: org?.requirePhoto ?? false,
                 requireHelper: org?.requireHelper ?? false,
                 requireCustomerSignature: org?.requireCustomerSignature ?? true,

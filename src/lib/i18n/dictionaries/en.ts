@@ -681,6 +681,13 @@ export const en = {
     laborLine: "Labor — {type} (Job {job})",
     createInvoice: "Create invoice",
     invoicedAs: "Invoiced: {number}",
+    // Sharing / public view
+    shareLink: "Share with customer",
+    stopSharing: "Stop sharing",
+    copyLink: "Copy link",
+    copied: "Copied",
+    shareHint: "Anyone with this link can view and download the invoice.",
+    publicFooter: "Thank you for your business.",
   },
   reports: {
     title: "Pay Report",
@@ -869,6 +876,7 @@ export const en = {
     tileActiveProjects: "Active Projects",
     tilePhotos: "Photos",
     tileTeams: "Teams",
+    tileOutstanding: "Outstanding",
     activeProjects: "Active projects",
     viewAll: "View all",
     recentPhotos: "Recent photos",
@@ -1235,6 +1243,8 @@ export const en = {
       currency: "Currency symbol",
       currencyHelp:
         "Shown before money amounts across the app and PDF (e.g. $, €, £).",
+      taxRate: "Default tax rate (%)",
+      taxRateHelp: "Pre-filled on new invoices. Each invoice can still change it. Leave blank for none.",
       logo: "Company logo",
       logoHint: "Shown on the work record PDF · PNG or JPG, up to 2 MB",
       upload: "Upload",

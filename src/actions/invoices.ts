@@ -297,6 +297,37 @@ export async function setInvoiceStatusAction(invoiceId: string, status: InvoiceS
   revalidatePath(`/admin/invoices/${invoiceId}`);
 }
 
+// Turn on the public customer link: mint an unguessable token (idempotent).
+export async function shareInvoiceAction(
+  invoiceId: string
+): Promise<{ token: string } | null> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const inv = await prisma.invoice.findFirst({
+    where: { id: invoiceId, organizationId },
+    select: { publicToken: true },
+  });
+  if (!inv) return null;
+  const token =
+    inv.publicToken ?? `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+  await prisma.invoice.update({ where: { id: invoiceId }, data: { publicToken: token } });
+  revalidatePath(`/admin/invoices/${invoiceId}`);
+  return { token };
+}
+
+// Stop sharing: clear the token so the public link 404s.
+export async function unshareInvoiceAction(invoiceId: string) {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  const inv = await prisma.invoice.findFirst({
+    where: { id: invoiceId, organizationId },
+    select: { id: true },
+  });
+  if (!inv) return;
+  await prisma.invoice.update({ where: { id: invoiceId }, data: { publicToken: null } });
+  revalidatePath(`/admin/invoices/${invoiceId}`);
+}
+
 export async function deleteInvoiceAction(invoiceId: string) {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
