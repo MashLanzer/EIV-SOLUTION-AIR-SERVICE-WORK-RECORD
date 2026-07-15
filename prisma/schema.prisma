@@ -54,6 +54,12 @@ model Organization {
   // Raw Stripe subscription status: active, trialing, past_due, canceled, …
   subscriptionStatus   String?
   currentPeriodEnd     DateTime?
+  // Stripe Connect linkage for online invoice payments: the company connects
+  // its own Standard account and customers pay invoices directly into it.
+  // Null until the company starts onboarding; chargesEnabled flips true once
+  // Stripe confirms the account can accept charges.
+  stripeConnectAccountId     String?  @unique
+  stripeConnectChargesEnabled Boolean @default(false)
   // When true, a work record can't be submitted without at least one photo.
   requirePhoto     Boolean  @default(false)
   // When true, a work record requires a helper name to be submitted.

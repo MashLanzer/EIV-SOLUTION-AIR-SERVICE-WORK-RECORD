@@ -1349,6 +1349,7 @@ export const en = {
     payReport: "Pay Report",
     pay: "Pay",
     financials: "Financials",
+    payments: "Payments",
     invoices: "Invoices",
     estimates: "Estimates",
     schedule: "Schedule",

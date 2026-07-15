@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ClipboardList,
   ClipboardCheck,
+  CreditCard,
   ListChecks,
   Users,
   Users2,
@@ -45,6 +46,7 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
   { href: "/admin/estimates", label: n.estimates, shortLabel: n.estimates, icon: FileText, exact: false },
   { href: "/admin/invoices", label: n.invoices, shortLabel: n.invoices, icon: Receipt, exact: false },
   { href: "/admin/financials", label: n.financials, shortLabel: n.financials, icon: Wallet, exact: false },
+  { href: "/admin/payments", label: n.payments, shortLabel: n.payments, icon: CreditCard, exact: false },
   { href: "/admin/reports", label: n.payReport, shortLabel: n.pay, icon: BarChart3, exact: false },
   { href: "/admin/workers", label: n.workers, shortLabel: n.workers, icon: Users, exact: false },
   ];
@@ -83,6 +85,7 @@ function moreItems(n: Dictionary["nav"]): MoreItem[] {
   { href: "/admin/estimates", label: n.estimates, icon: FileText },
   { href: "/admin/invoices", label: n.invoices, icon: Receipt },
   { href: "/admin/financials", label: n.financials, icon: Wallet },
+  { href: "/admin/payments", label: n.payments, icon: CreditCard },
   { href: "/admin/reports", label: n.payReport, icon: BarChart3 },
   { href: "/admin/workers", label: n.workers, icon: Users },
   { href: "/admin/checklists", label: n.checklistTemplates, icon: ListChecks },
@@ -157,6 +160,7 @@ export function AdminSidebar({
   if (features && !features.invoicing) {
     disabledHrefs.add("/admin/invoices");
     disabledHrefs.add("/admin/financials");
+    disabledHrefs.add("/admin/payments");
   }
   if (features && !features.estimates) disabledHrefs.add("/admin/estimates");
   const byFeature = <T extends { href: string }>(list: T[]) =>

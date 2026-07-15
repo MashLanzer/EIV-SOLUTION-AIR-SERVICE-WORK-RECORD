@@ -1344,6 +1344,7 @@ export const es: Dictionary = {
     payReport: "Reporte de pago",
     pay: "Pago",
     financials: "Finanzas",
+    payments: "Pagos",
     invoices: "Facturas",
     estimates: "Presupuestos",
     schedule: "Agenda",
