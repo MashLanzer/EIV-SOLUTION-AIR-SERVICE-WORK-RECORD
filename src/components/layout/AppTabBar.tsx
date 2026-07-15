@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { AppMenuSheet, type CreateItem, type MoreItem } from "@/components/layout/AppMenuSheet";
 import { isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { tapHaptic } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
 // A concave semicircle punched out of the bar's top-centre, so the raised FAB
@@ -75,7 +76,10 @@ export function AppTabBar({
           {/* Centre FAB, nested in the notch. Plus rotates into an × when open. */}
           <button
             type="button"
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => {
+              tapHaptic(14);
+              setMenuOpen((v) => !v);
+            }}
             aria-label={n.menu}
             aria-haspopup="dialog"
             aria-expanded={menuOpen}
@@ -108,6 +112,7 @@ function Tab({ item, active }: { item: TabItem; active: boolean }) {
       href={item.href}
       aria-label={item.label}
       aria-current={active ? "page" : undefined}
+      onClick={() => tapHaptic()}
       className="flex items-center justify-center"
     >
       <span
