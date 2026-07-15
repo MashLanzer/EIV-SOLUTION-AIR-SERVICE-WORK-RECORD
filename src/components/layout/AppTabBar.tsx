@@ -59,13 +59,13 @@ export function AppTabBar({
             className="flex h-16 items-stretch rounded-[28px] border border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-lg"
             style={{ WebkitMaskImage: NOTCH_MASK, maskImage: NOTCH_MASK }}
           >
-            <div className="flex flex-1 items-center justify-around">
+            <div className="flex flex-1 items-center justify-around pl-2">
               {left.map((item) => (
                 <Tab key={item.href} item={item} active={isTabActive(pathname, item)} />
               ))}
             </div>
             <span aria-hidden="true" className="w-16 shrink-0" />
-            <div className="flex flex-1 items-center justify-around">
+            <div className="flex flex-1 items-center justify-around pr-2">
               {right.map((item) => (
                 <Tab key={item.href} item={item} active={isTabActive(pathname, item)} />
               ))}
@@ -132,7 +132,7 @@ function Tab({ item, active }: { item: TabItem; active: boolean }) {
           style={{ gridTemplateColumns: active ? "1fr" : "0fr" }}
         >
           <span className="overflow-hidden">
-            <span className="whitespace-nowrap pl-1.5 text-xs font-semibold">
+            <span className="whitespace-nowrap pl-2.5 text-xs font-semibold">
               {item.shortLabel}
             </span>
           </span>
