@@ -817,6 +817,19 @@ export const en = {
     notFoundTitle: "Link unavailable",
     notFoundDesc: "This portal link is no longer active. Ask us for a fresh one.",
   },
+  financials: {
+    title: "Financials",
+    thisMonth: "This month",
+    allTime: "All time",
+    revenue: "Revenue (paid)",
+    labor: "Labor cost",
+    grossProfit: "Gross profit",
+    tax: "Tax collected",
+    collected: "Total collected",
+    outstanding: "Outstanding",
+    taxCollected: "Total tax",
+    note: "Revenue from paid invoices; labor cost from approved records this month.",
+  },
   reports: {
     title: "Pay Report",
     // Utilization report
@@ -1335,6 +1348,7 @@ export const en = {
     customers: "Customers",
     payReport: "Pay Report",
     pay: "Pay",
+    financials: "Financials",
     invoices: "Invoices",
     estimates: "Estimates",
     schedule: "Schedule",

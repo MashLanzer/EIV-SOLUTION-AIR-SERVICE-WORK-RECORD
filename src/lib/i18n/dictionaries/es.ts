@@ -811,6 +811,19 @@ export const es: Dictionary = {
     notFoundTitle: "Enlace no disponible",
     notFoundDesc: "Este enlace del portal ya no está activo. Pídenos uno nuevo.",
   },
+  financials: {
+    title: "Finanzas",
+    thisMonth: "Este mes",
+    allTime: "Histórico",
+    revenue: "Ingresos (cobrado)",
+    labor: "Costo de mano de obra",
+    grossProfit: "Utilidad bruta",
+    tax: "Impuesto cobrado",
+    collected: "Total cobrado",
+    outstanding: "Por cobrar",
+    taxCollected: "Impuesto total",
+    note: "Ingresos de facturas pagadas; costo de mano de obra de registros aprobados este mes.",
+  },
   reports: {
     title: "Reporte de pago",
     // Reporte de utilización
@@ -1330,6 +1343,7 @@ export const es: Dictionary = {
     customers: "Clientes",
     payReport: "Reporte de pago",
     pay: "Pago",
+    financials: "Finanzas",
     invoices: "Facturas",
     estimates: "Presupuestos",
     schedule: "Agenda",

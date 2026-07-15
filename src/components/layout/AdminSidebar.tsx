@@ -19,6 +19,7 @@ import {
   Images,
   Receipt,
   UserPlus,
+  Wallet,
 } from "lucide-react";
 
 import { ActivityBell } from "@/components/activity/ActivityBell";
@@ -43,6 +44,7 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
   { href: "/admin/customers", label: n.customers, shortLabel: n.customers, icon: Contact, exact: false },
   { href: "/admin/estimates", label: n.estimates, shortLabel: n.estimates, icon: FileText, exact: false },
   { href: "/admin/invoices", label: n.invoices, shortLabel: n.invoices, icon: Receipt, exact: false },
+  { href: "/admin/financials", label: n.financials, shortLabel: n.financials, icon: Wallet, exact: false },
   { href: "/admin/reports", label: n.payReport, shortLabel: n.pay, icon: BarChart3, exact: false },
   { href: "/admin/workers", label: n.workers, shortLabel: n.workers, icon: Users, exact: false },
   ];
@@ -80,6 +82,7 @@ function moreItems(n: Dictionary["nav"]): MoreItem[] {
   { href: "/admin/customers", label: n.customers, icon: Contact },
   { href: "/admin/estimates", label: n.estimates, icon: FileText },
   { href: "/admin/invoices", label: n.invoices, icon: Receipt },
+  { href: "/admin/financials", label: n.financials, icon: Wallet },
   { href: "/admin/reports", label: n.payReport, icon: BarChart3 },
   { href: "/admin/workers", label: n.workers, icon: Users },
   { href: "/admin/checklists", label: n.checklistTemplates, icon: ListChecks },
@@ -151,7 +154,10 @@ export function AdminSidebar({
   const t = useT();
   // Hrefs to hide because their module is turned off for this company.
   const disabledHrefs = new Set<string>();
-  if (features && !features.invoicing) disabledHrefs.add("/admin/invoices");
+  if (features && !features.invoicing) {
+    disabledHrefs.add("/admin/invoices");
+    disabledHrefs.add("/admin/financials");
+  }
   if (features && !features.estimates) disabledHrefs.add("/admin/estimates");
   const byFeature = <T extends { href: string }>(list: T[]) =>
     disabledHrefs.size ? list.filter((i) => !disabledHrefs.has(i.href)) : list;
