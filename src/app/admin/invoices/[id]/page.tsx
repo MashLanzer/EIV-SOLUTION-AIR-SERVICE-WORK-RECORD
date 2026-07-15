@@ -17,6 +17,8 @@ import {
 import { InvoiceStatusBadge } from "@/components/invoices/InvoiceStatusBadge";
 import { InvoiceStatusControls } from "@/components/invoices/InvoiceStatusControls";
 import { ShareInvoiceButton } from "@/components/invoices/ShareInvoiceButton";
+import { EmailToCustomerButton } from "@/components/shared/EmailToCustomerButton";
+import { emailInvoiceAction } from "@/actions/invoices";
 import { DeleteInvoiceButton } from "@/components/invoices/DeleteInvoiceButton";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -236,6 +238,18 @@ export default async function InvoiceDetailPage({
             : formatInvoiceNumber(invoice.number)}
         </h2>
         <ShareInvoiceButton invoiceId={invoice.id} initialToken={invoice.publicToken} />
+        <EmailToCustomerButton
+          action={emailInvoiceAction.bind(null, invoice.id)}
+          label={t.emailToCustomer}
+          sendingLabel={t.emailSending}
+          sentLabel={t.emailSent}
+          errors={{
+            no_email: t.emailNoEmail,
+            not_configured: t.emailNotConfigured,
+            not_found: t.emailError,
+            default: t.emailError,
+          }}
+        />
         <div>
           <DeleteInvoiceButton invoiceId={invoice.id} />
         </div>

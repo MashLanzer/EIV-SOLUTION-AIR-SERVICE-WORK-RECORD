@@ -25,6 +25,12 @@ export function normalizeEmailForDuplicateCheck(rawEmail: string): string {
 
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 
+// True when a real email provider is configured; the UI uses this to show a
+// clear "not set up yet" message instead of silently no-oping.
+export function emailConfigured(): boolean {
+  return Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM);
+}
+
 export function appUrl(path = ""): string {
   const base =
     process.env.NEXT_PUBLIC_APP_URL ??

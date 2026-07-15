@@ -17,6 +17,8 @@ import {
 import { EstimateStatusBadge } from "@/components/estimates/EstimateStatusBadge";
 import { EstimateStatusControls } from "@/components/estimates/EstimateStatusControls";
 import { ShareEstimateButton } from "@/components/estimates/ShareEstimateButton";
+import { EmailToCustomerButton } from "@/components/shared/EmailToCustomerButton";
+import { emailEstimateAction } from "@/actions/estimates";
 import { DeleteEstimateButton } from "@/components/estimates/DeleteEstimateButton";
 import { convertEstimateToInvoiceAction } from "@/actions/estimates";
 import { prisma } from "@/lib/prisma";
@@ -232,6 +234,18 @@ export default async function EstimateDetailPage({
             : formatEstimateNumber(estimate.number)}
         </h2>
         <ShareEstimateButton estimateId={estimate.id} initialToken={estimate.publicToken} />
+        <EmailToCustomerButton
+          action={emailEstimateAction.bind(null, estimate.id)}
+          label={t.emailToCustomer}
+          sendingLabel={t.emailSending}
+          sentLabel={t.emailSent}
+          errors={{
+            no_email: t.emailNoEmail,
+            not_configured: t.emailNotConfigured,
+            not_found: t.emailError,
+            default: t.emailError,
+          }}
+        />
         <div>
           <DeleteEstimateButton estimateId={estimate.id} />
         </div>

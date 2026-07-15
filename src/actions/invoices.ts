@@ -10,7 +10,64 @@ import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
 import { INVOICE_STATUSES, formatInvoiceNumber } from "@/lib/invoices";
 import { logAudit } from "@/lib/audit";
+import { appUrl, emailConfigured, emailLayout, sendEmail } from "@/lib/email";
 import { getT } from "@/lib/i18n/server";
+
+export type EmailSendResult = { ok: true } | { error: "no_email" | "not_configured" | "not_found" };
+
+function freshToken(): string {
+  return `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+}
+
+// Email the public invoice link straight to the customer via the configured
+// provider. Ensures a share token first. Best-effort transport, but we report
+// clearly if there's no customer email or no provider configured.
+export async function emailInvoiceAction(invoiceId: string): Promise<EmailSendResult> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  if (!emailConfigured()) return { error: "not_configured" };
+
+  const inv = await prisma.invoice.findFirst({
+    where: { id: invoiceId, organizationId },
+    select: {
+      number: true,
+      publicToken: true,
+      customer: { select: { email: true } },
+      organization: { select: { name: true } },
+    },
+  });
+  if (!inv) return { error: "not_found" };
+  const email = inv.customer?.email?.trim();
+  if (!email) return { error: "no_email" };
+
+  const token = inv.publicToken ?? freshToken();
+  if (!inv.publicToken) {
+    await prisma.invoice.update({ where: { id: invoiceId }, data: { publicToken: token } });
+  }
+
+  const num = formatInvoiceNumber(inv.number);
+  const orgName = inv.organization?.name ?? "";
+  await sendEmail({
+    to: email,
+    subject: `Invoice ${num}${orgName ? ` from ${orgName}` : ""}`,
+    html: emailLayout(
+      `Invoice ${num}`,
+      [`${orgName} sent you an invoice.`, "You can view it online using the button below."],
+      { href: appUrl(`/invoice/${token}`), label: "View invoice" }
+    ),
+  });
+
+  await logAudit({
+    organizationId,
+    actor: auditActor(session),
+    action: "invoice.email",
+    entityType: "invoice",
+    entityId: invoiceId,
+    summary: `Emailed ${num} to ${email}`,
+  });
+  revalidatePath(`/admin/invoices/${invoiceId}`);
+  return { ok: true };
+}
 
 function auditActor(session: { user: { id: string; name?: string | null } }) {
   return { id: session.user.id, name: session.user.name };

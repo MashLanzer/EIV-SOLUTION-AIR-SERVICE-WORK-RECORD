@@ -11,6 +11,8 @@ import { requireAdmin } from "@/lib/session";
 import { ESTIMATE_STATUSES, formatEstimateNumber } from "@/lib/estimates";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { logAudit } from "@/lib/audit";
+import { appUrl, emailConfigured, emailLayout, sendEmail } from "@/lib/email";
+import type { EmailSendResult } from "@/actions/invoices";
 
 export type EstimateFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
@@ -244,6 +246,55 @@ export async function shareEstimateAction(estimateId: string): Promise<{ token: 
   await prisma.estimate.update({ where: { id: estimateId }, data: { publicToken: token } });
   revalidatePath(`/admin/estimates/${estimateId}`);
   return { token };
+}
+
+// Email the public estimate (accept/decline) link to the customer.
+export async function emailEstimateAction(estimateId: string): Promise<EmailSendResult> {
+  const session = await requireAdmin();
+  const organizationId = requireOrgId(session);
+  if (!emailConfigured()) return { error: "not_configured" };
+
+  const est = await prisma.estimate.findFirst({
+    where: { id: estimateId, organizationId },
+    select: {
+      number: true,
+      publicToken: true,
+      customer: { select: { email: true } },
+      organization: { select: { name: true } },
+    },
+  });
+  if (!est) return { error: "not_found" };
+  const email = est.customer?.email?.trim();
+  if (!email) return { error: "no_email" };
+
+  const token =
+    est.publicToken ?? `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
+  if (!est.publicToken) {
+    await prisma.estimate.update({ where: { id: estimateId }, data: { publicToken: token } });
+  }
+
+  const num = formatEstimateNumber(est.number);
+  const orgName = est.organization?.name ?? "";
+  await sendEmail({
+    to: email,
+    subject: `Estimate ${num}${orgName ? ` from ${orgName}` : ""}`,
+    html: emailLayout(
+      `Estimate ${num}`,
+      [`${orgName} sent you an estimate.`, "Review it and accept or decline using the button below."],
+      { href: appUrl(`/estimate/${token}`), label: "View estimate" }
+    ),
+  });
+
+  await logAudit({
+    organizationId,
+    actor: { id: session.user.id, name: session.user.name },
+    action: "estimate.email",
+    entityType: "estimate",
+    entityId: estimateId,
+    summary: `Emailed ${num} to ${email}`,
+  });
+  revalidatePath(`/admin/estimates/${estimateId}`);
+  return { ok: true };
 }
 
 export async function unshareEstimateAction(estimateId: string) {
