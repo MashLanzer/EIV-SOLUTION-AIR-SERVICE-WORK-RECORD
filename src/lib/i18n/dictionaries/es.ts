@@ -705,6 +705,13 @@ export const es: Dictionary = {
     copied: "Copiado",
     shareHint: "Cualquiera con este enlace puede ver y descargar la factura.",
     publicFooter: "Gracias por su preferencia.",
+    // Pago en línea (vista pública)
+    payNow: "Pagar ahora",
+    paySuccess: "¡Pago recibido — gracias!",
+    payCanceled: "Pago cancelado. Puedes intentarlo cuando quieras.",
+    payError: "Algo salió mal al iniciar el pago. Intenta de nuevo.",
+    payUnavailable: "El pago en línea no está disponible para esta factura.",
+    payAlready: "Esta factura ya está pagada.",
   },
   estimates: {
     title: "Presupuestos",

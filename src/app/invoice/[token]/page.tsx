@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 
+import { payInvoiceAction } from "@/actions/invoicePayment";
+import { Alert } from "@/components/ui/alert";
 import { prisma } from "@/lib/prisma";
+import { connectEnabled } from "@/lib/payments";
 import { computeTotals, formatInvoiceNumber } from "@/lib/invoices";
 import { getLocale, getT } from "@/lib/i18n/server";
 
@@ -11,10 +14,13 @@ export const dynamic = "force-dynamic";
 // the link. Light-only, like the receipt page.
 export default async function PublicInvoicePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ pay?: string }>;
 }) {
   const { token } = await params;
+  const { pay } = await searchParams;
   const invoice = await prisma.invoice.findFirst({
     where: { publicToken: token },
     include: {
@@ -26,11 +32,19 @@ export default async function PublicInvoicePage({
           companyPhone: true,
           companyAddress: true,
           currencySymbol: true,
+          stripeConnectChargesEnabled: true,
         },
       },
     },
   });
   if (!invoice) notFound();
+
+  // Online payment is offered only when Stripe is configured, the company can
+  // accept charges, and the invoice is sent-but-unpaid.
+  const canPay =
+    connectEnabled &&
+    invoice.organization.stripeConnectChargesEnabled &&
+    invoice.status === "SENT";
 
   const t = (await getT()).invoices;
   const locale = await getLocale();
@@ -162,7 +176,32 @@ export default async function PublicInvoicePage({
             </div>
           )}
 
+          {/* Payment outcome banners (customer returns here from Stripe). */}
+          {pay === "success" && <Alert variant="success">{t.paySuccess}</Alert>}
+          {pay === "cancel" && (
+            <div className="rounded-lg bg-neutral-50 px-3 py-2 text-center text-sm text-neutral-600">
+              {t.payCanceled}
+            </div>
+          )}
+          {pay === "already" && (
+            <div className="rounded-lg bg-neutral-50 px-3 py-2 text-center text-sm text-neutral-600">
+              {t.payAlready}
+            </div>
+          )}
+          {pay === "error" && <Alert variant="warning">{t.payError}</Alert>}
+          {pay === "unavailable" && <Alert variant="warning">{t.payUnavailable}</Alert>}
+
           <div className="flex flex-col items-center gap-3 border-t border-neutral-100 pt-4">
+            {canPay && (
+              <form action={payInvoiceAction.bind(null, token)} className="w-full">
+                <button
+                  type="submit"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800"
+                >
+                  {t.payNow} · {money(totals.total)}
+                </button>
+              </form>
+            )}
             <a
               href={`/invoice/${token}/pdf`}
               target="_blank"

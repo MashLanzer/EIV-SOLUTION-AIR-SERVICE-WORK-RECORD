@@ -4,10 +4,38 @@ import type Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { planFeatureFlags, statusGrantsPro } from "@/lib/billing";
 import { appUrl } from "@/lib/email";
+import { formatInvoiceNumber } from "@/lib/invoices";
 import { notifyOrgAdmins } from "@/lib/orgNotify";
-import { STRIPE_WEBHOOK_SECRET, getStripe, stripeEnabled } from "@/lib/stripe";
+import { STRIPE_WEBHOOK_SECRET, getStripe, stripeSecretConfigured } from "@/lib/stripe";
 
 const BILLING_CTA = { href: appUrl("/admin/billing"), label: "Manage billing" };
+
+// Mark an invoice paid when its Connect checkout completes. Idempotent, and
+// keyed on our own invoiceId metadata so it works for direct charges on the
+// company's connected account (the session lives on that account).
+async function markInvoicePaidFromSession(s: Stripe.Checkout.Session) {
+  const invoiceId = (s.metadata?.invoiceId as string | undefined) ?? s.client_reference_id ?? undefined;
+  if (!invoiceId) return;
+  if (s.payment_status && s.payment_status !== "paid") return;
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { id: true, status: true, number: true, organizationId: true },
+  });
+  if (!invoice || invoice.status === "PAID") return;
+
+  await prisma.invoice.update({
+    where: { id: invoice.id },
+    data: { status: "PAID", paidAt: new Date() },
+  });
+
+  await notifyOrgAdmins(invoice.organizationId, {
+    subject: `Invoice ${formatInvoiceNumber(invoice.number)} paid`,
+    heading: "You've been paid",
+    lines: [`${formatInvoiceNumber(invoice.number)} was just paid online by your customer.`],
+    cta: { href: appUrl(`/admin/invoices/${invoice.id}`), label: "View invoice" },
+  });
+}
 
 // Find the org owning a Stripe customer, for lifecycle email notices.
 async function orgIdForCustomer(customer: string | Stripe.Customer | Stripe.DeletedCustomer | null) {
@@ -58,7 +86,7 @@ async function syncFromSubscription(sub: Stripe.Subscription) {
 }
 
 export async function POST(req: Request) {
-  if (!stripeEnabled || !STRIPE_WEBHOOK_SECRET) {
+  if (!stripeSecretConfigured || !STRIPE_WEBHOOK_SECRET) {
     return new NextResponse("Stripe not configured", { status: 503 });
   }
 
@@ -92,6 +120,9 @@ export async function POST(req: Request) {
               cta: BILLING_CTA,
             });
           }
+        } else {
+          // A one-off invoice payment (Connect direct charge).
+          await markInvoicePaidFromSession(s);
         }
         break;
       }

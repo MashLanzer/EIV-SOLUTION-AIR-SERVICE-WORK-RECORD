@@ -711,6 +711,13 @@ export const en = {
     copied: "Copied",
     shareHint: "Anyone with this link can view and download the invoice.",
     publicFooter: "Thank you for your business.",
+    // Online payment (public view)
+    payNow: "Pay now",
+    paySuccess: "Payment received — thank you!",
+    payCanceled: "Payment canceled. You can try again anytime.",
+    payError: "Something went wrong starting the payment. Please try again.",
+    payUnavailable: "Online payment isn't available for this invoice.",
+    payAlready: "This invoice is already paid.",
   },
   estimates: {
     title: "Estimates",
