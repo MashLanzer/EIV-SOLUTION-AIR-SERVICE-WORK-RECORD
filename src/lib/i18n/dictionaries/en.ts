@@ -138,6 +138,7 @@ export const en = {
     companyNamePlaceholder: "e.g. Acme HVAC",
     creating: "Creating…",
     createCompany: "Create company",
+    platformConsole: "Go to platform console →",
   },
   records: {
     myRecords: "My Records",

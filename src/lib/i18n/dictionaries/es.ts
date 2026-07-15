@@ -138,6 +138,7 @@ export const es: Dictionary = {
     companyNamePlaceholder: "p. ej. Acme HVAC",
     creating: "Creando…",
     createCompany: "Crear empresa",
+    platformConsole: "Ir al panel de plataforma →",
   },
   records: {
     myRecords: "Mis registros",

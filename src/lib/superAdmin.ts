@@ -6,15 +6,24 @@ import { requireAuth } from "@/lib/session";
 
 export { isSuperAdminEmail };
 
-// Gate every /super page and action. Looks up the caller's email from the DB
-// (the session doesn't carry it) and 404s for anyone not on the allowlist, so
-// the platform console stays invisible to normal users.
+// Gate every /super page and action, and 404 for anyone not on the allowlist
+// so the platform console stays invisible to normal users.
+//
+// Gate on the email carried in the session — it's set for every signed-in user,
+// including a platform owner who has NOT joined any company (whose DB user row,
+// and therefore session.user.id, may be empty). Keying off the id used to 404
+// those owners outright. Fall back to a lookup by id only if the session
+// somehow lacks an email.
 export async function requireSuperAdmin() {
   const session = await requireAuth();
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { email: true },
-  });
-  if (!isSuperAdminEmail(user?.email)) notFound();
-  return { session, email: user!.email };
+  let email = session.user.email ?? null;
+  if (!email && session.user.id) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true },
+    });
+    email = user?.email ?? null;
+  }
+  if (!isSuperAdminEmail(email)) notFound();
+  return { session, email: email! };
 }

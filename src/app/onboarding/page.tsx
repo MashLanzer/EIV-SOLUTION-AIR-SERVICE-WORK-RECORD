@@ -4,6 +4,7 @@ import { AeroMark } from "@/components/brand/AeroMark";
 import { AeroWordmark } from "@/components/brand/AeroWordmark";
 import { OnboardingForms } from "@/components/onboarding/OnboardingForms";
 import { requireAuth } from "@/lib/session";
+import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 import { getT } from "@/lib/i18n/server";
 
 export default async function OnboardingPage() {
@@ -37,6 +38,15 @@ export default async function OnboardingPage() {
             image: session.user.image ?? null,
           }}
         />
+
+        {isSuperAdminEmail(session.user.email) && (
+          <a
+            href="/super"
+            className="text-center text-sm font-medium text-neutral-500 underline underline-offset-4 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            {t.platformConsole}
+          </a>
+        )}
       </div>
     </div>
   );
