@@ -1050,6 +1050,10 @@ export const es: Dictionary = {
     noPayMonth: "No hay pagos registrados este mes",
     workByType: "Trabajo por tipo (últimos {n} meses)",
     moreCharts: "Más gráficos",
+    qaSchedule: "Agenda",
+    qaProject: "Proyecto",
+    qaWorker: "Trabajador",
+    qaTeam: "Equipo",
   },
   adminRecords: {
     allRecords: "Todos los registros",

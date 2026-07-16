@@ -97,22 +97,25 @@ const GROUP_LABEL =
 
 function Metric({ value, label }: { value: number | string; label: string }) {
   return (
-    <div className="min-w-0">
+    <div className="flex min-w-0 flex-col items-center px-2 text-center">
       <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
         {value}
       </div>
-      <div className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">{label}</div>
+      <div className="mt-1 text-xs leading-tight text-neutral-500 dark:text-neutral-400">{label}</div>
     </div>
   );
 }
 
 function MetricLink({ value, label, href }: { value: number | string; label: string; href: string }) {
   return (
-    <Link href={href} className="min-w-0 rounded-lg transition-opacity hover:opacity-70">
+    <Link
+      href={href}
+      className="flex min-w-0 flex-col items-center px-2 text-center transition-opacity hover:opacity-70"
+    >
       <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
         {value}
       </div>
-      <div className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">{label}</div>
+      <div className="mt-1 text-xs leading-tight text-neutral-500 dark:text-neutral-400">{label}</div>
     </Link>
   );
 }
@@ -317,23 +320,189 @@ export default async function AdminDashboardPage() {
       </div>
 
       {isAdmin && (
-        <div className="flex flex-wrap gap-2 animate-fade-up" style={{ animationDelay: "20ms" }}>
+        <div className="grid grid-cols-4 gap-2 animate-fade-up" style={{ animationDelay: "20ms" }}>
           {[
-            { href: "/admin/schedule", label: dict.nav.schedule, icon: CalendarPlus },
-            { href: "/admin/projects/new", label: dict.nav.newProject, icon: FolderPlus },
-            { href: "/admin/workers/new", label: dict.nav.newWorker, icon: UserPlus },
-            { href: "/admin/teams/new", label: dict.nav.newTeam, icon: Users2 },
+            { href: "/admin/schedule", label: t.qaSchedule, icon: CalendarPlus },
+            { href: "/admin/projects/new", label: t.qaProject, icon: FolderPlus },
+            { href: "/admin/workers/new", label: t.qaWorker, icon: UserPlus },
+            { href: "/admin/teams/new", label: t.qaTeam, icon: Users2 },
           ].map((a) => (
             <Link
               key={a.href}
               href={a.href}
-              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+              className="flex flex-col items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-1 py-2.5 text-center text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
             >
-              <a.icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-              {a.label}
+              <a.icon className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+              <span className="text-[11px] font-medium leading-tight">{a.label}</span>
             </Link>
           ))}
         </div>
+      )}
+
+      {todaySchedule.length > 0 && (
+        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "60ms" }}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.todaySchedule}
+            </h2>
+            <Link
+              href="/admin/schedule"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              {t.viewAll}
+            </Link>
+          </div>
+          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+              {todaySchedule.map((job) => {
+                const who = job.assignedTo?.name ?? job.team?.name ?? t.unassigned;
+                const when = job.startTime
+                  ? `${formatTime(job.startTime)}${job.endTime ? `–${formatTime(job.endTime)}` : ""}`
+                  : t.allDay;
+                return (
+                  <Link
+                    key={job.id}
+                    href="/admin/schedule"
+                    className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  >
+                    <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
+                      <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                      {when}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
+                        {job.title}
+                      </div>
+                      <div className="truncate text-sm text-neutral-500 dark:text-neutral-400">
+                        {who}
+                        {job.customer?.name ? ` · ${job.customer.name}` : ""}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                );
+              })}
+          </div>
+        </section>
+      )}
+
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          {t.overview}
+        </h2>
+        {/* A few grouped cards instead of one tile per metric: money, records
+            and company clusters, so the screen holds all the numbers in three
+            boxes instead of ten. */}
+        <div className="flex flex-col gap-3">
+          {isAdmin && (
+            <Link href="/admin/reports" className={GROUP_CARD}>
+              <div className="mb-3 flex items-center justify-between">
+                <span className={GROUP_LABEL}>{t.groupMoney}</span>
+                <ArrowRight className="h-3.5 w-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
+              </div>
+              <div className="grid grid-cols-2 divide-x divide-neutral-100 dark:divide-neutral-800">
+                <Metric value={fmtMoney(payReport.grand.total)} label={t.toPayThisMonth} />
+                <Metric value={fmtMoney(outstandingTotal)} label={t.tileOutstanding} />
+              </div>
+            </Link>
+          )}
+
+          <Link href="/admin/records" className={GROUP_CARD}>
+            <div className="mb-3 flex items-center justify-between">
+              <span className={GROUP_LABEL}>{t.groupRecords}</span>
+              <ArrowRight className="h-3.5 w-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-neutral-100 dark:divide-neutral-800">
+              <Metric value={recordsThisWeek} label={t.tileThisWeek} />
+              <Metric value={recordsThisMonth} label={t.tileThisMonth} />
+              <Metric value={totalRecords} label={t.shortTotal} />
+            </div>
+          </Link>
+
+          <div className={cn(GROUP_CARD, "cursor-default")}>
+            <div className="mb-3">
+              <span className={GROUP_LABEL}>{t.groupCompany}</span>
+            </div>
+            <div className="grid grid-cols-4 divide-x divide-neutral-100 dark:divide-neutral-800">
+              <MetricLink value={activeWorkers} label={t.shortWorkers} href="/admin/workers" />
+              <MetricLink value={activeProjects} label={t.shortProjects} href="/admin/projects" />
+              <MetricLink value={photoCount} label={t.tilePhotos} href="/admin/photos" />
+              <MetricLink value={teamCount} label={t.tileTeams} href="/admin/teams" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {recentActiveProjects.length > 0 && (
+        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.activeProjects}
+            </h2>
+            <Link
+              href="/admin/projects"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              {t.viewAll}
+            </Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {recentActiveProjects.map((p) => {
+              let total = 0;
+              let done = 0;
+              for (const c of p.checklists)
+                for (const item of c.items) {
+                  total++;
+                  if (item.done) done++;
+                }
+              const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+              return (
+                <Card
+                  key={p.id}
+                  className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
+                >
+                  <Link
+                    href={`/admin/projects/${p.id}`}
+                    className="flex items-center gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                      <FolderKanban className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
+                          {p.name}
+                        </span>
+                        <ProjectStatusBadge status={p.status} />
+                      </div>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+                        {total > 0 && (
+                          <span className="flex items-center gap-1.5">
+                            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+                              <span
+                                className="block h-full rounded-full bg-neutral-800 dark:bg-neutral-200"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </span>
+                            <span className="tabular-nums">{pct}%</span>
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <ImageIcon className="h-3.5 w-3.5" />
+                          <span className="tabular-nums">{p._count.photos}</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <ClipboardList className="h-3.5 w-3.5" />
+                          <span className="tabular-nums">{p._count.records}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "40ms" }}>
@@ -418,172 +587,6 @@ export default async function AdminDashboardPage() {
         )}
       </section>
 
-      {todaySchedule.length > 0 && (
-        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "60ms" }}>
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.todaySchedule}
-            </h2>
-            <Link
-              href="/admin/schedule"
-              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            >
-              {t.viewAll}
-            </Link>
-          </div>
-          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
-              {todaySchedule.map((job) => {
-                const who = job.assignedTo?.name ?? job.team?.name ?? t.unassigned;
-                const when = job.startTime
-                  ? `${formatTime(job.startTime)}${job.endTime ? `–${formatTime(job.endTime)}` : ""}`
-                  : t.allDay;
-                return (
-                  <Link
-                    key={job.id}
-                    href="/admin/schedule"
-                    className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  >
-                    <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
-                      <CalendarClock className="h-3.5 w-3.5 shrink-0" />
-                      {when}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
-                        {job.title}
-                      </div>
-                      <div className="truncate text-sm text-neutral-500 dark:text-neutral-400">
-                        {who}
-                        {job.customer?.name ? ` · ${job.customer.name}` : ""}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                  </Link>
-                );
-              })}
-          </div>
-        </section>
-      )}
-
-      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          {t.overview}
-        </h2>
-        {/* A few grouped cards instead of one tile per metric: money, records
-            and company clusters, so the screen holds all the numbers in three
-            boxes instead of ten. */}
-        <div className="flex flex-col gap-3">
-          {isAdmin && (
-            <Link href="/admin/reports" className={GROUP_CARD}>
-              <div className="mb-3 flex items-center justify-between">
-                <span className={GROUP_LABEL}>{t.groupMoney}</span>
-                <ArrowRight className="h-3.5 w-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
-              </div>
-              <div className="flex gap-8">
-                <Metric value={fmtMoney(payReport.grand.total)} label={t.toPayThisMonth} />
-                <Metric value={fmtMoney(outstandingTotal)} label={t.tileOutstanding} />
-              </div>
-            </Link>
-          )}
-
-          <Link href="/admin/records" className={GROUP_CARD}>
-            <div className="mb-3 flex items-center justify-between">
-              <span className={GROUP_LABEL}>{t.groupRecords}</span>
-              <ArrowRight className="h-3.5 w-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <Metric value={recordsThisWeek} label={t.tileThisWeek} />
-              <Metric value={recordsThisMonth} label={t.tileThisMonth} />
-              <Metric value={totalRecords} label={t.shortTotal} />
-            </div>
-          </Link>
-
-          <div className={cn(GROUP_CARD, "cursor-default")}>
-            <div className="mb-3">
-              <span className={GROUP_LABEL}>{t.groupCompany}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-y-4 sm:grid-cols-4">
-              <MetricLink value={activeWorkers} label={t.shortWorkers} href="/admin/workers" />
-              <MetricLink value={activeProjects} label={t.shortProjects} href="/admin/projects" />
-              <MetricLink value={photoCount} label={t.tilePhotos} href="/admin/photos" />
-              <MetricLink value={teamCount} label={t.tileTeams} href="/admin/teams" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {recentActiveProjects.length > 0 && (
-        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.activeProjects}
-            </h2>
-            <Link
-              href="/admin/projects"
-              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            >
-              {t.viewAll}
-            </Link>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {recentActiveProjects.map((p) => {
-              let total = 0;
-              let done = 0;
-              for (const c of p.checklists)
-                for (const item of c.items) {
-                  total++;
-                  if (item.done) done++;
-                }
-              const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-              return (
-                <Card
-                  key={p.id}
-                  className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
-                >
-                  <Link
-                    href={`/admin/projects/${p.id}`}
-                    className="flex items-center gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                      <FolderKanban className="h-5 w-5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
-                          {p.name}
-                        </span>
-                        <ProjectStatusBadge status={p.status} />
-                      </div>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
-                        {total > 0 && (
-                          <span className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
-                              <span
-                                className="block h-full rounded-full bg-neutral-800 dark:bg-neutral-200"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </span>
-                            <span className="tabular-nums">{pct}%</span>
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <ImageIcon className="h-3.5 w-3.5" />
-                          <span className="tabular-nums">{p._count.photos}</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <ClipboardList className="h-3.5 w-3.5" />
-                          <span className="tabular-nums">{p._count.records}</span>
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                  </Link>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
       {recentPhotos.length > 0 && (
         <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "110ms" }}>
           <div className="flex items-center justify-between gap-2">
@@ -654,43 +657,43 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {t.trends}
         </h2>
-        {/* The headline trend stays open; the two secondary charts tuck into
-            a disclosure so they don't add height until asked for. */}
-        <Card>
-          <CardHeader className="flex-row items-center gap-2 space-y-0">
-            <TrendingUp className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-            <CardTitle>{t.recordsPerWeek.replace("{n}", String(WEEKS_BACK))}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarList data={weekBuckets} emptyLabel={t.noRecordsPeriod} labelWidth="4rem" />
-          </CardContent>
-        </Card>
-
+        {/* All the charts live behind one disclosure, so trends add no height
+            to the dashboard until opened. */}
         <details className="group">
           <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-1 py-1 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 [&::-webkit-details-marker]:hidden">
             <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
             {t.moreCharts}
           </summary>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <div className="mt-3 flex flex-col gap-4">
             <Card>
               <CardHeader className="flex-row items-center gap-2 space-y-0">
-                <DollarSign className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                <CardTitle>{t.topPay}</CardTitle>
+                <TrendingUp className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                <CardTitle>{t.recordsPerWeek.replace("{n}", String(WEEKS_BACK))}</CardTitle>
               </CardHeader>
               <CardContent>
-                <BarList data={payData} formatValue={fmtMoney} emptyLabel={t.noPayMonth} />
+                <BarList data={weekBuckets} emptyLabel={t.noRecordsPeriod} labelWidth="4rem" />
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader className="flex-row items-center gap-2 space-y-0">
-                <Wrench className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                <CardTitle>{t.workByType.replace("{n}", String(TYPE_WINDOW_MONTHS))}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <BarList data={typeData} emptyLabel={t.noRecordsYet} />
-              </CardContent>
-            </Card>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card>
+                <CardHeader className="flex-row items-center gap-2 space-y-0">
+                  <DollarSign className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                  <CardTitle>{t.topPay}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BarList data={payData} formatValue={fmtMoney} emptyLabel={t.noPayMonth} />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex-row items-center gap-2 space-y-0">
+                  <Wrench className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                  <CardTitle>{t.workByType.replace("{n}", String(TYPE_WINDOW_MONTHS))}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BarList data={typeData} emptyLabel={t.noRecordsYet} />
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </details>
       </section>

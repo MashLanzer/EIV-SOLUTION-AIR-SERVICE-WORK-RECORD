@@ -1056,6 +1056,10 @@ export const en = {
     noPayMonth: "No pay recorded this month",
     workByType: "Work by type (last {n} months)",
     moreCharts: "More charts",
+    qaSchedule: "Schedule",
+    qaProject: "Project",
+    qaWorker: "Worker",
+    qaTeam: "Team",
   },
   adminRecords: {
     allRecords: "All Work Records",
