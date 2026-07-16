@@ -11,6 +11,7 @@ import {
   ExternalLink,
   History,
   MapPin,
+  Navigation,
   Pencil,
   PlayCircle,
   RotateCcw,
@@ -191,40 +192,65 @@ export function ScheduleJobCard({
         </p>
       )}
 
-      {/* Actions */}
-      <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-neutral-100 dark:border-neutral-800 pt-3">
-        {(job.status === "SCHEDULED" || job.status === "EN_ROUTE") && (
-          <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("IN_PROGRESS")}>
-            <PlayCircle className="h-3.5 w-3.5" />
-            {t.markInProgress}
-          </Button>
-        )}
-        {(job.status === "SCHEDULED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
-          <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("DONE")}>
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            {t.markDone}
-          </Button>
-        )}
-        {(job.status === "DONE" || job.status === "CANCELED") && (
-          <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("SCHEDULED")}>
-            <RotateCcw className="h-3.5 w-3.5" />
-            {t.reopen}
-          </Button>
-        )}
-        {job.workRecordId && (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/admin/records/${job.workRecordId}`}>
-              <ExternalLink className="h-3.5 w-3.5" />
-              {t.viewRecord}
-            </Link>
-          </Button>
-        )}
+      {/* Linked work record: the calendar job ties into the rest of the app —
+          filing a record from this job auto-marks it Done and links the two. */}
+      {job.workRecordId && (
+        <Link
+          href={`/admin/records/${job.workRecordId}`}
+          className="mt-3 flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3 py-2 text-sm transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
+        >
+          <ExternalLink className="h-4 w-4 shrink-0 text-neutral-400" />
+          <span className="flex-1 truncate text-neutral-700 dark:text-neutral-200">
+            {t.viewRecord}
+            {job.workRecordJobNumber ? ` · #${job.workRecordJobNumber}` : ""}
+          </span>
+          <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" />
+        </Link>
+      )}
 
-        <div className="ml-auto flex items-center gap-1.5">
+      {/* Actions: forward status steps on the left, manage (cancel/edit/delete)
+          as icons on the right. */}
+      <div className="mt-3 flex items-center gap-1.5 border-t border-neutral-100 dark:border-neutral-800 pt-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {job.status === "SCHEDULED" && (
+            <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("EN_ROUTE")}>
+              <Navigation className="h-3.5 w-3.5" />
+              {t.markEnRoute}
+            </Button>
+          )}
+          {(job.status === "SCHEDULED" || job.status === "EN_ROUTE") && (
+            <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("IN_PROGRESS")}>
+              <PlayCircle className="h-3.5 w-3.5" />
+              {t.markInProgress}
+            </Button>
+          )}
           {(job.status === "SCHEDULED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
-            <Button type="button" variant="ghost" size="sm" disabled={pending} onClick={() => setStatus("CANCELED")}>
-              <XCircle className="h-3.5 w-3.5" />
-              {t.markCanceled}
+            <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("DONE")}>
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {t.markDone}
+            </Button>
+          )}
+          {(job.status === "DONE" || job.status === "CANCELED") && (
+            <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("SCHEDULED")}>
+              <RotateCcw className="h-3.5 w-3.5" />
+              {t.reopen}
+            </Button>
+          )}
+        </div>
+
+        <div className="ml-auto flex items-center gap-0.5">
+          {(job.status === "SCHEDULED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={pending}
+              aria-label={t.markCanceled}
+              title={t.markCanceled}
+              className="text-neutral-500 dark:text-neutral-400"
+              onClick={() => setStatus("CANCELED")}
+            >
+              <XCircle className="h-4 w-4" />
             </Button>
           )}
           <Button type="button" variant="ghost" size="icon" aria-label={t.edit} onClick={() => setEditing(true)}>
