@@ -17,6 +17,7 @@ import {
   type ScheduleFormState,
 } from "@/actions/schedule";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 
 export interface JobOption {
   id: string;
@@ -74,6 +75,7 @@ export function ScheduleJobForm({
   skillSuggestions,
   loadByDay,
   onDone,
+  fullWidth = false,
 }: {
   jobId?: string;
   // Pre-fills the date in create mode so a job lands on the day being viewed.
@@ -83,6 +85,8 @@ export function ScheduleJobForm({
   teams: JobOption[];
   customers: JobOption[];
   projects: JobOption[];
+  // Stretch the submit/cancel buttons to full width (for use inside a sheet).
+  fullWidth?: boolean;
   // Skills per worker id + the org's skill names, so the required-skill field
   // can autocomplete and the worker dropdown can flag who's qualified.
   workerSkills?: Record<string, string[]>;
@@ -130,16 +134,21 @@ export function ScheduleJobForm({
       onDone?.();
       return;
     }
-    // form.reset() clears the uncontrolled fields; the controlled ones
-    // (date, worker, required skill) are reset by hand. The reset can only
-    // happen here since success is signalled through the post-render state.
+    // Saved but flagged (e.g. an overlap): keep the sheet open with everything
+    // the user typed so the warning is seen and nothing is lost. They close it
+    // themselves or adjust and re-save.
+    if (state.warning) return;
+    // Clean create: reset the fields for the next job and close the sheet.
+    // form.reset() clears the uncontrolled fields; the controlled ones (date,
+    // worker, required skill) are reset by hand. The reset can only happen here
+    // since success is signalled through the post-render state.
     formRef.current?.reset();
     /* eslint-disable react-hooks/set-state-in-effect */
     setDate(defaultDate ?? "");
     setAssignedToId("");
     setRequiredSkill("");
     /* eslint-enable react-hooks/set-state-in-effect */
-    if (!state.warning) onDone?.();
+    onDone?.();
   }, [state?.ok, state?.warning, jobId, onDone, defaultDate]);
 
   return (
@@ -161,22 +170,22 @@ export function ScheduleJobForm({
       </div>
 
       <Group icon={Clock} label={t.groupWhen}>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor={`date-${uid}`} required>
-              {t.date}
-            </Label>
-            <Input
-              id={`date-${uid}`}
-              name="scheduledFor"
-              type="date"
-              required
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              aria-invalid={err("scheduledFor") ? true : undefined}
-            />
-            <FieldError id={`date-${uid}-error`} message={err("scheduledFor")} />
-          </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`date-${uid}`} required>
+            {t.date}
+          </Label>
+          <Input
+            id={`date-${uid}`}
+            name="scheduledFor"
+            type="date"
+            required
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            aria-invalid={err("scheduledFor") ? true : undefined}
+          />
+          <FieldError id={`date-${uid}-error`} message={err("scheduledFor")} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`start-${uid}`}>{t.startTime}</Label>
             <Input
@@ -323,13 +332,24 @@ export function ScheduleJobForm({
         <Alert variant="success">{t.saved}</Alert>
       )}
 
-      <div className="flex items-center gap-2">
-        <Button type="submit" disabled={pending}>
+      <div
+        className={cn(
+          "flex items-center gap-2",
+          fullWidth && "flex-col-reverse items-stretch"
+        )}
+      >
+        <Button type="submit" disabled={pending} className={cn(fullWidth && "w-full")}>
           {jobId ? <Save className="h-4 w-4" /> : <CalendarPlus className="h-4 w-4" />}
           {pending ? t.saving : t.saveJob}
         </Button>
         {jobId && onDone && (
-          <Button type="button" variant="outline" onClick={onDone} disabled={pending}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onDone}
+            disabled={pending}
+            className={cn(fullWidth && "w-full")}
+          >
             {tc.cancel}
           </Button>
         )}

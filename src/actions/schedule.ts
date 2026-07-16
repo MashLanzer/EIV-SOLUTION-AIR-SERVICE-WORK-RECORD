@@ -131,6 +131,16 @@ export async function createScheduledJobAction(
   const projectId = await resolveProjectId(formData, organizationId);
   const date = toDateOnly(scheduledFor);
 
+  // Check for an overlap BEFORE inserting, so the new job isn't compared against
+  // itself (which would flag every timed job as a false conflict).
+  const warning = await conflictWarning({
+    organizationId,
+    assignedToId,
+    scheduledFor: date,
+    startTime: startTime || "",
+    endTime: endTime || "",
+  });
+
   await prisma.scheduledJob.create({
     data: {
       organizationId,
@@ -146,14 +156,6 @@ export async function createScheduledJobAction(
       projectId,
       createdById: session.user.id,
     },
-  });
-
-  const warning = await conflictWarning({
-    organizationId,
-    assignedToId,
-    scheduledFor: date,
-    startTime: startTime || "",
-    endTime: endTime || "",
   });
 
   revalidatePath(SCHEDULE_PATH);

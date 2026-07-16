@@ -286,6 +286,7 @@ export function ScheduleJobCard({
         workerSkills={workerSkills}
         skillSuggestions={skillSuggestions}
         onDone={() => setEditing(false)}
+        fullWidth
       />
     </BottomSheet>
     </>

@@ -63,6 +63,7 @@ export function NewScheduledJobButton({
           skillSuggestions={skillSuggestions}
           loadByDay={loadByDay}
           onDone={() => setParam(false)}
+          fullWidth
         />
       </BottomSheet>
     </>
