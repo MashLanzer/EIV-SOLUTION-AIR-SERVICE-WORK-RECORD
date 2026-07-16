@@ -69,9 +69,11 @@ function ProjectCard({ project, t }: { project: ProjectRow; t: Dictionary["proje
       />
       <Link
         href={`/admin/projects/${project.id}`}
-        className="flex flex-col gap-3 rounded-xl p-4 pr-28 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+        className="flex flex-col gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
       >
-        <div className="flex items-start gap-3">
+        {/* Header: identity block. pr-28 only here clears the floating status
+            menu; the progress bar and footer below still span the full width. */}
+        <div className="flex items-start gap-3 pr-28">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
             <FolderKanban className="h-5 w-5" />
           </span>
@@ -98,45 +100,44 @@ function ProjectCard({ project, t }: { project: ProjectRow; t: Dictionary["proje
           </div>
         </div>
 
-        {project.team && (
-          <TeamChip
-            name={project.team.name}
-            color={project.team.color}
-            seed={project.team.id}
-            className="self-start"
-          />
+        {/* Checklist progress: the "at a glance" completion of a jobsite. The
+            bar only appears once there's a checklist. */}
+        {progress.total > 0 && (
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
+              <span>{t.checklist}</span>
+              <span className="tabular-nums">
+                {progress.done}/{progress.total} · {progress.pct}%
+              </span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+              <div
+                className="h-full rounded-full bg-neutral-800 dark:bg-neutral-200 transition-all"
+                style={{ width: `${progress.pct}%` }}
+              />
+            </div>
+          </div>
         )}
 
-        {/* Checklist progress + photo/record counts: the "at a glance" state
-            of a jobsite. The bar only appears once there's a checklist. */}
-        <div className="flex flex-col gap-2">
-          {progress.total > 0 && (
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
-                <span>{t.checklist}</span>
-                <span className="tabular-nums">
-                  {progress.done}/{progress.total} · {progress.pct}%
-                </span>
-              </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
-                <div
-                  className="h-full rounded-full bg-neutral-800 dark:bg-neutral-200 transition-all"
-                  style={{ width: `${progress.pct}%` }}
-                />
-              </div>
-            </div>
+        {/* Footer: team + photo/record counts in one row that spans the card,
+            so the card reads as tidy zones instead of scattered lines. */}
+        <div className="flex items-center gap-3 border-t border-neutral-100 dark:border-neutral-800 pt-3 text-xs text-neutral-500 dark:text-neutral-400">
+          {project.team && (
+            <TeamChip
+              name={project.team.name}
+              color={project.team.color}
+              seed={project.team.id}
+            />
           )}
-          <div className="flex items-center gap-4 text-xs text-neutral-500 dark:text-neutral-400">
-            <span className="flex items-center gap-1.5">
-              <ImageIcon className="h-3.5 w-3.5" />
-              {(project._count.photos === 1 ? t.photoCountOne : t.photoCountMany).replace("{n}", String(project._count.photos))}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <ClipboardList className="h-3.5 w-3.5" />
-              {(project._count.records === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(project._count.records))}
-            </span>
-            <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-          </div>
+          <span className="flex items-center gap-1.5">
+            <ImageIcon className="h-3.5 w-3.5" />
+            {(project._count.photos === 1 ? t.photoCountOne : t.photoCountMany).replace("{n}", String(project._count.photos))}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <ClipboardList className="h-3.5 w-3.5" />
+            {(project._count.records === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(project._count.records))}
+          </span>
+          <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
         </div>
       </Link>
     </Card>

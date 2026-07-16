@@ -395,22 +395,7 @@ export default async function AdminProjectPage({
             <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
               {project.name}
             </h1>
-            <div className="flex shrink-0 items-center gap-2">
-              <ProjectStatusMenu projectId={project.id} status={project.status} />
-              <ProjectManageSheet
-                projectId={project.id}
-                teams={teams}
-                customers={customers}
-                defaultValues={{
-                  name: project.name,
-                  address: project.address ?? "",
-                  status: project.status,
-                  teamId: project.teamId ?? "",
-                  customerId: project.customerId ?? "",
-                }}
-                editHref={`/admin/projects/${project.id}/edit`}
-              />
-            </div>
+            <ProjectStatusMenu projectId={project.id} status={project.status} />
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-neutral-500 dark:text-neutral-400">
@@ -463,6 +448,24 @@ export default async function AdminProjectPage({
                 {t.noCustomerAssigned}
               </span>
             )}
+          </div>
+
+          {/* Manage lives at the bottom-right so opening it never crowds or
+              shifts the status control at the top. */}
+          <div className="flex justify-end border-t border-neutral-200 dark:border-neutral-800 pt-3">
+            <ProjectManageSheet
+              projectId={project.id}
+              teams={teams}
+              customers={customers}
+              defaultValues={{
+                name: project.name,
+                address: project.address ?? "",
+                status: project.status,
+                teamId: project.teamId ?? "",
+                customerId: project.customerId ?? "",
+              }}
+              editHref={`/admin/projects/${project.id}/edit`}
+            />
           </div>
         </CardContent>
       </Card>
