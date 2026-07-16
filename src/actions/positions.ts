@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { ALL_PERMISSION_KEYS, ACCESS_LEVELS, type AccessLevel } from "@/lib/permissions";
 
 function parseAccessLevel(raw: FormDataEntryValue | null): AccessLevel {
@@ -21,7 +21,7 @@ function parsePermissions(formData: FormData): string[] {
 }
 
 export async function createPositionAction(formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   const name = String(formData.get("name") ?? "").trim().slice(0, 60);
@@ -42,7 +42,7 @@ export async function createPositionAction(formData: FormData) {
 }
 
 export async function updatePositionAction(positionId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   const existing = await prisma.position.findFirst({
@@ -71,7 +71,7 @@ export async function updatePositionAction(positionId: string, formData: FormDat
 }
 
 export async function deletePositionAction(positionId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   // System positions can't be deleted (they're the fallback that mirrors the
@@ -90,7 +90,7 @@ export async function deletePositionAction(positionId: string) {
 // Assign (or clear, with an empty value) a worker's position. Scoped to the
 // org on both the user and the position, so you can't assign another company's.
 export async function setWorkerPositionAction(userId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   const raw = String(formData.get("positionId") ?? "").trim();

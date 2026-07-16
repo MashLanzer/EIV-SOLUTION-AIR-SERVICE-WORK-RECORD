@@ -11,6 +11,7 @@ import { requireReviewer } from "@/lib/session";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 import { getActiveSupportSessionForOrg } from "@/lib/support";
 import { getOrgFeatures } from "@/lib/features";
+import { loadAccess } from "@/lib/authz";
 
 export default async function AdminLayout({
   children,
@@ -33,10 +34,15 @@ export default async function AdminLayout({
   // Only full admins can create (supervisors can't), so we only load the small
   // id/name lists that seed the "create" sheets for them.
   const canCreate = session.user.role === "ADMIN";
+  // Effective capabilities of the signed-in user, used to hide nav sections a
+  // narrower position can't use (pages still guard with requirePermission).
+  // Real admins get the full set via the legacy-role fallback, so they lose
+  // nothing.
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
-  const [pendingReviewCount, latestActivityAt, features, announcement, createData] =
+  const [{ permissions }, pendingReviewCount, latestActivityAt, features, announcement, createData] =
     await Promise.all([
+      loadAccess(session),
       prisma.workRecord.count({
         where: { organizationId, status: "SUBMITTED" },
       }),
@@ -89,8 +95,8 @@ export default async function AdminLayout({
       <AdminSidebar
         name={session.user.name ?? session.user.email ?? ""}
         avatarUrl={session.user.avatarUrl ?? null}
-        isSupervisor={session.user.role === "SUPERVISOR"}
         isSuperAdmin={isSuperAdmin}
+        permissions={permissions}
         features={features}
         pendingReviewCount={pendingReviewCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}

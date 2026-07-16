@@ -4,6 +4,7 @@ import type { Session } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { effectiveAccess } from "@/lib/positions";
+import { ALL_PERMISSION_KEYS } from "@/lib/permissions";
 import type { AccessLevel, LegacyRole, PermissionKey } from "@/lib/permissions";
 
 // The single source of truth for "what can this user do". Uses the session's
@@ -18,6 +19,15 @@ export async function loadAccess(
   session: Session
 ): Promise<{ accessLevel: AccessLevel; permissions: string[] }> {
   const role = session.user.role as LegacyRole;
+
+  // A real owner (role ADMIN) is always a super-user with every capability, so
+  // assigning them a narrower position can never lock them out of settings or
+  // the roles page. Positions refine access for supervisors / office staff, not
+  // owners. (Full impersonation also maps to role ADMIN here; read-only support
+  // maps to SUPERVISOR and falls through to the role-default permissions.)
+  if (role === "ADMIN") {
+    return { accessLevel: "ADMIN", permissions: [...ALL_PERMISSION_KEYS] };
+  }
 
   if (session.user.impersonating) {
     return effectiveAccess({ role, position: null });

@@ -5,7 +5,7 @@ import { EditRoleSheet, type RolePosition } from "@/components/roles/EditRoleShe
 import { NewRoleButton } from "@/components/roles/NewRoleButton";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { ensureDefaultPositions } from "@/lib/positions";
 import type { AccessLevel } from "@/lib/permissions";
 import { getT } from "@/lib/i18n/server";
@@ -15,7 +15,7 @@ export default async function AdminRolesPage({
 }: {
   searchParams: Promise<{ saved?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const { saved } = await searchParams;
 

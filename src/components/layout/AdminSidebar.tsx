@@ -33,6 +33,7 @@ import { Logo } from "@/components/layout/Logo";
 import { SearchCommand } from "@/components/search/SearchCommand";
 import { useT } from "@/components/i18n/LocaleProvider";
 import type { Dictionary } from "@/lib/i18n";
+import { canSeeHref } from "@/lib/navPermissions";
 import { cn } from "@/lib/utils";
 
 function navItems(n: Dictionary["nav"]): TabItem[] {
@@ -127,20 +128,11 @@ function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
   );
 }
 
-// Supervisors only get the review scope; management destinations are hidden
-// (and their pages fail closed via requireAdmin anyway).
-const SUPERVISOR_HREFS = new Set([
-  "/admin",
-  "/admin/review",
-  "/admin/records",
-  "/admin/reports",
-]);
-
 export function AdminSidebar({
   name,
   avatarUrl = null,
-  isSupervisor = false,
   isSuperAdmin = false,
+  permissions = [],
   features,
   pendingReviewCount = 0,
   latestActivityAt = null,
@@ -148,16 +140,20 @@ export function AdminSidebar({
 }: {
   name: string;
   avatarUrl?: string | null;
-  isSupervisor?: boolean;
   isSuperAdmin?: boolean;
+  // Effective capabilities of the signed-in user (from their position, else
+  // legacy-role defaults). Real admins get the full set via the fallback, so
+  // they never lose a destination; narrower positions see only what they can use.
+  permissions?: string[];
   features?: { invoicing: boolean; estimates: boolean; portal: boolean };
   pendingReviewCount?: number;
   latestActivityAt?: number | null;
   createData?: CreateData | null;
 }) {
   const platformHref = isSuperAdmin ? "/super" : null;
-  // Billing is an admin-only page (supervisors are blocked by requireAdmin).
-  const billingHref = isSupervisor ? null : "/admin/billing";
+  // Billing is a company-settings concern; show it only to positions that can
+  // manage settings (real admins always can, via the all-permissions fallback).
+  const billingHref = permissions.includes("settings.manage") ? "/admin/billing" : null;
   const pathname = usePathname();
   const t = useT();
   // Hrefs to hide because their module is turned off for this company.
@@ -170,14 +166,16 @@ export function AdminSidebar({
   if (features && !features.estimates) disabledHrefs.add("/admin/estimates");
   const byFeature = <T extends { href: string }>(list: T[]) =>
     disabledHrefs.size ? list.filter((i) => !disabledHrefs.has(i.href)) : list;
-  const forRole = (list: TabItem[]) =>
-    byFeature(isSupervisor ? list.filter((item) => SUPERVISOR_HREFS.has(item.href)) : list);
-  const items = forRole(navItems(t.nav)).map((item) =>
+  // Hide destinations the position can't use (cosmetic — the pages themselves
+  // guard with requirePermission), then drop modules turned off for the company.
+  const byAccess = <T extends { href: string }>(list: T[]) =>
+    byFeature(list.filter((i) => canSeeHref(i.href, permissions)));
+  const items = byAccess(navItems(t.nav)).map((item) =>
     item.href === "/admin/review" ? { ...item, badge: pendingReviewCount } : item
   );
   // Records is no longer a native tab, so the review badge rides the Dashboard
   // tab (where the review queue lives) in the APK bar.
-  const appTabs = forRole(appTabItems(t.nav)).map((item) =>
+  const appTabs = byAccess(appTabItems(t.nav)).map((item) =>
     item.href === "/admin" ? { ...item, badge: pendingReviewCount } : item
   );
 
@@ -230,8 +228,8 @@ export function AdminSidebar({
       <AppTabBar
         items={appTabs}
         pathname={pathname}
-        createItems={isSupervisor ? [] : createItems(t.nav)}
-        moreItems={byFeature(isSupervisor ? moreItems(t.nav).filter((m) => SUPERVISOR_HREFS.has(m.href)) : moreItems(t.nav))}
+        createItems={byAccess(createItems(t.nav))}
+        moreItems={byAccess(moreItems(t.nav))}
         createData={createData}
       />
     </>
