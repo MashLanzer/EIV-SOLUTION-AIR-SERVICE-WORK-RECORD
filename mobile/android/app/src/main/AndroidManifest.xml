@@ -63,4 +63,8 @@
     <!-- Lets the WebView's Vibration API drive light tap haptics on the
          floating tab bar (FAB + tabs). Harmless if unused. -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Accurate GPS for jobsite photo geotagging. Without these the WebView
+         only gets coarse WiFi/cell/IP location, which can be far off. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>

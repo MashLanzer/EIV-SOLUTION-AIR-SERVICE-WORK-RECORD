@@ -63,7 +63,10 @@ function getGps(): Promise<{ lat: number; lng: number } | null> {
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => resolve(null),
-      { timeout: 5000, maximumAge: 60000 }
+      // Force a fresh GPS-grade fix: without enableHighAccuracy the browser
+      // falls back to WiFi/cell/IP positioning, which can be kilometres off
+      // ("photo taken somewhere else"); maximumAge 0 refuses a stale coarse fix.
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
     );
   });
 }
