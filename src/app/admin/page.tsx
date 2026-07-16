@@ -1,10 +1,7 @@
 import Link from "next/link";
 import {
   ClipboardList,
-  CalendarDays,
   CalendarClock,
-  CalendarRange,
-  Users,
   Users2,
   ArrowRight,
   ChevronRight,
@@ -18,16 +15,11 @@ import {
   Wrench,
   FolderKanban,
   Image as ImageIcon,
-  Images,
-  Receipt,
 } from "lucide-react";
-
-import type { LucideIcon } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BarList } from "@/components/charts/BarList";
-import { StatTile } from "@/components/ui/stat-tile";
 import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
 import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
@@ -96,6 +88,34 @@ function timeAgo(date: Date, justNow: string) {
 // Whole-number money with grouping; the org's currency symbol is prefixed by
 // the caller (currency is a configurable symbol, not a locale currency code).
 const moneyNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+
+// Grouped overview card + its cluster label, plus the metric figures inside.
+const GROUP_CARD =
+  "group rounded-xl border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700";
+const GROUP_LABEL =
+  "text-[11px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500";
+
+function Metric({ value, label }: { value: number | string; label: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+        {value}
+      </div>
+      <div className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">{label}</div>
+    </div>
+  );
+}
+
+function MetricLink({ value, label, href }: { value: number | string; label: string; href: string }) {
+  return (
+    <Link href={href} className="min-w-0 rounded-lg transition-opacity hover:opacity-70">
+      <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+        {value}
+      </div>
+      <div className="mt-0.5 truncate text-xs text-neutral-500 dark:text-neutral-400">{label}</div>
+    </Link>
+  );
+}
 
 export default async function AdminDashboardPage() {
   const session = await requireReviewer();
@@ -257,34 +277,6 @@ export default async function AdminDashboardPage() {
       ).total,
     0
   );
-
-  const tiles: {
-    label: string;
-    value: number | string;
-    icon: LucideIcon;
-    href?: string;
-  }[] = [
-    // The two headline figures now ride in the same dense grid as the rest,
-    // so the overview reads as one uniform block instead of hero cards + tiles.
-    { label: t.totalRecords, value: totalRecords, icon: ClipboardList },
-    { label: t.toPayThisMonth, value: fmtMoney(payReport.grand.total), icon: DollarSign, href: "/admin/reports" },
-    { label: t.tileTodayJobs, value: todayJobs, icon: CalendarClock, href: "/admin/schedule" },
-    { label: t.tileThisWeek, value: recordsThisWeek, icon: CalendarDays },
-    { label: t.tileThisMonth, value: recordsThisMonth, icon: CalendarRange },
-    { label: t.tileActiveWorkers, value: activeWorkers, icon: Users },
-    { label: t.tileActiveProjects, value: activeProjects, icon: FolderKanban, href: "/admin/projects" },
-    { label: t.tilePhotos, value: photoCount, icon: Images, href: "/admin/photos" },
-    { label: t.tileTeams, value: teamCount, icon: Users2, href: "/admin/teams" },
-  ];
-  // Money tile for admins only (invoices are an admin surface).
-  if (isAdmin) {
-    tiles.push({
-      label: t.tileOutstanding,
-      value: fmtMoney(outstandingTotal),
-      icon: Receipt,
-      href: "/admin/invoices",
-    });
-  }
 
   // Bucket records into WEEKS_BACK weekly columns ending this week.
   const weekBuckets: { label: string; value: number }[] = Array.from(
@@ -476,12 +468,46 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {t.overview}
         </h2>
-        {/* One dense, uniform grid: the two headline totals lead, the rest of
-            the metrics follow — 3 across on phones, 4 on wider screens. */}
-        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
-          {tiles.map((tile) => (
-            <StatTile key={tile.label} {...tile} />
-          ))}
+        {/* A few grouped cards instead of one tile per metric: money, records
+            and company clusters, so the screen holds all the numbers in three
+            boxes instead of ten. */}
+        <div className="flex flex-col gap-3">
+          {isAdmin && (
+            <Link href="/admin/reports" className={GROUP_CARD}>
+              <div className="mb-3 flex items-center justify-between">
+                <span className={GROUP_LABEL}>{t.groupMoney}</span>
+                <ArrowRight className="h-3.5 w-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
+              </div>
+              <div className="flex gap-8">
+                <Metric value={fmtMoney(payReport.grand.total)} label={t.toPayThisMonth} />
+                <Metric value={fmtMoney(outstandingTotal)} label={t.tileOutstanding} />
+              </div>
+            </Link>
+          )}
+
+          <Link href="/admin/records" className={GROUP_CARD}>
+            <div className="mb-3 flex items-center justify-between">
+              <span className={GROUP_LABEL}>{t.groupRecords}</span>
+              <ArrowRight className="h-3.5 w-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <Metric value={recordsThisWeek} label={t.tileThisWeek} />
+              <Metric value={recordsThisMonth} label={t.tileThisMonth} />
+              <Metric value={totalRecords} label={t.shortTotal} />
+            </div>
+          </Link>
+
+          <div className={cn(GROUP_CARD, "cursor-default")}>
+            <div className="mb-3">
+              <span className={GROUP_LABEL}>{t.groupCompany}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-y-4 sm:grid-cols-4">
+              <MetricLink value={activeWorkers} label={t.shortWorkers} href="/admin/workers" />
+              <MetricLink value={activeProjects} label={t.shortProjects} href="/admin/projects" />
+              <MetricLink value={photoCount} label={t.tilePhotos} href="/admin/photos" />
+              <MetricLink value={teamCount} label={t.tileTeams} href="/admin/teams" />
+            </div>
+          </div>
         </div>
       </section>
 
