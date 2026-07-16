@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { JobStatusTimeline } from "@/components/schedule/JobStatusTimeline";
@@ -79,6 +80,7 @@ export function ScheduleJobCard({
   conflict?: boolean;
 }) {
   const t = useT().schedule;
+  const tc = useT().common;
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -93,36 +95,8 @@ export function ScheduleJobCard({
 
   const canceled = job.status === "CANCELED";
 
-  if (editing) {
-    return (
-      <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-3">
-        <ScheduleJobForm
-          jobId={job.id}
-          defaultValues={{
-            title: job.title,
-            scheduledFor: job.scheduledFor,
-            startTime: job.startTime ?? "",
-            endTime: job.endTime ?? "",
-            requiredSkill: job.requiredSkill ?? "",
-            assignedToId: job.assignedToId ?? "",
-            teamId: job.teamId ?? "",
-            customerId: job.customerId ?? "",
-            projectId: job.projectId ?? "",
-            notes: job.notes ?? "",
-          }}
-          workers={workers}
-          teams={teams}
-          customers={customers}
-          projects={projects}
-          workerSkills={workerSkills}
-          skillSuggestions={skillSuggestions}
-          onDone={() => setEditing(false)}
-        />
-      </div>
-    );
-  }
-
   return (
+    <>
     <div
       className={cnCard(canceled)}
     >
@@ -289,6 +263,32 @@ export function ScheduleJobCard({
         </details>
       )}
     </div>
+
+    <BottomSheet open={editing} onClose={() => setEditing(false)} title={t.editJob} closeLabel={tc.close}>
+      <ScheduleJobForm
+        jobId={job.id}
+        defaultValues={{
+          title: job.title,
+          scheduledFor: job.scheduledFor,
+          startTime: job.startTime ?? "",
+          endTime: job.endTime ?? "",
+          requiredSkill: job.requiredSkill ?? "",
+          assignedToId: job.assignedToId ?? "",
+          teamId: job.teamId ?? "",
+          customerId: job.customerId ?? "",
+          projectId: job.projectId ?? "",
+          notes: job.notes ?? "",
+        }}
+        workers={workers}
+        teams={teams}
+        customers={customers}
+        projects={projects}
+        workerSkills={workerSkills}
+        skillSuggestions={skillSuggestions}
+        onDone={() => setEditing(false)}
+      />
+    </BottomSheet>
+    </>
   );
 }
 

@@ -120,24 +120,27 @@ export function ScheduleJobForm({
   const err = (name: string) => state?.fieldErrors?.[name]?.[0];
   const uid = jobId ?? "new";
 
-  // On a successful save: an inline editor collapses; the create form resets
-  // so the next job starts blank. The list itself refreshes via revalidatePath.
+  // On a successful save: an edit closes its sheet. A create resets the fields
+  // for the next job and closes the sheet too — unless the save came back with a
+  // conflict warning, in which case the sheet stays open so the warning is seen.
+  // The list itself refreshes via revalidatePath.
   useEffect(() => {
     if (!state?.ok) return;
     if (jobId) {
       onDone?.();
-    } else {
-      // form.reset() clears the uncontrolled fields; the controlled ones
-      // (date, worker, required skill) are reset by hand. The reset can only
-      // happen here since success is signalled through the post-render state.
-      formRef.current?.reset();
-      /* eslint-disable react-hooks/set-state-in-effect */
-      setDate(defaultDate ?? "");
-      setAssignedToId("");
-      setRequiredSkill("");
-      /* eslint-enable react-hooks/set-state-in-effect */
+      return;
     }
-  }, [state?.ok, jobId, onDone, defaultDate]);
+    // form.reset() clears the uncontrolled fields; the controlled ones
+    // (date, worker, required skill) are reset by hand. The reset can only
+    // happen here since success is signalled through the post-render state.
+    formRef.current?.reset();
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setDate(defaultDate ?? "");
+    setAssignedToId("");
+    setRequiredSkill("");
+    /* eslint-enable react-hooks/set-state-in-effect */
+    if (!state.warning) onDone?.();
+  }, [state?.ok, state?.warning, jobId, onDone, defaultDate]);
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col gap-5">

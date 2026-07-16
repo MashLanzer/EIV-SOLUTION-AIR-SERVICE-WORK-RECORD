@@ -3,7 +3,6 @@ import {
   CalendarDays,
   CalendarPlus,
   CalendarArrowDown,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   GripVertical,
@@ -20,7 +19,7 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { ScheduleJobCard, type ScheduleJobView } from "@/components/schedule/ScheduleJobCard";
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
-import { ScheduleJobForm } from "@/components/schedule/ScheduleJobForm";
+import { NewScheduledJobButton } from "@/components/schedule/NewScheduledJobButton";
 import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
 import { WeekBoard } from "@/components/schedule/WeekBoard";
 import {
@@ -68,10 +67,9 @@ function schedHref(params: {
   if (params.worker) p.set("worker", params.worker);
   if (params.create) p.set("new", "1");
   const qs = p.toString();
-  const base = params.create
-    ? "/admin/schedule#new-job"
-    : "/admin/schedule";
-  return qs ? `/admin/schedule?${qs}${params.create ? "#new-job" : ""}` : base;
+  // ?new=1 opens the "new job" bottom sheet (read from the query by
+  // NewScheduledJobButton), pre-filled with the day carried in ?date=.
+  return qs ? `/admin/schedule?${qs}` : "/admin/schedule";
 }
 
 // Flag jobs where the same worker is double-booked with an overlapping timed
@@ -200,7 +198,7 @@ export default async function SchedulePage({
   const locale = await getLocale();
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
 
-  const { date, view: viewParam, worker: workerParam, new: newParam } = await searchParams;
+  const { date, view: viewParam, worker: workerParam } = await searchParams;
   const view =
     viewParam === "week"
       ? "week"
@@ -210,7 +208,6 @@ export default async function SchedulePage({
           ? "team"
           : "month";
   const worker = workerParam?.trim() || undefined;
-  const formOpen = newParam === "1";
   const selected = parseDateParam(date);
   const selectedKey = dayKey(selected);
   const todayKey = dayKey(startOfUtcDay(new Date()));
@@ -370,12 +367,24 @@ export default async function SchedulePage({
           <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
           <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.subtitle}</p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <a href={worker ? `/admin/schedule/ics?worker=${worker}` : "/admin/schedule/ics"}>
-            <CalendarArrowDown className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.addToCalendar}</span>
-          </a>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <a href={worker ? `/admin/schedule/ics?worker=${worker}` : "/admin/schedule/ics"}>
+              <CalendarArrowDown className="h-4 w-4" />
+              <span className="hidden sm:inline">{t.addToCalendar}</span>
+            </a>
+          </Button>
+          <NewScheduledJobButton
+            defaultDate={formDefaultDate}
+            workers={workers}
+            teams={teams}
+            customers={customers}
+            projects={projects}
+            workerSkills={workerSkills}
+            skillSuggestions={skillSuggestions}
+            loadByDay={loadByDay}
+          />
+        </div>
       </div>
 
       {/* View switch + worker filter */}
@@ -391,32 +400,6 @@ export default async function SchedulePage({
         />
         <ScheduleWorkerFilter workers={workers} />
       </div>
-
-      {/* New job (collapsed by default; opens when ?new=1, e.g. via the
-          "Schedule for this day" CTA on an empty day) */}
-      <Card id="new-job" className="scroll-mt-4">
-        <details className="group" open={formOpen}>
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
-            <span className="flex items-center gap-2 text-sm font-medium text-neutral-900 dark:text-neutral-100">
-              <CalendarPlus className="h-4 w-4" />
-              {t.newJob}
-            </span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="px-4 pb-4">
-            <ScheduleJobForm
-              defaultDate={formDefaultDate}
-              workers={workers}
-              teams={teams}
-              customers={customers}
-              projects={projects}
-              workerSkills={workerSkills}
-              skillSuggestions={skillSuggestions}
-              loadByDay={loadByDay}
-            />
-          </div>
-        </details>
-      </Card>
 
       {view === "month" ? (
         <MonthView
