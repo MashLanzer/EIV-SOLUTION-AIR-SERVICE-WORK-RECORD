@@ -359,22 +359,17 @@ export default async function AdminDashboardPage() {
           )}
         </div>
         {pendingQueue.length === 0 ? (
-          <Card>
-            <CardContent className="flex items-center gap-3 p-5">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success-soft text-success-text">
-                <CheckCircle2 className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="font-medium text-neutral-900 dark:text-neutral-100">{t.allCaughtUp}</div>
-                <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                  {t.nothingWaiting}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex items-center gap-3 py-1">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success-soft text-success-text">
+              <CheckCircle2 className="h-5 w-5" />
+            </span>
+            <div>
+              <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{t.allCaughtUp}</div>
+              <div className="text-sm text-neutral-500 dark:text-neutral-400">{t.nothingWaiting}</div>
+            </div>
+          </div>
         ) : (
-          <Card>
-            <CardContent className="flex flex-col divide-y divide-neutral-100 p-4 dark:divide-neutral-800">
+          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
               {pendingQueue.map((record) => {
                 // 3+ days waiting reads as urgent (amber icon), matching the
                 // review queue's own aging cue.
@@ -383,7 +378,7 @@ export default async function AdminDashboardPage() {
                 <Link
                   key={record.id}
                   href={`/admin/records/${record.id}`}
-                  className="group -mx-3 flex items-center justify-between gap-3 rounded-lg px-3 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                 >
                   <div className="flex min-w-0 items-center gap-3">
                     <span
@@ -413,8 +408,7 @@ export default async function AdminDashboardPage() {
                 </Link>
                 );
               })}
-            </CardContent>
-          </Card>
+          </div>
         )}
         {returnedCount > 0 && (
           <Link
@@ -445,8 +439,7 @@ export default async function AdminDashboardPage() {
               {t.viewAll}
             </Link>
           </div>
-          <Card>
-            <CardContent className="flex flex-col divide-y divide-neutral-100 p-4 dark:divide-neutral-800">
+          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
               {todaySchedule.map((job) => {
                 const who = job.assignedTo?.name ?? job.team?.name ?? t.unassigned;
                 const when = job.startTime
@@ -456,7 +449,7 @@ export default async function AdminDashboardPage() {
                   <Link
                     key={job.id}
                     href="/admin/schedule"
-                    className="group -mx-3 flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                    className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                   >
                     <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
                       <CalendarClock className="h-3.5 w-3.5 shrink-0" />
@@ -475,8 +468,7 @@ export default async function AdminDashboardPage() {
                   </Link>
                 );
               })}
-            </CardContent>
-          </Card>
+          </div>
         </section>
       )}
 
@@ -602,21 +594,19 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {t.recentRecords}
         </h2>
-        <Card>
-          <CardContent className="p-4">
-            {recentRecords.length === 0 ? (
-              <EmptyState
-                icon={ClipboardList}
-                title={t.noRecordsYet}
-                description={t.noRecordsYetDesc}
-              />
-            ) : (
-              <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
-                {recentRecords.map((record) => (
+        {recentRecords.length === 0 ? (
+          <EmptyState
+            icon={ClipboardList}
+            title={t.noRecordsYet}
+            description={t.noRecordsYetDesc}
+          />
+        ) : (
+          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+            {recentRecords.map((record) => (
                   <Link
                     key={record.id}
                     href={`/admin/records/${record.id}`}
-                    className="group -mx-3 flex items-center justify-between gap-4 rounded-lg px-3 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                    className="group -mx-2 flex items-center justify-between gap-4 rounded-lg px-2 py-3 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
                   >
                     <div className="min-w-0">
                       <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
@@ -630,10 +620,8 @@ export default async function AdminDashboardPage() {
                     <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
                   </Link>
                 ))}
-              </div>
+          </div>
             )}
-          </CardContent>
-        </Card>
       </section>
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "160ms" }}>
