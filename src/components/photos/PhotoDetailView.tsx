@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PhotoDeleteButton } from "@/components/photos/PhotoDeleteButton";
 import { PhotoDownloadButton } from "@/components/photos/PhotoDownloadButton";
-import { ZoomableImage } from "@/components/photos/ZoomableImage";
+import { PhotoViewer } from "@/components/photos/PhotoViewer";
 import { getT, getLocale } from "@/lib/i18n/server";
 import type { Dictionary } from "@/lib/i18n";
 import {
@@ -73,50 +73,119 @@ export async function PhotoDetailView({
   currentUserId: string;
   isAdmin: boolean;
 }) {
-  const t = (await getT()).photoDetail;
+  const dict = await getT();
+  const t = dict.photoDetail;
   const locale = await getLocale();
   const canDelete = isAdmin || photo.takenById === currentUserId;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <Link
-        href={`${basePath}/${photo.project.id}`}
-        className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        {photo.project.name}
-      </Link>
-
-      <ZoomableImage src={photo.url} alt={t.jobsitePhoto} />
-
-      {/* Who/when + GPS, and the photo actions */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-neutral-500 dark:text-neutral-400">
-          <span className="flex items-center gap-1.5">
-            {photo.takenBy?.name && (
-              <AvatarInitials name={photo.takenBy.name} className="h-6 w-6 text-[10px]" />
-            )}
-            <span>
-              {photo.takenBy?.name ? `${photo.takenBy.name} · ` : ""}
-              {timeAgo(photo.takenAt, t, locale)}
-            </span>
-          </span>
-          {photo.latitude != null && photo.longitude != null && (
-            <a
-              href={`https://www.openstreetmap.org/?mlat=${photo.latitude}&mlon=${photo.longitude}#map=17/${photo.latitude}/${photo.longitude}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-primary"
+      {/* Photo hero: the who/when/location sit over the image; comments open
+          in a bottom sheet. */}
+      <PhotoViewer
+        src={photo.url}
+        alt={t.jobsitePhoto}
+        commentsCount={photo.comments.length}
+        commentsTitle={t.comments}
+        closeLabel={dict.common.close}
+        overlayTop={
+          <div className="flex flex-col gap-2">
+            <Link
+              href={`${basePath}/${photo.project.id}`}
+              className="flex w-fit items-center gap-1.5 text-sm font-medium"
             >
-              <MapPin className="h-4 w-4" />
-              {t.viewLocation}
-            </a>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <PhotoDownloadButton url={photo.url} />
-          {canDelete && <PhotoDeleteButton photoId={photo.id} basePath={basePath} />}
-        </div>
+              <ArrowLeft className="h-4 w-4" />
+              {photo.project.name}
+            </Link>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <span className="flex items-center gap-1.5">
+                {photo.takenBy?.name && (
+                  <AvatarInitials name={photo.takenBy.name} className="h-6 w-6 text-[10px]" />
+                )}
+                <span>
+                  {photo.takenBy?.name ? `${photo.takenBy.name} · ` : ""}
+                  {timeAgo(photo.takenAt, t, locale)}
+                </span>
+              </span>
+              {photo.latitude != null && photo.longitude != null && (
+                <a
+                  href={`https://www.openstreetmap.org/?mlat=${photo.latitude}&mlon=${photo.longitude}#map=17/${photo.latitude}/${photo.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1"
+                >
+                  <MapPin className="h-4 w-4" />
+                  {t.viewLocation}
+                </a>
+              )}
+            </div>
+          </div>
+        }
+        overlayBottom={null}
+        comments={
+          <div className="flex flex-col gap-4">
+            {photo.comments.length === 0 ? (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.beFirst}</p>
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {photo.comments.map((c) => {
+                  const canRemove = isAdmin || c.authorId === currentUserId;
+                  const name = c.author?.name ?? t.someone;
+                  return (
+                    <li key={c.id} className="flex items-start gap-3">
+                      <AvatarInitials name={name} className="h-8 w-8" />
+                      <div className="min-w-0 flex-1">
+                        <div className="rounded-2xl rounded-tl-sm bg-neutral-100 dark:bg-neutral-800 px-3 py-2">
+                          <div className="mb-0.5 flex items-center justify-between gap-2">
+                            <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                              {name}
+                            </span>
+                            <span className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400">
+                              {timeAgo(c.createdAt, t, locale)}
+                            </span>
+                          </div>
+                          <p className="whitespace-pre-wrap break-words text-sm text-neutral-800 dark:text-neutral-200">
+                            {c.body}
+                          </p>
+                        </div>
+                        {canRemove && (
+                          <form action={deleteCommentAction.bind(null, c.id)} className="mt-1">
+                            <button
+                              type="submit"
+                              className="flex items-center gap-1 text-xs text-neutral-400 hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              {t.delete}
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <form action={addCommentAction.bind(null, photo.id)} className="flex items-end gap-2">
+              <Textarea
+                name="body"
+                required
+                rows={2}
+                maxLength={2000}
+                placeholder={t.addComment}
+                className="flex-1"
+              />
+              <Button type="submit" size="icon" aria-label={t.postComment}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </form>
+          </div>
+        }
+      />
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-2">
+        <PhotoDownloadButton url={photo.url} />
+        {canDelete && <PhotoDeleteButton photoId={photo.id} basePath={basePath} />}
       </div>
 
       {/* Tags */}
@@ -177,80 +246,6 @@ export async function PhotoDetailView({
               </Button>
             </form>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Comments */}
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t.comments}{" "}
-            <span className="tabular-nums text-neutral-400">
-              ({photo.comments.length})
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {photo.comments.length === 0 ? (
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {t.beFirst}
-            </p>
-          ) : (
-            <ul className="flex flex-col gap-4">
-              {photo.comments.map((c) => {
-                const canRemove = isAdmin || c.authorId === currentUserId;
-                const name = c.author?.name ?? t.someone;
-                return (
-                  <li key={c.id} className="flex items-start gap-3">
-                    <AvatarInitials name={name} className="h-8 w-8" />
-                    <div className="min-w-0 flex-1">
-                      <div className="rounded-2xl rounded-tl-sm bg-neutral-100 dark:bg-neutral-800 px-3 py-2">
-                        <div className="mb-0.5 flex items-center justify-between gap-2">
-                          <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                            {name}
-                          </span>
-                          <span className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400">
-                            {timeAgo(c.createdAt, t, locale)}
-                          </span>
-                        </div>
-                        <p className="whitespace-pre-wrap break-words text-sm text-neutral-800 dark:text-neutral-200">
-                          {c.body}
-                        </p>
-                      </div>
-                      {canRemove && (
-                        <form action={deleteCommentAction.bind(null, c.id)} className="mt-1">
-                          <button
-                            type="submit"
-                            className="flex items-center gap-1 text-xs text-neutral-400 hover:text-destructive"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            {t.delete}
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-
-          <form
-            action={addCommentAction.bind(null, photo.id)}
-            className="flex items-end gap-2"
-          >
-            <Textarea
-              name="body"
-              required
-              rows={2}
-              maxLength={2000}
-              placeholder={t.addComment}
-              className="flex-1"
-            />
-            <Button type="submit" size="icon" aria-label={t.postComment}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
         </CardContent>
       </Card>
     </div>
