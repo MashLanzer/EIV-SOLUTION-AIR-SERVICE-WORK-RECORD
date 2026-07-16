@@ -8,7 +8,6 @@ const PUBLIC_PATHS = [
   "/login",
   "/api/auth",
   "/api/native-handoff",
-  "/api/diag",
   "/.well-known",
 ];
 

@@ -215,6 +215,8 @@ export function AdminSidebar({
             avatarUrl={avatarUrl}
             profileHref="/admin/profile"
             settingsHref="/admin/settings"
+            platformHref={platformHref}
+            billingHref={billingHref}
           />
         </div>
       </header>
