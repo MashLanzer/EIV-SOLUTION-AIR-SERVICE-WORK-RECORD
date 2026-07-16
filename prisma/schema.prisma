@@ -15,6 +15,45 @@ enum Role {
   WORKER
 }
 
+// Which app a position belongs to: the office app (ADMIN) or the field app
+// (WORKER). This is the hard app gate; granular capabilities live in
+// Position.permissions (see src/lib/permissions.ts).
+enum AccessLevel {
+  ADMIN
+  WORKER
+}
+
+// A per-company job position. Companies define their own (Supervisor,
+// Accountant, Dispatcher, Foreman…), each granting a set of capability keys
+// from the fixed catalog. `role` on User still gates which app you enter; a
+// Position refines what you can do inside it.
+model Position {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  color          String?
+  accessLevel    AccessLevel  @default(WORKER)
+  // Capability keys from src/lib/permissions.ts (PermissionKey[]).
+  permissions    String[]     @default([])
+  // Built-in positions seeded to mirror the ADMIN/SUPERVISOR/WORKER roles; they
+  // can be edited but not deleted, so a company keeps a valid fallback.
+  isSystem       Boolean      @default(false)
+  // Stable key for the built-in positions ("admin" / "supervisor" / "worker"),
+  // null for company-created ones. Lets us localize their name and map them to
+  // the legacy role. Unique per org (one of each).
+  systemKey      String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  members        User[]       @relation("UserPosition")
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, systemKey])
+  @@index([organizationId])
+}
+
 // A tenant. Every company using the app is one Organization; all
 // company-scoped data (users, customers, records, and - later - projects,
 // photos, teams) carries an organizationId so one company can never see
@@ -107,6 +146,7 @@ model Organization {
   auditEvents        AuditEvent[]
   estimates          Estimate[]
   supportSessions    ImpersonationSession[]
+  positions          Position[]
 }
 
 enum SupportMode {
@@ -476,10 +516,16 @@ model User {
   createdInvoices  Invoice[]           @relation("InvoiceCreatedBy")
   auditEvents      AuditEvent[]        @relation("AuditActor")
   createdEstimates Estimate[]          @relation("EstimateCreatedBy")
+  // Optional per-company position (job title + permissions). Falls back to the
+  // legacy `role` defaults when unset. SetNull so deleting a position doesn't
+  // remove its members.
+  positionId       String?
+  position         Position?     @relation("UserPosition", fields: [positionId], references: [id], onDelete: SetNull)
   organizationId   String?
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+  @@index([positionId])
 }
 
 model UserSkill {
