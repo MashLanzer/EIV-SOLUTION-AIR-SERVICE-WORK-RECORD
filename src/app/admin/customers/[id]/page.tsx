@@ -36,11 +36,13 @@ import { MergeCustomerForm } from "@/components/customers/MergeCustomerForm";
 import { ShareCustomerPortalButton } from "@/components/customers/ShareCustomerPortalButton";
 import { getOrgFeatures } from "@/lib/features";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
+import { ProjectSchedule, type ProjectScheduleJob } from "@/components/projects/ProjectSchedule";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
+import { dayKey, startOfUtcDay } from "@/lib/schedule";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 function formatDate(date: Date, locale: string) {
@@ -82,7 +84,7 @@ export default async function AdminCustomerPage({
   const customer = await prisma.customer.findFirst({ where: { id, organizationId } });
   if (!customer) notFound();
 
-  const [recordCount, statusGroups, records, projects] = await Promise.all([
+  const [recordCount, statusGroups, records, projects, scheduledJobRows] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId, customerId: id } }),
     // Bounded to the 3 statuses - a tiny at-a-glance health breakdown.
     prisma.workRecord.groupBy({
@@ -113,6 +115,27 @@ export default async function AdminCustomerPage({
         _count: { select: { records: true, photos: true } },
       },
     }),
+    // Upcoming scheduled visits for this customer (today onward).
+    prisma.scheduledJob.findMany({
+      where: {
+        organizationId,
+        customerId: id,
+        status: { not: "CANCELED" },
+        scheduledFor: { gte: startOfUtcDay(new Date()) },
+      },
+      orderBy: [{ scheduledFor: "asc" }, { startTime: "asc" }],
+      take: 6,
+      select: {
+        id: true,
+        title: true,
+        scheduledFor: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        assignedTo: { select: { name: true } },
+        team: { select: { name: true } },
+      },
+    }),
   ]);
   const pages = pageCount(recordCount);
 
@@ -138,6 +161,25 @@ export default async function AdminCustomerPage({
   const dict = await getT();
   const t = dict.customers;
   const locale = await getLocale();
+
+  const visitDateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  const scheduledJobs: ProjectScheduleJob[] = scheduledJobRows.map((j) => ({
+    id: j.id,
+    title: j.title,
+    dateKey: dayKey(j.scheduledFor),
+    dateLabel: visitDateFmt.format(j.scheduledFor),
+    timeLabel:
+      j.startTime && j.endTime
+        ? `${j.startTime}–${j.endTime}`
+        : j.startTime || dict.schedule.allDay,
+    who: j.assignedTo?.name ?? j.team?.name ?? null,
+    status: j.status,
+  }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -202,6 +244,13 @@ export default async function AdminCustomerPage({
           </div>
         </CardContent>
       </Card>
+
+      <ProjectSchedule
+        jobs={scheduledJobs}
+        title={dict.projects.upcomingVisits}
+        emptyText={dict.projects.noUpcomingVisits}
+        viewAllLabel={dict.projects.viewCalendar}
+      />
 
       {/* Snapshot - total jobs + status breakdown */}
       <Card

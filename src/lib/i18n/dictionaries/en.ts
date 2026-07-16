@@ -353,6 +353,9 @@ export const en = {
     tabPhotos: "Photos",
     tabChecklists: "Checklists",
     tabRecords: "Records",
+    upcomingVisits: "Upcoming visits",
+    noUpcomingVisits: "No visits scheduled yet.",
+    viewCalendar: "Calendar",
     // Delete + edit + geocode
     deleteProjectTitle: "Delete this project?",
     deleteProjectDesc:

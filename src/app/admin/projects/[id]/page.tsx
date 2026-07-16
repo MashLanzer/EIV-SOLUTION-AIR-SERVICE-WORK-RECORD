@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
 import { ProjectManageSheet } from "@/components/projects/ProjectManageSheet";
+import { ProjectSchedule, type ProjectScheduleJob } from "@/components/projects/ProjectSchedule";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
 import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
 import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
@@ -39,6 +40,7 @@ import { prisma } from "@/lib/prisma";
 import { getWeather } from "@/lib/weather";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
+import { dayKey, startOfUtcDay } from "@/lib/schedule";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 function formatDate(date: Date, locale: string) {
@@ -83,7 +85,7 @@ export default async function AdminProjectPage({
   const t = dict.projects;
   const locale = await getLocale();
 
-  const [teams, customers, statusGroups, records, photoRows, checklists, templates, photoCount] =
+  const [teams, customers, statusGroups, records, photoRows, checklists, templates, photoCount, scheduledJobRows] =
     await Promise.all([
       prisma.team.findMany({
         where: { organizationId },
@@ -145,6 +147,28 @@ export default async function AdminProjectPage({
         select: { id: true, name: true },
       }),
       prisma.photo.count({ where: { organizationId, projectId: id } }),
+      // Upcoming scheduled visits for this project (today onward), so the
+      // calendar is visible from the project instead of living on its own.
+      prisma.scheduledJob.findMany({
+        where: {
+          organizationId,
+          projectId: id,
+          status: { not: "CANCELED" },
+          scheduledFor: { gte: startOfUtcDay(new Date()) },
+        },
+        orderBy: [{ scheduledFor: "asc" }, { startTime: "asc" }],
+        take: 6,
+        select: {
+          id: true,
+          title: true,
+          scheduledFor: true,
+          startTime: true,
+          endTime: true,
+          status: true,
+          assignedTo: { select: { name: true } },
+          team: { select: { name: true } },
+        },
+      }),
     ]);
 
   const photos = photoRows.map((p) => ({
@@ -199,8 +223,33 @@ export default async function AdminProjectPage({
     }));
   const hasMap = projectPins.length > 0 || photoPins.length > 0;
 
+  const visitDateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  const scheduledJobs: ProjectScheduleJob[] = scheduledJobRows.map((j) => ({
+    id: j.id,
+    title: j.title,
+    dateKey: dayKey(j.scheduledFor),
+    dateLabel: visitDateFmt.format(j.scheduledFor),
+    timeLabel:
+      j.startTime && j.endTime
+        ? `${j.startTime}–${j.endTime}`
+        : j.startTime || dict.schedule.allDay,
+    who: j.assignedTo?.name ?? j.team?.name ?? null,
+    status: j.status,
+  }));
+
   const overviewPanel = (
     <div className="flex flex-col gap-4">
+      <ProjectSchedule
+        jobs={scheduledJobs}
+        title={t.upcomingVisits}
+        emptyText={t.noUpcomingVisits}
+        viewAllLabel={t.viewCalendar}
+      />
       {hasMap && (
         <>
           <GeoPhotoMap projectPins={projectPins} photoPins={photoPins} />

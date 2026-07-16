@@ -354,6 +354,9 @@ export const es: Dictionary = {
     tabPhotos: "Fotos",
     tabChecklists: "Listas",
     tabRecords: "Registros",
+    upcomingVisits: "Próximas visitas",
+    noUpcomingVisits: "Aún no hay visitas agendadas.",
+    viewCalendar: "Calendario",
     // Delete + edit + geocode
     deleteProjectTitle: "¿Eliminar este proyecto?",
     deleteProjectDesc:
