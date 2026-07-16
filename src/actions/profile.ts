@@ -120,9 +120,13 @@ export async function updateProfileAvatarAction(
 
   let url: string;
   try {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return { error: "Image storage isn't configured. Ask your provider to enable it." };
+    }
     url = await uploadUserAvatar(session.user.id, file, file.type);
-  } catch {
-    return { error: "Image storage isn't configured. Ask your provider to enable it." };
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : "unknown error";
+    return { error: `Upload failed: ${detail}` };
   }
 
   const prev = await prisma.user.findUnique({

@@ -47,17 +47,21 @@ export async function POST(
 
   let url: string;
   try {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json(
+        { error: "Photo storage isn't configured. Ask your admin to enable it." },
+        { status: 500 }
+      );
+    }
     url = await uploadProjectPhoto(
       organizationId,
       projectId,
       file,
       file.type || "image/jpeg"
     );
-  } catch {
-    return NextResponse.json(
-      { error: "Photo storage isn't configured. Ask your admin to enable it." },
-      { status: 500 }
-    );
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : "unknown error";
+    return NextResponse.json({ error: `Upload failed: ${detail}` }, { status: 500 });
   }
 
   const photo = await prisma.photo.create({
