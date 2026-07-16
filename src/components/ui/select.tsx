@@ -56,7 +56,13 @@ function Select({
   const selected = options.find((o) => o.value === current);
 
   const [open, setOpen] = React.useState(false);
-  const [pos, setPos] = React.useState<{ top: number; left: number; width: number } | null>(null);
+  const [pos, setPos] = React.useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
 
@@ -77,7 +83,31 @@ function Select({
       return;
     }
     const r = triggerRef.current?.getBoundingClientRect();
-    if (r) setPos({ top: r.bottom + 4, left: r.left, width: r.width });
+    if (r) {
+      // Open downward by default, but flip up when the trigger sits near the
+      // bottom of the viewport (e.g. inside a bottom sheet) so the list stays
+      // on screen and usable instead of spilling under the gesture bar. The
+      // list is also clamped to the available space so it always scrolls.
+      const margin = 12;
+      const spaceBelow = window.innerHeight - r.bottom;
+      const spaceAbove = r.top;
+      const openUp = spaceBelow < 240 && spaceAbove > spaceBelow;
+      setPos(
+        openUp
+          ? {
+              bottom: window.innerHeight - r.top + 4,
+              left: r.left,
+              width: r.width,
+              maxHeight: spaceAbove - margin,
+            }
+          : {
+              top: r.bottom + 4,
+              left: r.left,
+              width: r.width,
+              maxHeight: spaceBelow - margin,
+            }
+      );
+    }
     setOpen(true);
   }
 
@@ -146,14 +176,20 @@ function Select({
       {open && pos && typeof document !== "undefined"
         ? createPortal(
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
+              <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} aria-hidden="true" />
               <div
                 ref={listRef}
                 role="listbox"
                 aria-label={ariaLabel}
                 onKeyDown={onListKeyDown}
-                style={{ top: pos.top, left: pos.left, width: pos.width }}
-                className="fixed z-50 max-h-72 overflow-y-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1 shadow-lg shadow-black/10 [scrollbar-width:thin]"
+                style={{
+                  top: pos.top,
+                  bottom: pos.bottom,
+                  left: pos.left,
+                  width: pos.width,
+                  maxHeight: pos.maxHeight,
+                }}
+                className="fixed z-[61] overflow-y-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1 shadow-lg shadow-black/10 [scrollbar-width:thin]"
               >
                 {options.map((opt, i) => {
                   const isSel = opt.value === current;
