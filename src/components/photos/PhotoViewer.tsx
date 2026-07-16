@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { MessageCircle, Tag as TagIcon, X } from "lucide-react";
+
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 // Shared glassy pill used by every control that floats over the photo
 // (tags, comments) so the overlay reads as one toolbar.
@@ -87,17 +89,24 @@ export function PhotoViewer({
   const [zoom, setZoom] = useState(false);
   const [sheet, setSheet] = useState<null | "comments" | "tags">(null);
 
+  // Close any open overlay (used by Escape and the system back button).
+  const closeOverlays = useCallback(() => {
+    setZoom(false);
+    setSheet(null);
+  }, []);
+
+  // The Android / browser back button dismisses the open overlay first,
+  // instead of navigating away and leaving the photo stuck on screen.
+  useBackDismiss(zoom || sheet !== null, closeOverlays);
+
   useEffect(() => {
     if (!zoom && !sheet) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setZoom(false);
-        setSheet(null);
-      }
+      if (e.key === "Escape") closeOverlays();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [zoom, sheet]);
+  }, [zoom, sheet, closeOverlays]);
 
   return (
     <>

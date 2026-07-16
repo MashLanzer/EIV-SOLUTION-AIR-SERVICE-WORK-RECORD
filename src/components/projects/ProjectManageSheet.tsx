@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { Pencil, Settings2, X } from "lucide-react";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { DeleteProjectButton } from "@/components/projects/DeleteProjectButton";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { useBackDismiss } from "@/hooks/useBackDismiss";
 
 interface ProjectValues {
   name: string;
@@ -37,6 +38,10 @@ export function ProjectManageSheet({
   const t = useT().projects;
   const tc = useT().common;
   const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+
+  // System / browser back closes the sheet instead of navigating away.
+  useBackDismiss(open, close);
 
   useEffect(() => {
     if (!open) return;

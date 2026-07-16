@@ -4,6 +4,8 @@ import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
+import { useBackDismiss } from "@/hooks/useBackDismiss";
+
 // A shared bottom sheet: slides up from the bottom on mobile, becomes a
 // centered dialog on desktop, dims the page behind it and closes on Escape or
 // backdrop tap. Used across the app to move "add / edit" panels off the page
@@ -21,6 +23,9 @@ export function BottomSheet({
   closeLabel: string;
   children: ReactNode;
 }) {
+  // System / browser back closes the sheet instead of navigating away.
+  useBackDismiss(open, onClose);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
