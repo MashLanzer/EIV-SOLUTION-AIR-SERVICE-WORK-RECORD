@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { ProjectStatus } from "@prisma/client";
 
+import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SheetButton } from "@/components/ui/sheet-button";
@@ -95,6 +96,8 @@ export default async function AdminTeamPage({
   ]);
 
   const memberIds = team.memberships.map((m) => m.userId);
+  const memberIdSet = new Set(memberIds);
+  const members = users.filter((u) => memberIdSet.has(u.id));
   const assignedIds = team.projects.map((p) => p.id);
   const activeProjects = team.projects.filter((p) => p.status === "ACTIVE").length;
   const byStatus = SECTION_ORDER.map((status) => ({
@@ -141,6 +144,22 @@ export default async function AdminTeamPage({
               </p>
             </div>
           </div>
+          {members.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {members.map((m) => (
+                <span
+                  key={m.id}
+                  className="flex items-center gap-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 py-1 pl-1 pr-2.5"
+                >
+                  <AvatarInitials name={m.name || m.email} className="h-6 w-6 text-[10px]" />
+                  <span className="truncate text-xs font-medium text-neutral-700 dark:text-neutral-200">
+                    {m.name || m.email}
+                  </span>
+                </span>
+              ))}
+            </div>
+          )}
+
           <div className="grid grid-cols-4 gap-2">
             <StatTile icon={Users2} value={memberIds.length} label={t.members} />
             <StatTile icon={FolderKanban} value={activeProjects} label={t.active} />
