@@ -3,12 +3,10 @@ import { notFound } from "next/navigation";
 import {
   ArrowRight,
   CalendarDays,
-  ChevronDown,
   ClipboardList,
   Download,
   Mail,
   MapPin,
-  Pencil,
   Phone,
   User,
 } from "lucide-react";
@@ -28,9 +26,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DeleteProjectButton } from "@/components/projects/DeleteProjectButton";
 import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
-import { ProjectForm } from "@/components/projects/ProjectForm";
+import { ProjectManageSheet } from "@/components/projects/ProjectManageSheet";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
 import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
 import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
@@ -273,41 +270,6 @@ export default async function AdminProjectPage({
           </div>
         </CardContent>
       </Card>
-
-      {/* Manage - edit collapsed + delete */}
-      <Card>
-        <details className="group">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
-            <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-              {t.manageProject}
-            </span>
-            <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="flex flex-col gap-4 px-4 pb-4">
-            <ProjectForm
-              projectId={project.id}
-              teams={teams}
-              customers={customers}
-              defaultValues={{
-                name: project.name,
-                address: project.address ?? "",
-                status: project.status,
-                teamId: project.teamId ?? "",
-                customerId: project.customerId ?? "",
-              }}
-            />
-            <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/projects/${project.id}/edit`}>
-                  <Pencil className="h-4 w-4" />
-                  {t.fullEditPage}
-                </Link>
-              </Button>
-              <DeleteProjectButton projectId={project.id} />
-            </div>
-          </div>
-        </details>
-      </Card>
     </div>
   );
 
@@ -433,7 +395,22 @@ export default async function AdminProjectPage({
             <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
               {project.name}
             </h1>
-            <ProjectStatusMenu projectId={project.id} status={project.status} />
+            <div className="flex shrink-0 items-center gap-2">
+              <ProjectStatusMenu projectId={project.id} status={project.status} />
+              <ProjectManageSheet
+                projectId={project.id}
+                teams={teams}
+                customers={customers}
+                defaultValues={{
+                  name: project.name,
+                  address: project.address ?? "",
+                  status: project.status,
+                  teamId: project.teamId ?? "",
+                  customerId: project.customerId ?? "",
+                }}
+                editHref={`/admin/projects/${project.id}/edit`}
+              />
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-neutral-500 dark:text-neutral-400">
