@@ -6,7 +6,6 @@ import {
   FolderKanban,
   Image as ImageIcon,
   MapPin,
-  Plus,
   Search,
   SearchX,
 } from "lucide-react";
@@ -17,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { NewProjectButton } from "@/components/projects/NewProjectButton";
 import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
 import { ProjectsTeamsTabs } from "@/components/projects/ProjectsTeamsTabs";
@@ -158,8 +158,13 @@ export default async function AdminProjectsPage({
   const rawTeam = Array.isArray(rawParams.team) ? rawParams.team[0] : rawParams.team;
   const teamFilter = rawTeam?.trim() || undefined;
 
-  const [teams, projects] = await Promise.all([
+  const [teams, customers, projects] = await Promise.all([
     prisma.team.findMany({
+      where: { organizationId },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.customer.findMany({
       where: { organizationId },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
@@ -221,12 +226,7 @@ export default async function AdminProjectsPage({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <ProjectsTeamsTabs />
-        <Button asChild>
-          <Link href="/admin/projects/new">
-            <Plus className="h-4 w-4" />
-            {t.newProject}
-          </Link>
-        </Button>
+        <NewProjectButton teams={teams} customers={customers} />
       </div>
 
       {/* Search (name/address) + team filter as a GET form, matching the
@@ -284,12 +284,12 @@ export default async function AdminProjectsPage({
             title={t.noProjectsYet}
             description={t.createProjectDesc}
             action={
-              <Button asChild variant="outline" className="mt-2">
-                <Link href="/admin/projects/new">
-                  <Plus className="h-4 w-4" />
-                  {t.newProject}
-                </Link>
-              </Button>
+              <NewProjectButton
+                teams={teams}
+                customers={customers}
+                variant="outline"
+                className="mt-2"
+              />
             }
           />
         )

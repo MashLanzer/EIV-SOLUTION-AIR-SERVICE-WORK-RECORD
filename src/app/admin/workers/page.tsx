@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, Shield, UserPlus, Users, SearchX } from "lucide-react";
+import { Search, Shield, Users, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -7,6 +7,7 @@ import { FilterChip } from "@/components/ui/filter-chip";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
+import { NewWorkerButton } from "@/components/workers/NewWorkerButton";
 import { WorkersSection, type WorkerStat } from "@/components/workers/WorkersTable";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -40,7 +41,7 @@ export default async function AdminWorkersPage({
     ...(skill ? { skills: { some: { name: { equals: skill, mode: "insensitive" } } } } : {}),
   };
 
-  const [users, recordStats, skillNames] = await Promise.all([
+  const [users, recordStats, skillNames, teams] = await Promise.all([
     prisma.user.findMany({ where, orderBy: { name: "asc" } }),
     // Jobs submitted + last activity per person (submittedById is SetNull, so
     // some records have no author - those don't attribute to anyone).
@@ -56,6 +57,12 @@ export default async function AdminWorkersPage({
       distinct: ["name"],
       select: { name: true },
       orderBy: { name: "asc" },
+    }),
+    // Teams to seed on the "new worker" sheet.
+    prisma.team.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
     }),
   ]);
 
@@ -85,17 +92,7 @@ export default async function AdminWorkersPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader
-        title={t.team}
-        action={
-          <Button asChild>
-            <Link href="/admin/workers/new">
-              <UserPlus className="h-4 w-4" />
-              {t.newWorker}
-            </Link>
-          </Button>
-        }
-      />
+      <PageHeader title={t.team} action={<NewWorkerButton teams={teams} />} />
 
       {/* Team summary - only when not filtering, so the numbers reflect the
           whole roster rather than the filtered subset. */}

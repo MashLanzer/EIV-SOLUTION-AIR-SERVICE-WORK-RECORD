@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ChevronRight, FolderKanban, Plus, Users2 } from "lucide-react";
+import { ChevronRight, FolderKanban, Users2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProjectsTeamsTabs } from "@/components/projects/ProjectsTeamsTabs";
+import { NewTeamButton } from "@/components/teams/NewTeamButton";
 import { TeamAvatar } from "@/components/teams/TeamColorDot";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -15,7 +15,7 @@ export default async function AdminTeamsPage() {
   const session = await requireAdmin();
   const organizationId = requireOrgId(session);
 
-  const [teams, activeByTeam] = await Promise.all([
+  const [teams, activeByTeam, users, allProjects] = await Promise.all([
     prisma.team.findMany({
       where: { organizationId },
       orderBy: { name: "asc" },
@@ -28,6 +28,17 @@ export default async function AdminTeamsPage() {
       where: { organizationId, status: "ACTIVE", teamId: { not: null } },
       _count: { _all: true },
     }),
+    // For the "new team" sheet: seed members/projects up front.
+    prisma.user.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.project.findMany({
+      where: { organizationId, status: { not: "COMPLETED" } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
   const activeCount = new Map<string, number>(
     activeByTeam.map((g) => [g.teamId as string, g._count._all])
@@ -38,12 +49,7 @@ export default async function AdminTeamsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <ProjectsTeamsTabs />
-        <Button asChild>
-          <Link href="/admin/teams/new">
-            <Plus className="h-4 w-4" />
-            {tr.newTeam}
-          </Link>
-        </Button>
+        <NewTeamButton users={users} projects={allProjects} />
       </div>
 
       {teams.length === 0 ? (
@@ -52,12 +58,12 @@ export default async function AdminTeamsPage() {
           title={tr.noTeams}
           description={tr.noTeamsDesc}
           action={
-            <Button asChild variant="outline" className="mt-2">
-              <Link href="/admin/teams/new">
-                <Plus className="h-4 w-4" />
-                {tr.newTeam}
-              </Link>
-            </Button>
+            <NewTeamButton
+              users={users}
+              projects={allProjects}
+              variant="outline"
+              className="mt-2"
+            />
           }
         />
       ) : (

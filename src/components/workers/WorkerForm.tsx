@@ -14,8 +14,11 @@ import { cn } from "@/lib/utils";
 
 export function WorkerForm({
   teams = [],
+  fullWidth = false,
 }: {
   teams?: { id: string; name: string }[];
+  // Stretch the submit button to full width (for use inside a bottom sheet).
+  fullWidth?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<WorkerFormState, FormData>(
     createWorkerAction,
@@ -103,14 +106,14 @@ export function WorkerForm({
           confirmLabel={t.createAdminConfirm}
           confirmVariant="default"
           trigger={
-            <Button type="button" disabled={pending}>
+            <Button type="button" disabled={pending} className={cn(fullWidth && "w-full")}>
               {pending ? t.creating : t.createAccount}
             </Button>
           }
           onConfirm={() => formRef.current?.requestSubmit()}
         />
       ) : (
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending} className={cn(fullWidth && "w-full")}>
           {pending ? t.creating : t.createAccount}
         </Button>
       )}
