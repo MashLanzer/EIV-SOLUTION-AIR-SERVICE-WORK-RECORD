@@ -2,17 +2,18 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
-  ChevronDown,
   ChevronRight,
   ClipboardList,
   FolderKanban,
   Image as ImageIcon,
+  Settings2,
   Users2,
 } from "lucide-react";
 import type { ProjectStatus } from "@prisma/client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { SheetButton } from "@/components/ui/sheet-button";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { AssignProjectsForm } from "@/components/teams/AssignProjectsForm";
 import { DeleteTeamButton } from "@/components/teams/DeleteTeamButton";
@@ -26,6 +27,11 @@ import { requireAdmin } from "@/lib/session";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 const SECTION_ORDER: ProjectStatus[] = ["ACTIVE", "ON_HOLD", "COMPLETED"];
+
+// A uniform action tile (icon over a short label) shared by the team's manage
+// actions so they read as one compact row that opens sheets.
+const ACTION_TILE =
+  "flex flex-col items-center justify-center gap-1 rounded-xl border border-neutral-200 bg-white px-1 py-2 text-center text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800";
 
 // Compact stat, shown 4-up inside the team header card (nested context, so it
 // stays a light bordered cell rather than a full Card tile).
@@ -113,9 +119,10 @@ export default async function AdminTeamPage({
     <div className="flex flex-col gap-4">
       {saved && <SuccessToast message={t.teamSaved} aboveMobileNav />}
 
-      {/* Header: color identity + stats */}
+      {/* Header: color identity + stats + manage actions (each opens a sheet
+          so the big member / project / settings forms never take page space). */}
       <Card className="animate-fade-up">
-        <CardContent className="flex flex-col gap-4 p-4">
+        <CardContent className="flex flex-col gap-3 p-4">
           <Link
             href="/admin/teams"
             className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
@@ -140,42 +147,32 @@ export default async function AdminTeamPage({
             <StatTile icon={ImageIcon} value={photoCount} label={t.photos} />
             <StatTile icon={ClipboardList} value={jobCount} label={t.jobs} />
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Members */}
-      <Card
-        className="animate-fade-up"
-        style={{ animationDelay: "40ms", animationFillMode: "both" }}
-      >
-        <CardHeader>
-          <CardTitle>{t.members}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {users.length === 0 ? (
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              {t.addPeopleFirst}
-            </p>
-          ) : (
-            <TeamMembersForm teamId={team.id} users={users} memberIds={memberIds} />
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Assign projects to this team */}
-      <Card
-        className="animate-fade-up"
-        style={{ animationDelay: "80ms", animationFillMode: "both" }}
-      >
-        <CardHeader>
-          <CardTitle>{t.assignProjects}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AssignProjectsForm
-            teamId={team.id}
-            projects={allProjects}
-            assignedIds={assignedIds}
-          />
+          <div className="grid grid-cols-3 gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-3">
+            <SheetButton icon={Users2} label={t.members} className={ACTION_TILE}>
+              {users.length === 0 ? (
+                <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.addPeopleFirst}</p>
+              ) : (
+                <TeamMembersForm teamId={team.id} users={users} memberIds={memberIds} />
+              )}
+            </SheetButton>
+            <SheetButton icon={FolderKanban} label={t.assignProjects} className={ACTION_TILE}>
+              <AssignProjectsForm teamId={team.id} projects={allProjects} assignedIds={assignedIds} />
+            </SheetButton>
+            <SheetButton
+              icon={Settings2}
+              label={t.manage}
+              title={t.teamDetails}
+              className={ACTION_TILE}
+            >
+              <div className="flex flex-col gap-4">
+                <TeamForm teamId={team.id} defaultName={team.name} defaultColor={team.color} />
+                <div className="border-t border-neutral-200 dark:border-neutral-800 pt-4">
+                  <DeleteTeamButton teamId={team.id} />
+                </div>
+              </div>
+            </SheetButton>
+          </div>
         </CardContent>
       </Card>
 
@@ -225,32 +222,6 @@ export default async function AdminTeamPage({
             </div>
           ))
         )}
-      </section>
-
-      {/* Manage */}
-      <section
-        className="flex animate-fade-up flex-col gap-3"
-        style={{ animationDelay: "160ms", animationFillMode: "both" }}
-      >
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          {t.manage}
-        </h2>
-        <Card>
-          <details className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
-              <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                {t.teamDetails}
-              </span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="flex flex-col gap-4 px-4 pb-4">
-              <TeamForm teamId={team.id} defaultName={team.name} defaultColor={team.color} />
-              <div className="border-t border-neutral-200 dark:border-neutral-800 pt-4">
-                <DeleteTeamButton teamId={team.id} />
-              </div>
-            </div>
-          </details>
-        </Card>
       </section>
     </div>
   );
