@@ -9,6 +9,7 @@ import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { RecordBulkBar } from "@/components/records/RecordBulkBar";
 import { RecordsFilterBar } from "@/components/records/RecordsFilterBar";
 import { RecordsTable } from "@/components/records/RecordsTable";
+import { SuccessToast } from "@/components/ui/success-toast";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
@@ -145,6 +146,7 @@ export default async function AdminRecordsPage({
         ]}
       />
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.allRecords}</h1>
+      {rawParams.saved && <SuccessToast message={dict.records.recordSaved} aboveMobileNav />}
 
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {statusChips.map((chip) => {

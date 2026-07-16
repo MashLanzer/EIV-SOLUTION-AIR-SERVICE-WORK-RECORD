@@ -306,8 +306,12 @@ enum ProjectStatus {
 
 enum ScheduledJobStatus {
   SCHEDULED
+  // The worker has acknowledged/kicked off the job from their side (accepted
+  // the assignment) before physically heading out. Sits between SCHEDULED and
+  // EN_ROUTE.
+  STARTED
   // The crew is heading to the jobsite (live "on the way" status the customer
-  // and the office can see). Sits between SCHEDULED and IN_PROGRESS.
+  // and the office can see). Sits between STARTED and IN_PROGRESS.
   EN_ROUTE
   IN_PROGRESS
   DONE
@@ -689,6 +693,10 @@ model ScheduledJob {
   // The work record this job produced once the crew filed it (one-to-one).
   workRecordId   String?            @unique
   workRecord     WorkRecord?        @relation(fields: [workRecordId], references: [id], onDelete: SetNull)
+  // Groups the occurrences created together as a recurring series (weekly /
+  // biweekly / monthly). Null for one-off jobs. Each occurrence is otherwise a
+  // fully independent job (its own status, edits, linked record).
+  seriesId       String?
   createdById    String?
   createdBy      User?              @relation("CreatedJobs", fields: [createdById], references: [id], onDelete: SetNull)
   statusEvents   JobStatusEvent[]
@@ -700,6 +708,7 @@ model ScheduledJob {
   @@index([teamId])
   @@index([customerId])
   @@index([projectId])
+  @@index([seriesId])
 }
 
 // Append-only trail of a scheduled job's live status changes, so the office

@@ -9,6 +9,8 @@ import {
   ChevronDown,
   Clock,
   ExternalLink,
+  FilePlus2,
+  Hammer,
   History,
   MapPin,
   Navigation,
@@ -97,16 +99,18 @@ export function ScheduleJobCard({
   const canceled = job.status === "CANCELED";
 
   // The single next step in the lifecycle, so the card shows one forward button
-  // at a time (Scheduled → On my way → Start → Done) instead of all at once.
-  // Each tap advances the status and is recorded in the status history.
+  // at a time (Scheduled → Start → On my way → Start work → Done) instead of all
+  // at once. Each tap advances the status and is recorded in the status history.
   const nextStep =
     job.status === "SCHEDULED"
-      ? { to: "EN_ROUTE" as const, label: t.markEnRoute, Icon: Navigation }
-      : job.status === "EN_ROUTE"
-        ? { to: "IN_PROGRESS" as const, label: t.markInProgress, Icon: PlayCircle }
-        : job.status === "IN_PROGRESS"
-          ? { to: "DONE" as const, label: t.markDone, Icon: CheckCircle2 }
-          : null;
+      ? { to: "STARTED" as const, label: t.markStarted, Icon: PlayCircle }
+      : job.status === "STARTED"
+        ? { to: "EN_ROUTE" as const, label: t.markEnRoute, Icon: Navigation }
+        : job.status === "EN_ROUTE"
+          ? { to: "IN_PROGRESS" as const, label: t.markInProgress, Icon: Hammer }
+          : job.status === "IN_PROGRESS"
+            ? { to: "DONE" as const, label: t.markDone, Icon: CheckCircle2 }
+            : null;
 
   return (
     <>
@@ -205,8 +209,10 @@ export function ScheduleJobCard({
       )}
 
       {/* Linked work record: the calendar job ties into the rest of the app —
-          filing a record from this job auto-marks it Done and links the two. */}
-      {job.workRecordId && (
+          filing a record from this job auto-marks it Done and links the two.
+          When none exists yet, the office can start one straight from here and
+          credit it to whichever worker actually did the job. */}
+      {job.workRecordId ? (
         <Link
           href={`/admin/records/${job.workRecordId}`}
           className="mt-3 flex items-center gap-2 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3 py-2 text-sm transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
@@ -218,6 +224,19 @@ export function ScheduleJobCard({
           </span>
           <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" />
         </Link>
+      ) : (
+        !canceled && (
+          <Link
+            href={`/admin/records/new?jobId=${job.id}`}
+            className="mt-3 flex items-center gap-2 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 px-3 py-2 text-sm transition-colors hover:border-neutral-400 dark:hover:border-neutral-600"
+          >
+            <FilePlus2 className="h-4 w-4 shrink-0 text-neutral-400" />
+            <span className="flex-1 truncate font-medium text-neutral-700 dark:text-neutral-200">
+              {t.startRecord}
+            </span>
+            <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" />
+          </Link>
+        )
       )}
 
       {/* Actions: forward status steps on the left, manage (cancel/edit/delete)
@@ -243,7 +262,7 @@ export function ScheduleJobCard({
         </div>
 
         <div className="ml-auto flex items-center gap-0.5">
-          {(job.status === "SCHEDULED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
+          {(job.status === "SCHEDULED" || job.status === "STARTED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
             <Button
               type="button"
               variant="ghost"

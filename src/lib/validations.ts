@@ -127,6 +127,7 @@ export const addSkillSchema = z.object({
 
 export const SCHEDULED_JOB_STATUSES = [
   "SCHEDULED",
+  "STARTED",
   "EN_ROUTE",
   "IN_PROGRESS",
   "DONE",

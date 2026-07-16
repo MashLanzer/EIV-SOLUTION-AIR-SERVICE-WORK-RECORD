@@ -113,6 +113,16 @@ interface WorkRecordFormProps {
   // When this record is being started from a scheduled job, its id rides along
   // as a hidden field so the server can mark the job done and link them.
   scheduledJobId?: string;
+  // Office flow only: when an admin files a record from the schedule, they pick
+  // which worker it counts for (submittedById drives the pay report). When this
+  // list is present the form shows an "Attribute to" picker; workers never see
+  // it and always file as themselves.
+  attributeWorkers?: { id: string; name: string }[];
+  attributeDefaultId?: string;
+  // Where to land after a successful create. Defaults (server-side) to the
+  // worker's records list; the office flow points it back into /admin so the
+  // admin isn't dropped into the worker app.
+  redirectTo?: string;
 }
 
 // The wizard steps, in order. Each carries its icon + the field ids that live
@@ -190,6 +200,9 @@ export function WorkRecordForm({
   requireCustomerSignature = true,
   storedSignature,
   scheduledJobId,
+  attributeWorkers,
+  attributeDefaultId,
+  redirectTo,
 }: WorkRecordFormProps) {
   const t = useT().form;
   const tc = useT().common;
@@ -618,6 +631,9 @@ export function WorkRecordForm({
         {scheduledJobId && (
           <input type="hidden" name="jobId" value={scheduledJobId} />
         )}
+        {redirectTo && (
+          <input type="hidden" name="returnTo" value={redirectTo} />
+        )}
         {(errorSummary.length > 0 || state?.error) && (
           <Alert variant="error">
             <div className="flex flex-col gap-1">
@@ -649,6 +665,29 @@ export function WorkRecordForm({
         {/* Step 1 - Job Details */}
         <div ref={(el) => { stepRefs.current[0] = el; }} hidden={step !== 0}>
           <FormSection icon={Briefcase} title={t.stepJob}>
+            {attributeWorkers && attributeWorkers.length > 0 && (
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <Label htmlFor="submittedById" required>{t.attributeTo}</Label>
+                <Select
+                  id="submittedById"
+                  name="submittedById"
+                  required
+                  defaultValue={attributeDefaultId ?? ""}
+                >
+                  <option value="" disabled>
+                    {t.attributeToPlaceholder}
+                  </option>
+                  {attributeWorkers.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name}
+                    </option>
+                  ))}
+                </Select>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {t.attributeToHint}
+                </p>
+              </div>
+            )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="date" required>{t.date}</Label>
               <Input

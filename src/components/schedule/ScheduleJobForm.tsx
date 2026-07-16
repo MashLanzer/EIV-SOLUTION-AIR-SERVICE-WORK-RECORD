@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { CalendarPlus, Clock, MapPin, Save, Users } from "lucide-react";
+import { CalendarPlus, Clock, MapPin, Repeat, Save, Users } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -101,6 +101,9 @@ export function ScheduleJobForm({
   const [requiredSkill, setRequiredSkill] = useState(defaultValues?.requiredSkill ?? "");
   const [date, setDate] = useState(defaultValues?.scheduledFor ?? defaultDate ?? "");
   const [assignedToId, setAssignedToId] = useState(defaultValues?.assignedToId ?? "");
+  // Recurrence (create mode only). "none" or weekly/biweekly/monthly; when set,
+  // the count field appears and the server materializes the whole series.
+  const [repeat, setRepeat] = useState("none");
   const skillNeeded = requiredSkill.trim().toLowerCase();
   const hasSkill = (id: string) =>
     !!skillNeeded &&
@@ -147,6 +150,7 @@ export function ScheduleJobForm({
     setDate(defaultDate ?? "");
     setAssignedToId("");
     setRequiredSkill("");
+    setRepeat("none");
     /* eslint-enable react-hooks/set-state-in-effect */
     onDone?.();
   }, [state?.ok, state?.warning, jobId, onDone, defaultDate]);
@@ -208,6 +212,47 @@ export function ScheduleJobForm({
           </div>
         </div>
       </Group>
+
+      {/* Recurrence — create only. Turns one job into a weekly/biweekly/monthly
+          series; each occurrence is then an independent job. */}
+      {!jobId && (
+        <Group icon={Repeat} label={t.groupRepeat}>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor={`repeat-${uid}`}>{t.repeat}</Label>
+              <Select
+                id={`repeat-${uid}`}
+                name="repeatFreq"
+                value={repeat}
+                onChange={(e) => setRepeat(e.target.value)}
+              >
+                <option value="none">{t.repeatNone}</option>
+                <option value="weekly">{t.repeatWeekly}</option>
+                <option value="biweekly">{t.repeatBiweekly}</option>
+                <option value="monthly">{t.repeatMonthly}</option>
+              </Select>
+            </div>
+            {repeat !== "none" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor={`repeatCount-${uid}`}>{t.repeatCount}</Label>
+                <Input
+                  id={`repeatCount-${uid}`}
+                  name="repeatCount"
+                  type="number"
+                  min="1"
+                  max="51"
+                  step="1"
+                  inputMode="numeric"
+                  defaultValue="4"
+                />
+              </div>
+            )}
+          </div>
+          {repeat !== "none" && (
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.repeatHint}</p>
+          )}
+        </Group>
+      )}
 
       <Group icon={Users} label={t.groupAssign}>
         <div className="flex flex-col gap-1.5">

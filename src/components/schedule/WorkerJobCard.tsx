@@ -8,6 +8,7 @@ import {
   Clock,
   ExternalLink,
   FilePlus2,
+  Hammer,
   MapPin,
   Navigation,
   PlayCircle,
@@ -58,16 +59,18 @@ export function WorkerJobCard({ job }: { job: WorkerJobView }) {
       : job.startTime || t.allDay;
   const address = job.projectAddress || job.customerAddress || null;
 
-  // One forward step at a time (Scheduled → On my way → Start → Done); each tap
-  // advances the status and lands in the job's history.
+  // One forward step at a time (Scheduled → Start → On my way → Start work →
+  // Done); each tap advances the status and lands in the job's history.
   const nextStep =
     job.status === "SCHEDULED"
-      ? { to: "EN_ROUTE" as const, label: t.markEnRoute, Icon: Truck }
-      : job.status === "EN_ROUTE"
-        ? { to: "IN_PROGRESS" as const, label: t.markInProgress, Icon: PlayCircle }
-        : job.status === "IN_PROGRESS"
-          ? { to: "DONE" as const, label: t.markDone, Icon: CheckCircle2 }
-          : null;
+      ? { to: "STARTED" as const, label: t.markStarted, Icon: PlayCircle }
+      : job.status === "STARTED"
+        ? { to: "EN_ROUTE" as const, label: t.markEnRoute, Icon: Truck }
+        : job.status === "EN_ROUTE"
+          ? { to: "IN_PROGRESS" as const, label: t.markInProgress, Icon: Hammer }
+          : job.status === "IN_PROGRESS"
+            ? { to: "DONE" as const, label: t.markDone, Icon: CheckCircle2 }
+            : null;
 
   return (
     <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-3">

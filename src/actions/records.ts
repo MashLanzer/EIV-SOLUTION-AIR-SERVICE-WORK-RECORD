@@ -252,6 +252,24 @@ export async function createRecordAction(
   const organizationId = requireOrgId(session);
   const data = parsed.data;
 
+  // Attribution (office flow): an admin filing a record on a crew's behalf can
+  // credit it to a specific worker, since submittedById drives the pay report.
+  // Only an admin may reassign; a worker always files as themselves. The target
+  // must be an active member of the same org, or we silently fall back to self.
+  let submittedById = session.user.id;
+  let submitterName = session.user.name;
+  const attributeTo = (formData.get("submittedById") as string | null)?.trim();
+  if (attributeTo && attributeTo !== session.user.id && session.user.role === "ADMIN") {
+    const worker = await prisma.user.findFirst({
+      where: { id: attributeTo, organizationId, active: true },
+      select: { id: true, name: true },
+    });
+    if (worker) {
+      submittedById = worker.id;
+      submitterName = worker.name;
+    }
+  }
+
   const policyError = await checkRecordPolicies(organizationId, data);
   if (policyError) return policyError;
 
@@ -286,7 +304,7 @@ export async function createRecordAction(
       helperPay: data.helperPay === "" || data.helperPay == null ? null : data.helperPay,
       customerSignature: data.customerSignature,
       installerSignature: data.installerSignature,
-      submittedById: session.user.id,
+      submittedById,
       photos: data.photos?.length
         ? {
             create: data.photos.map((dataUrl, position) => ({
@@ -299,11 +317,23 @@ export async function createRecordAction(
     select: { id: true },
   });
 
-  await logReviewEvent(organizationId, created.id, "SUBMITTED", session.user);
+  await logReviewEvent(organizationId, created.id, "SUBMITTED", {
+    id: submittedById,
+    name: submitterName,
+  });
   await notifyAdminsRecordForReview(created.id, "new");
 
   const jobId = (formData.get("jobId") as string | null)?.trim();
   if (jobId) await linkScheduledJob(session, organizationId, jobId, created.id);
+
+  // The office flow files from /admin and passes a returnTo so the admin lands
+  // back in the admin app instead of the worker records list. Only internal
+  // /admin/ paths are honored (an open redirect guard).
+  const returnTo = (formData.get("returnTo") as string | null)?.trim();
+  if (returnTo && /^\/admin\/[A-Za-z0-9/_-]*$/.test(returnTo)) {
+    revalidatePath(returnTo);
+    redirect(`${returnTo}?saved=1`);
+  }
 
   revalidatePath("/records");
   redirect("/records?saved=1");

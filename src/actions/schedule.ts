@@ -82,6 +82,44 @@ function toDateOnly(value: string): Date {
   return new Date(`${value}T00:00:00.000Z`);
 }
 
+const RECURRENCE_FREQS = ["weekly", "biweekly", "monthly"] as const;
+type RecurrenceFreq = (typeof RECURRENCE_FREQS)[number];
+
+// The recurrence choice from the create form: a frequency plus how many extra
+// occurrences to add after the first one. Null when the job doesn't repeat.
+// Capped so a typo can't spawn thousands of rows.
+function parseRecurrence(
+  formData: FormData
+): { freq: RecurrenceFreq; count: number } | null {
+  const freq = String(formData.get("repeatFreq") ?? "none");
+  if (!(RECURRENCE_FREQS as readonly string[]).includes(freq)) return null;
+  const raw = Number(formData.get("repeatCount"));
+  const count = Number.isFinite(raw) ? Math.min(Math.max(Math.trunc(raw), 0), 51) : 0;
+  if (count <= 0) return null;
+  return { freq: freq as RecurrenceFreq, count };
+}
+
+// The Nth occurrence date of a series (0 = the first/base date). Weekly and
+// biweekly step whole weeks; monthly keeps the same day-of-month, clamped to
+// the last day of shorter months (e.g. the 31st becomes the 30th).
+function occurrenceDate(base: Date, freq: RecurrenceFreq, n: number): Date {
+  const d = new Date(base);
+  if (freq === "weekly") {
+    d.setUTCDate(d.getUTCDate() + 7 * n);
+  } else if (freq === "biweekly") {
+    d.setUTCDate(d.getUTCDate() + 14 * n);
+  } else {
+    const day = base.getUTCDate();
+    d.setUTCDate(1);
+    d.setUTCMonth(base.getUTCMonth() + n);
+    const daysInMonth = new Date(
+      Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)
+    ).getUTCDate();
+    d.setUTCDate(Math.min(day, daysInMonth));
+  }
+  return d;
+}
+
 // Warn (never block) when the assigned worker already has an overlapping timed
 // job that day. Returns a warning string or null.
 async function conflictWarning(params: {
@@ -141,22 +179,35 @@ export async function createScheduledJobAction(
     endTime: endTime || "",
   });
 
-  await prisma.scheduledJob.create({
-    data: {
-      organizationId,
-      title,
-      notes: notes || null,
-      scheduledFor: date,
-      startTime: startTime || null,
-      endTime: endTime || null,
-      requiredSkill: requiredSkill || null,
-      assignedToId,
-      teamId,
-      customerId,
-      projectId,
-      createdById: session.user.id,
-    },
-  });
+  const recurrence = parseRecurrence(formData);
+  const base = {
+    organizationId,
+    title,
+    notes: notes || null,
+    startTime: startTime || null,
+    endTime: endTime || null,
+    requiredSkill: requiredSkill || null,
+    assignedToId,
+    teamId,
+    customerId,
+    projectId,
+    createdById: session.user.id,
+  };
+
+  if (recurrence) {
+    // Materialize the whole series up front (base date + N repeats), tagged
+    // with a shared seriesId. Each occurrence is then an ordinary, independently
+    // editable job.
+    const seriesId = crypto.randomUUID();
+    const dates = [date, ...Array.from({ length: recurrence.count }, (_, i) =>
+      occurrenceDate(date, recurrence.freq, i + 1)
+    )];
+    await prisma.scheduledJob.createMany({
+      data: dates.map((d) => ({ ...base, scheduledFor: d, seriesId })),
+    });
+  } else {
+    await prisma.scheduledJob.create({ data: { ...base, scheduledFor: date } });
+  }
 
   revalidatePath(SCHEDULE_PATH);
   revalidatePath(WORKER_SCHEDULE_PATH);

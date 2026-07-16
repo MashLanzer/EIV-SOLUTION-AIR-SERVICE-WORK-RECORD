@@ -1,7 +1,7 @@
 "use client";
 
 import type { ScheduledJobStatus } from "@prisma/client";
-import { CalendarClock, CheckCircle2, PlayCircle, Truck, XCircle } from "lucide-react";
+import { CalendarClock, CheckCircle2, CircleDot, PlayCircle, Truck, XCircle } from "lucide-react";
 
 import { useT } from "@/components/i18n/LocaleProvider";
 
@@ -15,6 +15,7 @@ export type TimelineEvent = {
 
 const ICONS: Record<ScheduledJobStatus, typeof Truck> = {
   SCHEDULED: CalendarClock,
+  STARTED: CircleDot,
   EN_ROUTE: Truck,
   IN_PROGRESS: PlayCircle,
   DONE: CheckCircle2,
@@ -28,6 +29,7 @@ export function JobStatusTimeline({ events }: { events: TimelineEvent[] }) {
   const t = useT().schedule;
   const label: Record<ScheduledJobStatus, string> = {
     SCHEDULED: t.statusScheduled,
+    STARTED: t.statusStarted,
     EN_ROUTE: t.statusEnRoute,
     IN_PROGRESS: t.statusInProgress,
     DONE: t.statusDone,
