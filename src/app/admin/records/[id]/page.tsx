@@ -22,9 +22,9 @@ import { requireReviewer } from "@/lib/session";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 // A uniform action tile (icon over a short label) shared by the record's
-// primary actions so they read as one tidy grid.
+// primary actions so they read as one tidy, compact row.
 const ACTION_TILE =
-  "flex flex-col items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-1 py-2.5 text-center text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800";
+  "flex flex-col items-center justify-center gap-1 rounded-xl border border-neutral-200 bg-white px-1 py-2 text-center text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800";
 
 function formatDateTime(date: Date, locale: string) {
   return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
@@ -84,7 +84,7 @@ export default async function AdminReviewRecordPage({
       {/* Header: identity + status, a quick summary line, and the review
           actions - Approve/Return get prominence, the rest are secondary. */}
       <Card className="animate-fade-up">
-        <CardContent className="flex flex-col gap-4 p-4">
+        <CardContent className="flex flex-col gap-3 p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
@@ -113,8 +113,8 @@ export default async function AdminReviewRecordPage({
           {/* Actions as uniform tiles (icon over a short label) instead of a
               wrapping button row; secondary flows (share) open in a sheet and
               delete is a quiet ghost row, so the card stays compact. */}
-          <div className="flex flex-col gap-3 border-t border-neutral-200 dark:border-neutral-800 pt-4">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="flex flex-col gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-3">
+            <div className="grid grid-cols-4 gap-2">
               <Link href={`/admin/records/${record.id}/edit`} className={ACTION_TILE}>
                 <Pencil className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
                 <span className="text-[11px] font-medium leading-tight">{dict.common.edit}</span>
