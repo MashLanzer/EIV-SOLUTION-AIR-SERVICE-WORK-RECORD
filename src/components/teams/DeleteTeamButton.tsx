@@ -19,7 +19,7 @@ export function DeleteTeamButton({ teamId }: { teamId: string }) {
         description={t.deleteDesc}
         confirmLabel={t.deleteConfirm}
         trigger={
-          <Button type="button" variant="destructive" size="sm">
+          <Button type="button" variant="destructive" className="w-full">
             <Trash2 className="h-4 w-4" />
             {tc.delete}
           </Button>

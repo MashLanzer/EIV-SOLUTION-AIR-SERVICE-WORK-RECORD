@@ -140,12 +140,10 @@ export function TeamForm({
       )}
 
       {state?.error && <Alert variant="error">{state.error}</Alert>}
-      <div>
-        <Button type="submit" disabled={pending}>
-          <Save className="h-4 w-4" />
-          {pending ? t.saving : teamId ? t.saveTeam : t.createTeam}
-        </Button>
-      </div>
+      <Button type="submit" disabled={pending} className="w-full">
+        <Save className="h-4 w-4" />
+        {pending ? t.saving : teamId ? t.saveTeam : t.createTeam}
+      </Button>
     </form>
   );
 }

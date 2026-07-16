@@ -67,7 +67,7 @@ export function AssignProjectsForm({
           </label>
         ))}
       </div>
-      <Button type="submit" className="w-fit">
+      <Button type="submit" className="w-full">
         <Save className="h-4 w-4" />
         {t.saveProjects}
       </Button>
