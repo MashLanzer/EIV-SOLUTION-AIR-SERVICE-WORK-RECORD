@@ -76,38 +76,32 @@ function Select({
     triggerRef.current?.focus();
   }
 
+  // Measure the trigger and anchor the listbox to it. Opens downward by
+  // default, but flips up when the trigger sits near the bottom of the viewport
+  // (e.g. inside a bottom sheet) so the list stays on screen and usable instead
+  // of spilling under the gesture bar. Clamped to the available space so it
+  // always scrolls.
+  const reposition = React.useCallback(() => {
+    const r = triggerRef.current?.getBoundingClientRect();
+    if (!r) return;
+    const margin = 12;
+    const spaceBelow = window.innerHeight - r.bottom;
+    const spaceAbove = r.top;
+    const openUp = spaceBelow < 240 && spaceAbove > spaceBelow;
+    setPos(
+      openUp
+        ? { bottom: window.innerHeight - r.top + 4, left: r.left, width: r.width, maxHeight: spaceAbove - margin }
+        : { top: r.bottom + 4, left: r.left, width: r.width, maxHeight: spaceBelow - margin }
+    );
+  }, []);
+
   function toggle() {
     if (disabled) return;
     if (open) {
       setOpen(false);
       return;
     }
-    const r = triggerRef.current?.getBoundingClientRect();
-    if (r) {
-      // Open downward by default, but flip up when the trigger sits near the
-      // bottom of the viewport (e.g. inside a bottom sheet) so the list stays
-      // on screen and usable instead of spilling under the gesture bar. The
-      // list is also clamped to the available space so it always scrolls.
-      const margin = 12;
-      const spaceBelow = window.innerHeight - r.bottom;
-      const spaceAbove = r.top;
-      const openUp = spaceBelow < 240 && spaceAbove > spaceBelow;
-      setPos(
-        openUp
-          ? {
-              bottom: window.innerHeight - r.top + 4,
-              left: r.left,
-              width: r.width,
-              maxHeight: spaceAbove - margin,
-            }
-          : {
-              top: r.bottom + 4,
-              left: r.left,
-              width: r.width,
-              maxHeight: spaceBelow - margin,
-            }
-      );
-    }
+    reposition();
     setOpen(true);
   }
 
@@ -119,11 +113,14 @@ function Select({
         triggerRef.current?.focus();
       }
     };
-    const close = () => setOpen(false);
+    // Re-anchor (don't dismiss) on scroll/resize. A full-screen overlay sits
+    // over the page while the list is open, so the content beneath can't be
+    // scrolled by the user; the only scrolls that fire are spurious ones from a
+    // touch tap on an option. Closing on those swallowed the selection on
+    // touch devices — repositioning keeps the list open so the tap lands.
     window.addEventListener("keydown", onKey);
-    // Any scroll/resize invalidates the anchored position — just close.
-    window.addEventListener("scroll", close, true);
-    window.addEventListener("resize", close);
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
     // Focus the selected (or first) option for keyboard users.
     const focusTarget =
       listRef.current?.querySelector<HTMLElement>('[data-selected="true"]') ??
@@ -131,10 +128,10 @@ function Select({
     focusTarget?.focus();
     return () => {
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", close, true);
-      window.removeEventListener("resize", close);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
     };
-  }, [open]);
+  }, [open, reposition]);
 
   function onListKeyDown(e: React.KeyboardEvent) {
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
