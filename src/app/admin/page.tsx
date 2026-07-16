@@ -600,13 +600,10 @@ export default async function AdminDashboardPage() {
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "120ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          {t.recentActivity}
+          {t.recentRecords}
         </h2>
         <Card>
-          <CardHeader>
-            <CardTitle>{t.recentRecords}</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             {recentRecords.length === 0 ? (
               <EmptyState
                 icon={ClipboardList}
@@ -643,51 +640,45 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {t.trends}
         </h2>
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Card className="lg:col-span-2">
-            <CardHeader className="flex-row items-center gap-2 space-y-0">
-              <TrendingUp className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-              <CardTitle>
-                {t.recordsPerWeek.replace("{n}", String(WEEKS_BACK))}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BarList
-                data={weekBuckets}
-                emptyLabel={t.noRecordsPeriod}
-                labelWidth="4rem"
-              />
-            </CardContent>
-          </Card>
+        {/* The headline trend stays open; the two secondary charts tuck into
+            a disclosure so they don't add height until asked for. */}
+        <Card>
+          <CardHeader className="flex-row items-center gap-2 space-y-0">
+            <TrendingUp className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+            <CardTitle>{t.recordsPerWeek.replace("{n}", String(WEEKS_BACK))}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BarList data={weekBuckets} emptyLabel={t.noRecordsPeriod} labelWidth="4rem" />
+          </CardContent>
+        </Card>
 
-          <Card>
-            <CardHeader className="flex-row items-center gap-2 space-y-0">
-              <DollarSign className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-              <CardTitle>
-                {t.topPay}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BarList
-                data={payData}
-                formatValue={fmtMoney}
-                emptyLabel={t.noPayMonth}
-              />
-            </CardContent>
-          </Card>
+        <details className="group">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-1 py-1 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 [&::-webkit-details-marker]:hidden">
+            <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
+            {t.moreCharts}
+          </summary>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            <Card>
+              <CardHeader className="flex-row items-center gap-2 space-y-0">
+                <DollarSign className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                <CardTitle>{t.topPay}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BarList data={payData} formatValue={fmtMoney} emptyLabel={t.noPayMonth} />
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex-row items-center gap-2 space-y-0">
-              <Wrench className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-              <CardTitle>
-                {t.workByType.replace("{n}", String(TYPE_WINDOW_MONTHS))}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <BarList data={typeData} emptyLabel={t.noRecordsYet} />
-            </CardContent>
-          </Card>
-        </div>
+            <Card>
+              <CardHeader className="flex-row items-center gap-2 space-y-0">
+                <Wrench className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                <CardTitle>{t.workByType.replace("{n}", String(TYPE_WINDOW_MONTHS))}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BarList data={typeData} emptyLabel={t.noRecordsYet} />
+              </CardContent>
+            </Card>
+          </div>
+        </details>
       </section>
     </div>
   );

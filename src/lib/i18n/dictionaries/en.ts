@@ -1049,6 +1049,7 @@ export const en = {
     topPay: "Top approved pay this month",
     noPayMonth: "No pay recorded this month",
     workByType: "Work by type (last {n} months)",
+    moreCharts: "More charts",
   },
   adminRecords: {
     allRecords: "All Work Records",

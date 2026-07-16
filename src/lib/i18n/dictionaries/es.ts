@@ -1043,6 +1043,7 @@ export const es: Dictionary = {
     topPay: "Mayor pago aprobado este mes",
     noPayMonth: "No hay pagos registrados este mes",
     workByType: "Trabajo por tipo (últimos {n} meses)",
+    moreCharts: "Más gráficos",
   },
   adminRecords: {
     allRecords: "Todos los registros",
