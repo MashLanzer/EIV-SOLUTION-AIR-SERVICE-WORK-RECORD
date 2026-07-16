@@ -96,6 +96,18 @@ export function ScheduleJobCard({
 
   const canceled = job.status === "CANCELED";
 
+  // The single next step in the lifecycle, so the card shows one forward button
+  // at a time (Scheduled → On my way → Start → Done) instead of all at once.
+  // Each tap advances the status and is recorded in the status history.
+  const nextStep =
+    job.status === "SCHEDULED"
+      ? { to: "EN_ROUTE" as const, label: t.markEnRoute, Icon: Navigation }
+      : job.status === "EN_ROUTE"
+        ? { to: "IN_PROGRESS" as const, label: t.markInProgress, Icon: PlayCircle }
+        : job.status === "IN_PROGRESS"
+          ? { to: "DONE" as const, label: t.markDone, Icon: CheckCircle2 }
+          : null;
+
   return (
     <>
     <div
@@ -212,25 +224,17 @@ export function ScheduleJobCard({
           as icons on the right. */}
       <div className="mt-3 flex items-center gap-1.5 border-t border-neutral-100 dark:border-neutral-800 pt-3">
         <div className="flex flex-wrap items-center gap-1.5">
-          {job.status === "SCHEDULED" && (
-            <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("EN_ROUTE")}>
-              <Navigation className="h-3.5 w-3.5" />
-              {t.markEnRoute}
+          {nextStep ? (
+            <Button
+              type="button"
+              size="sm"
+              disabled={pending}
+              onClick={() => setStatus(nextStep.to)}
+            >
+              <nextStep.Icon className="h-3.5 w-3.5" />
+              {nextStep.label}
             </Button>
-          )}
-          {(job.status === "SCHEDULED" || job.status === "EN_ROUTE") && (
-            <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("IN_PROGRESS")}>
-              <PlayCircle className="h-3.5 w-3.5" />
-              {t.markInProgress}
-            </Button>
-          )}
-          {(job.status === "SCHEDULED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
-            <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("DONE")}>
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {t.markDone}
-            </Button>
-          )}
-          {(job.status === "DONE" || job.status === "CANCELED") && (
+          ) : (
             <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("SCHEDULED")}>
               <RotateCcw className="h-3.5 w-3.5" />
               {t.reopen}

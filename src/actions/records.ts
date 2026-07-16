@@ -18,9 +18,11 @@ import { scheduleWhereForUser, schedulePaths } from "@/lib/schedule";
 import { workRecordSchema } from "@/lib/validations";
 
 // When a record is filed from a scheduled job, close the loop: link the two
-// and mark the job done. Scope-safe (updateMany over the caller's own jobs) so
+// and mark the job done. Scope-safe (only the caller's own accessible jobs) so
 // a forged jobId can't touch someone else's plan. Best-effort - a bad id is a
-// silent no-op and never blocks the record from saving.
+// silent no-op and never blocks the record from saving. The auto-completion is
+// recorded in the job's status history too, so an internal Done shows up in the
+// trail just like a manual one.
 async function linkScheduledJob(
   session: Awaited<ReturnType<typeof requireAuth>>,
   organizationId: string,
@@ -28,10 +30,30 @@ async function linkScheduledJob(
   workRecordId: string
 ) {
   const scope = await scheduleWhereForUser(session, organizationId);
-  await prisma.scheduledJob.updateMany({
+  const job = await prisma.scheduledJob.findFirst({
     where: { AND: [{ id: jobId, workRecordId: null }, scope] },
-    data: { workRecordId, status: "DONE" },
+    select: { id: true, status: true },
   });
+  if (job) {
+    await prisma.scheduledJob.update({
+      where: { id: job.id },
+      data: { workRecordId, status: "DONE" },
+    });
+    if (job.status !== "DONE") {
+      try {
+        await prisma.jobStatusEvent.create({
+          data: {
+            jobId: job.id,
+            status: "DONE",
+            actorId: session.user.id,
+            actorName: session.user.name?.trim() || "—",
+          },
+        });
+      } catch {
+        /* history is best-effort; never block the record from saving */
+      }
+    }
+  }
   for (const path of schedulePaths()) revalidatePath(path);
 }
 

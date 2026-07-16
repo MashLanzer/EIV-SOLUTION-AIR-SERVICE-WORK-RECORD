@@ -58,6 +58,17 @@ export function WorkerJobCard({ job }: { job: WorkerJobView }) {
       : job.startTime || t.allDay;
   const address = job.projectAddress || job.customerAddress || null;
 
+  // One forward step at a time (Scheduled → On my way → Start → Done); each tap
+  // advances the status and lands in the job's history.
+  const nextStep =
+    job.status === "SCHEDULED"
+      ? { to: "EN_ROUTE" as const, label: t.markEnRoute, Icon: Truck }
+      : job.status === "EN_ROUTE"
+        ? { to: "IN_PROGRESS" as const, label: t.markInProgress, Icon: PlayCircle }
+        : job.status === "IN_PROGRESS"
+          ? { to: "DONE" as const, label: t.markDone, Icon: CheckCircle2 }
+          : null;
+
   return (
     <div className="rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950 p-3">
       <div className="flex items-start justify-between gap-3">
@@ -95,22 +106,10 @@ export function WorkerJobCard({ job }: { job: WorkerJobView }) {
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-neutral-100 dark:border-neutral-800 pt-3">
-        {job.status === "SCHEDULED" && (
-          <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("EN_ROUTE")}>
-            <Truck className="h-3.5 w-3.5" />
-            {t.markEnRoute}
-          </Button>
-        )}
-        {(job.status === "SCHEDULED" || job.status === "EN_ROUTE") && (
-          <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("IN_PROGRESS")}>
-            <PlayCircle className="h-3.5 w-3.5" />
-            {t.markInProgress}
-          </Button>
-        )}
-        {(job.status === "SCHEDULED" || job.status === "EN_ROUTE" || job.status === "IN_PROGRESS") && (
-          <Button type="button" variant="outline" size="sm" disabled={pending} onClick={() => setStatus("DONE")}>
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            {t.markDone}
+        {nextStep && (
+          <Button type="button" size="sm" disabled={pending} onClick={() => setStatus(nextStep.to)}>
+            <nextStep.Icon className="h-3.5 w-3.5" />
+            {nextStep.label}
           </Button>
         )}
         {address && (
