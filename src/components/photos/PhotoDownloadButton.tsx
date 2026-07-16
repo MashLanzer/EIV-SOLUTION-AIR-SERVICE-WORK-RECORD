@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { Download } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { PHOTO_OVERLAY_ICON } from "@/components/photos/PhotoViewer";
 import { useT } from "@/components/i18n/LocaleProvider";
 
 // Save the original photo to the device. Fetches the blob and triggers a
 // download; if that's blocked (e.g. cross-origin CORS in some WebViews) it
 // falls back to opening the image so the user can long-press to save.
+// Rendered as a glassy icon button on the photo overlay toolbar.
 export function PhotoDownloadButton({ url }: { url: string }) {
   const t = useT();
   const [busy, setBusy] = useState(false);
@@ -35,9 +36,14 @@ export function PhotoDownloadButton({ url }: { url: string }) {
   }
 
   return (
-    <Button type="button" variant="outline" size="sm" onClick={handle} disabled={busy}>
-      <Download className="h-4 w-4" />
-      {busy ? t.common.saving : t.photoDetail.download}
-    </Button>
+    <button
+      type="button"
+      onClick={handle}
+      disabled={busy}
+      aria-label={busy ? t.common.saving : t.photoDetail.download}
+      className={`${PHOTO_OVERLAY_ICON} disabled:opacity-60`}
+    >
+      <Download className="h-5 w-5" />
+    </button>
   );
 }

@@ -3,7 +3,6 @@ import { ArrowLeft, MapPin, Send, Tag as TagIcon, Trash2, X } from "lucide-react
 
 import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { PhotoDeleteButton } from "@/components/photos/PhotoDeleteButton";
@@ -77,17 +76,82 @@ export async function PhotoDetailView({
   const t = dict.photoDetail;
   const locale = await getLocale();
   const canDelete = isAdmin || photo.takenById === currentUserId;
+  const showTags = photo.photoTags.length > 0 || canManageTags;
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      {/* Photo hero: the who/when/location sit over the image; comments open
-          in a bottom sheet. */}
+      {/* Photo hero: the who/when/location sit over the image; every action
+          (download, delete, tags, comments) floats on the overlay toolbar and
+          tags/comments open in bottom sheets. */}
       <PhotoViewer
         src={photo.url}
         alt={t.jobsitePhoto}
         commentsCount={photo.comments.length}
         commentsTitle={t.comments}
         closeLabel={dict.common.close}
+        actions={
+          <>
+            <PhotoDownloadButton url={photo.url} />
+            {canDelete && <PhotoDeleteButton photoId={photo.id} basePath={basePath} />}
+          </>
+        }
+        tagsCount={showTags ? photo.photoTags.length : undefined}
+        tagsTitle={showTags ? t.tags : undefined}
+        tags={
+          showTags ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap gap-2">
+                {photo.photoTags.length === 0 && (
+                  <span className="text-sm text-neutral-500 dark:text-neutral-400">
+                    {t.noTagsYet}
+                  </span>
+                )}
+                {photo.photoTags.map(({ tag }) =>
+                  canManageTags ? (
+                    <form key={tag.id} action={removeTagAction.bind(null, photo.id, tag.id)}>
+                      <button
+                        type="submit"
+                        className="flex items-center gap-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 px-3 py-1 text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        aria-label={t.removeTag.replace("{name}", tag.name)}
+                      >
+                        <TagIcon className="h-3 w-3" />
+                        {tag.name}
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </form>
+                  ) : (
+                    <span
+                      key={tag.id}
+                      className="flex items-center gap-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 px-3 py-1 text-sm font-medium text-neutral-700 dark:text-neutral-200"
+                    >
+                      <TagIcon className="h-3 w-3" />
+                      {tag.name}
+                    </span>
+                  )
+                )}
+              </div>
+              {canManageTags && (
+                <form action={addTagAction.bind(null, photo.id)} className="flex gap-2">
+                  <Input
+                    name="name"
+                    list="org-tags"
+                    placeholder={t.addTagPlaceholder}
+                    autoComplete="off"
+                    maxLength={30}
+                  />
+                  <datalist id="org-tags">
+                    {orgTags.map((tag) => (
+                      <option key={tag.name} value={tag.name} />
+                    ))}
+                  </datalist>
+                  <Button type="submit" variant="outline">
+                    {t.add}
+                  </Button>
+                </form>
+              )}
+            </div>
+          ) : undefined
+        }
         overlayTop={
           <div className="flex flex-col gap-2">
             <Link
@@ -121,7 +185,6 @@ export async function PhotoDetailView({
             </div>
           </div>
         }
-        overlayBottom={null}
         comments={
           <div className="flex flex-col gap-4">
             {photo.comments.length === 0 ? (
@@ -181,73 +244,6 @@ export async function PhotoDetailView({
           </div>
         }
       />
-
-      {/* Actions */}
-      <div className="flex flex-wrap gap-2">
-        <PhotoDownloadButton url={photo.url} />
-        {canDelete && <PhotoDeleteButton photoId={photo.id} basePath={basePath} />}
-      </div>
-
-      {/* Tags */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TagIcon className="h-4 w-4" />
-            {t.tags}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <div className="flex flex-wrap gap-2">
-            {photo.photoTags.length === 0 && (
-              <span className="text-sm text-neutral-500 dark:text-neutral-400">
-                {t.noTagsYet}
-              </span>
-            )}
-            {photo.photoTags.map(({ tag }) =>
-              canManageTags ? (
-                <form key={tag.id} action={removeTagAction.bind(null, photo.id, tag.id)}>
-                  <button
-                    type="submit"
-                    className="flex items-center gap-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 px-3 py-1 text-sm font-medium text-neutral-700 dark:text-neutral-200 transition-colors hover:bg-destructive/10 hover:text-destructive"
-                    aria-label={t.removeTag.replace("{name}", tag.name)}
-                  >
-                    <TagIcon className="h-3 w-3" />
-                    {tag.name}
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </form>
-              ) : (
-                <span
-                  key={tag.id}
-                  className="flex items-center gap-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 px-3 py-1 text-sm font-medium text-neutral-700 dark:text-neutral-200"
-                >
-                  <TagIcon className="h-3 w-3" />
-                  {tag.name}
-                </span>
-              )
-            )}
-          </div>
-          {canManageTags && (
-            <form action={addTagAction.bind(null, photo.id)} className="flex gap-2">
-              <Input
-                name="name"
-                list="org-tags"
-                placeholder={t.addTagPlaceholder}
-                autoComplete="off"
-                maxLength={30}
-              />
-              <datalist id="org-tags">
-                {orgTags.map((tag) => (
-                  <option key={tag.name} value={tag.name} />
-                ))}
-              </datalist>
-              <Button type="submit" variant="outline">
-                {t.add}
-              </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }

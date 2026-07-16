@@ -3,8 +3,8 @@
 import { useRef } from "react";
 import { Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { PHOTO_OVERLAY_ICON } from "@/components/photos/PhotoViewer";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { deletePhotoAndReturnAction } from "@/actions/photos";
 
@@ -27,10 +27,9 @@ export function PhotoDeleteButton({
         description={t.deletePhotoDesc}
         confirmLabel={t.delete}
         trigger={
-          <Button type="button" variant="outline" size="sm" aria-label={t.deletePhotoAria}>
-            <Trash2 className="h-4 w-4" />
-            {t.delete}
-          </Button>
+          <button type="button" aria-label={t.deletePhotoAria} className={PHOTO_OVERLAY_ICON}>
+            <Trash2 className="h-5 w-5" />
+          </button>
         }
         onConfirm={() => formRef.current?.requestSubmit()}
       />
