@@ -12,6 +12,7 @@ import { ToggleWorkerActiveButton } from "@/components/workers/ToggleWorkerActiv
 import { UpdateWorkerEmailForm } from "@/components/workers/UpdateWorkerEmailForm";
 import { UpdateWorkerOverloadForm } from "@/components/workers/UpdateWorkerOverloadForm";
 import { UpdateWorkerRoleForm } from "@/components/workers/UpdateWorkerRoleForm";
+import { WorkerPositionForm } from "@/components/workers/WorkerPositionForm";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAdmin } from "@/lib/session";
@@ -40,7 +41,7 @@ export default async function WorkerDetailPage({
   });
   if (!worker) notFound();
 
-  const [otherActiveAdmins, recordCount, org] = await Promise.all([
+  const [otherActiveAdmins, recordCount, org, positions] = await Promise.all([
     prisma.user.count({
       where: { organizationId, role: "ADMIN", active: true, id: { not: worker.id } },
     }),
@@ -48,6 +49,11 @@ export default async function WorkerDetailPage({
     prisma.organization.findUnique({
       where: { id: organizationId },
       select: { scheduleOverloadThreshold: true },
+    }),
+    prisma.position.findMany({
+      where: { organizationId },
+      orderBy: [{ isSystem: "desc" }, { name: "asc" }],
+      select: { id: true, name: true },
     }),
   ]);
   const orgOverloadDefault = org?.scheduleOverloadThreshold ?? 4;
@@ -174,6 +180,16 @@ export default async function WorkerDetailPage({
                 currentRole={worker.role}
                 disableDemote={isLastActiveAdmin}
               />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>{t.position}</Label>
+              <WorkerPositionForm
+                userId={worker.id}
+                currentPositionId={worker.positionId}
+                positions={positions}
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.positionHint}</p>
             </div>
 
             <div className="flex flex-col gap-2">

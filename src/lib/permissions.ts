@@ -27,6 +27,17 @@ export const PERMISSION_GROUPS = [
 ] as const;
 export type PermissionGroup = (typeof PERMISSION_GROUPS)[number];
 
+// Human labels for the groups (headers in the roles UI), kept next to the
+// catalog so adding a group is a one-file change.
+export const GROUP_LABELS: Record<PermissionGroup, { en: string; es: string }> = {
+  records: { en: "Records", es: "Registros" },
+  people: { en: "People", es: "Personas" },
+  work: { en: "Work", es: "Trabajo" },
+  customers: { en: "Customers", es: "Clientes" },
+  money: { en: "Money", es: "Dinero" },
+  company: { en: "Company", es: "Empresa" },
+};
+
 export interface PermissionDef {
   key: string;
   group: PermissionGroup;

@@ -19,6 +19,7 @@ import {
   History,
   Images,
   Receipt,
+  ShieldCheck,
   UserPlus,
   Wallet,
 } from "lucide-react";
@@ -49,6 +50,7 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
   { href: "/admin/payments", label: n.payments, shortLabel: n.payments, icon: CreditCard, exact: false },
   { href: "/admin/reports", label: n.payReport, shortLabel: n.pay, icon: BarChart3, exact: false },
   { href: "/admin/workers", label: n.workers, shortLabel: n.workers, icon: Users, exact: false },
+  { href: "/admin/roles", label: n.roles, shortLabel: n.roles, icon: ShieldCheck, exact: false },
   ];
 }
 
@@ -89,6 +91,7 @@ function moreItems(n: Dictionary["nav"]): MoreItem[] {
   { href: "/admin/reports", label: n.payReport, icon: BarChart3 },
   { href: "/admin/workers", label: n.workers, icon: Users },
   { href: "/admin/checklists", label: n.checklistTemplates, icon: ListChecks },
+  { href: "/admin/roles", label: n.roles, icon: ShieldCheck },
   { href: "/admin/audit", label: n.audit, icon: History },
   ];
 }
