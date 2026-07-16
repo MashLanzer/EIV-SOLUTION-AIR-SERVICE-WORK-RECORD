@@ -11,6 +11,7 @@ import { NewWorkerButton } from "@/components/workers/NewWorkerButton";
 import { WorkersSection, type WorkerStat } from "@/components/workers/WorkersTable";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
+import { getAssignablePositions } from "@/lib/positions";
 import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 import type { Prisma } from "@prisma/client";
@@ -41,7 +42,7 @@ export default async function AdminWorkersPage({
     ...(skill ? { skills: { some: { name: { equals: skill, mode: "insensitive" } } } } : {}),
   };
 
-  const [users, recordStats, skillNames, teams] = await Promise.all([
+  const [users, recordStats, skillNames, teams, positions] = await Promise.all([
     prisma.user.findMany({ where, orderBy: { name: "asc" } }),
     // Jobs submitted + last activity per person (submittedById is SetNull, so
     // some records have no author - those don't attribute to anyone).
@@ -64,6 +65,8 @@ export default async function AdminWorkersPage({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
+    // Company positions, so a puesto can be assigned right on the create sheet.
+    getAssignablePositions(organizationId),
   ]);
 
   // Preserve the text query when switching skill chips.
@@ -92,7 +95,7 @@ export default async function AdminWorkersPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title={t.team} action={<NewWorkerButton teams={teams} />} />
+      <PageHeader title={t.team} action={<NewWorkerButton teams={teams} positions={positions} />} />
 
       {/* Team summary - only when not filtering, so the numbers reflect the
           whole roster rather than the filtered subset. */}

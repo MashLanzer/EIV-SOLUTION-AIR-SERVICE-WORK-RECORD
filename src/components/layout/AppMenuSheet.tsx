@@ -35,6 +35,7 @@ export interface CreateData {
   customers: { id: string; name: string }[];
   users: { id: string; name: string }[];
   projects: { id: string; name: string }[];
+  positions: { id: string; name: string }[];
 }
 
 // Which known create route each item maps to, so the item opens that form in a
@@ -202,7 +203,7 @@ export function AppMenuSheet({
             title={t.workers.newWorkerTitle}
             closeLabel={t.common.close}
           >
-            <WorkerForm teams={createData.teams} fullWidth />
+            <WorkerForm teams={createData.teams} positions={createData.positions} fullWidth />
           </FormSheet>
           <FormSheet
             open={create === "team"}

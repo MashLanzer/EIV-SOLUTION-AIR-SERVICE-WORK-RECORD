@@ -6,15 +6,20 @@ import { WorkerForm } from "@/components/workers/WorkerForm";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
+import { getAssignablePositions } from "@/lib/positions";
 import { getT } from "@/lib/i18n/server";
 
 export default async function NewWorkerPage() {
   const session = await requirePermission("workers.manage");
-  const teams = await prisma.team.findMany({
-    where: { organizationId: requireOrgId(session) },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const organizationId = requireOrgId(session);
+  const [teams, positions] = await Promise.all([
+    prisma.team.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    getAssignablePositions(organizationId),
+  ]);
   const t = (await getT()).workers;
 
   return (
@@ -43,7 +48,7 @@ export default async function NewWorkerPage() {
       </div>
       <Card>
         <CardContent className="p-4">
-          <WorkerForm teams={teams} />
+          <WorkerForm teams={teams} positions={positions} />
         </CardContent>
       </Card>
     </div>

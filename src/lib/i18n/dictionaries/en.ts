@@ -1435,6 +1435,8 @@ export const en = {
     reduceMotionHint: "Turn off entrance and tap animations",
     tempUnits: "Temperature units",
     tempUnitsHint: "Used for the jobsite weather",
+    mapColor: "Colour map",
+    mapColorHint: "Use a full-colour map instead of the monochrome one",
     language: "Language",
     languageHint: "The app's display language",
   },

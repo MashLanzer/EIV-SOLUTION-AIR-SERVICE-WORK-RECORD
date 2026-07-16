@@ -89,12 +89,26 @@ export async function createWorkerAction(
     };
   }
 
+  // Optional position assigned at creation. Scoped to this org so a crafted id
+  // can't attach another company's position; an invalid/blank id just leaves it
+  // unset (the worker falls back to their base-role defaults).
+  const rawPositionId = String(formData.get("positionId") ?? "").trim();
+  let positionId: string | null = null;
+  if (rawPositionId) {
+    const pos = await prisma.position.findFirst({
+      where: { id: rawPositionId, organizationId },
+      select: { id: true },
+    });
+    positionId = pos?.id ?? null;
+  }
+
   const user = await prisma.user.create({
     data: {
       email,
       name: parsed.data.name,
       role: parsed.data.role,
       organizationId,
+      positionId,
     },
   });
 

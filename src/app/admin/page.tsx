@@ -2,13 +2,9 @@ import Link from "next/link";
 import {
   ClipboardList,
   CalendarClock,
-  Users2,
   ArrowRight,
   ChevronRight,
   Clock3,
-  FolderPlus,
-  UserPlus,
-  CalendarPlus,
   CheckCircle2,
   TrendingUp,
   DollarSign,
@@ -21,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BarList } from "@/components/charts/BarList";
 import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
+import { DashboardQuickActions } from "@/components/admin/DashboardQuickActions";
 import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { formatTime } from "@/lib/format";
@@ -28,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { computeTotals } from "@/lib/invoices";
 import { prisma } from "@/lib/prisma";
+import { getAssignablePositions } from "@/lib/positions";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireOfficeAccess } from "@/lib/authz";
@@ -268,6 +266,40 @@ export default async function AdminDashboardPage() {
   const fmtMoney = (n: number) => `${currencySymbol}${moneyNumber.format(n)}`;
   const isAdmin = session.user.role === "ADMIN";
 
+  // Seed lists for the dashboard quick-action create sheets (Project / Worker /
+  // Team). Only fetched for admins, who are the ones shown the quick actions.
+  const quickCreateData = isAdmin
+    ? await Promise.all([
+        prisma.team.findMany({
+          where: { organizationId },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        }),
+        prisma.customer.findMany({
+          where: { organizationId },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        }),
+        prisma.user.findMany({
+          where: { organizationId },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        }),
+        prisma.project.findMany({
+          where: { organizationId, status: { not: "COMPLETED" } },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true },
+        }),
+        getAssignablePositions(organizationId),
+      ]).then(([teams, customers, users, projects, positions]) => ({
+        teams,
+        customers,
+        users,
+        projects,
+        positions,
+      }))
+    : null;
+
   const outstandingTotal = sentInvoices.reduce(
     (sum, inv) =>
       sum +
@@ -319,25 +351,7 @@ export default async function AdminDashboardPage() {
         />
       </div>
 
-      {isAdmin && (
-        <div className="grid grid-cols-4 gap-2 animate-fade-up" style={{ animationDelay: "20ms" }}>
-          {[
-            { href: "/admin/schedule", label: t.qaSchedule, icon: CalendarPlus },
-            { href: "/admin/projects/new", label: t.qaProject, icon: FolderPlus },
-            { href: "/admin/workers/new", label: t.qaWorker, icon: UserPlus },
-            { href: "/admin/teams/new", label: t.qaTeam, icon: Users2 },
-          ].map((a) => (
-            <Link
-              key={a.href}
-              href={a.href}
-              className="flex flex-col items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-1 py-2.5 text-center text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
-            >
-              <a.icon className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
-              <span className="text-[11px] font-medium leading-tight">{a.label}</span>
-            </Link>
-          ))}
-        </div>
-      )}
+      {quickCreateData && <DashboardQuickActions data={quickCreateData} />}
 
       {todaySchedule.length > 0 && (
         <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "60ms" }}>

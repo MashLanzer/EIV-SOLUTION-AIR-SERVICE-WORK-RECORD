@@ -12,10 +12,12 @@ import { useT } from "@/components/i18n/LocaleProvider";
 // create action redirects to the new worker's detail page (closing the sheet).
 export function NewWorkerButton({
   teams,
+  positions = [],
   variant = "default",
   className,
 }: {
   teams: { id: string; name: string }[];
+  positions?: { id: string; name: string }[];
   variant?: "default" | "outline";
   className?: string;
 }) {
@@ -30,7 +32,7 @@ export function NewWorkerButton({
         {t.newWorker}
       </Button>
       <BottomSheet open={open} onClose={() => setOpen(false)} title={t.newWorkerTitle} closeLabel={tc.close}>
-        <WorkerForm teams={teams} fullWidth />
+        <WorkerForm teams={teams} positions={positions} fullWidth />
       </BottomSheet>
     </>
   );

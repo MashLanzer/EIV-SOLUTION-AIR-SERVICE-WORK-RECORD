@@ -5,6 +5,7 @@ import { Check, Save } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -109,7 +110,7 @@ export function TeamForm({
                 key={u.id}
                 className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm"
               >
-                <input type="checkbox" name="userId" value={u.id} className="h-4 w-4 shrink-0" />
+                <Checkbox name="userId" value={u.id} />
                 <span className="text-neutral-800 dark:text-neutral-200">{u.name}</span>
               </label>
             ))}
@@ -131,7 +132,7 @@ export function TeamForm({
                 key={p.id}
                 className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm"
               >
-                <input type="checkbox" name="projectId" value={p.id} className="h-4 w-4 shrink-0" />
+                <Checkbox name="projectId" value={p.id} />
                 <span className="text-neutral-800 dark:text-neutral-200">{p.name}</span>
               </label>
             ))}

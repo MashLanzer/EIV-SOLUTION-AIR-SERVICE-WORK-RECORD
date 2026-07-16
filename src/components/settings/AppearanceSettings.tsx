@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { Check, Monitor, Moon, Sun, Palette as PaletteIcon, Sparkles, Thermometer } from "lucide-react";
+import { Check, Map as MapIcon, Monitor, Moon, Sun, Palette as PaletteIcon, Sparkles, Thermometer } from "lucide-react";
 
 import { Switch } from "@/components/ui/switch";
 import { SettingsCustomRow, SettingsRow } from "@/components/settings/SettingsList";
@@ -13,6 +13,7 @@ import {
   PALETTE_FAMILIES,
 } from "@/lib/palettes";
 import { setTempUnit, useTempUnit, type TempUnit } from "@/lib/tempUnit";
+import { setMapStyle, useMapStyle } from "@/lib/mapStyle";
 import { cn } from "@/lib/utils";
 
 const TEMP_UNIT_VALUES: TempUnit[] = ["F", "C"];
@@ -112,6 +113,7 @@ export function AppearanceSettings() {
   const paletteId = usePaletteId();
   const reduceMotion = useReduceMotion();
   const tempUnit = useTempUnit();
+  const mapStyle = useMapStyle();
 
   return (
     <>
@@ -237,6 +239,19 @@ export function AppearanceSettings() {
               );
             })}
           </div>
+        }
+      />
+
+      <SettingsRow
+        icon={MapIcon}
+        label={t.appearance.mapColor}
+        sublabel={t.appearance.mapColorHint}
+        trailing={
+          <Switch
+            checked={mapStyle === "color"}
+            onCheckedChange={(on) => setMapStyle(on ? "color" : "mono")}
+            aria-label={t.appearance.mapColor}
+          />
         }
       />
 

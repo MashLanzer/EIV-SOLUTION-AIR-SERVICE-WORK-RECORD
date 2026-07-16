@@ -7,6 +7,7 @@ import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
 import { Navigation } from "lucide-react";
 
 import { useThemeFamily } from "@/hooks/useThemeFamily";
+import { useMapStyle } from "@/lib/mapStyle";
 
 export interface MapPin {
   id: string;
@@ -24,12 +25,19 @@ export interface MapPin {
   subtitle?: string;
 }
 
-// CartoDB's greyscale basemaps match the app's monochrome look far better than
-// OpenStreetMap's full-colour tiles, and come in a light + dark pair so the map
-// follows the theme. No API key required; attribution is required and provided.
+// CartoDB basemaps (no API key; attribution required and provided). Monochrome
+// (light/dark pair, follows the theme) matches the app's look; a "color" device
+// setting swaps in the full-colour Voyager basemap instead. Voyager is a single
+// light-toned style, so it's used for both themes in colour mode.
 const TILES = {
-  light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-  dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  mono: {
+    light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  },
+  color: {
+    light: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    dark: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+  },
 } as const;
 
 const ATTRIBUTION =
@@ -84,6 +92,7 @@ function FitBounds({ pins }: { pins: MapPin[] }) {
 
 export default function ProjectsMap({ pins }: { pins: MapPin[] }) {
   const family = useThemeFamily();
+  const mapStyle = useMapStyle();
   const projectIcon = useMemo(() => makeProjectIcon(family), [family]);
   const photoIcon = useMemo(() => makePhotoIcon(family), [family]);
 
@@ -104,7 +113,11 @@ export default function ProjectsMap({ pins }: { pins: MapPin[] }) {
         scrollWheelZoom={false}
         style={{ height: "100%", width: "100%" }}
       >
-        <TileLayer key={family} attribution={ATTRIBUTION} url={TILES[family]} />
+        <TileLayer
+          key={`${mapStyle}-${family}`}
+          attribution={ATTRIBUTION}
+          url={TILES[mapStyle][family]}
+        />
         <FitBounds pins={pins} />
         {pins.map((p) => (
           <Marker

@@ -36,6 +36,20 @@ export async function ensureDefaultPositions(organizationId: string): Promise<vo
   });
 }
 
+// The company's positions as a plain id/name list for assignment dropdowns
+// (create/edit worker). Ensures the built-in positions exist first, so the
+// picker is never empty on a company that hasn't opened the Roles page yet.
+export async function getAssignablePositions(
+  organizationId: string
+): Promise<{ id: string; name: string }[]> {
+  await ensureDefaultPositions(organizationId);
+  return prisma.position.findMany({
+    where: { organizationId },
+    orderBy: [{ isSystem: "desc" }, { name: "asc" }],
+    select: { id: true, name: true },
+  });
+}
+
 // The effective permissions + access level for a user, from their assigned
 // position if any, otherwise falling back to the legacy role defaults. This is
 // the single place enforcement will read from as we migrate role checks over.

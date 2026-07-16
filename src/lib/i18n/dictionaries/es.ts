@@ -1430,6 +1430,8 @@ export const es: Dictionary = {
     reduceMotionHint: "Desactiva las animaciones de entrada y de toque",
     tempUnits: "Unidades de temperatura",
     tempUnitsHint: "Se usan para el clima del jobsite",
+    mapColor: "Mapa a color",
+    mapColorHint: "Usa un mapa a todo color en vez del monocromático",
     language: "Idioma",
     languageHint: "El idioma de la aplicación",
   },

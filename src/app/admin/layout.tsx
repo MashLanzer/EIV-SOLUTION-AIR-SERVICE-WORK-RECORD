@@ -10,6 +10,7 @@ import { requireOrgId } from "@/lib/orgScope";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 import { getActiveSupportSessionForOrg } from "@/lib/support";
 import { getOrgFeatures } from "@/lib/features";
+import { getAssignablePositions } from "@/lib/positions";
 import { requireOfficeAccess } from "@/lib/authz";
 
 export default async function AdminLayout({
@@ -69,11 +70,13 @@ export default async function AdminLayout({
               orderBy: { name: "asc" },
               select: { id: true, name: true },
             }),
-          ]).then(([teams, customers, users, projects]) => ({
+            getAssignablePositions(organizationId),
+          ]).then(([teams, customers, users, projects, positions]) => ({
             teams,
             customers,
             users,
             projects,
+            positions,
           }))
         : Promise.resolve(null),
     ]);

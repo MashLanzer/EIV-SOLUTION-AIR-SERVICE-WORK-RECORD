@@ -5,18 +5,24 @@ import { Shield, User } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { createWorkerAction, type WorkerFormState } from "@/actions/workers";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 export function WorkerForm({
   teams = [],
+  positions = [],
   fullWidth = false,
 }: {
   teams?: { id: string; name: string }[];
+  // Company positions to optionally assign at creation. When empty the picker
+  // is hidden and the worker just gets the base role above.
+  positions?: { id: string; name: string }[];
   // Stretch the submit button to full width (for use inside a bottom sheet).
   fullWidth?: boolean;
 }) {
@@ -76,6 +82,26 @@ export function WorkerForm({
         </div>
       </div>
 
+      {positions.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="positionId">
+            {t.position}{" "}
+            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+              ({tc.optional})
+            </span>
+          </Label>
+          <Select id="positionId" name="positionId" defaultValue="">
+            <option value="">{t.noPosition}</option>
+            {positions.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </Select>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.positionHint}</p>
+        </div>
+      )}
+
       {teams.length > 0 && (
         <div className="flex flex-col gap-2">
           <Label>
@@ -90,7 +116,7 @@ export function WorkerForm({
                 key={t.id}
                 className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm"
               >
-                <input type="checkbox" name="teamId" value={t.id} className="h-4 w-4 shrink-0" />
+                <Checkbox name="teamId" value={t.id} />
                 <span className="text-neutral-800 dark:text-neutral-200">{t.name}</span>
               </label>
             ))}

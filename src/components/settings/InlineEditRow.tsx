@@ -24,6 +24,7 @@ export function InlineEditRow({
   placeholder,
   action,
   helpWhenEditing,
+  fieldName = "name",
 }: {
   icon: LucideIcon;
   label: string;
@@ -31,6 +32,10 @@ export function InlineEditRow({
   placeholder?: string;
   action: (prev: EditState, formData: FormData) => Promise<EditState>;
   helpWhenEditing?: string;
+  // The form-field name this row submits. Must match what the server action
+  // reads (e.g. the phone action expects "phone", not "name"). Defaults to
+  // "name" for the display-name / company-name rows.
+  fieldName?: string;
 }) {
   const t = useT();
   const [editing, setEditing] = useState(false);
@@ -50,7 +55,7 @@ export function InlineEditRow({
     if (!name) return;
     startTransition(async () => {
       const fd = new FormData();
-      fd.set("name", name);
+      fd.set(fieldName, name);
       const result = await action(undefined, fd);
       if (result?.ok) {
         setEditing(false);
@@ -99,7 +104,7 @@ export function InlineEditRow({
         <div className="flex items-center gap-2">
           <Input
             id={`edit-${label}`}
-            name="name"
+            name={fieldName}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder={placeholder}

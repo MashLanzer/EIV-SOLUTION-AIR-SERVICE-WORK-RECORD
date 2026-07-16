@@ -5,6 +5,7 @@ import { Save } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -91,11 +92,7 @@ export function CustomerEditForm({
       </div>
 
       <label className="flex items-start gap-2 text-sm text-neutral-600 dark:text-neutral-300">
-        <input
-          type="checkbox"
-          name="applyToExistingRecords"
-          className="mt-0.5"
-        />
+        <Checkbox name="applyToExistingRecords" />
         <span>{t.applyToRecords}</span>
       </label>
 

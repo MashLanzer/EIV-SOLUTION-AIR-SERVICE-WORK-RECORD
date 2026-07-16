@@ -363,6 +363,7 @@ export function ProfileScreen({
           placeholder={t.phonePlaceholder}
           action={updateProfilePhoneAction}
           helpWhenEditing={t.phoneHelp}
+          fieldName="phone"
         />
         <SettingsRow icon={Mail} label={email} sublabel={t.signedInGoogle} />
         <SettingsRow
