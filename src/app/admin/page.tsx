@@ -264,6 +264,10 @@ export default async function AdminDashboardPage() {
     icon: LucideIcon;
     href?: string;
   }[] = [
+    // The two headline figures now ride in the same dense grid as the rest,
+    // so the overview reads as one uniform block instead of hero cards + tiles.
+    { label: t.totalRecords, value: totalRecords, icon: ClipboardList },
+    { label: t.toPayThisMonth, value: fmtMoney(payReport.grand.total), icon: DollarSign, href: "/admin/reports" },
     { label: t.tileTodayJobs, value: todayJobs, icon: CalendarClock, href: "/admin/schedule" },
     { label: t.tileThisWeek, value: recordsThisWeek, icon: CalendarDays },
     { label: t.tileThisMonth, value: recordsThisMonth, icon: CalendarRange },
@@ -276,7 +280,7 @@ export default async function AdminDashboardPage() {
   if (isAdmin) {
     tiles.push({
       label: t.tileOutstanding,
-      value: `${currencySymbol}${outstandingTotal.toFixed(2)}`,
+      value: fmtMoney(outstandingTotal),
       icon: Receipt,
       href: "/admin/invoices",
     });
@@ -480,42 +484,9 @@ export default async function AdminDashboardPage() {
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {t.overview}
         </h2>
-        {/* Two headline totals side by side... */}
-        <div className="grid grid-cols-2 gap-3">
-          <Card>
-            <CardContent className="flex flex-col gap-2 p-4">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-                <ClipboardList className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-                  {totalRecords}
-                </div>
-                <div className="text-sm text-neutral-500 dark:text-neutral-400">{t.totalRecords}</div>
-              </div>
-            </CardContent>
-          </Card>
-          <Link href="/admin/reports" className="block">
-            <Card className="h-full transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
-              <CardContent className="flex flex-col gap-2 p-4">
-                <div className="flex items-center justify-between">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-                    <DollarSign className="h-5 w-5" />
-                  </span>
-                  <ArrowRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-                    {fmtMoney(payReport.grand.total)}
-                  </div>
-                  <div className="text-sm text-neutral-500 dark:text-neutral-400">{t.toPayThisMonth}</div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
-        {/* ...then the compact stat tiles, three across. */}
-        <div className="grid grid-cols-3 gap-3">
+        {/* One dense, uniform grid: the two headline totals lead, the rest of
+            the metrics follow — 3 across on phones, 4 on wider screens. */}
+        <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
           {tiles.map((tile) => (
             <StatTile key={tile.label} {...tile} />
           ))}
