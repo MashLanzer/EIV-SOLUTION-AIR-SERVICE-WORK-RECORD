@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { geocodeAddress } from "@/lib/geocode";
 import { projectDetailPaths } from "@/lib/projectAccess";
 import { PROJECT_STATUSES, projectSchema } from "@/lib/validations";
@@ -56,7 +56,7 @@ export async function createProjectAction(
   _prev: ProjectFormState,
   formData: FormData
 ): Promise<ProjectFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = parse(formData);
@@ -102,7 +102,7 @@ export async function updateProjectAction(
   _prev: ProjectFormState,
   formData: FormData
 ): Promise<ProjectFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = parse(formData);
@@ -153,7 +153,7 @@ export async function updateProjectAction(
 // Quick status change from the list card / detail header. Org-scoped
 // updateMany so a bad id (or another org's) is a silent no-op, never a leak.
 export async function setProjectStatusAction(projectId: string, status: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const parsed = z.enum(PROJECT_STATUSES).safeParse(status);
   if (!parsed.success) return;
@@ -171,7 +171,7 @@ export async function setProjectStatusAction(projectId: string, status: string) 
 export async function retryGeocodeAction(
   projectId: string
 ): Promise<{ ok: boolean; located: boolean }> {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const project = await prisma.project.findFirst({
     where: { id: projectId, organizationId },
@@ -190,7 +190,7 @@ export async function retryGeocodeAction(
 }
 
 export async function deleteProjectAction(projectId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const existing = await prisma.project.findFirst({
     where: { id: projectId, organizationId },

@@ -27,7 +27,7 @@ import { computeTotals, formatInvoiceNumber } from "@/lib/invoices";
 import { formatEstimateNumber, isEstimateExpired } from "@/lib/estimates";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireFeature } from "@/lib/features";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 export default async function EstimateDetailPage({
@@ -35,7 +35,7 @@ export default async function EstimateDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   await requireFeature(organizationId, "estimates");
   const { id } = await params;

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { addSkillSchema } from "@/lib/validations";
 
 export type OrgSkillState = { error?: string; ok?: boolean } | undefined;
@@ -24,7 +24,7 @@ export async function createOrgSkillAction(
   _prev: OrgSkillState,
   formData: FormData
 ): Promise<OrgSkillState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = addSkillSchema.safeParse({ name: formData.get("name") });
@@ -49,7 +49,7 @@ export async function createOrgSkillAction(
 
 // Remove a skill from the catalog (admin only, org-scoped).
 export async function deleteOrgSkillAction(skillId: string): Promise<OrgSkillState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   await prisma.orgSkill.deleteMany({ where: { id: skillId, organizationId } });

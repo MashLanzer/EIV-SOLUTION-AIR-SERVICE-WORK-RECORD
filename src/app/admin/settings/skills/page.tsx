@@ -4,11 +4,11 @@ import Link from "next/link";
 import { OrgSkillsManager } from "@/components/settings/OrgSkillsManager";
 import { getOrgSkills } from "@/lib/orgSkills";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 export default async function SkillsCatalogSettingsPage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const skills = await getOrgSkills(organizationId);
   const t = (await getT()).settings;

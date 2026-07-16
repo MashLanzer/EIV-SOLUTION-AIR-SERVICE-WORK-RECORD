@@ -15,7 +15,7 @@ import { UpdateWorkerRoleForm } from "@/components/workers/UpdateWorkerRoleForm"
 import { WorkerPositionForm } from "@/components/workers/WorkerPositionForm";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 function formatJoined(date: Date, locale: string) {
@@ -31,7 +31,7 @@ export default async function WorkerDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("workers.manage");
   const organizationId = requireOrgId(session);
   const { id } = await params;
 

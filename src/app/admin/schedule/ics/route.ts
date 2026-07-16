@@ -1,4 +1,4 @@
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { requireOrgId } from "@/lib/orgScope";
 import { addUtcDays, getScheduledJobs, startOfUtcDay } from "@/lib/schedule";
 import { buildCalendar } from "@/lib/ics";
@@ -6,7 +6,7 @@ import { buildCalendar } from "@/lib/ics";
 // The whole company's agenda as a downloadable .ics feed (admin only), with an
 // optional ?worker=<id> filter that matches the calendar's worker filter.
 export async function GET(request: Request) {
-  const session = await requireAdmin();
+  const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
 
   const worker = new URL(request.url).searchParams.get("worker")?.trim() || undefined;

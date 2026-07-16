@@ -8,7 +8,7 @@ import { refreshConnectStatusAction, startConnectOnboardingAction } from "@/acti
 import { getPaymentStatus } from "@/lib/payments";
 import { requireFeature } from "@/lib/features";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export default async function PaymentsPage({
 }: {
   searchParams: Promise<{ connected?: string; error?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("payments.manage");
   const organizationId = requireOrgId(session);
   await requireFeature(organizationId, "invoicing");
   const { connected, error } = await searchParams;

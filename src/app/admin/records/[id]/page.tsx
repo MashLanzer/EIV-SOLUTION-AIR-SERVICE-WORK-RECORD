@@ -18,7 +18,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
+import { requireOfficeAccess } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 // A uniform action tile (icon over a short label) shared by the record's
@@ -41,7 +41,7 @@ export default async function AdminReviewRecordPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ saved?: string }>;
 }) {
-  const session = await requireReviewer();
+  const { session } = await requireOfficeAccess();
   const { id } = await params;
   const { saved } = await searchParams;
   const record = await prisma.workRecord.findFirst({

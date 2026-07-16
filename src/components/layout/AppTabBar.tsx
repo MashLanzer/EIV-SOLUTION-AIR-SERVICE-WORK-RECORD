@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Lock, Plus } from "lucide-react";
 
 import {
   AppMenuSheet,
@@ -115,6 +115,23 @@ export function AppTabBar({
 
 function Tab({ item, active }: { item: TabItem; active: boolean }) {
   const Icon = item.icon;
+  // Locked: shown greyed with a lock, not navigable (the page also guards it).
+  if (item.locked) {
+    return (
+      <div
+        aria-label={item.label}
+        aria-disabled="true"
+        className="flex items-center justify-center text-neutral-300 dark:text-neutral-600"
+      >
+        <span className="relative flex items-center rounded-full px-2.5 py-2">
+          <span className="relative flex shrink-0 items-center justify-center">
+            <Icon className="h-[22px] w-[22px]" strokeWidth={2} />
+            <Lock className="absolute -right-1.5 -top-1 h-3 w-3" strokeWidth={2.5} />
+          </span>
+        </span>
+      </div>
+    );
+  }
   return (
     <Link
       href={item.href}

@@ -13,7 +13,7 @@ import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
+import { requireOfficeAccess } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 import { parseSort } from "@/lib/sort";
 import type { Prisma, RecordStatus } from "@prisma/client";
@@ -54,7 +54,7 @@ export default async function AdminRecordsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await requireReviewer();
+  const { session } = await requireOfficeAccess();
   const organizationId = requireOrgId(session);
   const rawParams = await searchParams;
   const filters = parseRecordFilterParams(rawParams);

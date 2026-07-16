@@ -5,14 +5,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { deleteProjectPhoto, uploadCompanyLogo } from "@/lib/blob";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { generateJoinCode } from "@/lib/joinCode";
 import { updateOrganizationNameSchema } from "@/lib/validations";
 
 // Rotate the company's invite code (admin only). Anyone holding the old code
 // can no longer join with it. Also (re)enables joining-by-code if it was off.
 export async function rotateJoinCodeAction() {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   for (let attempt = 0; attempt < 5; attempt++) {
@@ -34,7 +34,7 @@ export async function rotateJoinCodeAction() {
 // no one can join with a link they saved; on mints a fresh code. This is the
 // enable/disable half of the invite-code control (rotate handles refresh).
 export async function setJoinCodeEnabledAction(enabled: boolean) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   if (!enabled) {
@@ -78,7 +78,7 @@ export async function updateOrganizationNameAction(
   _prev: OrganizationNameState,
   formData: FormData
 ): Promise<OrganizationNameState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = updateOrganizationNameSchema.safeParse({
@@ -117,7 +117,7 @@ export async function updateCompanyFieldAction(
   _prev: CompanyFieldState,
   formData: FormData
 ): Promise<CompanyFieldState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const raw = ((formData.get("name") as string | null) ?? "").trim();
 
@@ -170,7 +170,7 @@ export async function updateCompanyFieldAction(
 
 // Toggle the "a record needs a photo to be submitted" policy (admin only).
 export async function setRequirePhotoAction(enabled: boolean) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   await prisma.organization.update({
     where: { id: organizationId },
@@ -181,7 +181,7 @@ export async function setRequirePhotoAction(enabled: boolean) {
 
 // Toggle the "require a helper" policy (admin only).
 export async function setRequireHelperAction(enabled: boolean) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   await prisma.organization.update({
     where: { id: organizationId },
@@ -192,7 +192,7 @@ export async function setRequireHelperAction(enabled: boolean) {
 
 // Toggle the "require the customer's signature" policy (admin only).
 export async function setRequireCustomerSignatureAction(enabled: boolean) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   await prisma.organization.update({
     where: { id: organizationId },
@@ -204,7 +204,7 @@ export async function setRequireCustomerSignatureAction(enabled: boolean) {
 // Toggle the "lock approved records" policy (admin only). When on, an approved
 // record can't be edited by anyone until it's returned to Needs changes.
 export async function setLockApprovedRecordsAction(enabled: boolean) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   await prisma.organization.update({
     where: { id: organizationId },
@@ -222,7 +222,7 @@ export async function setDefaultWorkNotesAction(
   _prev: DefaultNotesState,
   formData: FormData
 ): Promise<DefaultNotesState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const raw = ((formData.get("notes") as string | null) ?? "").trim();
   await prisma.organization.update({
@@ -243,7 +243,7 @@ export async function updateCompanyLogoAction(
   _prev: LogoState,
   formData: FormData
 ): Promise<LogoState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   const file = formData.get("logo");
@@ -284,7 +284,7 @@ export async function updateCompanyLogoAction(
 
 // Remove the company logo (admin only).
 export async function removeCompanyLogoAction() {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },

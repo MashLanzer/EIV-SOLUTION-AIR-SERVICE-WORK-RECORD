@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAuditLog } from "@/lib/audit";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 const ICON: Record<string, typeof Contact> = {
@@ -16,7 +16,7 @@ const ICON: Record<string, typeof Contact> = {
 };
 
 export default async function AuditPage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const events = await getAuditLog(organizationId);
 

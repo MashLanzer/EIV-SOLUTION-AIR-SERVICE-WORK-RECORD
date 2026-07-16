@@ -47,14 +47,34 @@ export async function sessionCan(session: Session, key: PermissionKey): Promise<
   return permissions.includes(key);
 }
 
+// The gate for the whole office (admin) app: anyone whose effective access
+// level is ADMIN may enter, whether that comes from the legacy role (owner /
+// supervisor) or from an assigned office Position. Field-only users are sent to
+// the worker app. Returns the session + effective access so the caller doesn't
+// have to loadAccess again.
+export async function requireOfficeAccess(): Promise<{
+  session: Session;
+  accessLevel: AccessLevel;
+  permissions: string[];
+}> {
+  const session = await requireAuth();
+  const access = await loadAccess(session);
+  if (access.accessLevel !== "ADMIN") {
+    redirect("/records");
+  }
+  return { session, ...access };
+}
+
 // Guard a page/action on a capability: requires a signed-in user who has the
 // permission, else sends them back to their app home. Returns the session so
 // callers can keep using it, mirroring requireAdmin/requireReviewer.
 export async function requirePermission(key: PermissionKey): Promise<Session> {
   const session = await requireAuth();
-  const { permissions } = await loadAccess(session);
+  const { accessLevel, permissions } = await loadAccess(session);
   if (!permissions.includes(key)) {
-    redirect("/records");
+    // Bounce office users back to their dashboard (a baseline destination) and
+    // field users to the worker app, rather than always dumping to /records.
+    redirect(accessLevel === "ADMIN" ? "/admin" : "/records");
   }
   return session;
 }

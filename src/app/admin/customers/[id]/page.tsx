@@ -40,7 +40,7 @@ import { StatusBadge } from "@/components/records/StatusBadge";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 function formatDate(date: Date, locale: string) {
@@ -72,7 +72,7 @@ export default async function AdminCustomerPage({
     page?: string;
   }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("customers.manage");
   const organizationId = requireOrgId(session);
   const { portal: portalEnabled } = await getOrgFeatures(organizationId);
   const { id } = await params;

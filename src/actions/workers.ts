@@ -7,7 +7,7 @@ import { normalizeEmailForDuplicateCheck } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { planMaxUsers } from "@/lib/plans";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import {
   createWorkerSchema,
   updateWorkerEmailSchema,
@@ -49,7 +49,7 @@ export async function createWorkerAction(
   _prevState: WorkerFormState,
   formData: FormData
 ): Promise<WorkerFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("workers.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = createWorkerSchema.safeParse({
@@ -120,7 +120,7 @@ export async function createWorkerAction(
 }
 
 export async function toggleWorkerActiveAction(userId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("workers.manage");
   const organizationId = requireOrgId(session);
   const user = await prisma.user.findFirst({ where: { id: userId, organizationId } });
   if (!user) return;
@@ -147,7 +147,7 @@ export async function toggleWorkerActiveAction(userId: string) {
 }
 
 export async function deleteWorkerAction(userId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("workers.manage");
   const organizationId = requireOrgId(session);
   const user = await prisma.user.findFirst({ where: { id: userId, organizationId } });
   if (!user) return;
@@ -178,7 +178,7 @@ export async function updateWorkerEmailAction(
   _prevState: UpdateWorkerEmailState,
   formData: FormData
 ): Promise<UpdateWorkerEmailState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("workers.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = updateWorkerEmailSchema.safeParse({
@@ -222,7 +222,7 @@ export async function updateWorkerOverloadAction(
   _prevState: UpdateWorkerOverloadState,
   formData: FormData
 ): Promise<UpdateWorkerOverloadState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("workers.manage");
   const organizationId = requireOrgId(session);
 
   const target = await prisma.user.findFirst({
@@ -259,7 +259,9 @@ export async function updateWorkerRoleAction(
   _prevState: UpdateWorkerRoleState,
   formData: FormData
 ): Promise<UpdateWorkerRoleState> {
-  const session = await requireAdmin();
+  // Changing the app-access role grants/revokes office access, so it's gated on
+  // company-settings management, not just worker management.
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = updateWorkerRoleSchema.safeParse({

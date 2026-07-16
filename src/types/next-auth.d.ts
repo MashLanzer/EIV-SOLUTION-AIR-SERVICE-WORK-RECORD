@@ -1,11 +1,16 @@
 import type { DefaultSession } from "next-auth";
 
 type AppRole = "ADMIN" | "SUPERVISOR" | "WORKER";
+// Effective app-access level: which app the user enters. Derived from the base
+// role and any assigned Position, so an office Position grants ADMIN access even
+// to a WORKER-role user. Used by the Edge middleware gate (it can't hit the DB).
+type AppAccessLevel = "ADMIN" | "WORKER";
 
 declare module "next-auth" {
   interface User {
     id: string;
     role: AppRole;
+    accessLevel: AppAccessLevel;
     organizationId: string | null;
     phone: string | null;
     storedSignature: string | null;
@@ -16,6 +21,7 @@ declare module "next-auth" {
     user: {
       id: string;
       role: AppRole;
+      accessLevel: AppAccessLevel;
       organizationId: string | null;
       phone: string | null;
       storedSignature: string | null;
@@ -38,6 +44,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: AppRole;
+    accessLevel: AppAccessLevel;
     organizationId: string | null;
     phone: string | null;
     storedSignature: string | null;

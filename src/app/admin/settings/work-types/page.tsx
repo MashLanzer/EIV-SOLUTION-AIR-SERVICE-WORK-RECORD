@@ -3,11 +3,11 @@ import Link from "next/link";
 
 import { WorkTypesManager } from "@/components/settings/WorkTypesManager";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getWorkTypeGroups, STARTER_PACKS } from "@/lib/workTypes";
 
 export default async function WorkTypesSettingsPage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const groups = await getWorkTypeGroups(organizationId);
   const packs = STARTER_PACKS.map((p) => ({ id: p.id, label: p.label }));

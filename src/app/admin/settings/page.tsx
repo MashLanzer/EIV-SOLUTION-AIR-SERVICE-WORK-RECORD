@@ -2,7 +2,7 @@ import { SettingsScreen } from "@/components/settings/SettingsScreen";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
+import { requireOfficeAccess } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 export default async function AdminSettingsPage({
@@ -10,7 +10,7 @@ export default async function AdminSettingsPage({
 }: {
   searchParams: Promise<{ reset?: string }>;
 }) {
-  const session = await requireReviewer();
+  const { session } = await requireOfficeAccess();
   const isAdmin = session.user.role === "ADMIN";
   const t = await getT();
   const { reset } = await searchParams;

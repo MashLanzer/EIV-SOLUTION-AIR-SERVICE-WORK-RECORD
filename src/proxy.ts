@@ -20,8 +20,16 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (req.auth?.user && pathname.startsWith("/admin") && req.auth.user.role !== "ADMIN") {
-    return NextResponse.redirect(new URL("/records", req.nextUrl.origin));
+  // The office (admin) app is gated on effective access level, which follows an
+  // assigned Position — so an office Position (e.g. Accountant) reaches /admin
+  // even with a WORKER base role, while a field Position keeps someone out. Old
+  // tokens minted before accessLevel existed fall back to the base role.
+  if (req.auth?.user && pathname.startsWith("/admin")) {
+    const level =
+      req.auth.user.accessLevel ?? (req.auth.user.role === "WORKER" ? "WORKER" : "ADMIN");
+    if (level !== "ADMIN") {
+      return NextResponse.redirect(new URL("/records", req.nextUrl.origin));
+    }
   }
 
   return NextResponse.next();

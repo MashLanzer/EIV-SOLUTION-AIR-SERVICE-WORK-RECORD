@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { buildInvoiceCsv } from "@/lib/invoiceCsv";
 import { formatInvoiceNumber, INVOICE_STATUSES } from "@/lib/invoices";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import type { InvoiceStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ export const runtime = "nodejs";
 // Honors the same search + status filters as the invoices list so "what you
 // see is what you export".
 export async function GET(request: Request) {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
 
   const url = new URL(request.url);

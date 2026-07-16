@@ -12,7 +12,8 @@ import {
   notifyWorkerReturned,
 } from "@/lib/notifications";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin, requireAuth, requireReviewer } from "@/lib/session";
+import { requireAuth } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { scheduleWhereForUser, schedulePaths } from "@/lib/schedule";
 import { workRecordSchema } from "@/lib/validations";
 
@@ -398,7 +399,7 @@ export async function updateRecordAction(
 }
 
 export async function deleteRecordAction(recordId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("records.delete");
   const organizationId = requireOrgId(session);
   // Org-scoped delete: a no-op if the record belongs to another company.
   await prisma.workRecord.deleteMany({ where: { id: recordId, organizationId } });
@@ -413,7 +414,7 @@ export async function shareRecordAction(
   recordId: string,
   expiryDays?: number | null
 ): Promise<{ token: string; expiresAt: string | null } | null> {
-  const session = await requireAdmin();
+  const session = await requirePermission("records.review");
   const organizationId = requireOrgId(session);
   const record = await prisma.workRecord.findFirst({
     where: { id: recordId, organizationId },
@@ -438,7 +439,7 @@ export async function shareRecordAction(
 
 // Stop sharing: clear the token so the public link 404s.
 export async function unshareRecordAction(recordId: string): Promise<void> {
-  const session = await requireAdmin();
+  const session = await requirePermission("records.review");
   const organizationId = requireOrgId(session);
   await prisma.workRecord.updateMany({
     where: { id: recordId, organizationId },
@@ -448,7 +449,7 @@ export async function unshareRecordAction(recordId: string): Promise<void> {
 }
 
 export async function approveRecordAction(recordId: string) {
-  const session = await requireReviewer();
+  const session = await requirePermission("records.review");
   const organizationId = requireOrgId(session);
   await prisma.workRecord.updateMany({
     where: { id: recordId, organizationId },
@@ -468,7 +469,7 @@ export async function approveRecordAction(recordId: string) {
 
 // Send a record back to the worker with a note explaining what to fix.
 export async function requestChangesAction(recordId: string, formData: FormData) {
-  const session = await requireReviewer();
+  const session = await requirePermission("records.review");
   const organizationId = requireOrgId(session);
   const note = (formData.get("reviewNote") as string | null)?.trim() || null;
   await prisma.workRecord.updateMany({
@@ -495,7 +496,7 @@ export async function requestChangesAction(recordId: string, formData: FormData)
 export async function bulkApproveRecordsAction(
   ids: string[]
 ): Promise<{ count: number }> {
-  const session = await requireReviewer();
+  const session = await requirePermission("records.review");
   const organizationId = requireOrgId(session);
   const clean = [...new Set(ids.filter(Boolean))];
   if (clean.length === 0) return { count: 0 };
@@ -531,7 +532,7 @@ export async function bulkRequestChangesAction(
   ids: string[],
   note: string
 ): Promise<{ count: number }> {
-  const session = await requireReviewer();
+  const session = await requirePermission("records.review");
   const organizationId = requireOrgId(session);
   const clean = [...new Set(ids.filter(Boolean))];
   const trimmed = note.trim();
@@ -574,7 +575,7 @@ export async function bulkRequestChangesAction(
 // scratch. User accounts and the Organization itself are kept, so the admin
 // stays signed in. Strictly org-scoped: never touches another company.
 export async function resetHistoryAction(formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const confirm = (formData.get("confirm") as string | null)?.trim();
   if (confirm !== "RESET") {

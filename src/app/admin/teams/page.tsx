@@ -8,11 +8,11 @@ import { NewTeamButton } from "@/components/teams/NewTeamButton";
 import { TeamAvatar } from "@/components/teams/TeamColorDot";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 export default async function AdminTeamsPage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("teams.manage");
   const organizationId = requireOrgId(session);
 
   const [teams, activeByTeam, users, allProjects] = await Promise.all([

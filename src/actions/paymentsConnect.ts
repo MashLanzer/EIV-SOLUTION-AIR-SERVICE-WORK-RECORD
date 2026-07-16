@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { connectEnabled, syncConnectAccount } from "@/lib/payments";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getStripe } from "@/lib/stripe";
 
 async function baseUrl(): Promise<string> {
@@ -23,7 +23,7 @@ async function baseUrl(): Promise<string> {
 // invoice payments settle directly into their own Stripe balance.
 export async function startConnectOnboardingAction() {
   if (!connectEnabled) redirect("/admin/payments?error=unconfigured");
-  const session = await requireAdmin();
+  const session = await requirePermission("payments.manage");
   const organizationId = requireOrgId(session);
 
   const org = await prisma.organization.findUnique({
@@ -65,7 +65,7 @@ export async function startConnectOnboardingAction() {
 // Manual "refresh status": pull the connected account's current state from
 // Stripe and mirror charges_enabled locally, then re-render the page.
 export async function refreshConnectStatusAction() {
-  const session = await requireAdmin();
+  const session = await requirePermission("payments.manage");
   const organizationId = requireOrgId(session);
   await syncConnectAccount(organizationId);
   revalidatePath("/admin/payments");

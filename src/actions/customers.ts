@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { customerSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 import { getOrgFeatures } from "@/lib/features";
@@ -20,7 +20,7 @@ export async function updateCustomerAction(
   _prevState: CustomerFormState,
   formData: FormData
 ): Promise<CustomerFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("customers.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = customerSchema.safeParse({
@@ -92,7 +92,7 @@ export async function mergeCustomerAction(
   sourceId: string,
   formData: FormData
 ) {
-  const session = await requireAdmin();
+  const session = await requirePermission("customers.manage");
   const organizationId = requireOrgId(session);
   const targetId = (formData.get("targetId") as string | null)?.trim();
   if (!targetId || targetId === sourceId) {
@@ -131,7 +131,7 @@ export async function mergeCustomerAction(
 }
 
 export async function deleteCustomerAction(customerId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("customers.manage");
   const organizationId = requireOrgId(session);
   const existing = await prisma.customer.findFirst({
     where: { id: customerId, organizationId },
@@ -160,7 +160,7 @@ export async function deleteCustomerAction(customerId: string) {
 export async function shareCustomerPortalAction(
   customerId: string
 ): Promise<{ token: string } | undefined> {
-  const session = await requireAdmin();
+  const session = await requirePermission("customers.manage");
   const organizationId = requireOrgId(session);
   // Portal module must be enabled for this company.
   if (!(await getOrgFeatures(organizationId)).portal) return undefined;
@@ -186,7 +186,7 @@ export async function shareCustomerPortalAction(
 }
 
 export async function unshareCustomerPortalAction(customerId: string): Promise<void> {
-  const session = await requireAdmin();
+  const session = await requirePermission("customers.manage");
   const organizationId = requireOrgId(session);
   const customer = await prisma.customer.findFirst({
     where: { id: customerId, organizationId },

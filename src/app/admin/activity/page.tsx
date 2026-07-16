@@ -5,13 +5,13 @@ import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { MarkActivitySeen } from "@/components/activity/MarkActivitySeen";
 import { getActivityFeed } from "@/lib/activity";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requireOfficeAccess } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminActivityPage() {
-  const session = await requireAdmin();
+  const { session } = await requireOfficeAccess();
   const events = await getActivityFeed({
     organizationId: requireOrgId(session),
     userId: session.user.id,

@@ -4,7 +4,7 @@ import { companyForPdf, renderInvoicePdf } from "@/lib/pdf";
 import { computeTotals, formatInvoiceNumber } from "@/lib/invoices";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
   const { id } = await params;
 

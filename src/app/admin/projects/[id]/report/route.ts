@@ -4,7 +4,7 @@ import type { ReportGroup, ReportPhoto } from "@/components/pdf/PhotoReportPdfDo
 import { renderPhotoReportPdf } from "@/lib/pdf";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 
 export const runtime = "nodejs";
 
@@ -16,7 +16,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
 
   const project = await prisma.project.findFirst({

@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { canAccessProject, projectDetailPaths } from "@/lib/projectAccess";
-import { requireAdmin, requireAuth } from "@/lib/session";
+import { requireAuth } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 
 const MAX_ITEM_LEN = 200;
 const MAX_NAME_LEN = 80;
@@ -33,7 +34,7 @@ function revalidateProject(projectId: string) {
 // ---- Templates (managed from /admin/checklists) ----------------------------
 
 export async function createTemplateAction(formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);
 
   const name = ((formData.get("name") as string | null) ?? "").trim().slice(0, MAX_NAME_LEN);
@@ -55,7 +56,7 @@ export async function createTemplateAction(formData: FormData) {
 // Rename a template and replace its whole item list (delete + recreate from
 // the parsed lines), org-scoped so another org's id is a no-op.
 export async function updateTemplateAction(templateId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);
 
   const owned = await prisma.checklistTemplate.findFirst({
@@ -83,7 +84,7 @@ export async function updateTemplateAction(templateId: string, formData: FormDat
 
 // Clone a template (and its items) as a starting point for a similar one.
 export async function duplicateTemplateAction(templateId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);
 
   const src = await prisma.checklistTemplate.findFirst({
@@ -105,7 +106,7 @@ export async function duplicateTemplateAction(templateId: string) {
 }
 
 export async function deleteTemplateAction(templateId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);
 
   await prisma.checklistTemplate.deleteMany({
@@ -119,7 +120,7 @@ export async function deleteTemplateAction(templateId: string) {
 // Add a checklist to a project - blank, or seeded from a template's items.
 // Admin-only: workers can check items off but not build checklists.
 export async function addChecklistAction(projectId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);
 
   const project = await prisma.project.findFirst({
@@ -158,7 +159,7 @@ export async function addChecklistAction(projectId: string, formData: FormData) 
 }
 
 export async function deleteChecklistAction(checklistId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);
 
   const checklist = await prisma.checklist.findFirst({
@@ -200,7 +201,7 @@ export async function toggleChecklistItemAction(itemId: string) {
 }
 
 export async function addChecklistItemAction(checklistId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);
 
   const checklist = await prisma.checklist.findFirst({
@@ -225,7 +226,7 @@ export async function addChecklistItemAction(checklistId: string, formData: Form
 }
 
 export async function deleteChecklistItemAction(itemId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);
 
   const item = await ownedItem(itemId, organizationId);

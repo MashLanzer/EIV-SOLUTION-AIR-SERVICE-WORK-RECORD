@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requireOfficeAccess } from "@/lib/authz";
 import { buildWorkbook } from "@/lib/excel";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
 
@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 const MAX_EXCEL_RECORDS = 2000;
 
 export async function GET(request: Request) {
-  const session = await requireAdmin();
+  const { session } = await requireOfficeAccess();
 
   const url = new URL(request.url);
   const filters = parseRecordFilterParams({

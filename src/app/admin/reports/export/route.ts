@@ -4,12 +4,12 @@ import { NextResponse } from "next/server";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
-  const session = await requireAdmin();
+  const session = await requirePermission("reports.view");
 
   const { searchParams } = new URL(request.url);
   const { dateFrom, dateTo } = parsePayReportParams({

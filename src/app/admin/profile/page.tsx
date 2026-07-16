@@ -2,10 +2,10 @@ import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { getProfileData } from "@/lib/profileData";
 import { getLocale } from "@/lib/i18n/server";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requireOfficeAccess } from "@/lib/authz";
 
 export default async function AdminProfilePage() {
-  const session = await requireAdmin();
+  const { session } = await requireOfficeAccess();
   const data = await getProfileData(session.user.id, requireOrgId(session));
   const locale = await getLocale();
   const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {

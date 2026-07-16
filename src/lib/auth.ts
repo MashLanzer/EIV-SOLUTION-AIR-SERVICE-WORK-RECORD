@@ -65,7 +65,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const dbUser = await prisma.user.findUnique({
         where: { email },
-        include: { organization: { select: { active: true } } },
+        include: {
+          organization: { select: { active: true } },
+          position: { select: { accessLevel: true } },
+        },
       });
       if (dbUser) {
         if (!dbUser.active) return null;
@@ -76,6 +79,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
         token.id = dbUser.id;
         token.role = dbUser.role;
+        // Effective app-access level: which app they enter. Owners (role ADMIN)
+        // are always office; otherwise an assigned Position decides, falling
+        // back to the base role. Baked into the token so the Edge middleware can
+        // gate /admin without a DB call. Refreshed on the same staleness cycle
+        // as role, so assigning an office Position takes effect within minutes.
+        token.accessLevel =
+          dbUser.role === "ADMIN"
+            ? "ADMIN"
+            : dbUser.position
+              ? dbUser.position.accessLevel
+              : dbUser.role === "WORKER"
+                ? "WORKER"
+                : "ADMIN";
         token.name = dbUser.name;
         token.phone = dbUser.phone;
         token.storedSignature = dbUser.storedSignature;
@@ -90,6 +106,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       // means every org-scoped page bounces them to onboarding.
       token.id = "";
       token.role = "WORKER";
+      token.accessLevel = "WORKER";
       token.organizationId = null;
       token.checkedAt = Date.now();
       return token;
@@ -97,6 +114,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     session({ session, token }) {
       session.user.id = token.id as string;
       session.user.role = token.role as "ADMIN" | "SUPERVISOR" | "WORKER";
+      session.user.accessLevel = (token.accessLevel as "ADMIN" | "WORKER") ?? "WORKER";
       session.user.phone = (token.phone as string | null) ?? null;
       session.user.storedSignature = (token.storedSignature as string | null) ?? null;
       session.user.avatarUrl = (token.avatarUrl as string | null) ?? null;

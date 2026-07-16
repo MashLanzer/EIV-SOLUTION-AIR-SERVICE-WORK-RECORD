@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import { Lock, type LucideIcon } from "lucide-react";
 
 import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,10 @@ export interface TabItem {
   // its own (it lives under Projects), so /admin/teams keeps the Projects tab
   // lit instead of leaving the bar with nothing selected.
   alsoActiveFor?: string[];
+  // The user's position can't use this destination. Shown greyed with a lock
+  // (rather than removed, which would leave the app looking empty) and not
+  // navigable; the page itself also guards server-side.
+  locked?: boolean;
 }
 
 export function isTabActive(pathname: string, item: TabItem) {
@@ -50,8 +54,24 @@ export function BottomTabBar({
       className="fixed inset-x-0 bottom-0 z-20 flex border-t border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-lg shadow-[0_-1px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_16px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)] sm:hidden native:hidden"
     >
       {items.map((item) => {
-        const isActive = isTabActive(pathname, item);
         const Icon = item.icon;
+        // Locked: shown but not a link (muted + a lock over the icon).
+        if (item.locked) {
+          return (
+            <div
+              key={item.href}
+              aria-disabled="true"
+              className="relative flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium text-neutral-300 dark:text-neutral-600"
+            >
+              <span className="relative">
+                <Icon className="h-5 w-5" strokeWidth={2} />
+                <Lock className="absolute -right-1.5 -top-1 h-3 w-3" strokeWidth={2.5} />
+              </span>
+              <span className="truncate">{item.shortLabel}</span>
+            </div>
+          );
+        }
+        const isActive = isTabActive(pathname, item);
         return (
           <Link
             key={item.href}

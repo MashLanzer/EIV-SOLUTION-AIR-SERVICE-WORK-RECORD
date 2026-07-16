@@ -8,7 +8,7 @@ import { PhotoFilters } from "@/components/photos/PhotoFilters";
 import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 export default async function AdminPhotosPage({
@@ -16,7 +16,7 @@ export default async function AdminPhotosPage({
 }: {
   searchParams: Promise<{ tag?: string; project?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const t = (await getT()).photos;
   const { tag, project } = await searchParams;

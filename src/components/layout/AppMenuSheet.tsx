@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronRight, Lock, type LucideIcon } from "lucide-react";
 
 import { BottomSheet } from "@/components/layout/BottomSheet";
 import { BottomSheet as FormSheet } from "@/components/ui/bottom-sheet";
@@ -15,6 +15,8 @@ export interface CreateItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  // Position can't use this action: shown greyed + locked, not interactive.
+  locked?: boolean;
 }
 
 export interface MoreItem {
@@ -22,6 +24,8 @@ export interface MoreItem {
   label: string;
   icon: LucideIcon;
   badge?: number;
+  // Position can't use this destination: shown greyed + locked, not a link.
+  locked?: boolean;
 }
 
 // Seed data for the "create" sheets (small id/name lists). Null for roles that
@@ -78,6 +82,22 @@ export function AppMenuSheet({
         <ul className="flex flex-col px-2 pb-2">
           {createItems.map((item) => {
             const Icon = item.icon;
+            if (item.locked) {
+              return (
+                <li key={item.href}>
+                  <div
+                    aria-disabled="true"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-neutral-400 dark:text-neutral-500"
+                  >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span className="flex-1">{item.label}</span>
+                    <Lock className="h-4 w-4 shrink-0" />
+                  </div>
+                </li>
+              );
+            }
             const kind = createData ? createKind(item.href) : null;
             const inner = (
               <>
@@ -119,6 +139,22 @@ export function AppMenuSheet({
             <ul className="flex flex-col px-2 pb-2">
               {moreItems.map((item) => {
                 const Icon = item.icon;
+                if (item.locked) {
+                  return (
+                    <li key={item.href}>
+                      <div
+                        aria-disabled="true"
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-neutral-400 dark:text-neutral-500"
+                      >
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800">
+                          <Icon className="h-5 w-5" />
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                        <Lock className="h-4 w-4 shrink-0" />
+                      </div>
+                    </li>
+                  );
+                }
                 return (
                   <li key={item.href}>
                     <Link

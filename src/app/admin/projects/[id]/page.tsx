@@ -38,7 +38,7 @@ import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { getWeather } from "@/lib/weather";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 function formatDate(date: Date, locale: string) {
@@ -65,7 +65,7 @@ export default async function AdminProjectPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ saved?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const { id } = await params;
   const { saved } = await searchParams;

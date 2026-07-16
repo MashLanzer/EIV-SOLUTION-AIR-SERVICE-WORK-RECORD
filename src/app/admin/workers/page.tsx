@@ -11,7 +11,7 @@ import { NewWorkerButton } from "@/components/workers/NewWorkerButton";
 import { WorkersSection, type WorkerStat } from "@/components/workers/WorkersTable";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 import type { Prisma } from "@prisma/client";
 
@@ -20,7 +20,7 @@ export default async function AdminWorkersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("workers.manage");
   const organizationId = requireOrgId(session);
   const rawParams = await searchParams;
   const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;

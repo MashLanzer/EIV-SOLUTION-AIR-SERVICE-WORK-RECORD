@@ -22,7 +22,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 import type { Prisma } from "@prisma/client";
 
@@ -56,7 +56,7 @@ export default async function AdminCustomersPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("customers.manage");
   const organizationId = requireOrgId(session);
   const rawParams = await searchParams;
   const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;

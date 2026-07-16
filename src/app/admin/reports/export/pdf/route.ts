@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
 import { companyForPdf, renderPayReportPdf } from "@/lib/pdf";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ function fmtDate(iso: string, locale: string) {
 }
 
 export async function GET(request: Request) {
-  const session = await requireReviewer();
+  const session = await requirePermission("reports.view");
   const organizationId = requireOrgId(session);
 
   const { searchParams } = new URL(request.url);

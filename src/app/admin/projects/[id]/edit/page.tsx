@@ -8,7 +8,7 @@ import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 export default async function EditProjectPage({
@@ -16,7 +16,7 @@ export default async function EditProjectPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const { id } = await params;
   const project = await prisma.project.findFirst({

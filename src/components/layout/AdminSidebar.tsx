@@ -18,6 +18,7 @@ import {
   FolderPlus,
   History,
   Images,
+  Lock,
   Receipt,
   ShieldCheck,
   UserPlus,
@@ -101,8 +102,22 @@ function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
   return (
     <nav className="flex flex-col gap-1">
       {items.map((item) => {
-        const isActive = isTabActive(pathname, item);
         const Icon = item.icon;
+        // Locked: shown greyed with a lock on the right, not a link.
+        if (item.locked) {
+          return (
+            <div
+              key={item.href}
+              aria-disabled="true"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 dark:text-neutral-600"
+            >
+              <Icon className="h-4 w-4" />
+              <span className="flex-1">{item.label}</span>
+              <Lock className="h-3.5 w-3.5 shrink-0" />
+            </div>
+          );
+        }
+        const isActive = isTabActive(pathname, item);
         return (
           <Link
             key={item.href}
@@ -166,17 +181,19 @@ export function AdminSidebar({
   if (features && !features.estimates) disabledHrefs.add("/admin/estimates");
   const byFeature = <T extends { href: string }>(list: T[]) =>
     disabledHrefs.size ? list.filter((i) => !disabledHrefs.has(i.href)) : list;
-  // Hide destinations the position can't use (cosmetic — the pages themselves
-  // guard with requirePermission), then drop modules turned off for the company.
-  const byAccess = <T extends { href: string }>(list: T[]) =>
-    byFeature(list.filter((i) => canSeeHref(i.href, permissions)));
-  const items = byAccess(navItems(t.nav)).map((item) =>
-    item.href === "/admin/review" ? { ...item, badge: pendingReviewCount } : item
+  // Modules turned off for the company are removed entirely; destinations the
+  // position can't use are kept but marked `locked` (shown greyed with a lock,
+  // not navigable) so the app doesn't look empty. Real security is server-side
+  // (each page guards with requirePermission); locking is cosmetic.
+  const prep = <T extends { href: string; locked?: boolean }>(list: T[]): T[] =>
+    byFeature(list).map((i) => (canSeeHref(i.href, permissions) ? i : { ...i, locked: true }));
+  const items = prep(navItems(t.nav)).map((item) =>
+    item.href === "/admin/review" && !item.locked ? { ...item, badge: pendingReviewCount } : item
   );
   // Records is no longer a native tab, so the review badge rides the Dashboard
   // tab (where the review queue lives) in the APK bar.
-  const appTabs = byAccess(appTabItems(t.nav)).map((item) =>
-    item.href === "/admin" ? { ...item, badge: pendingReviewCount } : item
+  const appTabs = prep(appTabItems(t.nav)).map((item) =>
+    item.href === "/admin" && !item.locked ? { ...item, badge: pendingReviewCount } : item
   );
 
   return (
@@ -228,8 +245,8 @@ export function AdminSidebar({
       <AppTabBar
         items={appTabs}
         pathname={pathname}
-        createItems={byAccess(createItems(t.nav))}
-        moreItems={byAccess(moreItems(t.nav))}
+        createItems={prep(createItems(t.nav))}
+        moreItems={prep(moreItems(t.nav))}
         createData={createData}
       />
     </>

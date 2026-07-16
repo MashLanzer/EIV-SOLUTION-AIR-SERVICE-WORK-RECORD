@@ -6,13 +6,13 @@ import { getCurrencySymbol } from "@/lib/currency";
 import { getFinancials } from "@/lib/financials";
 import { requireFeature } from "@/lib/features";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function FinancialsPage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("financials.view");
   const organizationId = requireOrgId(session);
   await requireFeature(organizationId, "invoicing");
 

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { STRIPE_PRICE_PRO, getStripe, stripeEnabled } from "@/lib/stripe";
 
 async function baseUrl(): Promise<string> {
@@ -20,7 +20,7 @@ async function baseUrl(): Promise<string> {
 // hosted payment page. No-op if Stripe isn't configured.
 export async function createCheckoutSessionAction() {
   if (!stripeEnabled) redirect("/admin/billing?error=unconfigured");
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   const org = await prisma.organization.findUnique({
@@ -65,7 +65,7 @@ export async function createCheckoutSessionAction() {
 // or cancel. Requires an existing Stripe customer.
 export async function createBillingPortalSessionAction() {
   if (!stripeEnabled) redirect("/admin/billing?error=unconfigured");
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
 
   const org = await prisma.organization.findUnique({

@@ -30,7 +30,7 @@ import { computeTotals } from "@/lib/invoices";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
+import { requireOfficeAccess } from "@/lib/authz";
 import { addUtcDays, startOfUtcDay } from "@/lib/schedule";
 import { getLocale, getT } from "@/lib/i18n/server";
 
@@ -121,7 +121,7 @@ function MetricLink({ value, label, href }: { value: number | string; label: str
 }
 
 export default async function AdminDashboardPage() {
-  const session = await requireReviewer();
+  const { session } = await requireOfficeAccess();
   const organizationId = requireOrgId(session);
   const thisWeekMonday = startOfWeek();
   const windowStart = new Date(thisWeekMonday.getTime() - (WEEKS_BACK - 1) * 7 * DAY_MS);

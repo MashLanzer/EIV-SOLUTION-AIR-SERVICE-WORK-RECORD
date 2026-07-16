@@ -7,7 +7,7 @@ import type { EstimateStatus, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { ESTIMATE_STATUSES, formatEstimateNumber } from "@/lib/estimates";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { logAudit } from "@/lib/audit";
@@ -116,7 +116,7 @@ export async function createEstimateAction(
   _prev: EstimateFormState,
   formData: FormData
 ): Promise<EstimateFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   const parsed = parseForm(formData);
   if (!parsed.success) {
@@ -152,7 +152,7 @@ export async function updateEstimateAction(
   _prev: EstimateFormState,
   formData: FormData
 ): Promise<EstimateFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   const owned = await prisma.estimate.findFirst({
     where: { id: estimateId, organizationId },
@@ -189,7 +189,7 @@ export async function updateEstimateAction(
 }
 
 export async function setEstimateStatusAction(estimateId: string, status: EstimateStatus) {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   if (!ESTIMATE_STATUSES.includes(status)) return;
   const owned = await prisma.estimate.findFirst({
@@ -214,7 +214,7 @@ export async function setEstimateStatusAction(estimateId: string, status: Estima
 }
 
 export async function deleteEstimateAction(estimateId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   const owned = await prisma.estimate.findFirst({
     where: { id: estimateId, organizationId },
@@ -235,7 +235,7 @@ export async function deleteEstimateAction(estimateId: string) {
 }
 
 export async function shareEstimateAction(estimateId: string): Promise<{ token: string } | null> {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   const est = await prisma.estimate.findFirst({
     where: { id: estimateId, organizationId },
@@ -250,7 +250,7 @@ export async function shareEstimateAction(estimateId: string): Promise<{ token: 
 
 // Email the public estimate (accept/decline) link to the customer.
 export async function emailEstimateAction(estimateId: string): Promise<EmailSendResult> {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   if (!emailConfigured()) return { error: "not_configured" };
 
@@ -298,7 +298,7 @@ export async function emailEstimateAction(estimateId: string): Promise<EmailSend
 }
 
 export async function unshareEstimateAction(estimateId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   const est = await prisma.estimate.findFirst({
     where: { id: estimateId, organizationId },
@@ -313,7 +313,7 @@ export async function unshareEstimateAction(estimateId: string) {
 // tax rate, notes and line items. Idempotent — a second call jumps to the
 // invoice already created.
 export async function convertEstimateToInvoiceAction(estimateId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   const est = await prisma.estimate.findFirst({
     where: { id: estimateId, organizationId },

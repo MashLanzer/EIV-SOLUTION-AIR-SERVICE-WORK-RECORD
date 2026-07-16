@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { getSkillSuggestions } from "@/lib/orgSkills";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getWeather, type WeatherDay } from "@/lib/weather";
 import { orderByRoute } from "@/lib/route";
 import { getT, getLocale } from "@/lib/i18n/server";
@@ -194,7 +194,7 @@ export default async function SchedulePage({
 }: {
   searchParams: Promise<{ date?: string; view?: string; worker?: string; new?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
   const t = (await getT()).schedule;
   const locale = await getLocale();

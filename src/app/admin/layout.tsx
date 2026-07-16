@@ -7,20 +7,21 @@ import { getActiveAnnouncement } from "@/lib/announcements";
 import { getLatestActivityAt } from "@/lib/activity";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 import { getActiveSupportSessionForOrg } from "@/lib/support";
 import { getOrgFeatures } from "@/lib/features";
-import { loadAccess } from "@/lib/authz";
+import { requireOfficeAccess } from "@/lib/authz";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Reviewers (admins + supervisors) can enter the admin area; management pages
-  // inside keep their own requireAdmin guard, so supervisor access fails closed.
-  const session = await requireReviewer();
+  // Anyone with office (ADMIN) access level enters the admin area — whether from
+  // the legacy role (owner / supervisor) or an assigned office Position. Each
+  // page inside guards its own capability with requirePermission, so a narrower
+  // position fails closed. `permissions` is the caller's effective capability set.
+  const { session, permissions } = await requireOfficeAccess();
   const organizationId = requireOrgId(session);
   const scope = { organizationId, userId: session.user.id, isAdmin: true };
   // Platform owners get a discreet link to the /super console from their
@@ -31,18 +32,15 @@ export default async function AdminLayout({
   const supportActive = session.user.impersonating
     ? null
     : await getActiveSupportSessionForOrg(organizationId);
-  // Only full admins can create (supervisors can't), so we only load the small
-  // id/name lists that seed the "create" sheets for them.
-  const canCreate = session.user.role === "ADMIN";
-  // Effective capabilities of the signed-in user, used to hide nav sections a
-  // narrower position can't use (pages still guard with requirePermission).
-  // Real admins get the full set via the legacy-role fallback, so they lose
-  // nothing.
+  // Load the small id/name lists that seed the "create" sheets only for callers
+  // who can actually create something (any of the manage-* capabilities).
+  const canCreate = ["projects.manage", "teams.manage", "workers.manage"].some((p) =>
+    permissions.includes(p)
+  );
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
-  const [{ permissions }, pendingReviewCount, latestActivityAt, features, announcement, createData] =
+  const [pendingReviewCount, latestActivityAt, features, announcement, createData] =
     await Promise.all([
-      loadAccess(session),
       prisma.workRecord.count({
         where: { organizationId, status: "SUBMITTED" },
       }),

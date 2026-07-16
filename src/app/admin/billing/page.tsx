@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { createBillingPortalSessionAction, createCheckoutSessionAction } from "@/actions/billing";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { stripeEnabled } from "@/lib/stripe";
 import { PLANS, planLabel, planMaxUsers } from "@/lib/plans";
 
@@ -18,7 +18,7 @@ export default async function BillingPage({
 }: {
   searchParams: Promise<{ upgraded?: string; error?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const { upgraded, error } = await searchParams;
 

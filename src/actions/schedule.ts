@@ -5,7 +5,8 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin, requireAuth } from "@/lib/session";
+import { requireAuth } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { canAccessJob, timeWindowsOverlap } from "@/lib/schedule";
 import { SCHEDULED_JOB_STATUSES, scheduledJobSchema } from "@/lib/validations";
 
@@ -113,7 +114,7 @@ export async function createScheduledJobAction(
   _prev: ScheduleFormState,
   formData: FormData
 ): Promise<ScheduleFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = parse(formData);
@@ -165,7 +166,7 @@ export async function updateScheduledJobAction(
   _prev: ScheduleFormState,
   formData: FormData
 ): Promise<ScheduleFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
 
   const owned = await prisma.scheduledJob.findFirst({
@@ -221,7 +222,7 @@ export async function updateScheduledJobAction(
 // Quick move to another day (drag/drop or a date picker). Org-scoped
 // updateMany so a bad/cross-tenant id is a silent no-op.
 export async function rescheduleJobAction(jobId: string, dateStr: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return;
   await prisma.scheduledJob.updateMany({
@@ -236,7 +237,7 @@ export async function rescheduleJobAction(jobId: string, dateStr: string) {
 // target worker must be an active member of the caller's org, so a bad or
 // cross-tenant id can't stick a job on someone else's crew.
 export async function reassignJobAction(jobId: string, workerId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
 
   let assignedToId: string | null = null;
@@ -295,7 +296,7 @@ export async function setJobStatusAction(jobId: string, status: string) {
 }
 
 export async function deleteScheduledJobAction(jobId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
   await prisma.scheduledJob.deleteMany({ where: { id: jobId, organizationId } });
   revalidatePath(SCHEDULE_PATH);

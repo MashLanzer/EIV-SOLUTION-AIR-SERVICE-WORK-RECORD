@@ -23,7 +23,7 @@ import { ProjectsTeamsTabs } from "@/components/projects/ProjectsTeamsTabs";
 import { TeamChip } from "@/components/teams/TeamColorDot";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 import type { Dictionary } from "@/lib/i18n";
 
@@ -149,7 +149,7 @@ export default async function AdminProjectsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
 
   const rawParams = await searchParams;

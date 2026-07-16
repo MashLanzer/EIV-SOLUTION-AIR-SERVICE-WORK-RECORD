@@ -14,11 +14,11 @@ import {
 } from "@/actions/checklists";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 export default async function ChecklistTemplatesPage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);
   const t = (await getT()).checklists;
 

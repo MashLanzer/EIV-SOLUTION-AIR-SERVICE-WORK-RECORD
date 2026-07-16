@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 // Whole days between the submission and now (UTC-agnostic - just elapsed ms).
@@ -22,7 +22,7 @@ function daysWaiting(since: Date): number {
 // one-tap Approve. Separate from the full /admin/records list so a supervisor
 // lands straight on what needs their attention.
 export default async function ReviewQueuePage() {
-  const session = await requireReviewer();
+  const session = await requirePermission("records.review");
   const organizationId = requireOrgId(session);
 
   const [records, returned] = await Promise.all([

@@ -7,7 +7,7 @@ import { getCurrencySymbol } from "@/lib/currency";
 import { formatEstimateNumber } from "@/lib/estimates";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireFeature } from "@/lib/features";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 const isoDate = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
@@ -17,7 +17,7 @@ export default async function EditEstimatePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   await requireFeature(organizationId, "estimates");
   const { id } = await params;

@@ -56,8 +56,11 @@ async function applyImpersonation(session: Session): Promise<Session> {
       ...session.user,
       organizationId: support.organization.id,
       // Read-only support maps to supervisor-level access (view dashboards,
-      // records and reports; management pages fail closed via requireAdmin).
+      // records and reports); management pages fail closed via their
+      // requirePermission guards, since a supervisor lacks the manage-* caps.
       role: readOnly ? "SUPERVISOR" : "ADMIN",
+      // Both support modes are office-level access (they operate in /admin).
+      accessLevel: "ADMIN",
       impersonating: {
         orgId: support.organization.id,
         name: support.organization.name,
@@ -68,21 +71,8 @@ async function applyImpersonation(session: Session): Promise<Session> {
   };
 }
 
-export async function requireAdmin() {
-  const session = await requireAuth();
-  if (session.user.role !== "ADMIN") {
-    redirect("/records");
-  }
-  return session;
-}
-
-// A reviewer is an admin or a supervisor: they can approve/return records and
-// see the dashboard/reports, but supervisors are still blocked from management
-// pages (those keep requireAdmin, so access fails closed).
-export async function requireReviewer() {
-  const session = await requireAuth();
-  if (session.user.role !== "ADMIN" && session.user.role !== "SUPERVISOR") {
-    redirect("/records");
-  }
-  return session;
-}
+// Note: the office app gate and per-page capability checks now live in
+// @/lib/authz (requireOfficeAccess / requirePermission), which read the user's
+// effective access from their Position (falling back to the legacy role). The
+// old role-only requireAdmin / requireReviewer guards were removed in favour of
+// those, so access follows assigned positions, not just the base role.

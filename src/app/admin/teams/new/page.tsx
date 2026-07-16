@@ -5,11 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TeamForm } from "@/components/teams/TeamForm";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 export default async function NewTeamPage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("teams.manage");
   const organizationId = requireOrgId(session);
   const [users, projects] = await Promise.all([
     prisma.user.findMany({

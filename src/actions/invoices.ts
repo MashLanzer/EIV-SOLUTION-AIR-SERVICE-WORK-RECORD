@@ -7,7 +7,7 @@ import type { InvoiceStatus, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { INVOICE_STATUSES, formatInvoiceNumber } from "@/lib/invoices";
 import { logAudit } from "@/lib/audit";
 import { appUrl, emailConfigured, emailLayout, sendEmail } from "@/lib/email";
@@ -23,7 +23,7 @@ function freshToken(): string {
 // provider. Ensures a share token first. Best-effort transport, but we report
 // clearly if there's no customer email or no provider configured.
 export async function emailInvoiceAction(invoiceId: string): Promise<EmailSendResult> {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
   if (!emailConfigured()) return { error: "not_configured" };
 
@@ -192,7 +192,7 @@ export async function createInvoiceAction(
   _prev: InvoiceFormState,
   formData: FormData
 ): Promise<InvoiceFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = parseForm(formData);
@@ -237,7 +237,7 @@ export async function createInvoiceAction(
 // instead of creating a duplicate. Lands on the editor so the admin can
 // price/adjust before sending.
 export async function createInvoiceFromRecordAction(recordId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
 
   const record = await prisma.workRecord.findFirst({
@@ -304,7 +304,7 @@ export async function updateInvoiceAction(
   _prev: InvoiceFormState,
   formData: FormData
 ): Promise<InvoiceFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
 
   const owned = await prisma.invoice.findFirst({
@@ -352,7 +352,7 @@ export async function updateInvoiceAction(
 }
 
 export async function setInvoiceStatusAction(invoiceId: string, status: InvoiceStatus) {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
   if (!INVOICE_STATUSES.includes(status)) return;
 
@@ -387,7 +387,7 @@ export async function setInvoiceStatusAction(invoiceId: string, status: InvoiceS
 export async function shareInvoiceAction(
   invoiceId: string
 ): Promise<{ token: string } | null> {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
   const inv = await prisma.invoice.findFirst({
     where: { id: invoiceId, organizationId },
@@ -403,7 +403,7 @@ export async function shareInvoiceAction(
 
 // Stop sharing: clear the token so the public link 404s.
 export async function unshareInvoiceAction(invoiceId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
   const inv = await prisma.invoice.findFirst({
     where: { id: invoiceId, organizationId },
@@ -415,7 +415,7 @@ export async function unshareInvoiceAction(invoiceId: string) {
 }
 
 export async function deleteInvoiceAction(invoiceId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
 
   const owned = await prisma.invoice.findFirst({

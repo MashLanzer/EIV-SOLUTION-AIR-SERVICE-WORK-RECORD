@@ -23,7 +23,7 @@ import {
 } from "@/lib/utilization";
 import { dayKey, startOfUtcDay } from "@/lib/schedule";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 
@@ -74,7 +74,7 @@ export default async function UtilizationReportPage({
 }: {
   searchParams: Promise<{ date?: string; period?: string; group?: string }>;
 }) {
-  const session = await requireReviewer();
+  const session = await requirePermission("reports.view");
   const organizationId = requireOrgId(session);
   const sp = await searchParams;
   const period: UtilPeriod = sp.period === "month" ? "month" : "week";

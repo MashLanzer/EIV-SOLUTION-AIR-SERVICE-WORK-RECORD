@@ -24,7 +24,7 @@ import { computeTotals } from "@/lib/invoices";
 import { ESTIMATE_STATUSES, formatEstimateNumber, isEstimateExpired } from "@/lib/estimates";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireFeature } from "@/lib/features";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 import type { EstimateStatus } from "@prisma/client";
 
@@ -33,7 +33,7 @@ export default async function AdminEstimatesPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
   await requireFeature(organizationId, "estimates");
   const { q, status: rawStatus } = await searchParams;

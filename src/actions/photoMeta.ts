@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { canAccessProject, photoDetailPaths } from "@/lib/projectAccess";
-import { requireAdmin, requireAuth } from "@/lib/session";
+import { requireAuth } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 
 function normalizeTag(raw: string): string {
   return raw.trim().replace(/\s+/g, " ").toLowerCase().slice(0, 30);
@@ -27,7 +28,7 @@ function revalidatePhoto(projectId: string, photoId: string) {
 // Tags organize the whole company's photos, so only admins edit them; workers
 // see them read-only.
 export async function addTagAction(photoId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const photo = await ownedPhoto(photoId, organizationId);
   if (!photo) return;
@@ -53,7 +54,7 @@ export async function addTagAction(photoId: string, formData: FormData) {
 }
 
 export async function removeTagAction(photoId: string, tagId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const photo = await ownedPhoto(photoId, organizationId);
   if (!photo) return;

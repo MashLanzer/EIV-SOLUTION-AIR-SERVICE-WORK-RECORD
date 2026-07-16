@@ -25,7 +25,7 @@ import { TeamMembersForm } from "@/components/teams/TeamMembersForm";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 const SECTION_ORDER: ProjectStatus[] = ["ACTIVE", "ON_HOLD", "COMPLETED"];
@@ -64,7 +64,7 @@ export default async function AdminTeamPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ saved?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("teams.manage");
   const organizationId = requireOrgId(session);
   const { id } = await params;
   const { saved } = await searchParams;

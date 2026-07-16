@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { TEAM_COLORS } from "@/lib/teamColors";
 import { teamSchema } from "@/lib/validations";
 
@@ -23,7 +23,7 @@ export async function createTeamAction(
   _prev: TeamFormState,
   formData: FormData
 ): Promise<TeamFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("teams.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = teamSchema.safeParse({
@@ -79,7 +79,7 @@ export async function updateTeamAction(
   _prev: TeamFormState,
   formData: FormData
 ): Promise<TeamFormState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("teams.manage");
   const organizationId = requireOrgId(session);
 
   const parsed = teamSchema.safeParse({
@@ -106,7 +106,7 @@ export async function updateTeamAction(
 }
 
 export async function deleteTeamAction(teamId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("teams.manage");
   const organizationId = requireOrgId(session);
   // Memberships cascade; projects' teamId is nulled by the FK.
   await prisma.team.deleteMany({ where: { id: teamId, organizationId } });
@@ -117,7 +117,7 @@ export async function deleteTeamAction(teamId: string) {
 // Replace a team's whole membership set with the checked users. Only users in
 // the caller's org are accepted, so a crafted userId can't be added.
 export async function setTeamMembersAction(teamId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("teams.manage");
   const organizationId = requireOrgId(session);
 
   const team = await prisma.team.findFirst({
@@ -151,7 +151,7 @@ export async function setTeamMembersAction(teamId: string, formData: FormData) {
 // were previously on it). All updateMany calls are org-scoped, so a crafted
 // projectId from another org can't be moved onto the team.
 export async function setTeamProjectsAction(teamId: string, formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("teams.manage");
   const organizationId = requireOrgId(session);
 
   const team = await prisma.team.findFirst({

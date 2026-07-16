@@ -4,7 +4,7 @@ import { companyForPdf, renderUtilizationPdf } from "@/lib/pdf";
 import { getUtilization, type UtilGroup, type UtilPeriod } from "@/lib/utilization";
 import { dayKey, startOfUtcDay } from "@/lib/schedule";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 export const runtime = "nodejs";
@@ -18,7 +18,7 @@ function parseDate(value: string | null): Date {
 }
 
 export async function GET(request: Request) {
-  const session = await requireReviewer();
+  const session = await requirePermission("reports.view");
   const organizationId = requireOrgId(session);
 
   const url = new URL(request.url);

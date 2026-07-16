@@ -33,7 +33,7 @@ import { getCurrencySymbol } from "@/lib/currency";
 import { computeTotals, formatInvoiceNumber, isOverdue, INVOICE_STATUSES } from "@/lib/invoices";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireFeature } from "@/lib/features";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 import type { InvoiceStatus } from "@prisma/client";
 
@@ -47,7 +47,7 @@ export default async function AdminInvoicesPage({
 }: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
   await requireFeature(organizationId, "invoicing");
   const { q, status: rawStatus } = await searchParams;

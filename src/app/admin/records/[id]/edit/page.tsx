@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkTypeGroups } from "@/lib/workTypes";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 
 const editDateFmt = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -23,7 +23,7 @@ export default async function AdminEditRecordPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("records.edit");
   const { id } = await params;
   const record = await prisma.workRecord.findFirst({
     where: { id, organizationId: requireOrgId(session) },

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { requireAuth } from "@/lib/session";
+import { loadAccess } from "@/lib/authz";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 
 export default async function HomePage() {
@@ -11,5 +12,9 @@ export default async function HomePage() {
     if (isSuperAdminEmail(session.user.email)) redirect("/super");
     redirect("/onboarding");
   }
-  redirect(session.user.role === "ADMIN" ? "/admin" : "/records");
+  // Route by effective access level, not just the legacy role: a user placed on
+  // an office Position (e.g. Accountant) lands in the admin app even though their
+  // base role is WORKER, and vice-versa.
+  const { accessLevel } = await loadAccess(session);
+  redirect(accessLevel === "ADMIN" ? "/admin" : "/records");
 }

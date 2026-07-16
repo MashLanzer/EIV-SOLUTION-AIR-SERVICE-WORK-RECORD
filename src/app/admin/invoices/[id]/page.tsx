@@ -25,7 +25,7 @@ import { getCurrencySymbol } from "@/lib/currency";
 import { computeTotals, formatInvoiceNumber, isOverdue } from "@/lib/invoices";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireFeature } from "@/lib/features";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 export default async function InvoiceDetailPage({
@@ -33,7 +33,7 @@ export default async function InvoiceDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
   await requireFeature(organizationId, "invoicing");
   const { id } = await params;

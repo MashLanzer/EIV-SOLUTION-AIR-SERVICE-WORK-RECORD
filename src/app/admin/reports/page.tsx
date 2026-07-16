@@ -23,7 +23,7 @@ import { buildPayReport, defaultPayReportRange, parsePayReportParams } from "@/l
 import { getCurrencySymbol } from "@/lib/currency";
 import { formatMoney } from "@/lib/format";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireReviewer } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 function formatDate(iso: string, locale: string) {
@@ -40,7 +40,7 @@ export default async function AdminReportsPage({
 }: {
   searchParams: Promise<{ dateFrom?: string; dateTo?: string }>;
 }) {
-  const session = await requireReviewer();
+  const session = await requirePermission("reports.view");
   const { dateFrom, dateTo } = parsePayReportParams(await searchParams);
   const report = await buildPayReport({ dateFrom, dateTo }, requireOrgId(session));
   const currency = await getCurrencySymbol(requireOrgId(session));

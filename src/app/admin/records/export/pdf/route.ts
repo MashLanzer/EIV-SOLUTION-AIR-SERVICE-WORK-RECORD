@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requireOfficeAccess } from "@/lib/authz";
 import { companyForPdf, renderRecordsPdf } from "@/lib/pdf";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
 
@@ -12,7 +12,7 @@ export const runtime = "nodejs";
 const MAX_PDF_RECORDS = 300;
 
 export async function GET(request: Request) {
-  const session = await requireAdmin();
+  const { session } = await requireOfficeAccess();
   const organizationId = requireOrgId(session);
 
   const url = new URL(request.url);

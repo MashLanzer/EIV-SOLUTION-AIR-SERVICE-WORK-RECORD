@@ -7,7 +7,7 @@ import { getCurrencySymbol } from "@/lib/currency";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireFeature } from "@/lib/features";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
 function isoDate(d: Date | null): string {
@@ -19,7 +19,7 @@ export default async function EditInvoicePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("invoices.manage");
   const organizationId = requireOrgId(session);
   await requireFeature(organizationId, "invoicing");
   const { id } = await params;

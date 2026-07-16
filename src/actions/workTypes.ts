@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
-import { requireAdmin } from "@/lib/session";
+import { requirePermission } from "@/lib/authz";
 import { STARTER_PACKS } from "@/lib/workTypes";
 
 export type WorkTypeState = { error?: string } | undefined;
@@ -20,7 +20,7 @@ export async function createWorkTypeCategoryAction(
   _prev: WorkTypeState,
   formData: FormData
 ): Promise<WorkTypeState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const name = clean(formData.get("name"));
   if (!name) return { error: "Enter a category name." };
@@ -38,7 +38,7 @@ export async function createWorkTypeCategoryAction(
 }
 
 export async function deleteWorkTypeCategoryAction(categoryId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   // Org scope guard: only delete a category that belongs to the caller's org.
   await prisma.workTypeCategory.deleteMany({
@@ -53,7 +53,7 @@ export async function createWorkTypeAction(
   _prev: WorkTypeState,
   formData: FormData
 ): Promise<WorkTypeState> {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const name = clean(formData.get("name"));
   if (!name) return { error: "Enter a work type." };
@@ -77,7 +77,7 @@ export async function createWorkTypeAction(
 }
 
 export async function deleteWorkTypeAction(workTypeId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   await prisma.workType.deleteMany({
     where: { id: workTypeId, organizationId },
@@ -89,7 +89,7 @@ export async function deleteWorkTypeAction(workTypeId: string) {
 // categories/items are kept; duplicates are skipped, so packs can be mixed
 // and re-applying is safe.
 export async function applyStarterPackAction(packId: string) {
-  const session = await requireAdmin();
+  const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
   const pack = STARTER_PACKS.find((p) => p.id === packId);
   if (!pack) return;
