@@ -149,21 +149,43 @@ export default async function AdminTeamPage({
           </div>
 
           <div className="grid grid-cols-3 gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-3">
-            <SheetButton icon={Users2} label={t.members} className={ACTION_TILE}>
+            <SheetButton
+              title={t.members}
+              className={ACTION_TILE}
+              trigger={
+                <>
+                  <Users2 className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                  <span className="text-[11px] font-medium leading-tight">{t.members}</span>
+                </>
+              }
+            >
               {users.length === 0 ? (
                 <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.addPeopleFirst}</p>
               ) : (
                 <TeamMembersForm teamId={team.id} users={users} memberIds={memberIds} />
               )}
             </SheetButton>
-            <SheetButton icon={FolderKanban} label={t.assignProjects} className={ACTION_TILE}>
+            <SheetButton
+              title={t.assignProjects}
+              className={ACTION_TILE}
+              trigger={
+                <>
+                  <FolderKanban className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                  <span className="text-[11px] font-medium leading-tight">{t.assignProjects}</span>
+                </>
+              }
+            >
               <AssignProjectsForm teamId={team.id} projects={allProjects} assignedIds={assignedIds} />
             </SheetButton>
             <SheetButton
-              icon={Settings2}
-              label={t.manage}
               title={t.teamDetails}
               className={ACTION_TILE}
+              trigger={
+                <>
+                  <Settings2 className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                  <span className="text-[11px] font-medium leading-tight">{t.manage}</span>
+                </>
+              }
             >
               <div className="flex flex-col gap-4">
                 <TeamForm teamId={team.id} defaultName={team.name} defaultColor={team.color} />
