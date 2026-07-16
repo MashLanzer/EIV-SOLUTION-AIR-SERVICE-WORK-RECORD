@@ -109,6 +109,26 @@ export function HeaderAccountMenu({
           </div>
           <div className="mb-1 border-t border-neutral-100 dark:border-neutral-800" />
 
+          {/* Platform console first and emphasized, so owners reach /super in
+              one tap — the app has no address bar to type it. */}
+          {platformHref && (
+            <>
+              <Link
+                href={platformHref}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className={cn(
+                  itemClass,
+                  "bg-neutral-100 font-semibold text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+                )}
+              >
+                <ShieldCheck className="h-4 w-4 text-neutral-900 dark:text-neutral-100" />
+                {t.platformConsole}
+              </Link>
+              <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
+            </>
+          )}
+
           <Link
             href={profileHref}
             role="menuitem"
@@ -137,21 +157,6 @@ export function HeaderAccountMenu({
               <CreditCard className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               {t.billing}
             </Link>
-          )}
-
-          {platformHref && (
-            <>
-              <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
-              <Link
-                href={platformHref}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className={itemClass}
-              >
-                <ShieldCheck className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                {t.platformConsole}
-              </Link>
-            </>
           )}
 
           <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
