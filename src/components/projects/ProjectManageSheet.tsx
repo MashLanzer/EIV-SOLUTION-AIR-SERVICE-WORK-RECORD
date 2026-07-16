@@ -100,15 +100,16 @@ export function ProjectManageSheet({
                     teams={teams}
                     customers={customers}
                     defaultValues={defaultValues}
+                    fullWidth
                   />
-                  <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
-                    <Button asChild variant="outline" size="sm">
+                  <div className="flex flex-col gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
+                    <Button asChild variant="outline" className="w-full">
                       <Link href={editHref}>
                         <Pencil className="h-4 w-4" />
                         {t.fullEditPage}
                       </Link>
                     </Button>
-                    <DeleteProjectButton projectId={projectId} />
+                    <DeleteProjectButton projectId={projectId} fullWidth />
                   </div>
                 </div>
               </div>

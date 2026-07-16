@@ -12,6 +12,7 @@ import {
 import type { ProjectStatus } from "@prisma/client";
 
 import { AvatarInitials } from "@/components/ui/avatar-initials";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SheetButton } from "@/components/ui/sheet-button";
@@ -144,22 +145,6 @@ export default async function AdminTeamPage({
               </p>
             </div>
           </div>
-          {members.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {members.map((m) => (
-                <span
-                  key={m.id}
-                  className="flex items-center gap-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 py-1 pl-1 pr-2.5"
-                >
-                  <AvatarInitials name={m.name || m.email} className="h-6 w-6 text-[10px]" />
-                  <span className="truncate text-xs font-medium text-neutral-700 dark:text-neutral-200">
-                    {m.name || m.email}
-                  </span>
-                </span>
-              ))}
-            </div>
-          )}
-
           <div className="grid grid-cols-4 gap-2">
             <StatTile icon={Users2} value={memberIds.length} label={t.members} />
             <StatTile icon={FolderKanban} value={activeProjects} label={t.active} />
@@ -217,6 +202,38 @@ export default async function AdminTeamPage({
         </CardContent>
       </Card>
 
+      {/* Team members - a read-only roster; editing happens in the sheet. */}
+      {members.length > 0 && (
+        <section
+          className="flex animate-fade-up flex-col gap-3"
+          style={{ animationDelay: "100ms", animationFillMode: "both" }}
+        >
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {t.members} ({members.length})
+          </h2>
+          <Card>
+            <CardContent className="flex flex-col divide-y divide-neutral-200 dark:divide-neutral-800 p-0">
+              {members.map((m) => (
+                <div key={m.id} className="flex items-center gap-3 px-4 py-3">
+                  <AvatarInitials name={m.name || m.email} className="h-9 w-9 text-xs" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
+                      {m.name || m.email}
+                    </div>
+                    <div className="truncate text-sm text-neutral-500 dark:text-neutral-400">
+                      {m.email}
+                    </div>
+                  </div>
+                  <Badge variant={m.role === "ADMIN" ? "default" : "secondary"}>
+                    {m.role === "ADMIN" ? t.roleAdmin : t.roleWorker}
+                  </Badge>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
       {/* Team projects grouped by status */}
       <section
         className="flex animate-fade-up flex-col gap-3"
@@ -247,9 +264,12 @@ export default async function AdminTeamPage({
                     <Link
                       key={p.id}
                       href={`/admin/projects/${p.id}`}
-                      className="flex items-center justify-between gap-2 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
+                      className="flex items-center gap-3 px-4 py-3.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
                     >
-                      <span className="flex items-center gap-2 min-w-0">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
+                        <FolderKanban className="h-5 w-5" />
+                      </span>
+                      <span className="flex min-w-0 flex-1 items-center gap-2">
                         <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">
                           {p.name}
                         </span>

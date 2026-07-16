@@ -19,6 +19,7 @@ import {
 } from "@/actions/projects";
 import { PROJECT_STATUSES } from "@/lib/validations";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 import type { ProjectStatus } from "@prisma/client";
 
 interface ProjectValues {
@@ -35,6 +36,7 @@ export function ProjectForm({
   teams = [],
   customers = [],
   cancelHref,
+  fullWidth = false,
 }: {
   projectId?: string;
   defaultValues?: ProjectValues;
@@ -42,6 +44,8 @@ export function ProjectForm({
   customers?: { id: string; name: string }[];
   // When set, shows a Cancel button; leaving with unsaved edits is guarded.
   cancelHref?: string;
+  // Stretch the action buttons to full width (for use inside a bottom sheet).
+  fullWidth?: boolean;
 }) {
   const router = useRouter();
   const action = projectId
@@ -164,8 +168,8 @@ export function ProjectForm({
 
       {state?.error && <Alert variant="error">{state.error}</Alert>}
 
-      <div className="flex items-center gap-2">
-        <Button type="submit" disabled={pending}>
+      <div className={cn("flex items-center gap-2", fullWidth && "flex-col-reverse items-stretch")}>
+        <Button type="submit" disabled={pending} className={cn(fullWidth && "w-full")}>
           <Save className="h-4 w-4" />
           {pending ? t.saving : projectId ? t.saveProject : t.createProject}
         </Button>
@@ -176,14 +180,14 @@ export function ProjectForm({
               description={t.discardDesc}
               confirmLabel={t.discard}
               trigger={
-                <Button type="button" variant="outline" disabled={pending}>
+                <Button type="button" variant="outline" disabled={pending} className={cn(fullWidth && "w-full")}>
                   {tc.cancel}
                 </Button>
               }
               onConfirm={() => router.push(cancelHref)}
             />
           ) : (
-            <Button type="button" variant="outline" asChild>
+            <Button type="button" variant="outline" asChild className={cn(fullWidth && "w-full")}>
               <Link href={cancelHref}>{tc.cancel}</Link>
             </Button>
           ))}

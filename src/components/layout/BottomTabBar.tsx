@@ -15,10 +15,15 @@ export interface TabItem {
   // Count shown as a small red badge on the icon (e.g. records pending
   // review, or records returned to the worker). 0/undefined = no badge.
   badge?: number;
+  // Extra path prefixes that also mark this tab active. Teams has no tab of
+  // its own (it lives under Projects), so /admin/teams keeps the Projects tab
+  // lit instead of leaving the bar with nothing selected.
+  alsoActiveFor?: string[];
 }
 
 export function isTabActive(pathname: string, item: TabItem) {
-  return item.exact ? pathname === item.href : pathname.startsWith(item.href);
+  if (item.exact ? pathname === item.href : pathname.startsWith(item.href)) return true;
+  return item.alsoActiveFor?.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ?? false;
 }
 
 // A fixed bottom tab bar (icon + short label) reads as a native mobile app

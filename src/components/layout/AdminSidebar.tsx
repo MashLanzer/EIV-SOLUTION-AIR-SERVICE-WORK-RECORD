@@ -39,7 +39,7 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
   { href: "/admin", label: n.dashboard, shortLabel: n.home, icon: LayoutDashboard, exact: true },
   { href: "/admin/review", label: n.reviewQueue, shortLabel: n.reviewQueue, icon: ClipboardCheck, exact: false },
   { href: "/admin/schedule", label: n.schedule, shortLabel: n.schedule, icon: CalendarDays, exact: false },
-  { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
+  { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false, alsoActiveFor: ["/admin/teams"] },
   { href: "/admin/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
   { href: "/admin/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: false },
   { href: "/admin/customers", label: n.customers, shortLabel: n.customers, icon: Contact, exact: false },
@@ -57,7 +57,7 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
 function appTabItems(n: Dictionary["nav"]): TabItem[] {
   return [
   { href: "/admin", label: n.dashboard, shortLabel: n.home, icon: LayoutDashboard, exact: true },
-  { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false },
+  { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false, alsoActiveFor: ["/admin/teams"] },
   // Schedule takes the old Photos slot; Photos takes the old Records slot;
   // Records leaves the bar and is reached from the dashboard / center menu.
   { href: "/admin/schedule", label: n.schedule, shortLabel: n.schedule, icon: CalendarDays, exact: false },
