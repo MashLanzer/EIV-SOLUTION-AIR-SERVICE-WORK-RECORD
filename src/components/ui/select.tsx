@@ -1,18 +1,197 @@
+"use client";
+
 import * as React from "react";
+import { createPortal } from "react-dom";
+import { Check, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-function Select({ className, children, ...props }: React.ComponentProps<"select">) {
+// A drop-in replacement for a styled native <select>: same props (value /
+// defaultValue / onChange / name / id / disabled / required / className /
+// aria-*), same <option>/<optgroup> children — but it renders a custom
+// trigger + popover listbox so every dropdown in the app looks the same
+// instead of falling back to the OS-native picker. A hidden input carries the
+// value so it still submits inside a <form>.
+
+type Opt = { value: string; label: React.ReactNode; disabled?: boolean; group?: string };
+
+function collectOptions(children: React.ReactNode): Opt[] {
+  const out: Opt[] = [];
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) return;
+    if (child.type === "optgroup") {
+      const props = child.props as { label?: string; children?: React.ReactNode };
+      React.Children.forEach(props.children, (opt) => {
+        if (React.isValidElement(opt) && opt.type === "option") {
+          const p = opt.props as { value?: string | number; children?: React.ReactNode; disabled?: boolean };
+          out.push({ value: String(p.value ?? ""), label: p.children, disabled: p.disabled, group: props.label });
+        }
+      });
+    } else if (child.type === "option") {
+      const p = child.props as { value?: string | number; children?: React.ReactNode; disabled?: boolean };
+      out.push({ value: String(p.value ?? ""), label: p.children, disabled: p.disabled });
+    }
+  });
+  return out;
+}
+
+function Select({
+  className,
+  children,
+  value,
+  defaultValue,
+  onChange,
+  name,
+  id,
+  disabled,
+  required,
+  ...rest
+}: React.ComponentProps<"select">) {
+  const options = React.useMemo(() => collectOptions(children), [children]);
+  const isControlled = value !== undefined;
+  const [internal, setInternal] = React.useState(() =>
+    String(defaultValue ?? value ?? options[0]?.value ?? "")
+  );
+  const current = isControlled ? String(value) : internal;
+  const selected = options.find((o) => o.value === current);
+
+  const [open, setOpen] = React.useState(false);
+  const [pos, setPos] = React.useState<{ top: number; left: number; width: number } | null>(null);
+  const triggerRef = React.useRef<HTMLButtonElement>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
+
+  const ariaLabel = rest["aria-label"];
+  const invalid = rest["aria-invalid"] === true || rest["aria-invalid"] === "true";
+
+  function commit(v: string) {
+    if (!isControlled) setInternal(v);
+    onChange?.({ target: { value: v, name } } as unknown as React.ChangeEvent<HTMLSelectElement>);
+    setOpen(false);
+    triggerRef.current?.focus();
+  }
+
+  function toggle() {
+    if (disabled) return;
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    const r = triggerRef.current?.getBoundingClientRect();
+    if (r) setPos({ top: r.bottom + 4, left: r.left, width: r.width });
+    setOpen(true);
+  }
+
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    const close = () => setOpen(false);
+    window.addEventListener("keydown", onKey);
+    // Any scroll/resize invalidates the anchored position — just close.
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    // Focus the selected (or first) option for keyboard users.
+    const focusTarget =
+      listRef.current?.querySelector<HTMLElement>('[data-selected="true"]') ??
+      listRef.current?.querySelector<HTMLElement>("[role=option]");
+    focusTarget?.focus();
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+    };
+  }, [open]);
+
+  function onListKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    const items = Array.from(listRef.current?.querySelectorAll<HTMLElement>("[role=option]") ?? []);
+    const idx = items.indexOf(document.activeElement as HTMLElement);
+    const next = e.key === "ArrowDown" ? idx + 1 : idx - 1;
+    items[(next + items.length) % items.length]?.focus();
+  }
+
   return (
-    <select
-      className={cn(
-        "flex h-11 w-full appearance-none rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 bg-[length:1rem] bg-[position:right_0.75rem_center] bg-no-repeat bg-[url('data:image/svg+xml;utf8,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2216%22%20height=%2216%22%20fill=%22none%22%20viewBox=%220%200%2016%2016%22%3E%3Cpath%20stroke=%22%23737373%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%20stroke-width=%221.5%22%20d=%22m4%206%204%204%204-4%22/%3E%3C/svg%3E')] px-3 py-2 pr-9 text-base transition-colors hover:border-neutral-400 dark:hover:border-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-1 aria-invalid:ring-destructive sm:text-sm",
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </select>
+    <>
+      {name ? <input type="hidden" name={name} value={current} /> : null}
+      <button
+        ref={triggerRef}
+        type="button"
+        id={id}
+        disabled={disabled}
+        onClick={toggle}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        data-required={required || undefined}
+        className={cn(
+          "flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-3 py-2 text-left text-base transition-colors hover:border-neutral-400 dark:hover:border-neutral-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm",
+          invalid && "border-destructive ring-1 ring-destructive",
+          className
+        )}
+      >
+        <span className="truncate text-neutral-900 dark:text-neutral-100">{selected?.label ?? " "}</span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 shrink-0 text-neutral-500 transition-transform dark:text-neutral-400",
+            open && "rotate-180"
+          )}
+        />
+      </button>
+
+      {open && pos && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
+              <div
+                ref={listRef}
+                role="listbox"
+                aria-label={ariaLabel}
+                onKeyDown={onListKeyDown}
+                style={{ top: pos.top, left: pos.left, width: pos.width }}
+                className="fixed z-50 max-h-72 overflow-y-auto rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1 shadow-lg shadow-black/10 [scrollbar-width:thin]"
+              >
+                {options.map((opt, i) => {
+                  const isSel = opt.value === current;
+                  const prev = options[i - 1];
+                  const showGroup = opt.group && opt.group !== prev?.group;
+                  return (
+                    <React.Fragment key={`${opt.group ?? ""}-${opt.value}-${i}`}>
+                      {showGroup ? (
+                        <div className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">
+                          {opt.group}
+                        </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={isSel}
+                        data-selected={isSel}
+                        disabled={opt.disabled}
+                        onClick={() => commit(opt.value)}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-40",
+                          isSel
+                            ? "bg-neutral-100 font-medium text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100"
+                            : "text-neutral-700 hover:bg-neutral-100 focus:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-800 dark:focus:bg-neutral-800"
+                        )}
+                      >
+                        <span className="truncate">{opt.label}</span>
+                        {isSel ? <Check className="h-4 w-4 shrink-0" /> : null}
+                      </button>
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </>,
+            document.body
+          )
+        : null}
+    </>
   );
 }
 
