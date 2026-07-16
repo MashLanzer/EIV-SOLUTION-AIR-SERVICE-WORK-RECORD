@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Download, Pencil, Receipt, Star } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
@@ -17,9 +16,15 @@ import { createInvoiceFromRecordAction } from "@/actions/invoices";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
+import { cn } from "@/lib/utils";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireReviewer } from "@/lib/session";
 import { getLocale, getT } from "@/lib/i18n/server";
+
+// A uniform action tile (icon over a short label) shared by the record's
+// primary actions so they read as one tidy grid.
+const ACTION_TILE =
+  "flex flex-col items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-1 py-2.5 text-center text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800";
 
 function formatDateTime(date: Date, locale: string) {
   return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
@@ -105,47 +110,50 @@ export default async function AdminReviewRecordPage({
             </div>
           )}
 
-          <div className="flex flex-wrap gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-3">
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/admin/records/${record.id}/edit`}>
-                <Pencil className="h-4 w-4" />
-                {dict.common.edit}
+          {/* Actions as uniform tiles (icon over a short label) instead of a
+              wrapping button row; secondary flows (share) open in a sheet and
+              delete is a quiet ghost row, so the card stays compact. */}
+          <div className="flex flex-col gap-3 border-t border-neutral-200 dark:border-neutral-800 pt-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Link href={`/admin/records/${record.id}/edit`} className={ACTION_TILE}>
+                <Pencil className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                <span className="text-[11px] font-medium leading-tight">{dict.common.edit}</span>
               </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <a href={`/admin/records/${record.id}/pdf`}>
-                <Download className="h-4 w-4" />
-                {dict.records.downloadPdf}
+              <a href={`/admin/records/${record.id}/pdf`} className={ACTION_TILE}>
+                <Download className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                <span className="text-[11px] font-medium leading-tight">
+                  {dict.records.downloadPdf}
+                </span>
               </a>
-            </Button>
-            <ShareReceiptButton
-              recordId={record.id}
-              initialToken={record.publicToken}
-              initialExpiresAt={record.publicTokenExpiresAt?.toISOString() ?? null}
-              customerPhone={record.customer?.phone ?? null}
-              customerEmail={record.customer?.email ?? null}
-            />
-            {isAdmin &&
-              (linkedInvoice ? (
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/admin/invoices/${linkedInvoice.id}`}>
-                    <Receipt className="h-4 w-4" />
-                    {dict.invoices.invoicedAs.replace(
-                      "{number}",
-                      formatInvoiceNumber(linkedInvoice.number)
-                    )}
+              <ShareReceiptButton
+                recordId={record.id}
+                initialToken={record.publicToken}
+                initialExpiresAt={record.publicTokenExpiresAt?.toISOString() ?? null}
+                customerPhone={record.customer?.phone ?? null}
+                customerEmail={record.customer?.email ?? null}
+                className={ACTION_TILE}
+              />
+              {isAdmin &&
+                (linkedInvoice ? (
+                  <Link href={`/admin/invoices/${linkedInvoice.id}`} className={ACTION_TILE}>
+                    <Receipt className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                    <span className="truncate text-[11px] font-medium leading-tight">
+                      {formatInvoiceNumber(linkedInvoice.number)}
+                    </span>
                   </Link>
-                </Button>
-              ) : (
-                <form action={createInvoiceFromRecordAction.bind(null, record.id)}>
-                  <Button type="submit" variant="outline" size="sm">
-                    <Receipt className="h-4 w-4" />
-                    {dict.invoices.createInvoice}
-                  </Button>
-                </form>
-              ))}
-            <div className="ml-auto">
-              <DeleteRecordButton recordId={record.id} />
+                ) : (
+                  <form action={createInvoiceFromRecordAction.bind(null, record.id)}>
+                    <button type="submit" className={cn(ACTION_TILE, "w-full")}>
+                      <Receipt className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+                      <span className="text-[11px] font-medium leading-tight">
+                        {dict.invoices.createInvoice}
+                      </span>
+                    </button>
+                  </form>
+                ))}
+            </div>
+            <div className="flex justify-end">
+              <DeleteRecordButton recordId={record.id} subtle />
             </div>
           </div>
         </CardContent>
