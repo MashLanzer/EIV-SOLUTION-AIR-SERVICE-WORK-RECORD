@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 
-import { AppMenuSheet, type CreateItem, type MoreItem } from "@/components/layout/AppMenuSheet";
+import {
+  AppMenuSheet,
+  type CreateData,
+  type CreateItem,
+  type MoreItem,
+} from "@/components/layout/AppMenuSheet";
 import { isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { tapHaptic } from "@/lib/haptics";
@@ -25,6 +30,7 @@ export function AppTabBar({
   pathname,
   createItems,
   moreItems,
+  createData,
 }: {
   // The real destination tabs (3 or 4), split into balanced left/right groups
   // so the centre FAB always lines up with the notch.
@@ -32,6 +38,7 @@ export function AppTabBar({
   pathname: string;
   createItems: CreateItem[];
   moreItems: MoreItem[];
+  createData?: CreateData | null;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const n = useT().nav;
@@ -100,6 +107,7 @@ export function AppTabBar({
         onClose={() => setMenuOpen(false)}
         createItems={createItems}
         moreItems={moreItems}
+        createData={createData}
       />
     </>
   );

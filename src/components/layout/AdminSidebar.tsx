@@ -25,7 +25,7 @@ import {
 
 import { ActivityBell } from "@/components/activity/ActivityBell";
 import { AppTabBar } from "@/components/layout/AppTabBar";
-import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
+import type { CreateData, CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { Logo } from "@/components/layout/Logo";
@@ -141,6 +141,7 @@ export function AdminSidebar({
   features,
   pendingReviewCount = 0,
   latestActivityAt = null,
+  createData = null,
 }: {
   name: string;
   avatarUrl?: string | null;
@@ -149,6 +150,7 @@ export function AdminSidebar({
   features?: { invoicing: boolean; estimates: boolean; portal: boolean };
   pendingReviewCount?: number;
   latestActivityAt?: number | null;
+  createData?: CreateData | null;
 }) {
   const platformHref = isSuperAdmin ? "/super" : null;
   // Billing is an admin-only page (supervisors are blocked by requireAdmin).
@@ -227,6 +229,7 @@ export function AdminSidebar({
         pathname={pathname}
         createItems={isSupervisor ? [] : createItems(t.nav)}
         moreItems={byFeature(isSupervisor ? moreItems(t.nav).filter((m) => SUPERVISOR_HREFS.has(m.href)) : moreItems(t.nav))}
+        createData={createData}
       />
     </>
   );

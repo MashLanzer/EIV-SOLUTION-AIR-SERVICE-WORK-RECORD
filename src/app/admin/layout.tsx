@@ -30,16 +30,49 @@ export default async function AdminLayout({
   const supportActive = session.user.impersonating
     ? null
     : await getActiveSupportSessionForOrg(organizationId);
+  // Only full admins can create (supervisors can't), so we only load the small
+  // id/name lists that seed the "create" sheets for them.
+  const canCreate = session.user.role === "ADMIN";
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
-  const [pendingReviewCount, latestActivityAt, features, announcement] = await Promise.all([
-    prisma.workRecord.count({
-      where: { organizationId, status: "SUBMITTED" },
-    }),
-    getLatestActivityAt(scope),
-    getOrgFeatures(organizationId),
-    getActiveAnnouncement(),
-  ]);
+  const [pendingReviewCount, latestActivityAt, features, announcement, createData] =
+    await Promise.all([
+      prisma.workRecord.count({
+        where: { organizationId, status: "SUBMITTED" },
+      }),
+      getLatestActivityAt(scope),
+      getOrgFeatures(organizationId),
+      getActiveAnnouncement(),
+      canCreate
+        ? Promise.all([
+            prisma.team.findMany({
+              where: { organizationId },
+              orderBy: { name: "asc" },
+              select: { id: true, name: true },
+            }),
+            prisma.customer.findMany({
+              where: { organizationId },
+              orderBy: { name: "asc" },
+              select: { id: true, name: true },
+            }),
+            prisma.user.findMany({
+              where: { organizationId },
+              orderBy: { name: "asc" },
+              select: { id: true, name: true },
+            }),
+            prisma.project.findMany({
+              where: { organizationId, status: { not: "COMPLETED" } },
+              orderBy: { name: "asc" },
+              select: { id: true, name: true },
+            }),
+          ]).then(([teams, customers, users, projects]) => ({
+            teams,
+            customers,
+            users,
+            projects,
+          }))
+        : Promise.resolve(null),
+    ]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -61,6 +94,7 @@ export default async function AdminLayout({
         features={features}
         pendingReviewCount={pendingReviewCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}
+        createData={createData}
       />
       <main
         id="main-content"
