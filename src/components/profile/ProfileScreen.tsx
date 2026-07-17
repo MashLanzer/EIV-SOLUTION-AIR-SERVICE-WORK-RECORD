@@ -1,8 +1,7 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, CalendarDays, Camera, CheckCircle2, ChevronRight, Circle, ClipboardCheck, Clock, DollarSign, FilePlus2, FolderKanban, Image as ImageIcon, ListTodo, Mail, MapPin, PenLine, Percent, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, Wrench, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, CalendarOff, Camera, CheckCircle2, ChevronRight, Circle, Clock, DollarSign, ListTodo, Mail, MapPin, PenLine, Percent, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, Wrench, X } from "lucide-react";
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
 import type { RecordStatus } from "@prisma/client";
 
 import { useRef, useState } from "react";
@@ -61,35 +60,33 @@ interface UpcomingJob {
   subtitle: string | null;
 }
 
-// Role-appropriate shortcuts shown in the Summary tab. The icon is a stable
-// key (a string) rather than a component, since these cross the server→client
-// boundary from the page.
-type QuickActionIcon =
-  | "newRecord"
-  | "records"
-  | "schedule"
-  | "photos"
-  | "review"
-  | "projects";
-interface QuickAction {
-  icon: QuickActionIcon;
-  label: string;
-  href: string;
+interface MetricPair {
+  current: number;
+  previous: number;
 }
-const QUICK_ACTION_ICONS: Record<QuickActionIcon, LucideIcon> = {
-  newRecord: FilePlus2,
-  records: ListTodo,
-  schedule: CalendarDays,
-  photos: ImageIcon,
-  review: ClipboardCheck,
-  projects: FolderKanban,
-};
+interface MonthCompare {
+  records: MetricPair;
+  hours: MetricPair;
+  approvalRate: MetricPair;
+}
+interface ActivityDay {
+  date: string; // YYYY-MM-DD
+  count: number;
+}
+interface TimeOffEntry {
+  id: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+  reason: string | null;
+}
 
 export function ProfileScreen({
   name,
   email,
   phone,
   storedSignature,
+  memberSince,
+  locale,
   role,
   backHref,
   recordHrefBase,
@@ -105,12 +102,17 @@ export function ProfileScreen({
   skillSuggestions,
   payThisMonth,
   currency,
-  quickActions,
+  monthCompare,
+  activityDays,
+  timeOff,
 }: {
   name: string;
   email: string;
   phone: string | null;
   storedSignature: string | null;
+  // ISO date the account was created, and the viewer's locale for formatting.
+  memberSince: string | null;
+  locale: string;
   role: "ADMIN" | "SUPERVISOR" | "WORKER";
   backHref: string;
   // Base path for record links, so they resolve to the caller's area
@@ -132,8 +134,10 @@ export function ProfileScreen({
   // symbol. Workers only.
   payThisMonth: number;
   currency: string;
-  // Role-appropriate shortcuts for the Summary tab.
-  quickActions: QuickAction[];
+  // This month vs last, a 12-week activity heatmap, and upcoming time off.
+  monthCompare: MonthCompare;
+  activityDays: ActivityDay[];
+  timeOff: TimeOffEntry[];
 }) {
   const isAdmin = role === "ADMIN";
   const t = useT().profile;
@@ -163,12 +167,33 @@ export function ProfileScreen({
   // Which tabs to show. Workers get a rich Summary; the Activity tab only
   // appears when there's something in it; Account is always present. When only
   // one tab qualifies we drop the tab bar entirely (nothing to switch to).
+  // Which rich Summary cards have data (workers submit records; admins don't).
+  const hasActivityMap = activityDays.some((d) => d.count > 0);
+  const hasMonthCompare =
+    !isAdmin &&
+    (monthCompare.records.current > 0 || monthCompare.records.previous > 0);
   const hasSummary =
-    quickActions.length > 0 ||
     !isAdmin ||
     teams.length > 0 ||
     upcomingJobs.length > 0 ||
+    timeOff.length > 0 ||
     incomplete;
+
+  const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  const monthYearFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+  // Parse a "YYYY-MM-DD" as UTC midnight so formatting never drifts a day.
+  const asUtc = (d: string) => new Date(`${d}T00:00:00.000Z`);
+  const memberSinceLabel = memberSince
+    ? t.memberSince.replace("{date}", monthYearFmt.format(asUtc(memberSince.slice(0, 10))))
+    : null;
   const hasActivity = needsAttention.length > 0 || recentRecords.length > 0;
   const availableTabs = [
     hasSummary ? ("summary" as const) : null,
@@ -253,6 +278,11 @@ export function ProfileScreen({
             <ShieldCheck className="h-3.5 w-3.5" />
             {roleLabel}
           </span>
+          {memberSinceLabel && (
+            <p className="mt-1.5 text-xs text-neutral-400 dark:text-neutral-500">
+              {memberSinceLabel}
+            </p>
+          )}
 
           {avatarError && (
             <p className="mt-2 text-sm text-destructive" role="alert">
@@ -323,33 +353,74 @@ export function ProfileScreen({
       {/* ---------------- SUMMARY ---------------- */}
       {tab === "summary" && hasSummary && (
         <div className="flex flex-col gap-5">
-          {/* Quick actions - role-appropriate shortcuts to the things this
-              person does most, so the Summary always has a clear use. */}
-          {quickActions.length > 0 && (
-            <section className="flex flex-col gap-2">
-              <h2 className="px-1 text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-                {t.quickActions}
-              </h2>
-              <div className="grid grid-cols-2 gap-2">
-                {quickActions.map((a) => {
-                  const Icon = QUICK_ACTION_ICONS[a.icon];
+          {/* This month vs last (workers) */}
+          {hasMonthCompare && (
+            <SettingsSection title={t.monthVsLast}>
+              <div className="grid grid-cols-3 divide-x divide-neutral-200 dark:divide-neutral-800">
+                <CompareCell
+                  label={t.cmpRecords}
+                  pair={monthCompare.records}
+                  sameLabel={t.samAsLast}
+                />
+                <CompareCell
+                  label={t.cmpHours}
+                  pair={monthCompare.hours}
+                  sameLabel={t.samAsLast}
+                />
+                <CompareCell
+                  label={t.cmpApproval}
+                  pair={monthCompare.approvalRate}
+                  suffix="%"
+                  sameLabel={t.samAsLast}
+                />
+              </div>
+            </SettingsSection>
+          )}
+
+          {/* 12-week activity heatmap (workers) */}
+          {hasActivityMap && (
+            <SettingsSection title={t.activityMapTitle} description={t.activityMapDesc}>
+              <div className="p-4">
+                <ActivityHeatmap
+                  days={activityDays}
+                  lessLabel={t.activityLess}
+                  moreLabel={t.activityMore}
+                />
+              </div>
+            </SettingsSection>
+          )}
+
+          {/* Time off - upcoming days off, scheduled by the office (read-only) */}
+          {timeOff.length > 0 && (
+            <SettingsSection title={t.timeOffTitle} description={t.timeOffDesc}>
+              <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+                {timeOff.map((entry) => {
+                  const start = asUtc(entry.startDate);
+                  const end = asUtc(entry.endDate);
+                  const range =
+                    entry.startDate === entry.endDate
+                      ? dateFmt.format(start)
+                      : `${dateFmt.format(start)} – ${dateFmt.format(end)}`;
                   return (
-                    <Link
-                      key={a.href}
-                      href={a.href}
-                      className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
-                    >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-text">
-                        <Icon className="h-4.5 w-4.5" />
+                    <div key={entry.id} className="flex items-center gap-3 px-4 py-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                        <CalendarOff className="h-4 w-4" />
                       </span>
-                      <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                        {a.label}
-                      </span>
-                    </Link>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-neutral-900 tabular-nums dark:text-neutral-100">
+                          {range}
+                        </p>
+                        {entry.reason && (
+                          <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+                            {entry.reason}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
-            </section>
+            </SettingsSection>
           )}
 
           {/* Completeness nudge - only until every useful field is filled */}
@@ -729,6 +800,100 @@ export function ProfileScreen({
           )}
         </form>
       </BottomSheet>
+    </div>
+  );
+}
+
+// One metric in the "this month vs last" strip: the current value big, with a
+// signed delta vs last month (green up / red down / muted when unchanged).
+function CompareCell({
+  label,
+  pair,
+  suffix = "",
+  sameLabel,
+}: {
+  label: string;
+  pair: { current: number; previous: number };
+  suffix?: string;
+  sameLabel: string;
+}) {
+  const delta = pair.current - pair.previous;
+  return (
+    <div className="flex flex-col items-center gap-1 px-1 py-4">
+      <span className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+        {pair.current}
+        {suffix}
+      </span>
+      <span className="text-[10px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+        {label}
+      </span>
+      {delta === 0 ? (
+        <span className="text-[11px] text-neutral-400 dark:text-neutral-500" title={sameLabel}>
+          —
+        </span>
+      ) : (
+        <span
+          className={cn(
+            "text-[11px] font-medium tabular-nums",
+            delta > 0 ? "text-success-text" : "text-destructive-text"
+          )}
+        >
+          {delta > 0 ? "▲" : "▼"} {Math.abs(delta)}
+          {suffix}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// A GitHub-style contribution grid: 12 columns (weeks) × 7 rows (days). Cells
+// are tinted by count against the busiest day, so a steady week doesn't read as
+// empty. Input is a fixed oldest→newest run of days.
+function ActivityHeatmap({
+  days,
+  lessLabel,
+  moreLabel,
+}: {
+  days: { date: string; count: number }[];
+  lessLabel: string;
+  moreLabel: string;
+}) {
+  const max = Math.max(1, ...days.map((d) => d.count));
+  // Chunk into weeks of 7 (already aligned oldest→newest).
+  const weeks: { date: string; count: number }[][] = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+
+  const level = (count: number) => {
+    if (count === 0) return "bg-neutral-100 dark:bg-neutral-800";
+    const ratio = count / max;
+    if (ratio > 0.66) return "bg-primary";
+    if (ratio > 0.33) return "bg-primary/60";
+    return "bg-primary/30";
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-1 overflow-x-auto">
+        {weeks.map((week, wi) => (
+          <div key={wi} className="flex flex-col gap-1">
+            {week.map((d) => (
+              <span
+                key={d.date}
+                title={`${d.date}: ${d.count}`}
+                className={cn("h-3.5 w-3.5 rounded-[3px]", level(d.count))}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-end gap-1.5 text-[10px] text-neutral-400 dark:text-neutral-500">
+        <span>{lessLabel}</span>
+        <span className="h-3 w-3 rounded-[3px] bg-neutral-100 dark:bg-neutral-800" />
+        <span className="h-3 w-3 rounded-[3px] bg-primary/30" />
+        <span className="h-3 w-3 rounded-[3px] bg-primary/60" />
+        <span className="h-3 w-3 rounded-[3px] bg-primary" />
+        <span>{moreLabel}</span>
+      </div>
     </div>
   );
 }

@@ -56,7 +56,14 @@ export async function getProfileData(userId: string, organizationId: string) {
       }),
       prisma.user.findUnique({
         where: { id: userId },
-        select: { name: true, avatarUrl: true, skills: { select: { id: true, name: true } } },
+        select: {
+          name: true,
+          phone: true,
+          storedSignature: true,
+          avatarUrl: true,
+          createdAt: true,
+          skills: { select: { id: true, name: true } },
+        },
       }),
       // "My week": jobs assigned to me from today through the next 7 days.
       prisma.scheduledJob.findMany({
@@ -146,6 +153,74 @@ export async function getProfileData(userId: string, organizationId: string) {
     if (idx >= 0 && idx < TREND_WEEKS) weekly[TREND_WEEKS - 1 - idx] += 1;
   }
 
+  // --- Month-over-month comparison + 12-week activity heatmap ---
+  const HEATMAP_DAYS = 84; // 12 weeks
+  const heatmapStart = addUtcDays(today, -(HEATMAP_DAYS - 1));
+  const prevMonthStart = utcDay(today.getUTCFullYear(), today.getUTCMonth() - 1, 1);
+  const analyticsStart = heatmapStart < prevMonthStart ? heatmapStart : prevMonthStart;
+
+  const [analyticsRecords, timeOffRows] = await Promise.all([
+    prisma.workRecord.findMany({
+      where: { submittedById: userId, date: { gte: analyticsStart } },
+      select: { date: true, status: true, arrivalTime: true, departureTime: true },
+    }),
+    // Upcoming time off (read-only here; the office schedules it). Anything that
+    // hasn't ended yet, soonest first.
+    prisma.timeOff.findMany({
+      where: { userId, endDate: { gte: today } },
+      orderBy: { startDate: "asc" },
+      take: 6,
+      select: { id: true, startDate: true, endDate: true, reason: true },
+    }),
+  ]);
+
+  // Daily submission counts for the heatmap, as a fixed 84-day window
+  // (oldest → today) so the grid renders even on quiet days.
+  const dayCounts = new Map<string, number>();
+  for (const r of analyticsRecords) {
+    if (r.date >= heatmapStart) {
+      const key = r.date.toISOString().slice(0, 10);
+      dayCounts.set(key, (dayCounts.get(key) ?? 0) + 1);
+    }
+  }
+  const activityDays: { date: string; count: number }[] = [];
+  for (let i = 0; i < HEATMAP_DAYS; i++) {
+    const key = addUtcDays(heatmapStart, i).toISOString().slice(0, 10);
+    activityDays.push({ date: key, count: dayCounts.get(key) ?? 0 });
+  }
+
+  // "This month so far" vs "all of last month" across records, hours, approval.
+  function monthAgg(from: Date, to: Date) {
+    let count = 0;
+    let approved = 0;
+    let hours = 0;
+    for (const r of analyticsRecords) {
+      if (r.date >= from && r.date < to) {
+        count += 1;
+        if (r.status === "APPROVED") approved += 1;
+        hours += spanHours(r.arrivalTime, r.departureTime);
+      }
+    }
+    return {
+      count,
+      hours: Math.round(hours),
+      approvalRate: count > 0 ? Math.round((approved / count) * 100) : 0,
+    };
+  }
+  const curMonth = monthAgg(monthStart, addUtcDays(today, 1));
+  const prevMonth = monthAgg(prevMonthStart, monthStart);
+  const monthCompare = {
+    records: { current: curMonth.count, previous: prevMonth.count },
+    hours: { current: curMonth.hours, previous: prevMonth.hours },
+    approvalRate: { current: curMonth.approvalRate, previous: prevMonth.approvalRate },
+  };
+  const timeOff = timeOffRows.map((t) => ({
+    id: t.id,
+    startDate: t.startDate.toISOString().slice(0, 10),
+    endDate: t.endDate.toISOString().slice(0, 10),
+    reason: t.reason,
+  }));
+
   return {
     stats: { totalRecords, approvedRecords, pendingRecords },
     metrics: {
@@ -153,10 +228,17 @@ export async function getProfileData(userId: string, organizationId: string) {
       hoursThisMonth: Math.round(hoursThisMonth),
       weekly,
     },
+    monthCompare,
+    activityDays,
+    timeOff,
     payThisMonth,
     currency,
     teams: teams.map((t) => ({ id: t.team.id, name: t.team.name, color: t.team.color })),
     recentRecords,
+    name: userData?.name ?? "",
+    phone: userData?.phone ?? null,
+    storedSignature: userData?.storedSignature ?? null,
+    memberSince: userData?.createdAt ?? null,
     avatarUrl: userData?.avatarUrl ?? null,
     skills: userData?.skills ?? [],
     skillSuggestions,

@@ -93,13 +93,26 @@ export const es: Dictionary = {
     tabSummary: "Resumen",
     tabActivity: "Actividad",
     tabAccount: "Cuenta",
-    // Accesos rápidos + filas de sheet
-    quickActions: "Accesos rápidos",
+    // Filas de sheet
     signatureSaved: "Guardada",
     signatureNotSet: "Sin guardar",
-    manageSignature: "Gestionar firma",
-    manageSkills: "Gestionar habilidades",
     noSkillsYet: "Ninguna añadida",
+    // Comparación mes a mes
+    monthVsLast: "Este mes vs anterior",
+    cmpRecords: "Registros",
+    cmpHours: "Horas",
+    cmpApproval: "Aprobación",
+    vsLastMonth: "vs mes pasado",
+    samAsLast: "Igual que el mes pasado",
+    // Mapa de actividad
+    activityMapTitle: "Actividad",
+    activityMapDesc: "Registros enviados en las últimas 12 semanas.",
+    activityLess: "Menos",
+    activityMore: "Más",
+    // Días libres
+    timeOffTitle: "Días libres",
+    timeOffDesc: "Tus próximos días libres, programados por la oficina.",
+    memberSince: "Miembro desde {date}",
   },
   errors: {
     somethingWrong: "Algo salió mal",

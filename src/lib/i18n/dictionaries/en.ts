@@ -93,13 +93,26 @@ export const en = {
     tabSummary: "Summary",
     tabActivity: "Activity",
     tabAccount: "Account",
-    // Quick actions + sheet rows
-    quickActions: "Quick actions",
+    // Sheet rows
     signatureSaved: "Saved",
     signatureNotSet: "Not saved yet",
-    manageSignature: "Manage signature",
-    manageSkills: "Manage skills",
     noSkillsYet: "None added yet",
+    // Month-over-month comparison
+    monthVsLast: "This month vs last",
+    cmpRecords: "Records",
+    cmpHours: "Hours",
+    cmpApproval: "Approval",
+    vsLastMonth: "vs last month",
+    samAsLast: "Same as last month",
+    // Activity heatmap
+    activityMapTitle: "Activity",
+    activityMapDesc: "Records submitted over the last 12 weeks.",
+    activityLess: "Less",
+    activityMore: "More",
+    // Time off
+    timeOffTitle: "Time off",
+    timeOffDesc: "Your upcoming days off, scheduled by the office.",
+    memberSince: "Member since {date}",
   },
   errors: {
     somethingWrong: "Something went wrong",
