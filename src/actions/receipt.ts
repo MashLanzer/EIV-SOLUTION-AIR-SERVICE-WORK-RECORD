@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { notifyFeedbackReceived } from "@/lib/notifications";
 
 export type RatingState = { ok?: boolean; error?: string } | undefined;
 
@@ -42,6 +43,10 @@ export async function submitReceiptRatingAction(
       customerRatedAt: new Date(),
     },
   });
+  // Let the office and the worker who did the job know (best-effort).
+  await notifyFeedbackReceived(record.id);
   revalidatePath(`/receipt/${token}`);
+  revalidatePath("/admin/feedback");
+  revalidatePath(`/admin/records/${record.id}`);
   return { ok: true };
 }

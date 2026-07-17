@@ -19,6 +19,7 @@ import {
   History,
   Images,
   Lock,
+  MessageSquareHeart,
   Receipt,
   ShieldCheck,
   UserPlus,
@@ -45,6 +46,7 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
   { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false, alsoActiveFor: ["/admin/teams"] },
   { href: "/admin/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
   { href: "/admin/records", label: n.records, shortLabel: n.records, icon: ClipboardList, exact: false },
+  { href: "/admin/feedback", label: n.feedback, shortLabel: n.feedback, icon: MessageSquareHeart, exact: false },
   { href: "/admin/customers", label: n.customers, shortLabel: n.customers, icon: Contact, exact: false },
   { href: "/admin/estimates", label: n.estimates, shortLabel: n.estimates, icon: FileText, exact: false },
   { href: "/admin/invoices", label: n.invoices, shortLabel: n.invoices, icon: Receipt, exact: false },
@@ -85,6 +87,7 @@ function moreItems(n: Dictionary["nav"]): MoreItem[] {
   { href: "/admin/review", label: n.reviewQueue, icon: ClipboardCheck },
   // Records is no longer a native tab, so it lives here (and on the dashboard).
   { href: "/admin/records", label: n.records, icon: ClipboardList },
+  { href: "/admin/feedback", label: n.feedback, icon: MessageSquareHeart },
   { href: "/admin/customers", label: n.customers, icon: Contact },
   { href: "/admin/estimates", label: n.estimates, icon: FileText },
   { href: "/admin/invoices", label: n.invoices, icon: Receipt },

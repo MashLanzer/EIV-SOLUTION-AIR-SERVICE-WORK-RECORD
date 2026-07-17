@@ -5,6 +5,7 @@
 export const NAV_PERMISSION: Record<string, string | undefined> = {
   "/admin": undefined,
   "/admin/records": undefined,
+  "/admin/feedback": "records.review",
   "/admin/review": "records.review",
   "/admin/schedule": "schedule.manage",
   "/admin/projects": "projects.manage",

@@ -508,7 +508,6 @@ export default async function AdminProjectPage({
                 teamId: project.teamId ?? "",
                 customerId: project.customerId ?? "",
               }}
-              editHref={`/admin/projects/${project.id}/edit`}
             />
           </div>
         </CardContent>

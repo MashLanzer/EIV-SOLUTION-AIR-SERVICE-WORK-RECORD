@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { createPortal } from "react-dom";
-import { Pencil, Settings2, X } from "lucide-react";
+import { Settings2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { DeleteProjectButton } from "@/components/projects/DeleteProjectButton";
@@ -28,13 +27,11 @@ export function ProjectManageSheet({
   teams,
   customers,
   defaultValues,
-  editHref,
 }: {
   projectId: string;
   teams: { id: string; name: string }[];
   customers: { id: string; name: string }[];
   defaultValues: ProjectValues;
-  editHref: string;
 }) {
   const t = useT().projects;
   const tc = useT().common;
@@ -104,12 +101,6 @@ export function ProjectManageSheet({
                     fullWidth
                   />
                   <div className="flex flex-col gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
-                    <Button asChild variant="outline" className="w-full">
-                      <Link href={editHref}>
-                        <Pencil className="h-4 w-4" />
-                        {t.fullEditPage}
-                      </Link>
-                    </Button>
                     <DeleteProjectButton projectId={projectId} fullWidth />
                   </div>
                 </div>

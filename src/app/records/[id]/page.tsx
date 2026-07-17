@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { Download, Pencil, Wrench } from "lucide-react";
+import { Download } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,12 @@ import { SuccessToast } from "@/components/ui/success-toast";
 import { RecordDetail } from "@/components/records/RecordDetail";
 import { ReviewTimeline } from "@/components/records/ReviewTimeline";
 import { StatusBadge } from "@/components/records/StatusBadge";
+import { WorkerRecordEditSheet } from "@/components/records/WorkerRecordEditSheet";
+import { updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
+import { getWorkerTeamIds } from "@/lib/projectAccess";
+import { getWorkTypeGroups } from "@/lib/workTypes";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 import { getT } from "@/lib/i18n/server";
@@ -45,6 +48,68 @@ export default async function RecordDetailPage({
   const currency = await getCurrencySymbol(requireOrgId(session));
   const t = await getT();
 
+  // Data for the edit sheet's WorkRecordForm (only when editable). Workers only
+  // pick from their teams' projects, keeping whatever project is already tagged.
+  const isAdmin = session.user.role === "ADMIN";
+  let editFormProps: React.ComponentProps<typeof WorkerRecordEditSheet>["formProps"] | null = null;
+  if (canEdit) {
+    const teamIds = isAdmin ? null : await getWorkerTeamIds(session.user.id);
+    const [projects, workTypeGroups, policy] = await Promise.all([
+      prisma.project.findMany({
+        where: {
+          organizationId: requireOrgId(session),
+          ...(isAdmin
+            ? {}
+            : {
+                OR: [
+                  { teamId: { in: teamIds ?? [] } },
+                  ...(record.projectId ? [{ id: record.projectId }] : []),
+                ],
+              }),
+        },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          customer: { select: { name: true, address: true, phone: true, email: true } },
+        },
+      }),
+      getWorkTypeGroups(requireOrgId(session)),
+      prisma.organization.findUnique({
+        where: { id: requireOrgId(session) },
+        select: { requireHelper: true, requireCustomerSignature: true },
+      }),
+    ]);
+    editFormProps = {
+      action: updateRecordAction.bind(null, record.id),
+      projects,
+      workTypeGroups,
+      currency,
+      requireHelper: policy?.requireHelper ?? false,
+      requireCustomerSignature: policy?.requireCustomerSignature ?? true,
+      submitLabel: t.common.save,
+      defaultValues: {
+        date: record.date.toISOString().slice(0, 10),
+        jobNumber: record.jobNumber,
+        projectId: record.projectId ?? "",
+        leadInstallerName: record.leadInstallerName,
+        helperName: record.helperName ?? "",
+        customerName: record.customerName,
+        customerAddress: record.customerAddress,
+        arrivalTime: record.arrivalTime,
+        departureTime: record.departureTime,
+        typeOfWork: record.typeOfWork,
+        workPerformedNotes: record.workPerformedNotes,
+        leadInstallerPay: record.leadInstallerPay.toString(),
+        helperPay: record.helperPay?.toString() ?? "",
+        customerSignature: record.customerSignature,
+        installerSignature: record.installerSignature,
+        photos: record.photos.map((p) => p.dataUrl),
+      },
+    };
+  }
+  const editTitle = `${t.form.editPrefix}${t.records.jobNumber}${record.jobNumber}`;
+
   return (
     <div className="flex flex-col gap-4">
       {saved && <SuccessToast message={t.records.recordSaved} />}
@@ -58,13 +123,8 @@ export default async function RecordDetailPage({
           <StatusBadge status={record.status} />
         </div>
         <div className="flex flex-wrap gap-2 sm:justify-end">
-          {canEdit && (
-            <Button asChild size="sm">
-              <Link href={`/records/${record.id}/edit`}>
-                <Pencil className="h-4 w-4" />
-                {t.common.edit}
-              </Link>
-            </Button>
+          {canEdit && editFormProps && (
+            <WorkerRecordEditSheet variant="edit" title={editTitle} formProps={editFormProps} />
           )}
           <Button asChild variant="outline" size="sm">
             <a href={`/records/${record.id}/pdf`}>
@@ -85,13 +145,8 @@ export default async function RecordDetailPage({
               ? record.reviewNote
               : t.records.pleaseReviewResubmit}
           </Alert>
-          {canEdit && (
-            <Button asChild size="lg" className="w-full">
-              <Link href={`/records/${record.id}/edit`}>
-                <Wrench className="h-4 w-4" />
-                {t.records.fixAndResubmit}
-              </Link>
-            </Button>
+          {canEdit && editFormProps && (
+            <WorkerRecordEditSheet variant="resubmit" title={editTitle} formProps={editFormProps} />
           )}
         </div>
       )}

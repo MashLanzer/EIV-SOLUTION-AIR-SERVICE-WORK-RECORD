@@ -316,6 +316,55 @@ export async function notifyWorkerTimeOff(timeOffId: string, actor?: Actor): Pro
   });
 }
 
+// A customer left feedback on a receipt -> the office (admins) and the worker
+// who submitted that record, so both learn how the customer felt. In-app only
+// (no customer email thread). Best-effort.
+export async function notifyFeedbackReceived(recordId: string): Promise<void> {
+  const record = await prisma.workRecord.findUnique({
+    where: { id: recordId },
+    select: {
+      jobNumber: true,
+      customerName: true,
+      customerRating: true,
+      organizationId: true,
+      submittedById: true,
+    },
+  });
+  if (!record || !record.organizationId) return;
+
+  const stars = record.customerRating
+    ? `${"★".repeat(record.customerRating)}${"☆".repeat(5 - record.customerRating)}`
+    : "";
+  const body = `#${record.jobNumber} · ${record.customerName}${stars ? ` · ${stars}` : ""}`;
+
+  const admins = await activeAdmins(record.organizationId);
+  if (admins.length > 0) {
+    await createNotifications({
+      organizationId: record.organizationId,
+      userIds: admins.map((a) => a.id),
+      category: "COMPANY",
+      type: "feedback_received",
+      title: "New customer feedback",
+      body,
+      href: "/admin/feedback",
+    });
+  }
+
+  // The worker who did the job (if still on the account and not already an
+  // admin who'd get the company copy).
+  if (record.submittedById && !admins.some((a) => a.id === record.submittedById)) {
+    await createNotifications({
+      organizationId: record.organizationId,
+      userIds: [record.submittedById],
+      category: "PERSONAL",
+      type: "feedback_received",
+      title: "A customer rated your job",
+      body,
+      href: `/records/${recordId}`,
+    });
+  }
+}
+
 // A worker requested time off from their profile -> the office (admins), so
 // someone can approve or deny it from the schedule.
 export async function notifyOfficeTimeOffRequest(timeOffId: string): Promise<void> {

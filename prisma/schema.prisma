@@ -657,6 +657,9 @@ model WorkRecord {
   customerRating     Int?
   customerFeedback   String?      @db.Text
   customerRatedAt    DateTime?
+  // The office's public-facing reply to the customer's feedback.
+  feedbackResponse   String?      @db.Text
+  feedbackRespondedAt DateTime?
   approvedAt         DateTime?
   approvedById       String?
   approvedBy         User?        @relation("ApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
