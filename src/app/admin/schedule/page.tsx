@@ -570,24 +570,28 @@ export default async function SchedulePage({
             { label: t.teamView, href: schedHref({ view: "team", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter }), active: view === "team" },
           ]}
         />
-        <div className="flex flex-wrap items-center gap-2">
-          <ScheduleWorkerFilter workers={workers} />
-          {teams.length > 0 && (
-            <ScheduleSelectFilter
-              param="team"
-              options={teams.map((tm) => ({ value: tm.id, label: tm.name }))}
-              allLabel={t.allTeams}
-              ariaLabel={t.team}
-              className="sm:max-w-44"
-            />
-          )}
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          {/* Worker + team sit side by side (two columns on mobile, inline on
+              desktop) so the two "All …" pickers read as one pair. */}
+          <div className="grid flex-1 grid-cols-2 items-center gap-2 sm:flex sm:flex-none">
+            <ScheduleWorkerFilter workers={workers} />
+            {teams.length > 0 && (
+              <ScheduleSelectFilter
+                param="team"
+                options={teams.map((tm) => ({ value: tm.id, label: tm.name }))}
+                allLabel={t.allTeams}
+                ariaLabel={t.team}
+                className="sm:max-w-44"
+              />
+            )}
+          </div>
           {skillSuggestions.length > 0 && (
             <ScheduleSelectFilter
               param="skill"
               options={skillSuggestions.map((s) => ({ value: s, label: s }))}
               allLabel={t.allSkills}
               ariaLabel={t.requiredSkill}
-              className="sm:max-w-44"
+              className="w-full sm:w-auto sm:max-w-44"
             />
           )}
         </div>
