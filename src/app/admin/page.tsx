@@ -168,7 +168,7 @@ export default async function AdminDashboardPage() {
     }),
     prisma.workRecord.findMany({
       where: { organizationId },
-      take: 5,
+      take: 3,
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -203,7 +203,7 @@ export default async function AdminDashboardPage() {
     prisma.project.findMany({
       where: { organizationId, status: "ACTIVE" },
       orderBy: { updatedAt: "desc" },
-      take: 4,
+      take: 3,
       select: {
         id: true,
         name: true,
@@ -236,7 +236,7 @@ export default async function AdminDashboardPage() {
         },
       },
       orderBy: [{ startTime: "asc" }, { createdAt: "asc" }],
-      take: 6,
+      take: 3,
       select: {
         id: true,
         title: true,
