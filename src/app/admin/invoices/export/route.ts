@@ -22,9 +22,15 @@ export async function GET(request: Request) {
   const status = INVOICE_STATUSES.includes(rawStatus as InvoiceStatus)
     ? (rawStatus as InvoiceStatus)
     : undefined;
+  // "overdue" is a derived pseudo-status: not paid/void, with a due date in the
+  // past. Expressed here as a Prisma filter so it matches the list.
+  const overdueWhere =
+    rawStatus === "overdue"
+      ? { status: { notIn: ["PAID", "VOID"] as InvoiceStatus[] }, dueDate: { lt: new Date() } }
+      : {};
 
   const rows = await prisma.invoice.findMany({
-    where: { organizationId, ...(status ? { status } : {}) },
+    where: { organizationId, ...(status ? { status } : {}), ...overdueWhere },
     orderBy: [{ issueDate: "desc" }, { number: "desc" }],
     select: {
       number: true,

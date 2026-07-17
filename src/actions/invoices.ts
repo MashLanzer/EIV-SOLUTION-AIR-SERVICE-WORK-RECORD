@@ -299,6 +299,54 @@ export async function createInvoiceFromRecordAction(recordId: string) {
   redirect(`/admin/invoices/${newId}/edit`);
 }
 
+// Re-issue a similar invoice: copy the customer, project, tax, notes and line
+// items into a fresh DRAFT (new number, issued today, no due date, not linked
+// to a work record) and open it for editing. Works even from a paid/void
+// invoice, so recurring or repeat billing is one tap.
+export async function duplicateInvoiceAction(invoiceId: string) {
+  const session = await requirePermission("invoices.manage");
+  const organizationId = requireOrgId(session);
+  const src = await prisma.invoice.findFirst({
+    where: { id: invoiceId, organizationId },
+    include: { lineItems: { orderBy: { position: "asc" } } },
+  });
+  if (!src) redirect("/admin/invoices");
+
+  const today = new Date();
+  const issueDate = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+  );
+  const newId = await allocateInvoice(organizationId, {
+    customerId: src.customerId,
+    projectId: src.projectId,
+    customerName: src.customerName,
+    customerAddress: src.customerAddress,
+    issueDate,
+    dueDate: null,
+    taxRate: src.taxRate,
+    notes: src.notes,
+    createdById: session.user.id,
+    lineItems: {
+      create: src.lineItems.map((li, i) => ({
+        description: li.description,
+        quantity: li.quantity,
+        unitPrice: li.unitPrice,
+        position: i,
+      })),
+    },
+  });
+  await logAudit({
+    organizationId,
+    actor: auditActor(session),
+    action: "invoice.duplicate",
+    entityType: "invoice",
+    entityId: newId,
+    summary: `Duplicated ${formatInvoiceNumber(src.number)}`,
+  });
+  revalidatePath("/admin/invoices");
+  redirect(`/admin/invoices/${newId}/edit`);
+}
+
 export async function updateInvoiceAction(
   invoiceId: string,
   _prev: InvoiceFormState,

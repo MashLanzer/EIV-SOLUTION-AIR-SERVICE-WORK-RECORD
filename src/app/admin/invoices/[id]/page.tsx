@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FolderKanban, Pencil, User } from "lucide-react";
+import { Copy, Download, FolderKanban, Pencil, User } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import { InvoiceStatusBadge } from "@/components/invoices/InvoiceStatusBadge";
 import { InvoiceStatusControls } from "@/components/invoices/InvoiceStatusControls";
 import { ShareInvoiceButton } from "@/components/invoices/ShareInvoiceButton";
 import { EmailToCustomerButton } from "@/components/shared/EmailToCustomerButton";
-import { emailInvoiceAction } from "@/actions/invoices";
+import { duplicateInvoiceAction, emailInvoiceAction } from "@/actions/invoices";
 import { DeleteInvoiceButton } from "@/components/invoices/DeleteInvoiceButton";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -238,6 +238,12 @@ export default async function InvoiceDetailPage({
             : formatInvoiceNumber(invoice.number)}
         </h2>
         <ShareInvoiceButton invoiceId={invoice.id} initialToken={invoice.publicToken} />
+        <form action={duplicateInvoiceAction.bind(null, invoice.id)}>
+          <Button type="submit" variant="outline" className="w-full">
+            <Copy className="h-4 w-4" />
+            {t.duplicate}
+          </Button>
+        </form>
         <EmailToCustomerButton
           action={emailInvoiceAction.bind(null, invoice.id)}
           label={t.emailToCustomer}

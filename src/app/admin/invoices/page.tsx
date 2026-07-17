@@ -55,6 +55,8 @@ export default async function AdminInvoicesPage({
   const status = INVOICE_STATUSES.includes(rawStatus as InvoiceStatus)
     ? (rawStatus as InvoiceStatus)
     : undefined;
+  // "overdue" is a derived pseudo-status (not stored) so it gets its own flag.
+  const overdueFilter = rawStatus === "overdue";
 
   const [rows, currency] = await Promise.all([
     prisma.invoice.findMany({
@@ -122,35 +124,42 @@ export default async function AdminInvoicesPage({
 
   const filtered = invoices.filter((i) => {
     if (status && i.status !== status) return false;
+    if (overdueFilter && !i.overdue) return false;
     if (query) {
       const hay = `${formatInvoiceNumber(i.number)} ${i.customerName}`.toLowerCase();
       if (!hay.includes(query)) return false;
     }
     return true;
   });
+  // Total value of the current view, so the office reads the money for a filter
+  // (e.g. everything still SENT) without exporting.
+  const filteredValue = filtered.reduce((s, i) => s + i.total, 0);
 
-  // The CSV export mirrors the active search + status filter.
+  const activeStatus: InvoiceStatus | "overdue" | undefined = overdueFilter ? "overdue" : status;
+
+  // The CSV export mirrors the active search + status (or overdue) filter.
   const exportParams = new URLSearchParams();
   if (query) exportParams.set("q", q!.trim());
-  if (status) exportParams.set("status", status);
+  if (activeStatus) exportParams.set("status", activeStatus);
   const exportQuery = exportParams.toString() ? `?${exportParams.toString()}` : "";
 
-  const chipHref = (next?: InvoiceStatus) => {
+  const chipHref = (next?: InvoiceStatus | "overdue") => {
     const p = new URLSearchParams();
     if (query) p.set("q", q!.trim());
     if (next) p.set("status", next);
     const s = p.toString();
     return s ? `/admin/invoices?${s}` : "/admin/invoices";
   };
-  const statusChips: { label: string; status?: InvoiceStatus }[] = [
-    { label: t.chipAll },
-    { label: t.statusDraft, status: "DRAFT" },
-    { label: t.statusSent, status: "SENT" },
-    { label: t.statusPaid, status: "PAID" },
-    { label: t.statusVoid, status: "VOID" },
+  const statusChips: { label: string; status?: InvoiceStatus | "overdue"; count: number }[] = [
+    { label: t.chipAll, count: invoices.length },
+    { label: t.statusDraft, status: "DRAFT", count: countByStatus.get("DRAFT") ?? 0 },
+    { label: t.statusSent, status: "SENT", count: countByStatus.get("SENT") ?? 0 },
+    { label: t.statusPaid, status: "PAID", count: countByStatus.get("PAID") ?? 0 },
+    { label: t.statusVoid, status: "VOID", count: countByStatus.get("VOID") ?? 0 },
+    { label: t.chipOverdue, status: "overdue", count: overdueCount },
   ];
 
-  const showSummary = !query && !status && invoices.length > 0;
+  const showSummary = !query && !status && !overdueFilter && invoices.length > 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -204,15 +213,14 @@ export default async function AdminInvoicesPage({
           className="pl-9"
           aria-label={t.searchAria}
         />
-        {status && <input type="hidden" name="status" value={status} />}
+        {activeStatus && <input type="hidden" name="status" value={activeStatus} />}
       </form>
 
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {statusChips.map((chip) => {
-          const active = (chip.status ?? undefined) === (status ?? undefined);
-          const count = chip.status ? countByStatus.get(chip.status) ?? 0 : invoices.length;
+          const active = (chip.status ?? undefined) === (activeStatus ?? undefined);
           return (
-            <FilterChip key={chip.label} href={chipHref(chip.status)} active={active} count={count}>
+            <FilterChip key={chip.label} href={chipHref(chip.status)} active={active} count={chip.count}>
               {chip.label}
             </FilterChip>
           );
@@ -248,6 +256,20 @@ export default async function AdminInvoicesPage({
         )
       ) : (
         <>
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {(filtered.length === 1 ? t.resultCountOne : t.resultCountMany).replace(
+                "{n}",
+                String(filtered.length)
+              )}
+            </h2>
+            <span className="text-xs text-neutral-400 dark:text-neutral-500">
+              {t.filteredValue}{" "}
+              <span className="font-semibold tabular-nums text-neutral-700 dark:text-neutral-200">
+                {money(filteredValue)}
+              </span>
+            </span>
+          </div>
           <div className="hidden sm:block">
             <Card>
               <CardContent className="p-0">
