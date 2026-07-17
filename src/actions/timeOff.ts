@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
+import { notifyWorkerTimeOff } from "@/lib/notifications";
 import { timeOffSchema } from "@/lib/validations";
 
 export type TimeOffFormState =
@@ -50,7 +51,7 @@ export async function addTimeOffAction(
   });
   if (!worker) return { error: "Worker not found", fieldErrors: { userId: ["Pick a worker"] } };
 
-  await prisma.timeOff.create({
+  const created = await prisma.timeOff.create({
     data: {
       organizationId,
       userId: worker.id,
@@ -59,7 +60,10 @@ export async function addTimeOffAction(
       reason: reason || null,
       createdById: session.user.id,
     },
+    select: { id: true },
   });
+  // Let the person know it's on their calendar (in-app; time off has no email).
+  await notifyWorkerTimeOff(created.id, session.user);
 
   revalidatePath(SCHEDULE_PATH);
   revalidatePath(WORKER_SCHEDULE_PATH);

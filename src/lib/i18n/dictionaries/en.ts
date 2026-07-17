@@ -548,6 +548,7 @@ export const en = {
       job_reassigned: "A job was assigned to you",
       job_rescheduled: "A scheduled job was moved",
       job_series: "You have a recurring job scheduled",
+      time_off_added: "Time off was added for you",
       system: "Account notice",
     },
   },

@@ -252,6 +252,47 @@ export async function notifyWorkerSeriesScheduled(
   }
 }
 
+const dayMonthFmt = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
+// The office registered time off for someone -> tell that person (in-app only;
+// time off has no email path). Personal notification, so it reaches whatever
+// role the recipient is. Skips notifying someone about their own entry.
+export async function notifyWorkerTimeOff(timeOffId: string, actor?: Actor): Promise<void> {
+  const row = await prisma.timeOff.findUnique({
+    where: { id: timeOffId },
+    select: {
+      userId: true,
+      organizationId: true,
+      startDate: true,
+      endDate: true,
+      reason: true,
+    },
+  });
+  if (!row || row.userId === actor?.id) return;
+
+  const startLabel = dayMonthFmt.format(row.startDate);
+  const endLabel = dayMonthFmt.format(row.endDate);
+  const range =
+    row.startDate.getTime() === row.endDate.getTime()
+      ? startLabel
+      : `${startLabel} – ${endLabel}`;
+  await createNotifications({
+    organizationId: row.organizationId,
+    userIds: [row.userId],
+    category: "PERSONAL",
+    type: "time_off_added",
+    title: "Time off was added for you",
+    body: row.reason?.trim() ? `${range} · ${row.reason.trim()}` : range,
+    actorId: actor?.id ?? null,
+    actorName: actor?.name ?? null,
+    href: "/records/schedule",
+  });
+}
+
 // The crew marked a job "on the way" -> let the customer know a technician is
 // heading over. Best-effort; a no-op when the job has no customer email.
 export async function notifyCustomerOnTheWay(jobId: string): Promise<void> {

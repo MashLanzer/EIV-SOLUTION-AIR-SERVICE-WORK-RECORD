@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   CalendarClock,
+  CalendarOff,
   CalendarPlus,
   CheckCircle2,
   ClipboardList,
@@ -27,6 +28,7 @@ const META: Record<string, { icon: LucideIcon; tone: "neutral" | "success" | "wa
   job_reassigned: { icon: UserCheck, tone: "neutral" },
   job_rescheduled: { icon: CalendarClock, tone: "neutral" },
   job_series: { icon: Repeat, tone: "neutral" },
+  time_off_added: { icon: CalendarOff, tone: "neutral" },
   system: { icon: CreditCard, tone: "neutral" },
 };
 

@@ -550,6 +550,7 @@ export const es: Dictionary = {
       job_reassigned: "Se te asignó un trabajo",
       job_rescheduled: "Un trabajo fue reprogramado",
       job_series: "Tienes un trabajo recurrente agendado",
+      time_off_added: "Se te registraron días libres",
       system: "Aviso de cuenta",
     },
   },
