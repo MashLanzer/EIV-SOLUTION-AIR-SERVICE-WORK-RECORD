@@ -59,6 +59,7 @@ export function StartRecordSheet({
         scheduledJobId={data.linkedJobId}
         attributeWorkers={data.workers}
         attributeDefaultId={data.attributeDefaultId}
+        customerOptions={data.customers}
         redirectTo="/admin/schedule"
       />
     </BottomSheet>

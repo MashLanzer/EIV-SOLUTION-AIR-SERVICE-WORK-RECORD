@@ -247,6 +247,11 @@ export const es: Dictionary = {
     installerSignature: "Firma del instalador",
     customerSigRequiredError: "La firma del cliente es obligatoria.",
     installerSigRequiredError: "La firma del instalador es obligatoria.",
+    departureAfterArrivalError: "La salida debe ser después de la llegada.",
+    // Placeholders de los desplegables (admin registrando un trabajo)
+    leadInstallerPlaceholder: "Elige al instalador principal",
+    helperNone: "Sin ayudante",
+    customerSelectPlaceholder: "Elige un cliente",
     // Offline
     offlineTitle: "Estás sin conexión.",
     offlineHint:

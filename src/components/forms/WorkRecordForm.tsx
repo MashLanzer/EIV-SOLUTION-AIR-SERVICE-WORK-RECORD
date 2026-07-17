@@ -119,6 +119,17 @@ interface WorkRecordFormProps {
   // it and always file as themselves.
   attributeWorkers?: { id: string; name: string }[];
   attributeDefaultId?: string;
+  // Office flow: pick the customer from a dropdown that auto-fills address /
+  // phone / email, instead of the free-text autocomplete. When this (and
+  // attributeWorkers) are present, lead installer + helper also become worker
+  // dropdowns. Workers filing their own record never get these.
+  customerOptions?: {
+    id: string;
+    name: string;
+    address: string;
+    phone: string | null;
+    email: string | null;
+  }[];
   // Where to land after a successful create. Defaults (server-side) to the
   // worker's records list; the office flow points it back into /admin so the
   // admin isn't dropped into the worker app.
@@ -155,6 +166,14 @@ function todayIsoDate() {
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   return now.toISOString().slice(0, 10);
+}
+
+// Minutes since midnight for an "HH:MM" string, or null if unparseable.
+function timeToMinutes(v: string): number | null {
+  if (!v) return null;
+  const [h, m] = v.split(":").map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+  return h * 60 + m;
 }
 
 // "6h 30m" between two HH:MM times, same calendar day. Returns null when either
@@ -206,6 +225,7 @@ export function WorkRecordForm({
   scheduledJobId,
   attributeWorkers,
   attributeDefaultId,
+  customerOptions,
   redirectTo,
   embedded = false,
 }: WorkRecordFormProps) {
@@ -253,6 +273,19 @@ export function WorkRecordForm({
     customer?: string;
     installer?: string;
   }>({});
+  // Live cross-field time error (departure must be after arrival). Shown on the
+  // Time step and blocks Next/Submit; cleared the moment the times are valid, so
+  // fixing it lets the user continue right away instead of only bouncing after a
+  // server round-trip.
+  const [timeError, setTimeError] = useState<string | undefined>(undefined);
+
+  // Office flow: when the caller hands us a worker list (attributeWorkers) the
+  // lead installer + helper become worker dropdowns, and — with customerOptions
+  // — the customer becomes a dropdown that auto-fills its contact details.
+  const officeWorkers = attributeWorkers ?? [];
+  const officeMode = officeWorkers.length > 0;
+  const customerList = customerOptions ?? [];
+  const [leadName, setLeadName] = useState(defaultValues?.leadInstallerName ?? "");
 
   // Field values seeded into the (remountable) form. Restoring a draft
   // swaps these in and bumps formKey to re-init the uncontrolled inputs,
@@ -297,6 +330,9 @@ export function WorkRecordForm({
       .map((name) => ({ id: name, label: fieldLabels[name] ?? name })),
     ...(sigErrors.customer ? [{ id: "sig-customer", label: fieldLabels["sig-customer"] }] : []),
     ...(sigErrors.installer ? [{ id: "sig-installer", label: fieldLabels["sig-installer"] }] : []),
+    ...(timeError && !state?.fieldErrors?.departureTime
+      ? [{ id: "departureTime", label: fieldLabels.departureTime }]
+      : []),
   ];
 
   // Bring a field into view, switching to its step first (it may live on a
@@ -337,6 +373,21 @@ export function WorkRecordForm({
     const a = (document.getElementById("arrivalTime") as HTMLInputElement | null)?.value ?? "";
     const d = (document.getElementById("departureTime") as HTMLInputElement | null)?.value ?? "";
     setDuration(durationLabel(a, d));
+    // Live cross-field validation, mirroring the server rule. Only flags once
+    // both times are filled; clears as soon as they're in order.
+    const am = timeToMinutes(a);
+    const dm = timeToMinutes(d);
+    setTimeError(am != null && dm != null && dm <= am ? t.departureAfterArrivalError : undefined);
+  }, [t.departureAfterArrivalError]);
+
+  // True when both times are set and departure isn't after arrival — used to
+  // block Next/Submit without relying on native validation of hidden steps.
+  const timesOutOfOrder = useCallback(() => {
+    const a = (document.getElementById("arrivalTime") as HTMLInputElement | null)?.value ?? "";
+    const d = (document.getElementById("departureTime") as HTMLInputElement | null)?.value ?? "";
+    const am = timeToMinutes(a);
+    const dm = timeToMinutes(d);
+    return am != null && dm != null && dm <= am;
   }, []);
 
   // Offline awareness: block submitting while there's no connection (the
@@ -453,7 +504,13 @@ export function WorkRecordForm({
     const proj = projects.find((p) => p.id === e.target.value);
     const c = proj?.customer;
     if (!c) return;
-    customerNameRef.current?.setName(c.name);
+    if (officeMode) {
+      // The customer is a dropdown here; set its value so it stays in sync.
+      const sel = document.getElementById("customerName") as HTMLSelectElement | null;
+      if (sel) sel.value = c.name;
+    } else {
+      customerNameRef.current?.setName(c.name);
+    }
     const set = (id: string, val: string | null) => {
       const el = document.getElementById(id) as HTMLInputElement | null;
       if (el && val != null) el.value = val;
@@ -462,6 +519,27 @@ export function WorkRecordForm({
     set("customerPhone", c.phone);
     set("customerEmail", c.email);
     scheduleSave();
+    requestAnimationFrame(recompute);
+  }
+
+  // Office: picking who the record is attributed to also fills the lead
+  // installer with that worker (the usual case), while staying editable.
+  function handleAttributeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const w = officeWorkers.find((x) => x.id === e.target.value);
+    if (w) setLeadName(w.name);
+  }
+
+  // Office: picking a customer from the dropdown fills in its saved contact
+  // details, so the office doesn't retype the address / phone / email.
+  function handleCustomerChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const c = customerList.find((x) => x.name === e.target.value);
+    const set = (id: string, val: string | null) => {
+      const el = document.getElementById(id) as HTMLInputElement | null;
+      if (el) el.value = val ?? "";
+    };
+    set("customerAddress", c?.address ?? "");
+    set("customerPhone", c?.phone ?? "");
+    set("customerEmail", c?.email ?? "");
     requestAnimationFrame(recompute);
   }
 
@@ -479,6 +557,13 @@ export function WorkRecordForm({
           return;
         }
       }
+    }
+    // Cross-field time rule can't be expressed with HTML validity, so enforce it
+    // here before leaving the Time step.
+    if (step === stepOfField("departureTime") && timesOutOfOrder()) {
+      setTimeError(t.departureAfterArrivalError);
+      focusField("departureTime");
+      return;
     }
     recompute();
     setStep((s) => Math.min(s + 1, LAST_STEP));
@@ -509,6 +594,14 @@ export function WorkRecordForm({
     // The offline banner and the disabled Save button already explain why a
     // submit can't go through, so just bail out quietly here.
     if (offline) return;
+
+    // Catch out-of-order times up front so the user is sent to the Time step to
+    // fix them, rather than to the server and back.
+    if (timesOutOfOrder()) {
+      setTimeError(t.departureAfterArrivalError);
+      focusField("departureTime");
+      return;
+    }
 
     const customerSignature = customerSigRef.current?.getDataUrl();
     const installerSignature = installerSigRef.current?.getDataUrl();
@@ -685,6 +778,7 @@ export function WorkRecordForm({
                   name="submittedById"
                   required
                   defaultValue={attributeDefaultId ?? ""}
+                  onChange={handleAttributeChange}
                 >
                   <option value="" disabled>
                     {t.attributeToPlaceholder}
@@ -727,14 +821,34 @@ export function WorkRecordForm({
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="leadInstallerName" required>{t.leadInstaller}</Label>
-              <Input
-                id="leadInstallerName"
-                name="leadInstallerName"
-                required
-                defaultValue={values?.leadInstallerName}
-                aria-invalid={invalid("leadInstallerName")}
-                aria-describedby={describedBy("leadInstallerName")}
-              />
+              {officeMode ? (
+                <Select
+                  id="leadInstallerName"
+                  name="leadInstallerName"
+                  required
+                  value={leadName}
+                  onChange={(e) => setLeadName(e.target.value)}
+                  aria-invalid={invalid("leadInstallerName")}
+                >
+                  <option value="" disabled>
+                    {t.leadInstallerPlaceholder}
+                  </option>
+                  {officeWorkers.map((w) => (
+                    <option key={w.id} value={w.name}>
+                      {w.name}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  id="leadInstallerName"
+                  name="leadInstallerName"
+                  required
+                  defaultValue={values?.leadInstallerName}
+                  aria-invalid={invalid("leadInstallerName")}
+                  aria-describedby={describedBy("leadInstallerName")}
+                />
+              )}
               <FieldError
                 id="leadInstallerName-error"
                 message={fieldError("leadInstallerName")}
@@ -747,14 +861,31 @@ export function WorkRecordForm({
                   <span className="font-normal text-neutral-400 dark:text-neutral-500"> ({tc.optional})</span>
                 )}
               </Label>
-              <Input
-                id="helperName"
-                name="helperName"
-                required={requireHelper}
-                defaultValue={values?.helperName}
-                aria-invalid={invalid("helperName")}
-                aria-describedby={describedBy("helperName")}
-              />
+              {officeMode ? (
+                <Select
+                  id="helperName"
+                  name="helperName"
+                  required={requireHelper}
+                  defaultValue={values?.helperName ?? ""}
+                  aria-invalid={invalid("helperName")}
+                >
+                  <option value="">{t.helperNone}</option>
+                  {officeWorkers.map((w) => (
+                    <option key={w.id} value={w.name}>
+                      {w.name}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  id="helperName"
+                  name="helperName"
+                  required={requireHelper}
+                  defaultValue={values?.helperName}
+                  aria-invalid={invalid("helperName")}
+                  aria-describedby={describedBy("helperName")}
+                />
+              )}
               <FieldError id="helperName-error" message={fieldError("helperName")} />
             </div>
             {projects.length > 0 && (
@@ -788,15 +919,35 @@ export function WorkRecordForm({
           <FormSection icon={User} title={t.stepCustomer}>
             <div className="flex flex-col gap-2">
               <Label htmlFor="customerName" required>{t.customerName}</Label>
-              <CustomerAutocomplete
-                ref={customerNameRef}
-                defaultValue={values?.customerName}
-                addressInputId="customerAddress"
-                phoneInputId="customerPhone"
-                emailInputId="customerEmail"
-                invalid={invalid("customerName")}
-                describedBy={describedBy("customerName")}
-              />
+              {customerList.length > 0 ? (
+                <Select
+                  id="customerName"
+                  name="customerName"
+                  required
+                  defaultValue={values?.customerName ?? ""}
+                  onChange={handleCustomerChange}
+                  aria-invalid={invalid("customerName")}
+                >
+                  <option value="" disabled>
+                    {t.customerSelectPlaceholder}
+                  </option>
+                  {customerList.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <CustomerAutocomplete
+                  ref={customerNameRef}
+                  defaultValue={values?.customerName}
+                  addressInputId="customerAddress"
+                  phoneInputId="customerPhone"
+                  emailInputId="customerEmail"
+                  invalid={invalid("customerName")}
+                  describedBy={describedBy("customerName")}
+                />
+              )}
               <FieldError
                 id="customerName-error"
                 message={fieldError("customerName")}
@@ -872,12 +1023,12 @@ export function WorkRecordForm({
                 required
                 defaultValue={values?.departureTime}
                 onChange={updateDuration}
-                aria-invalid={invalid("departureTime")}
+                aria-invalid={invalid("departureTime") || (timeError ? true : undefined)}
                 aria-describedby={describedBy("departureTime")}
               />
               <FieldError
                 id="departureTime-error"
-                message={fieldError("departureTime")}
+                message={fieldError("departureTime") ?? timeError}
               />
             </div>
             {duration && (

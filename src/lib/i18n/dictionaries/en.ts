@@ -247,6 +247,11 @@ export const en = {
     installerSignature: "Installer Signature",
     customerSigRequiredError: "Customer signature is required.",
     installerSigRequiredError: "Installer signature is required.",
+    departureAfterArrivalError: "Departure must be after arrival.",
+    // Office dropdown placeholders (admin filing a record)
+    leadInstallerPlaceholder: "Choose the lead installer",
+    helperNone: "No helper",
+    customerSelectPlaceholder: "Choose a customer",
     // Offline
     offlineTitle: "You're offline.",
     offlineHint: "Your entry is saved on this device. Reconnect to submit it.",

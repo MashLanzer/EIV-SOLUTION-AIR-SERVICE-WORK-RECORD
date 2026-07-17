@@ -27,6 +27,13 @@ export interface NewRecordFormData {
     currencySymbol: string | null;
   } | null;
   workers: { id: string; name: string }[];
+  customers: {
+    id: string;
+    name: string;
+    address: string;
+    phone: string | null;
+    email: string | null;
+  }[];
   suggestedJobNumber: string;
   workTypeGroups: Awaited<ReturnType<typeof getWorkTypeGroups>>;
   linkedJobId?: string;
@@ -46,7 +53,7 @@ export async function loadNewRecordFormData(
   organizationId: string,
   jobId?: string
 ): Promise<NewRecordFormData> {
-  const [projects, org, workers] = await Promise.all([
+  const [projects, org, workers, customers] = await Promise.all([
     prisma.project.findMany({
       where: { organizationId, status: { not: "COMPLETED" } },
       orderBy: { name: "asc" },
@@ -72,6 +79,11 @@ export async function loadNewRecordFormData(
       where: { organizationId, active: true },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
+    }),
+    prisma.customer.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, address: true, phone: true, email: true },
     }),
   ]);
   const suggestedJobNumber = await suggestNextJobNumber(organizationId);
@@ -114,6 +126,7 @@ export async function loadNewRecordFormData(
     projects,
     org,
     workers,
+    customers,
     suggestedJobNumber,
     workTypeGroups,
     linkedJobId,
