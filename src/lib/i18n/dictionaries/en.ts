@@ -442,6 +442,7 @@ export const en = {
     hoursAgo: "{n}h ago",
     daysAgo: "{n}d ago",
     // Map filter (GeoPhotoMap) + carousel + zoom
+    map: "Map",
     mapFilter: "Map filter",
     mapAll: "All",
     mapProject: "Project",

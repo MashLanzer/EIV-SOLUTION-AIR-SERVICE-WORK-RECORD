@@ -4,8 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
 import { PhotoFilters, type PhotoRange } from "@/components/photos/PhotoFilters";
+import { PhotoMapButton } from "@/components/photos/PhotoMapButton";
 import { photoRangeCutoff, normalizePhotoRange } from "@/lib/photoFilters";
-import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
@@ -134,9 +134,7 @@ export default async function WorkerPhotosPage({
         activeUntagged={activeUntagged}
       />
 
-      {photoPins.length > 0 && (
-        <GeoPhotoMap projectPins={[]} photoPins={photoPins} />
-      )}
+      <PhotoMapButton photoPins={photoPins} />
 
       {photos.length === 0 ? (
         <Card>

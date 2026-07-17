@@ -444,6 +444,7 @@ export const es: Dictionary = {
     hoursAgo: "hace {n}h",
     daysAgo: "hace {n}d",
     // Map filter (GeoPhotoMap) + carousel + zoom
+    map: "Mapa",
     mapFilter: "Filtro del mapa",
     mapAll: "Todo",
     mapProject: "Proyecto",
