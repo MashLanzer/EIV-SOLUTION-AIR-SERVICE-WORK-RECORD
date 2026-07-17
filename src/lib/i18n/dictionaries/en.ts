@@ -1769,6 +1769,11 @@ export const en = {
       removeAria: "Remove {name}",
       empty: "No skills yet. Add the ones your crew uses.",
     },
+    workTypesPage: {
+      title: "Work types",
+      description:
+        "Organize the types of work your crew can pick on a record, grouped by category. Works for any trade.",
+    },
     audit: {
       title: "Role change log",
       rowHint: "Who changed whose role, and when",

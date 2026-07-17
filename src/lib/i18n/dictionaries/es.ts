@@ -1766,6 +1766,11 @@ export const es: Dictionary = {
       removeAria: "Quitar {name}",
       empty: "Aún no hay habilidades. Añade las que usa tu equipo.",
     },
+    workTypesPage: {
+      title: "Tipos de trabajo",
+      description:
+        "Organiza los tipos de trabajo que tu cuadrilla puede elegir en un registro, agrupados por categoría. Sirve para cualquier oficio.",
+    },
     audit: {
       title: "Registro de cambios de rol",
       rowHint: "Quién cambió el rol de quién, y cuándo",
