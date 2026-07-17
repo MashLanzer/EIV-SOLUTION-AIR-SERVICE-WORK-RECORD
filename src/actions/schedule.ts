@@ -355,3 +355,48 @@ export async function deleteScheduledJobAction(jobId: string) {
   revalidatePath(SCHEDULE_PATH);
   revalidatePath(WORKER_SCHEDULE_PATH);
 }
+
+// Copy a job as a fresh SCHEDULED one on the same day (the office then drags or
+// edits it to the day it needs). Carries over the plan details but not the
+// lifecycle state, linked record, or recurrence series. Optionally lands the
+// copy on a specific day (YYYY-MM-DD).
+export async function duplicateScheduledJobAction(jobId: string, dateStr?: string) {
+  const session = await requirePermission("schedule.manage");
+  const organizationId = requireOrgId(session);
+  const job = await prisma.scheduledJob.findFirst({
+    where: { id: jobId, organizationId },
+    select: {
+      title: true,
+      notes: true,
+      scheduledFor: true,
+      startTime: true,
+      endTime: true,
+      requiredSkill: true,
+      assignedToId: true,
+      teamId: true,
+      customerId: true,
+      projectId: true,
+    },
+  });
+  if (!job) return;
+  const scheduledFor =
+    dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? toDateOnly(dateStr) : job.scheduledFor;
+  await prisma.scheduledJob.create({
+    data: {
+      organizationId,
+      title: job.title,
+      notes: job.notes,
+      scheduledFor,
+      startTime: job.startTime,
+      endTime: job.endTime,
+      requiredSkill: job.requiredSkill,
+      assignedToId: job.assignedToId,
+      teamId: job.teamId,
+      customerId: job.customerId,
+      projectId: job.projectId,
+      createdById: session.user.id,
+    },
+  });
+  revalidatePath(SCHEDULE_PATH);
+  revalidatePath(WORKER_SCHEDULE_PATH);
+}

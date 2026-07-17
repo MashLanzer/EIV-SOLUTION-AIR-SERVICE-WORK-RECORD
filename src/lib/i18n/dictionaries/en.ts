@@ -1001,6 +1001,7 @@ export const en = {
     dragHandle: "Drag to move",
     reopen: "Reopen",
     edit: "Edit",
+    duplicate: "Duplicate",
     expandJob: "Show details",
     collapseJob: "Collapse",
     // Delete

@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Clock,
+  Copy,
   ExternalLink,
   FilePlus2,
   Hammer,
@@ -35,7 +36,11 @@ import {
   ScheduleJobForm,
   type JobOption,
 } from "@/components/schedule/ScheduleJobForm";
-import { deleteScheduledJobAction, setJobStatusAction } from "@/actions/schedule";
+import {
+  deleteScheduledJobAction,
+  duplicateScheduledJobAction,
+  setJobStatusAction,
+} from "@/actions/schedule";
 import { useT } from "@/components/i18n/LocaleProvider";
 
 export interface ScheduleJobView {
@@ -99,6 +104,10 @@ export function ScheduleJobCard({
 
   function setStatus(status: ScheduledJobStatus) {
     startTransition(() => setJobStatusAction(job.id, status));
+  }
+
+  function duplicate() {
+    startTransition(() => duplicateScheduledJobAction(job.id));
   }
 
   // Open the office "start record" bottom sheet for this job, keeping the
@@ -327,6 +336,18 @@ export function ScheduleJobCard({
               <XCircle className="h-4 w-4" />
             </Button>
           )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={pending}
+            aria-label={t.duplicate}
+            title={t.duplicate}
+            className="text-neutral-500 dark:text-neutral-400"
+            onClick={duplicate}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
           <Button type="button" variant="ghost" size="icon" aria-label={t.edit} onClick={() => setEditing(true)}>
             <Pencil className="h-4 w-4" />
           </Button>

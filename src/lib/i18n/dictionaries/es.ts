@@ -995,6 +995,7 @@ export const es: Dictionary = {
     dragHandle: "Arrastra para mover",
     reopen: "Reabrir",
     edit: "Editar",
+    duplicate: "Duplicar",
     expandJob: "Ver detalles",
     collapseJob: "Contraer",
     // Delete
