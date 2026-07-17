@@ -79,6 +79,95 @@ export async function notifyWorkerReturned(recordId: string): Promise<void> {
   });
 }
 
+// --- Schedule notifications -> the assigned worker ---
+
+const jobDateFmt = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
+
+// A scheduled job was created / assigned / moved -> email the assigned worker so
+// they know what's on their plan without opening the app. Best-effort and a
+// no-op when the job has no assigned worker (or is canceled).
+export async function notifyWorkerJobScheduled(
+  jobId: string,
+  kind: "scheduled" | "reassigned" | "rescheduled"
+): Promise<void> {
+  const job = await prisma.scheduledJob.findUnique({
+    where: { id: jobId },
+    select: {
+      title: true,
+      scheduledFor: true,
+      startTime: true,
+      endTime: true,
+      status: true,
+      assignedTo: { select: { email: true } },
+      customer: { select: { name: true } },
+      project: { select: { name: true } },
+    },
+  });
+  const email = job?.assignedTo?.email;
+  if (!job || !email || job.status === "CANCELED") return;
+
+  const dateLabel = jobDateFmt.format(job.scheduledFor);
+  const timeLabel = job.startTime
+    ? job.endTime
+      ? `${job.startTime}–${job.endTime}`
+      : job.startTime
+    : "All day";
+  const where = job.project?.name ?? job.customer?.name ?? "";
+  const heading =
+    kind === "reassigned"
+      ? "A job was assigned to you"
+      : kind === "rescheduled"
+        ? "A scheduled job was moved"
+        : "You have a new scheduled job";
+  const title = job.title || "Scheduled job";
+  await sendEmail({
+    to: email,
+    subject: `${title} — ${dateLabel}`,
+    html: emailLayout(
+      heading,
+      [
+        `<strong>${title}</strong>`,
+        `${dateLabel} · ${timeLabel}${where ? ` · ${where}` : ""}`,
+      ],
+      { href: appUrl("/records/schedule"), label: "Open your schedule" }
+    ),
+  });
+}
+
+// A whole recurring series was created for a worker -> one summary email rather
+// than one per occurrence.
+export async function notifyWorkerSeriesScheduled(
+  workerId: string,
+  title: string,
+  firstDate: Date,
+  count: number
+): Promise<void> {
+  const worker = await prisma.user.findUnique({
+    where: { id: workerId },
+    select: { email: true },
+  });
+  const email = worker?.email;
+  if (!email) return;
+  const jobTitle = title || "Scheduled job";
+  await sendEmail({
+    to: email,
+    subject: `${jobTitle} — ${count} visits scheduled`,
+    html: emailLayout(
+      "You have a recurring job scheduled",
+      [
+        `<strong>${jobTitle}</strong>`,
+        `${count} visits, starting ${jobDateFmt.format(firstDate)}.`,
+      ],
+      { href: appUrl("/records/schedule"), label: "Open your schedule" }
+    ),
+  });
+}
+
 // Admin approved a record -> the worker who submitted it.
 export async function notifyWorkerApproved(recordId: string): Promise<void> {
   const record = await prisma.workRecord.findUnique({

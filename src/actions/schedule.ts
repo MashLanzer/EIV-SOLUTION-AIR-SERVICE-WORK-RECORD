@@ -8,6 +8,10 @@ import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 import { requirePermission } from "@/lib/authz";
 import { canAccessJob, timeWindowsOverlap } from "@/lib/schedule";
+import {
+  notifyWorkerJobScheduled,
+  notifyWorkerSeriesScheduled,
+} from "@/lib/notifications";
 import { SCHEDULED_JOB_STATUSES, scheduledJobSchema } from "@/lib/validations";
 
 export type ScheduleFormState =
@@ -205,8 +209,16 @@ export async function createScheduledJobAction(
     await prisma.scheduledJob.createMany({
       data: dates.map((d) => ({ ...base, scheduledFor: d, seriesId })),
     });
+    // One summary email for the series instead of one per occurrence.
+    if (assignedToId) {
+      await notifyWorkerSeriesScheduled(assignedToId, title, date, dates.length);
+    }
   } else {
-    await prisma.scheduledJob.create({ data: { ...base, scheduledFor: date } });
+    const created = await prisma.scheduledJob.create({
+      data: { ...base, scheduledFor: date },
+      select: { id: true },
+    });
+    if (assignedToId) await notifyWorkerJobScheduled(created.id, "scheduled");
   }
 
   revalidatePath(SCHEDULE_PATH);
@@ -282,6 +294,7 @@ export async function rescheduleJobAction(jobId: string, dateStr: string) {
     where: { id: jobId, organizationId },
     data: { scheduledFor: toDateOnly(dateStr) },
   });
+  await notifyWorkerJobScheduled(jobId, "rescheduled");
   revalidatePath(SCHEDULE_PATH);
   revalidatePath(WORKER_SCHEDULE_PATH);
 }
@@ -307,6 +320,8 @@ export async function reassignJobAction(jobId: string, workerId: string) {
     where: { id: jobId, organizationId },
     data: { assignedToId },
   });
+  // Let the newly assigned worker know (no-op when unassigned).
+  if (assignedToId) await notifyWorkerJobScheduled(jobId, "reassigned");
   revalidatePath(SCHEDULE_PATH);
   revalidatePath(WORKER_SCHEDULE_PATH);
 }

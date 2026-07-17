@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   "/login",
   "/api/auth",
   "/api/native-handoff",
+  // Vercel Cron hits this with its own CRON_SECRET bearer token (no session).
+  "/api/cron",
   "/.well-known",
 ];
 
