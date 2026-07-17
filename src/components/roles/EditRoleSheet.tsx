@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Copy } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Button } from "@/components/ui/button";
 import { PositionForm } from "@/components/roles/PositionForm";
 import { DeletePositionButton } from "@/components/roles/DeletePositionButton";
+import { duplicatePositionAction } from "@/actions/positions";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { TEAM_COLORS } from "@/lib/teamColors";
 import type { AccessLevel } from "@/lib/permissions";
@@ -74,11 +76,19 @@ export function EditRoleSheet({ position }: { position: RolePosition }) {
               permissions: position.permissions,
             }}
           />
-          {!position.isSystem && (
-            <div className="border-t border-neutral-200 dark:border-neutral-800 pt-4">
-              <DeletePositionButton positionId={position.id} />
-            </div>
-          )}
+          <div className="flex items-center gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
+            <form action={duplicatePositionAction.bind(null, position.id)}>
+              <Button type="submit" variant="outline" size="sm">
+                <Copy className="h-4 w-4" />
+                {t.duplicate}
+              </Button>
+            </form>
+            {!position.isSystem && (
+              <div className="ml-auto">
+                <DeletePositionButton positionId={position.id} />
+              </div>
+            )}
+          </div>
         </div>
       </BottomSheet>
     </>

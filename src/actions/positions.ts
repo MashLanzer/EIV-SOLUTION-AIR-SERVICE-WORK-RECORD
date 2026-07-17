@@ -70,6 +70,33 @@ export async function updatePositionAction(positionId: string, formData: FormDat
   redirect("/admin/roles?saved=1");
 }
 
+// Clone a position as a starting point for a new custom role. The copy is
+// always custom (isSystem: false) even when duplicating a built-in role, so
+// the original stays intact and the copy is fully editable/deletable.
+export async function duplicatePositionAction(positionId: string) {
+  const session = await requirePermission("settings.manage");
+  const organizationId = requireOrgId(session);
+
+  const src = await prisma.position.findFirst({
+    where: { id: positionId, organizationId },
+    select: { name: true, color: true, accessLevel: true, permissions: true },
+  });
+  if (!src) return;
+
+  await prisma.position.create({
+    data: {
+      organizationId,
+      name: `${src.name} (copy)`.slice(0, 60),
+      color: src.color,
+      accessLevel: src.accessLevel,
+      permissions: ALL_PERMISSION_KEYS.filter((k) => src.permissions.includes(k)),
+      isSystem: false,
+    },
+  });
+  revalidatePath("/admin/roles");
+  redirect("/admin/roles?saved=1");
+}
+
 export async function deletePositionAction(positionId: string) {
   const session = await requirePermission("settings.manage");
   const organizationId = requireOrgId(session);
