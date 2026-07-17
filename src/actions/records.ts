@@ -513,7 +513,7 @@ export async function approveRecordAction(recordId: string) {
     },
   });
   await logReviewEvent(organizationId, recordId, "APPROVED", session.user);
-  await notifyWorkerApproved(recordId);
+  await notifyWorkerApproved(recordId, session.user);
   revalidatePath("/admin/records");
   revalidatePath(`/admin/records/${recordId}`);
   revalidatePath("/admin");
@@ -534,7 +534,7 @@ export async function requestChangesAction(recordId: string, formData: FormData)
     },
   });
   await logReviewEvent(organizationId, recordId, "RETURNED", session.user, note);
-  await notifyWorkerReturned(recordId);
+  await notifyWorkerReturned(recordId, session.user);
   revalidatePath("/admin/records");
   revalidatePath(`/admin/records/${recordId}`);
   revalidatePath("/records");
@@ -571,7 +571,7 @@ export async function bulkApproveRecordsAction(
   });
   for (const id of targetIds) {
     await logReviewEvent(organizationId, id, "APPROVED", session.user);
-    await notifyWorkerApproved(id);
+    await notifyWorkerApproved(id, session.user);
   }
   revalidatePath("/admin/records");
   revalidatePath("/admin");
@@ -608,7 +608,7 @@ export async function bulkRequestChangesAction(
   });
   for (const id of targetIds) {
     await logReviewEvent(organizationId, id, "RETURNED", session.user, trimmed);
-    await notifyWorkerReturned(id);
+    await notifyWorkerReturned(id, session.user);
   }
   revalidatePath("/admin/records");
   revalidatePath("/admin");

@@ -148,6 +148,7 @@ model Organization {
   supportSessions    ImpersonationSession[]
   positions          Position[]
   timeOff            TimeOff[]
+  notifications      Notification[]
 }
 
 enum SupportMode {
@@ -517,6 +518,7 @@ model User {
   createdJobs      ScheduledJob[] @relation("CreatedJobs")
   timeOff          TimeOff[]      @relation("UserTimeOff")
   timeOffCreated   TimeOff[]      @relation("TimeOffCreatedBy")
+  notifications    Notification[] @relation("NotificationRecipient")
   reviewEvents     RecordReviewEvent[] @relation("ReviewActor")
   roleChangesMade  RoleChangeEvent[]   @relation("RoleChangeActor")
   roleChangesGot   RoleChangeEvent[]   @relation("RoleChangeTarget")
@@ -749,6 +751,48 @@ model TimeOff {
 
   @@index([organizationId, startDate])
   @@index([userId])
+}
+
+// Which tab of the in-app bell a notification lands in.
+//  PERSONAL - something that happened to the recipient's own work.
+//  COMPANY  - operational activity the office should act on.
+//  SYSTEM   - account / billing / platform notices.
+enum NotificationCategory {
+  PERSONAL
+  COMPANY
+  SYSTEM
+}
+
+// A persisted in-app notification for one recipient, written alongside every
+// email the app sends so the same message also shows in the header bell. Each
+// row keeps the actor (who caused it) and enough denormalized detail to render
+// a self-contained card without another lookup. Org-scoped; read state is
+// per-recipient (readAt). Cascade-deleted with the recipient or the org.
+model Notification {
+  id             String               @id @default(cuid())
+  organizationId String
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // The recipient.
+  userId         String
+  user           User                 @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  category       NotificationCategory
+  // A stable key for the kind of event (e.g. "record_approved"), so the UI can
+  // pick an icon/tone. Free-form string, not an enum, to stay open to new types.
+  type           String
+  title          String
+  body           String?
+  // Who caused it, denormalized so the card survives the actor's deletion.
+  actorId        String?
+  actorName      String?
+  // Optional in-app deep link the card opens.
+  href           String?
+  // Null until the recipient opens their bell; set when marked read.
+  readAt         DateTime?
+  createdAt      DateTime             @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([organizationId])
 }
 
 enum InvoiceStatus {

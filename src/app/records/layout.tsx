@@ -1,6 +1,7 @@
 import { SkipLink } from "@/components/layout/SkipLink";
 import { WorkerNav } from "@/components/layout/WorkerNav";
 import { getLatestActivityAt } from "@/lib/activity";
+import { getUnreadNotificationCount } from "@/lib/inappNotify";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
@@ -16,7 +17,7 @@ export default async function RecordsLayout({
   // Badge on the worker's Records tab: how many of their records were
   // returned and are waiting to be fixed and resubmitted. Plus the newest
   // activity timestamp that drives the header bell's unread dot.
-  const [returnedCount, latestActivityAt] = await Promise.all([
+  const [returnedCount, latestActivityAt, unreadNotifications] = await Promise.all([
     prisma.workRecord.count({
       where: {
         organizationId,
@@ -25,6 +26,7 @@ export default async function RecordsLayout({
       },
     }),
     getLatestActivityAt(scope),
+    getUnreadNotificationCount(session.user.id),
   ]);
 
   return (
@@ -35,6 +37,7 @@ export default async function RecordsLayout({
         avatarUrl={session.user.avatarUrl ?? null}
         returnedCount={returnedCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}
+        unreadNotifications={unreadNotifications}
       />
       <main
         id="main-content"

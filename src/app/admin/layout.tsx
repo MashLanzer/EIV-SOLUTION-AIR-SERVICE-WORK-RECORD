@@ -5,6 +5,7 @@ import { SupportActiveNotice } from "@/components/super/SupportActiveNotice";
 import { AnnouncementBanner } from "@/components/super/AnnouncementBanner";
 import { getActiveAnnouncement } from "@/lib/announcements";
 import { getLatestActivityAt } from "@/lib/activity";
+import { getUnreadNotificationCount } from "@/lib/inappNotify";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
@@ -40,12 +41,13 @@ export default async function AdminLayout({
   );
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
-  const [pendingReviewCount, latestActivityAt, features, announcement, createData] =
+  const [pendingReviewCount, latestActivityAt, unreadNotifications, features, announcement, createData] =
     await Promise.all([
       prisma.workRecord.count({
         where: { organizationId, status: "SUBMITTED" },
       }),
       getLatestActivityAt(scope),
+      getUnreadNotificationCount(session.user.id),
       getOrgFeatures(organizationId),
       getActiveAnnouncement(),
       canCreate
@@ -101,6 +103,7 @@ export default async function AdminLayout({
         features={features}
         pendingReviewCount={pendingReviewCount}
         latestActivityAt={latestActivityAt ? latestActivityAt.getTime() : null}
+        unreadNotifications={unreadNotifications}
         createData={createData}
       />
       <main

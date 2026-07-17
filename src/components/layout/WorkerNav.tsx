@@ -50,11 +50,13 @@ export function WorkerNav({
   avatarUrl = null,
   returnedCount = 0,
   latestActivityAt = null,
+  unreadNotifications = 0,
 }: {
   name: string;
   avatarUrl?: string | null;
   returnedCount?: number;
   latestActivityAt?: number | null;
+  unreadNotifications?: number;
 }) {
   const pathname = usePathname();
   const t = useT();
@@ -77,7 +79,7 @@ export function WorkerNav({
         </Link>
         <div className="flex items-center gap-2 sm:gap-3">
           <SearchCommand />
-          <ActivityBell href="/records/activity" latestActivityAt={latestActivityAt} />
+          <ActivityBell href="/records/activity" latestActivityAt={latestActivityAt} unreadCount={unreadNotifications} />
           <HeaderAccountMenu
             name={name}
             avatarUrl={avatarUrl}

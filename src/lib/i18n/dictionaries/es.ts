@@ -528,8 +528,30 @@ export const es: Dictionary = {
     adminSubtitle: "Todo lo que ocurre en tu empresa.",
     adminNothingDesc:
       "Los registros enviados, aprobaciones, fotos y comentarios aparecerán aquí.",
-    bell: "Actividad",
-    bellNew: "Actividad (nuevo)",
+    bell: "Notificaciones",
+    bellNew: "Notificaciones (nuevas)",
+    // Campana de notificaciones (buzón con pestañas)
+    notificationsTitle: "Notificaciones",
+    notificationsSubtitle: "Todo lo que te llegó, en un solo lugar.",
+    tabPersonal: "Personal",
+    tabCompany: "Compañía",
+    tabSystem: "Sistema",
+    tabActivity: "Actividad",
+    byActor: "por {name}",
+    emptyTitle: "Nada por aquí todavía",
+    emptyDesc: "Las nuevas notificaciones aparecerán aquí a medida que ocurran las cosas.",
+    // Título localizado por tipo de notificación (la línea de detalle se conserva).
+    notifTypes: {
+      record_submitted: "Nuevo registro para revisión",
+      record_resubmitted: "Registro reenviado para revisión",
+      record_approved: "Tu registro fue aprobado",
+      record_returned: "Tu registro necesita cambios",
+      job_scheduled: "Tienes un nuevo trabajo agendado",
+      job_reassigned: "Se te asignó un trabajo",
+      job_rescheduled: "Un trabajo fue reprogramado",
+      job_series: "Tienes un trabajo recurrente agendado",
+      system: "Aviso de cuenta",
+    },
   },
   activityFeed: {
     someone: "Alguien",

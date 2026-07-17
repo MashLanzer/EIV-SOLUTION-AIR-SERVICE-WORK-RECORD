@@ -34,6 +34,7 @@ async function markInvoicePaidFromSession(s: Stripe.Checkout.Session) {
     heading: "You've been paid",
     lines: [`${formatInvoiceNumber(invoice.number)} was just paid online by your customer.`],
     cta: { href: appUrl(`/admin/invoices/${invoice.id}`), label: "View invoice" },
+    inAppHref: `/admin/invoices/${invoice.id}`,
   });
 }
 

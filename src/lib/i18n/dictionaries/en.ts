@@ -526,8 +526,30 @@ export const en = {
     adminSubtitle: "Everything happening across your company.",
     adminNothingDesc:
       "Submitted records, approvals, photos and comments will show up here.",
-    bell: "Activity",
-    bellNew: "Activity (new)",
+    bell: "Notifications",
+    bellNew: "Notifications (new)",
+    // Notifications bell (tabbed inbox)
+    notificationsTitle: "Notifications",
+    notificationsSubtitle: "Everything that reached you, in one place.",
+    tabPersonal: "Personal",
+    tabCompany: "Company",
+    tabSystem: "System",
+    tabActivity: "Activity",
+    byActor: "by {name}",
+    emptyTitle: "Nothing here yet",
+    emptyDesc: "New notifications will show up here as things happen.",
+    // Localized title per notification type (the stored detail line stays as-is).
+    notifTypes: {
+      record_submitted: "New record for review",
+      record_resubmitted: "Record resubmitted for review",
+      record_approved: "Your record was approved",
+      record_returned: "Your record needs changes",
+      job_scheduled: "You have a new scheduled job",
+      job_reassigned: "A job was assigned to you",
+      job_rescheduled: "A scheduled job was moved",
+      job_series: "You have a recurring job scheduled",
+      system: "Account notice",
+    },
   },
   activityFeed: {
     someone: "Someone",

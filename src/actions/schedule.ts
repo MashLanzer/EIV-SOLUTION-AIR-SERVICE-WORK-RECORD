@@ -237,14 +237,14 @@ export async function createScheduledJobAction(
     });
     // One summary email for the series instead of one per occurrence.
     if (assignedToId) {
-      await notifyWorkerSeriesScheduled(assignedToId, title, date, dates.length);
+      await notifyWorkerSeriesScheduled(assignedToId, title, date, dates.length, session.user);
     }
   } else {
     const created = await prisma.scheduledJob.create({
       data: { ...base, scheduledFor: date },
       select: { id: true },
     });
-    if (assignedToId) await notifyWorkerJobScheduled(created.id, "scheduled");
+    if (assignedToId) await notifyWorkerJobScheduled(created.id, "scheduled", session.user);
   }
 
   revalidatePath(SCHEDULE_PATH);
@@ -322,7 +322,7 @@ export async function rescheduleJobAction(jobId: string, dateStr: string) {
     where: { id: jobId, organizationId },
     data: { scheduledFor: toDateOnly(dateStr) },
   });
-  await notifyWorkerJobScheduled(jobId, "rescheduled");
+  await notifyWorkerJobScheduled(jobId, "rescheduled", session.user);
   revalidatePath(SCHEDULE_PATH);
   revalidatePath(WORKER_SCHEDULE_PATH);
 }
@@ -349,7 +349,7 @@ export async function reassignJobAction(jobId: string, workerId: string) {
     data: { assignedToId },
   });
   // Let the newly assigned worker know (no-op when unassigned).
-  if (assignedToId) await notifyWorkerJobScheduled(jobId, "reassigned");
+  if (assignedToId) await notifyWorkerJobScheduled(jobId, "reassigned", session.user);
   revalidatePath(SCHEDULE_PATH);
   revalidatePath(WORKER_SCHEDULE_PATH);
 }

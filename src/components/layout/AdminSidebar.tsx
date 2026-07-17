@@ -151,6 +151,7 @@ export function AdminSidebar({
   features,
   pendingReviewCount = 0,
   latestActivityAt = null,
+  unreadNotifications = 0,
   createData = null,
 }: {
   name: string;
@@ -163,6 +164,7 @@ export function AdminSidebar({
   features?: { invoicing: boolean; estimates: boolean; portal: boolean };
   pendingReviewCount?: number;
   latestActivityAt?: number | null;
+  unreadNotifications?: number;
   createData?: CreateData | null;
 }) {
   const platformHref = isSuperAdmin ? "/super" : null;
@@ -210,7 +212,7 @@ export function AdminSidebar({
           <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{name}</span>
           <div className="flex items-center gap-2">
             <SearchCommand />
-            <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
+            <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} unreadCount={unreadNotifications} />
             <HeaderAccountMenu
               name={name}
               avatarUrl={avatarUrl}
@@ -229,7 +231,7 @@ export function AdminSidebar({
         <Logo />
         <div className="flex items-center gap-2">
           <SearchCommand />
-          <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} />
+          <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} unreadCount={unreadNotifications} />
           <HeaderAccountMenu
             name={name}
             avatarUrl={avatarUrl}
