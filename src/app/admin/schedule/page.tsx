@@ -22,6 +22,7 @@ import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
 import { NewScheduledJobButton } from "@/components/schedule/NewScheduledJobButton";
 import { StartRecordSheet } from "@/components/schedule/StartRecordSheet";
+import { DaySheet } from "@/components/schedule/DaySheet";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
 import { loadNewRecordFormData } from "@/lib/newRecordForm";
@@ -66,6 +67,9 @@ function schedHref(params: {
   worker?: string;
   status?: string;
   create?: boolean;
+  // Opens the tapped day's jobs in a bottom sheet (month view) instead of
+  // stacking them under the calendar.
+  day?: boolean;
 }): string {
   const p = new URLSearchParams();
   if (params.view) p.set("view", params.view);
@@ -73,6 +77,7 @@ function schedHref(params: {
   if (params.worker) p.set("worker", params.worker);
   if (params.status) p.set("status", params.status);
   if (params.create) p.set("new", "1");
+  if (params.day) p.set("day", "1");
   const qs = p.toString();
   // ?new=1 opens the "new job" bottom sheet (read from the query by
   // NewScheduledJobButton), pre-filled with the day carried in ?date=.
@@ -657,7 +662,7 @@ function MonthView({
         monthLabel={monthLabel}
         weekdayLabels={weekdayLabels}
         days={calendarDays}
-        dayHref={(key) => schedHref({ view: "month", date: key, worker, status: statusFilter })}
+        dayHref={(key) => schedHref({ view: "month", date: key, worker, status: statusFilter, day: true })}
         prevHref={schedHref({ view: "month", date: prevMonthKey, worker, status: statusFilter })}
         nextHref={schedHref({ view: "month", date: nextMonthKey, worker, status: statusFilter })}
         todayHref={schedHref({ view: "month", worker, status: statusFilter })}
@@ -675,18 +680,23 @@ function MonthView({
           </p>
         </div>
       )}
-      <DaySection
-        heading={selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
-        jobs={selectedJobs}
-        conflictIds={conflictIds}
-        emptyCtaHref={schedHref({ view: "month", date: selectedKey, worker, status: statusFilter, create: true })}
-        workers={workers}
-        teams={teams}
-        customers={customers}
-        projects={projects}
-        count={count}
-        t={t}
-      />
+      <DaySheet
+        title={selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
+      >
+        <DaySection
+          heading={selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
+          jobs={selectedJobs}
+          conflictIds={conflictIds}
+          emptyCtaHref={schedHref({ view: "month", date: selectedKey, worker, status: statusFilter, create: true })}
+          workers={workers}
+          teams={teams}
+          customers={customers}
+          projects={projects}
+          count={count}
+          t={t}
+          hideHeading
+        />
+      </DaySheet>
     </>
   );
 }
@@ -1102,6 +1112,7 @@ function DaySection({
   projects,
   count,
   t,
+  hideHeading = false,
 }: {
   heading: string;
   jobs: ScheduleJobView[];
@@ -1113,15 +1124,20 @@ function DaySection({
   projects: Opt[];
   count: (n: number) => string;
   t: SchedT;
+  // Drop the heading row when the section lives inside the day sheet (the sheet
+  // header already shows the date).
+  hideHeading?: boolean;
 }) {
   return (
     <section className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <h2 className="text-sm font-semibold capitalize text-neutral-900 dark:text-neutral-100">{heading}</h2>
-        {jobs.length > 0 && (
-          <span className="text-xs tabular-nums text-neutral-400 dark:text-neutral-500">{count(jobs.length)}</span>
-        )}
-      </div>
+      {!hideHeading && (
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold capitalize text-neutral-900 dark:text-neutral-100">{heading}</h2>
+          {jobs.length > 0 && (
+            <span className="text-xs tabular-nums text-neutral-400 dark:text-neutral-500">{count(jobs.length)}</span>
+          )}
+        </div>
+      )}
       {jobs.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 p-0 pb-6">
