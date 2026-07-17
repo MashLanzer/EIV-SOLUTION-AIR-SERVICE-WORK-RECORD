@@ -72,6 +72,8 @@ export function ScheduleJobCard({
   workerSkills,
   skillSuggestions,
   conflict = false,
+  compact = false,
+  compactHref,
 }: {
   job: ScheduleJobView;
   workers: JobOption[];
@@ -82,6 +84,11 @@ export function ScheduleJobCard({
   skillSuggestions?: string[];
   // The assigned worker has another timed job that overlaps this one this day.
   conflict?: boolean;
+  // Week board: render a small summary row that links to the day view (where the
+  // full card lives) instead of the full editable card, so the week stays a
+  // glanceable overview rather than a tall stack.
+  compact?: boolean;
+  compactHref?: string;
 }) {
   const t = useT().schedule;
   const tc = useT().common;
@@ -108,6 +115,38 @@ export function ScheduleJobCard({
       : job.startTime || t.allDay;
 
   const canceled = job.status === "CANCELED";
+
+  // Compact week-board row: time · title · who + status, linking to the day view.
+  if (compact) {
+    const who = job.assignedToName ?? job.teamName ?? t.unassigned;
+    return (
+      <Link href={compactHref ?? "#"} draggable={false} className={cnCard(canceled) + " block"}>
+        <div className="flex items-center gap-2">
+          <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
+            <Clock className="h-3 w-3" />
+            {timeLabel}
+          </span>
+          <span
+            className={
+              "truncate text-sm font-medium " +
+              (canceled
+                ? "text-neutral-400 line-through dark:text-neutral-500"
+                : "text-neutral-900 dark:text-neutral-100")
+            }
+          >
+            {job.title || t.untitled}
+          </span>
+        </div>
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <span className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+            {who}
+            {job.customerName ? ` · ${job.customerName}` : ""}
+          </span>
+          <ScheduleStatusBadge status={job.status} />
+        </div>
+      </Link>
+    );
+  }
 
   // The single next step in the lifecycle, so the card shows one forward button
   // at a time (Scheduled → Start → On my way → Start work → Done) instead of all

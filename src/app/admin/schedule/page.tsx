@@ -23,6 +23,7 @@ import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
 import { NewScheduledJobButton } from "@/components/schedule/NewScheduledJobButton";
 import { StartRecordSheet } from "@/components/schedule/StartRecordSheet";
 import { DaySheet } from "@/components/schedule/DaySheet";
+import { SheetButton } from "@/components/schedule/SheetButton";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
 import { loadNewRecordFormData } from "@/lib/newRecordForm";
@@ -770,45 +771,52 @@ function DayView({
         </Button>
       </div>
 
+      {/* A compact day-meta row: weather stays glanceable inline; the driving
+          route tucks into a bottom sheet so it doesn't stack down the page. */}
+      {(weather || route) && (
+        <div className="flex flex-wrap items-stretch gap-2">
+          {weather && (
+            <div className="min-w-[14rem] flex-1">
+              <ScheduleDayWeather day={weather.day} placeLabel={weather.placeLabel} />
+            </div>
+          )}
+          {route && (
+            <SheetButton
+              label={`${t.routeTitle} · ${route.stops.length}`}
+              icon={<Route className="h-4 w-4" />}
+              title={t.routeTitle}
+            >
+              <div className="flex flex-col gap-3">
+                <Button asChild variant="outline" className="w-full">
+                  <a href={route.mapsUrl} target="_blank" rel="noopener noreferrer">
+                    <Navigation className="h-4 w-4" />
+                    {t.routeOpen}
+                  </a>
+                </Button>
+                <ol className="flex flex-col gap-2.5">
+                  {route.stops.map((s, i) => (
+                    <li key={s.id} className="flex items-center gap-2.5 text-sm">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white dark:bg-neutral-100 dark:text-neutral-900 tabular-nums">
+                        {i + 1}
+                      </span>
+                      <span className="min-w-0 truncate text-neutral-900 dark:text-neutral-100">
+                        {s.title}
+                        <span className="text-neutral-500 dark:text-neutral-400"> · {s.place}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </SheetButton>
+          )}
+        </div>
+      )}
+
       <ScheduleDayTimeline
         jobs={dayJobs}
         conflictIds={conflictIds}
         conflictLabel={t.conflictBadge}
       />
-
-      {weather && (
-        <ScheduleDayWeather day={weather.day} placeLabel={weather.placeLabel} />
-      )}
-
-      {route && (
-        <div className="flex flex-col gap-2 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-4">
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              <Route className="h-4 w-4" />
-              {t.routeTitle}
-            </span>
-            <Button asChild variant="outline" size="sm">
-              <a href={route.mapsUrl} target="_blank" rel="noopener noreferrer">
-                <Navigation className="h-4 w-4" />
-                {t.routeOpen}
-              </a>
-            </Button>
-          </div>
-          <ol className="flex flex-col gap-1.5">
-            {route.stops.map((s, i) => (
-              <li key={s.id} className="flex items-center gap-2.5 text-sm">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-white dark:bg-neutral-100 dark:text-neutral-900 tabular-nums">
-                  {i + 1}
-                </span>
-                <span className="min-w-0 truncate text-neutral-900 dark:text-neutral-100">
-                  {s.title}
-                  <span className="text-neutral-500 dark:text-neutral-400"> · {s.place}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
 
       {overload && (
         <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/70 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-2.5 text-amber-800 dark:text-amber-200">
@@ -1081,6 +1089,7 @@ function WeekView({
                 label: dayFmt.format(d),
                 isToday: key === todayKey,
                 createHref: schedHref({ view: "week", date: key, worker, status: statusFilter, create: true }),
+                dayHref: schedHref({ view: "day", date: key, worker, status: statusFilter }),
               };
             })}
             initialJobsByDay={Object.fromEntries(

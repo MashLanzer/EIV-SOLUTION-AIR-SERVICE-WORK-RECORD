@@ -15,6 +15,8 @@ export type BoardDay = {
   label: string;
   isToday: boolean;
   createHref: string;
+  // Day view link for this day — compact week cards open it to manage the job.
+  dayHref: string;
 };
 
 // Drag-and-drop week board: reschedule a job by dropping it on another day, or
@@ -218,6 +220,8 @@ export function WeekBoard({
                         customers={customers}
                         projects={projects}
                         conflict={conflicts.has(job.id)}
+                        compact
+                        compactHref={d.dayHref}
                       />
                     </div>
                   </div>
