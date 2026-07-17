@@ -475,6 +475,7 @@ export const en = {
     deleteSelectedConfirm: "Delete",
     add: "Add",
     addTagPlaceholder: "Add a tag…",
+    loadMore: "Load more",
   },
   photoDetail: {
     jobsitePhoto: "Jobsite photo",

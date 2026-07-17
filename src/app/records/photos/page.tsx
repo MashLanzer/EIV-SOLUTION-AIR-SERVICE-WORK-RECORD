@@ -13,6 +13,9 @@ import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
 import { getT } from "@/lib/i18n/server";
 
+const PHOTO_PAGE = 120;
+const PHOTO_MAX = 600;
+
 export default async function WorkerPhotosPage({
   searchParams,
 }: {
@@ -21,23 +24,37 @@ export default async function WorkerPhotosPage({
     project?: string;
     range?: string;
     untagged?: string;
+    n?: string;
   }>;
 }) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
-  const { tag, project, range, untagged } = await searchParams;
+  const { tag, project, range, untagged, n } = await searchParams;
   const activeTag = tag?.trim().toLowerCase() || null;
   const activeProject = project?.trim() || null;
   const activeRange: PhotoRange = normalizePhotoRange(range);
   const activeUntagged = untagged === "1";
   const cutoff = photoRangeCutoff(activeRange);
+  const shown = Math.min(Math.max(Number(n) || PHOTO_PAGE, PHOTO_PAGE), PHOTO_MAX);
 
   const isAdmin = session.user.role === "ADMIN";
   const teamIds = isAdmin ? null : await getWorkerTeamIds(session.user.id);
   // Restrict every photo query to the worker's team projects.
   const projectScope = isAdmin ? {} : { project: { teamId: { in: teamIds ?? [] } } };
 
-  const [tags, projects, photoRows] = await Promise.all([
+  const photoWhere = {
+    organizationId,
+    ...projectScope,
+    ...(activeProject ? { projectId: activeProject } : {}),
+    ...(cutoff ? { takenAt: { gte: cutoff } } : {}),
+    ...(activeUntagged
+      ? { photoTags: { none: {} } }
+      : activeTag
+        ? { photoTags: { some: { tag: { name: activeTag } } } }
+        : {}),
+  };
+
+  const [tags, projects, photoRows, totalPhotos] = await Promise.all([
     prisma.tag.findMany({
       where: {
         organizationId,
@@ -56,19 +73,9 @@ export default async function WorkerPhotosPage({
       select: { id: true, name: true },
     }),
     prisma.photo.findMany({
-      where: {
-        organizationId,
-        ...projectScope,
-        ...(activeProject ? { projectId: activeProject } : {}),
-        ...(cutoff ? { takenAt: { gte: cutoff } } : {}),
-        ...(activeUntagged
-          ? { photoTags: { none: {} } }
-          : activeTag
-            ? { photoTags: { some: { tag: { name: activeTag } } } }
-            : {}),
-      },
+      where: photoWhere,
       orderBy: { takenAt: "desc" },
-      take: 120,
+      take: shown,
       select: {
         id: true,
         url: true,
@@ -80,6 +87,7 @@ export default async function WorkerPhotosPage({
         _count: { select: { photoTags: true, comments: true } },
       },
     }),
+    prisma.photo.count({ where: photoWhere }),
   ]);
 
   const t = (await getT()).photos;
@@ -120,13 +128,18 @@ export default async function WorkerPhotosPage({
   if (activeUntagged) reportParams.set("untagged", "1");
   const reportHref = `/records/photos/report${reportParams.toString() ? `?${reportParams}` : ""}`;
 
+  const canLoadMore = totalPhotos > photos.length && shown < PHOTO_MAX;
+  const moreParams = new URLSearchParams(reportParams);
+  moreParams.set("n", String(Math.min(shown + PHOTO_PAGE, PHOTO_MAX)));
+  const moreHref = `/records/photos?${moreParams}`;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
         <div className="flex items-center gap-3">
           <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
-            {(photos.length === 1 ? t.countOne : t.countMany).replace("{n}", String(photos.length))}
+            {(totalPhotos === 1 ? t.countOne : t.countMany).replace("{n}", String(totalPhotos))}
           </span>
           {photos.length > 0 && (
             <Button asChild variant="outline" size="sm">
@@ -163,6 +176,14 @@ export default async function WorkerPhotosPage({
         </Card>
       ) : (
         <PhotoFeed photos={photos} basePath="/records/projects" />
+      )}
+
+      {canLoadMore && (
+        <div className="flex justify-center pt-1">
+          <Button asChild variant="outline" size="sm">
+            <a href={moreHref}>{t.loadMore}</a>
+          </Button>
+        </div>
       )}
     </div>
   );

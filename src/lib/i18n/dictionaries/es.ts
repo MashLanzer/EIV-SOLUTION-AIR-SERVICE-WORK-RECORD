@@ -477,6 +477,7 @@ export const es: Dictionary = {
     deleteSelectedConfirm: "Eliminar",
     add: "Agregar",
     addTagPlaceholder: "Agregar etiqueta…",
+    loadMore: "Cargar más",
   },
   photoDetail: {
     jobsitePhoto: "Foto de la obra",

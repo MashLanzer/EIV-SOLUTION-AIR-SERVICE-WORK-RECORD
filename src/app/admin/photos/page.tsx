@@ -13,6 +13,10 @@ import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
 
+// Feed page size + a hard cap on how far "Load more" can grow it.
+const PHOTO_PAGE = 120;
+const PHOTO_MAX = 600;
+
 export default async function AdminPhotosPage({
   searchParams,
 }: {
@@ -22,18 +26,22 @@ export default async function AdminPhotosPage({
     by?: string;
     range?: string;
     untagged?: string;
+    n?: string;
   }>;
 }) {
   const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const t = (await getT()).photos;
-  const { tag, project, by, range, untagged } = await searchParams;
+  const { tag, project, by, range, untagged, n } = await searchParams;
   const activeTag = tag?.trim().toLowerCase() || null;
   const activeProject = project?.trim() || null;
   const activePhotographer = by?.trim() || null;
   const activeRange: PhotoRange = normalizePhotoRange(range);
   const activeUntagged = untagged === "1";
   const cutoff = photoRangeCutoff(activeRange);
+  // How many to show; grows via "Load more". Clamped so a hand-edited ?n= can't
+  // pull the whole library at once.
+  const shown = Math.min(Math.max(Number(n) || PHOTO_PAGE, PHOTO_PAGE), PHOTO_MAX);
 
   const photoWhere = {
     organizationId,
@@ -66,7 +74,7 @@ export default async function AdminPhotosPage({
     prisma.photo.findMany({
       where: photoWhere,
       orderBy: { takenAt: "desc" },
-      take: 120,
+      take: shown,
       select: {
         id: true,
         url: true,
@@ -122,6 +130,12 @@ export default async function AdminPhotosPage({
   if (activeRange !== "all") reportParams.set("range", activeRange);
   if (activeUntagged) reportParams.set("untagged", "1");
   const reportHref = `/admin/photos/report${reportParams.toString() ? `?${reportParams}` : ""}`;
+
+  // "Load more" grows the page by one more batch, keeping the filters.
+  const canLoadMore = totalPhotos > photos.length && shown < PHOTO_MAX;
+  const moreParams = new URLSearchParams(reportParams);
+  moreParams.set("n", String(Math.min(shown + PHOTO_PAGE, PHOTO_MAX)));
+  const moreHref = `/admin/photos?${moreParams}`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -184,6 +198,14 @@ export default async function AdminPhotosPage({
           canTag
           tagSuggestions={usableTags.map((tg) => tg.name)}
         />
+      )}
+
+      {canLoadMore && (
+        <div className="flex justify-center pt-1">
+          <Button asChild variant="outline" size="sm">
+            <a href={moreHref}>{t.loadMore}</a>
+          </Button>
+        </div>
       )}
     </div>
   );
