@@ -168,6 +168,32 @@ export async function notifyWorkerSeriesScheduled(
   });
 }
 
+// The crew marked a job "on the way" -> let the customer know a technician is
+// heading over. Best-effort; a no-op when the job has no customer email.
+export async function notifyCustomerOnTheWay(jobId: string): Promise<void> {
+  const job = await prisma.scheduledJob.findUnique({
+    where: { id: jobId },
+    select: {
+      title: true,
+      startTime: true,
+      customer: { select: { name: true, email: true } },
+      organization: { select: { name: true } },
+    },
+  });
+  const email = job?.customer?.email;
+  if (!job || !email) return;
+  const company = job.organization?.name ?? "Your service team";
+  const when = job.startTime ? ` around ${job.startTime}` : " shortly";
+  await sendEmail({
+    to: email,
+    subject: `${company} is on the way`,
+    html: emailLayout(`Your technician is on the way`, [
+      `Hi ${job.customer?.name ?? "there"},`,
+      `${company} is heading to your location${when} for <strong>${job.title || "your scheduled service"}</strong>.`,
+    ]),
+  });
+}
+
 // Admin approved a record -> the worker who submitted it.
 export async function notifyWorkerApproved(recordId: string): Promise<void> {
   const record = await prisma.workRecord.findUnique({

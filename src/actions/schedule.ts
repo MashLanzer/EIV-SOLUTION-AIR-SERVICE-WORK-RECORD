@@ -9,6 +9,7 @@ import { requireAuth } from "@/lib/session";
 import { requirePermission } from "@/lib/authz";
 import { canAccessJob, timeWindowsOverlap } from "@/lib/schedule";
 import {
+  notifyCustomerOnTheWay,
   notifyWorkerJobScheduled,
   notifyWorkerSeriesScheduled,
 } from "@/lib/notifications";
@@ -357,6 +358,10 @@ export async function setJobStatusAction(jobId: string, status: string) {
         actorName: session.user.name || "—",
       },
     });
+    // Heading to the jobsite — give the customer a heads-up (best-effort).
+    if (parsed.data === "EN_ROUTE") {
+      await notifyCustomerOnTheWay(jobId);
+    }
   }
 
   revalidatePath(SCHEDULE_PATH);
