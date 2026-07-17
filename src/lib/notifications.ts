@@ -293,6 +293,43 @@ export async function notifyWorkerTimeOff(timeOffId: string, actor?: Actor): Pro
   });
 }
 
+// Someone commented on a photo -> tell whoever took it (in-app only; photo
+// comments have no email path to avoid a back-and-forth email storm). Personal
+// notification, so it reaches the owner whatever their role. Skips notifying a
+// commenter about their own comment, and no-ops when the photo has no owner.
+export async function notifyPhotoOwnerOfComment(
+  photoId: string,
+  commentBody: string,
+  actor?: Actor
+): Promise<void> {
+  const photo = await prisma.photo.findUnique({
+    where: { id: photoId },
+    select: {
+      organizationId: true,
+      projectId: true,
+      takenById: true,
+      takenBy: { select: { role: true } },
+      project: { select: { name: true } },
+    },
+  });
+  if (!photo?.takenById || photo.takenById === actor?.id) return;
+
+  // Owner's own area for the deep link (admins view under /admin).
+  const area = photo.takenBy?.role === "ADMIN" ? "admin" : "records";
+  const excerpt = commentBody.trim().replace(/\s+/g, " ").slice(0, 100);
+  await createNotifications({
+    organizationId: photo.organizationId,
+    userIds: [photo.takenById],
+    category: "PERSONAL",
+    type: "photo_comment",
+    title: "New comment on your photo",
+    body: photo.project?.name ? `${photo.project.name} · ${excerpt}` : excerpt,
+    actorId: actor?.id ?? null,
+    actorName: actor?.name ?? null,
+    href: `/${area}/projects/${photo.projectId}/photos/${photoId}`,
+  });
+}
+
 // The crew marked a job "on the way" -> let the customer know a technician is
 // heading over. Best-effort; a no-op when the job has no customer email.
 export async function notifyCustomerOnTheWay(jobId: string): Promise<void> {

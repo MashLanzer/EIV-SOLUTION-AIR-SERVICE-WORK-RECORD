@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { canAccessProject, photoDetailPaths } from "@/lib/projectAccess";
+import { notifyPhotoOwnerOfComment } from "@/lib/notifications";
 import { requireAuth } from "@/lib/session";
 import { requirePermission } from "@/lib/authz";
 
@@ -83,6 +84,8 @@ export async function addCommentAction(photoId: string, formData: FormData) {
       body,
     },
   });
+  // Let whoever took the photo know someone commented on their work.
+  await notifyPhotoOwnerOfComment(photoId, body, session.user);
   revalidatePhoto(photo.projectId, photoId);
 }
 

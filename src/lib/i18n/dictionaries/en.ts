@@ -557,6 +557,7 @@ export const en = {
       job_rescheduled: "A scheduled job was moved",
       job_series: "You have a recurring job scheduled",
       time_off_added: "Time off was added for you",
+      photo_comment: "New comment on your photo",
       system: "Account notice",
     },
   },

@@ -559,6 +559,7 @@ export const es: Dictionary = {
       job_rescheduled: "Un trabajo fue reprogramado",
       job_series: "Tienes un trabajo recurrente agendado",
       time_off_added: "Se te registraron días libres",
+      photo_comment: "Nuevo comentario en tu foto",
       system: "Aviso de cuenta",
     },
   },
