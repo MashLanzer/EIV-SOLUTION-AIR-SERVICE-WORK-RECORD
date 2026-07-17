@@ -168,9 +168,6 @@ export function AdminSidebar({
   createData?: CreateData | null;
 }) {
   const platformHref = isSuperAdmin ? "/super" : null;
-  // Billing is a company-settings concern; show it only to positions that can
-  // manage settings (real admins always can, via the all-permissions fallback).
-  const billingHref = permissions.includes("settings.manage") ? "/admin/settings/billing" : null;
   const pathname = usePathname();
   const t = useT();
   // Hrefs to hide because their module is turned off for this company.
@@ -219,7 +216,6 @@ export function AdminSidebar({
               profileHref="/admin/profile"
               settingsHref="/admin/settings"
               platformHref={platformHref}
-              billingHref={billingHref}
             />
           </div>
         </div>
@@ -238,7 +234,6 @@ export function AdminSidebar({
             profileHref="/admin/profile"
             settingsHref="/admin/settings"
             platformHref={platformHref}
-            billingHref={billingHref}
           />
         </div>
       </header>

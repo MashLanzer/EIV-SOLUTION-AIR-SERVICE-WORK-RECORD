@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, CreditCard, LogOut, Settings, ShieldCheck, User as UserIcon } from "lucide-react";
+import { ChevronDown, LogOut, Settings, ShieldCheck, User as UserIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -27,7 +27,6 @@ export function HeaderAccountMenu({
   profileHref,
   settingsHref,
   platformHref = null,
-  billingHref = null,
 }: {
   name: string;
   avatarUrl?: string | null;
@@ -36,8 +35,6 @@ export function HeaderAccountMenu({
   // Set only for platform owners: a link to the /super console. Keeps the
   // hidden route reachable inside the mobile app, which has no address bar.
   platformHref?: string | null;
-  // Set for company admins: a link to their plan & billing page.
-  billingHref?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -147,18 +144,6 @@ export function HeaderAccountMenu({
             <Settings className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
             {t.settings}
           </Link>
-          {billingHref && (
-            <Link
-              href={billingHref}
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className={itemClass}
-            >
-              <CreditCard className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-              {t.billing}
-            </Link>
-          )}
-
           <div className="my-1 border-t border-neutral-100 dark:border-neutral-800" />
 
           {/* The confirm modal is a native <dialog> rendered here as a child of
