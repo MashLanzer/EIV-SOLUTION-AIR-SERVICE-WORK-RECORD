@@ -18,6 +18,7 @@ import {
   Navigation,
   Pencil,
   PlayCircle,
+  Repeat,
   RotateCcw,
   Trash2,
   User as UserIcon,
@@ -37,7 +38,9 @@ import {
   type JobOption,
 } from "@/components/schedule/ScheduleJobForm";
 import {
+  cancelSeriesFollowingAction,
   deleteScheduledJobAction,
+  deleteSeriesFollowingAction,
   duplicateScheduledJobAction,
   setJobStatusAction,
 } from "@/actions/schedule";
@@ -45,6 +48,8 @@ import { useT } from "@/components/i18n/LocaleProvider";
 
 export interface ScheduleJobView {
   id: string;
+  // Set when the job belongs to a recurring series (enables "this & following").
+  seriesId: string | null;
   title: string;
   notes: string | null;
   scheduledFor: string; // YYYY-MM-DD
@@ -370,6 +375,50 @@ export function ScheduleJobCard({
           />
         </div>
       </div>
+
+      {/* Recurring series: act on this occurrence and every later one at once,
+          so a whole plan can be trimmed without editing each copy. */}
+      {job.seriesId && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-neutral-100 pt-3 dark:border-neutral-800">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-400">
+            <Repeat className="h-3.5 w-3.5" />
+            {t.seriesLabel}
+          </span>
+          <div className="ml-auto flex items-center gap-1.5">
+            {!canceled && (
+              <ConfirmDialog
+                title={t.seriesCancelTitle}
+                description={t.seriesCancelDesc}
+                confirmLabel={t.seriesCancelConfirm}
+                trigger={
+                  <Button type="button" variant="outline" size="sm" disabled={pending}>
+                    <XCircle className="h-3.5 w-3.5" />
+                    {t.seriesCancelFollowing}
+                  </Button>
+                }
+                onConfirm={() => cancelSeriesFollowingAction(job.id)}
+              />
+            )}
+            <ConfirmDialog
+              title={t.seriesDeleteTitle}
+              description={t.seriesDeleteDesc}
+              confirmLabel={t.seriesDeleteConfirm}
+              trigger={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive-text"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {t.seriesDeleteFollowing}
+                </Button>
+              }
+              onConfirm={() => deleteSeriesFollowingAction(job.id)}
+            />
+          </div>
+        </div>
+      )}
 
       {job.statusHistory.length > 0 && (
         <details className="group mt-3 border-t border-neutral-100 pt-3 dark:border-neutral-800">

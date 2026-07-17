@@ -339,6 +339,7 @@ export default async function SchedulePage({
 
   const views: ScheduleJobView[] = jobs.map((j) => ({
     id: j.id,
+    seriesId: j.seriesId,
     title: j.title,
     notes: j.notes,
     scheduledFor: dayKey(j.scheduledFor),

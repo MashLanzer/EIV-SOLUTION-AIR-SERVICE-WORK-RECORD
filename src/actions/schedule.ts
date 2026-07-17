@@ -376,6 +376,81 @@ export async function deleteScheduledJobAction(jobId: string) {
   revalidatePath(WORKER_SCHEDULE_PATH);
 }
 
+// The other occurrences of a recurring series that fall on or after this one -
+// the "this and following" set every series action operates on. Returns the
+// anchor job's own scheduledFor + seriesId plus the affected ids, or null when
+// the job isn't part of a series (or isn't in the caller's org).
+async function seriesFollowing(
+  jobId: string,
+  organizationId: string
+): Promise<{ seriesId: string; from: Date; ids: string[] } | null> {
+  const anchor = await prisma.scheduledJob.findFirst({
+    where: { id: jobId, organizationId },
+    select: { seriesId: true, scheduledFor: true },
+  });
+  if (!anchor?.seriesId) return null;
+  const following = await prisma.scheduledJob.findMany({
+    where: {
+      organizationId,
+      seriesId: anchor.seriesId,
+      scheduledFor: { gte: anchor.scheduledFor },
+    },
+    select: { id: true },
+  });
+  return { seriesId: anchor.seriesId, from: anchor.scheduledFor, ids: following.map((j) => j.id) };
+}
+
+// Cancel this occurrence and every later one in the same series in one move -
+// the classic "this and following" calendar action. Only touches jobs that
+// aren't already canceled or done, and logs a status event for each so the
+// trail still explains why they stopped. No-op for a non-series job.
+export async function cancelSeriesFollowingAction(jobId: string) {
+  const session = await requirePermission("schedule.manage");
+  const organizationId = requireOrgId(session);
+  const series = await seriesFollowing(jobId, organizationId);
+  if (!series) return;
+
+  const affected = await prisma.scheduledJob.findMany({
+    where: {
+      id: { in: series.ids },
+      organizationId,
+      status: { notIn: ["CANCELED", "DONE"] },
+    },
+    select: { id: true },
+  });
+  if (affected.length === 0) return;
+
+  await prisma.scheduledJob.updateMany({
+    where: { id: { in: affected.map((j) => j.id) }, organizationId },
+    data: { status: "CANCELED" },
+  });
+  await prisma.jobStatusEvent.createMany({
+    data: affected.map((j) => ({
+      jobId: j.id,
+      status: "CANCELED" as const,
+      actorId: session.user.id,
+      actorName: session.user.name || "—",
+    })),
+  });
+  revalidatePath(SCHEDULE_PATH);
+  revalidatePath(WORKER_SCHEDULE_PATH);
+}
+
+// Delete this occurrence and every later one in the same series - for when a
+// recurring plan was set up wrong and the future copies should just go away.
+// No-op for a non-series job.
+export async function deleteSeriesFollowingAction(jobId: string) {
+  const session = await requirePermission("schedule.manage");
+  const organizationId = requireOrgId(session);
+  const series = await seriesFollowing(jobId, organizationId);
+  if (!series) return;
+  await prisma.scheduledJob.deleteMany({
+    where: { id: { in: series.ids }, organizationId },
+  });
+  revalidatePath(SCHEDULE_PATH);
+  revalidatePath(WORKER_SCHEDULE_PATH);
+}
+
 // Copy a job as a fresh SCHEDULED one on the same day (the office then drags or
 // edits it to the day it needs). Carries over the plan details but not the
 // lifecycle state, linked record, or recurrence series. Optionally lands the

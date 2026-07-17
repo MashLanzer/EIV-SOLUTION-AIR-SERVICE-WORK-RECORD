@@ -1004,6 +1004,18 @@ export const es: Dictionary = {
       "Esto elimina el trabajo programado. El registro de trabajo que haya producido se conserva.",
     deleteConfirm: "Eliminar trabajo",
     deleteAria: "Eliminar trabajo {title}",
+    // Serie recurrente ("este y los siguientes")
+    seriesLabel: "Recurrente",
+    seriesCancelFollowing: "Cancelar siguientes",
+    seriesCancelTitle: "¿Cancelar esta visita y las siguientes?",
+    seriesCancelDesc:
+      "Cancela esta visita y todas las posteriores de la serie. Las visitas pasadas o ya terminadas no se tocan.",
+    seriesCancelConfirm: "Cancelar visitas",
+    seriesDeleteFollowing: "Eliminar siguientes",
+    seriesDeleteTitle: "¿Eliminar esta visita y las siguientes?",
+    seriesDeleteDesc:
+      "Elimina esta visita y todas las posteriores de la serie. Los registros de trabajo que hayan producido se conservan.",
+    seriesDeleteConfirm: "Eliminar visitas",
     // Display
     allDay: "Todo el día",
     unassigned: "Sin asignar",

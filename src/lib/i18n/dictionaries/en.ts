@@ -1010,6 +1010,18 @@ export const en = {
       "This removes the scheduled job. Any work record it produced is kept.",
     deleteConfirm: "Delete job",
     deleteAria: "Delete job {title}",
+    // Recurring series ("this and following")
+    seriesLabel: "Recurring",
+    seriesCancelFollowing: "Cancel following",
+    seriesCancelTitle: "Cancel this and following visits?",
+    seriesCancelDesc:
+      "Cancels this visit and every later one in the series. Past and already-finished visits are left untouched.",
+    seriesCancelConfirm: "Cancel visits",
+    seriesDeleteFollowing: "Delete following",
+    seriesDeleteTitle: "Delete this and following visits?",
+    seriesDeleteDesc:
+      "Removes this visit and every later one in the series. Any work records they produced are kept.",
+    seriesDeleteConfirm: "Delete visits",
     // Display
     allDay: "All day",
     unassigned: "Unassigned",
