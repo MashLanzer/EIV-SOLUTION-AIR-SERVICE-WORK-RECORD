@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { NotificationCategory } from "@prisma/client";
-import { Activity, Bell, Building2, Settings2, User } from "lucide-react";
+import { Activity, Bell } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
@@ -29,8 +29,6 @@ const CATEGORY: Record<Exclude<TabKey, "activity">, NotificationCategory> = {
 function tabsFor(isAdmin: boolean): TabKey[] {
   return isAdmin ? ["personal", "company", "system", "activity"] : ["personal", "activity"];
 }
-
-const TAB_ICON = { personal: User, company: Building2, system: Settings2, activity: Activity };
 
 // The whole bell screen for both apps. `basePath` is the route the tab links
 // point at (/admin/activity or /records/activity); `tab` is the active one.
@@ -80,14 +78,14 @@ export async function NotificationsScreen({
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — segmented control (matches the profile screen for visual
+          consistency across the app). */}
       <nav
         aria-label={t.notificationsTitle}
-        className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-0.5"
+        className="flex rounded-xl border border-neutral-200 bg-neutral-100 p-1 dark:border-neutral-800 dark:bg-neutral-900"
       >
         {tabs.map((key) => {
           const isActive = key === active;
-          const Icon = TAB_ICON[key];
           const n = tabUnread[key];
           return (
             <Link
@@ -95,23 +93,15 @@ export async function NotificationsScreen({
               href={key === "personal" ? basePath : `${basePath}?tab=${key}`}
               aria-current={isActive ? "true" : undefined}
               className={cn(
-                "flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                "flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-medium transition-colors",
                 isActive
-                  ? "border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900"
-                  : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300 hover:text-neutral-900 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 dark:hover:text-neutral-100"
+                  ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-800 dark:text-neutral-100"
+                  : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
               )}
             >
-              <Icon className="h-3.5 w-3.5" />
-              {tabLabel[key]}
+              <span className="truncate">{tabLabel[key]}</span>
               {n > 0 && (
-                <span
-                  className={cn(
-                    "ml-0.5 min-w-[1.1rem] rounded-full px-1 text-center text-[10px] font-semibold tabular-nums",
-                    isActive
-                      ? "bg-white/20 text-white dark:bg-neutral-900/20 dark:text-neutral-900"
-                      : "bg-primary text-primary-foreground"
-                  )}
-                >
+                <span className="min-w-[1.1rem] shrink-0 rounded-full bg-primary px-1 text-center text-[10px] font-semibold tabular-nums text-primary-foreground">
                   {n > 99 ? "99+" : n}
                 </span>
               )}
