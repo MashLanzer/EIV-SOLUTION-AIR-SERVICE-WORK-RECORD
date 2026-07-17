@@ -168,6 +168,19 @@ export const timeOffSchema = z
     path: ["endDate"],
   });
 
+// A worker requesting their own time off from their profile: same fields as the
+// office form minus the worker picker (it's always the requester).
+export const timeOffRequestSchema = z
+  .object({
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "A start date is required"),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "An end date is required"),
+    reason: z.string().trim().max(120, "Reason is too long").optional().or(z.literal("")),
+  })
+  .refine((d) => d.endDate >= d.startDate, {
+    message: "The end date can't be before the start date",
+    path: ["endDate"],
+  });
+
 export const updateOrganizationNameSchema = z.object({
   name: z
     .string()

@@ -462,17 +462,30 @@ export default async function SchedulePage({
   // Worker time off. Two reads: the entries overlapping the fetched range (to
   // paint "off" on the calendar) and the upcoming list (for the manage sheet).
   const [timeOffInRange, upcomingTimeOff] = await Promise.all([
+    // Only APPROVED time off paints someone "off" on the calendar; pending
+    // requests don't block anything until an office user approves them.
     prisma.timeOff.findMany({
-      where: { organizationId, startDate: { lt: to }, endDate: { gte: from } },
+      where: {
+        organizationId,
+        status: "APPROVED",
+        startDate: { lt: to },
+        endDate: { gte: from },
+      },
       select: { userId: true, startDate: true, endDate: true },
     }),
+    // The manage sheet shows pending requests (to act on) plus upcoming
+    // approved/denied entries. Pending first, then by start date.
     prisma.timeOff.findMany({
-      where: { organizationId, endDate: { gte: startOfUtcDay(new Date()) } },
-      orderBy: { startDate: "asc" },
-      take: 30,
+      where: {
+        organizationId,
+        OR: [{ status: "PENDING" }, { endDate: { gte: startOfUtcDay(new Date()) } }],
+      },
+      orderBy: [{ status: "asc" }, { startDate: "asc" }],
+      take: 40,
       select: {
         id: true,
         reason: true,
+        status: true,
         startDate: true,
         endDate: true,
         user: { select: { name: true } },
@@ -503,6 +516,7 @@ export default async function SchedulePage({
       workerName: r.user?.name ?? "—",
       range: dayKey(r.startDate) === dayKey(r.endDate) ? startLabel : `${startLabel} – ${endLabel}`,
       reason: r.reason,
+      status: r.status,
     };
   });
 

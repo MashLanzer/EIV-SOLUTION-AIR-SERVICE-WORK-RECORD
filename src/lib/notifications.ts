@@ -316,6 +316,97 @@ export async function notifyWorkerTimeOff(timeOffId: string, actor?: Actor): Pro
   });
 }
 
+// A worker requested time off from their profile -> the office (admins), so
+// someone can approve or deny it from the schedule.
+export async function notifyOfficeTimeOffRequest(timeOffId: string): Promise<void> {
+  const row = await prisma.timeOff.findUnique({
+    where: { id: timeOffId },
+    select: {
+      organizationId: true,
+      startDate: true,
+      endDate: true,
+      reason: true,
+      user: { select: { id: true, name: true } },
+    },
+  });
+  if (!row) return;
+  const admins = await activeAdmins(row.organizationId);
+  if (admins.length === 0) return;
+
+  const startLabel = dayMonthFmt.format(row.startDate);
+  const endLabel = dayMonthFmt.format(row.endDate);
+  const range =
+    row.startDate.getTime() === row.endDate.getTime()
+      ? startLabel
+      : `${startLabel} – ${endLabel}`;
+  const who = row.user?.name ?? "A worker";
+
+  const emails = admins.map((a) => a.email).filter((e): e is string => Boolean(e));
+  if (emails.length > 0) {
+    await sendEmail({
+      to: emails,
+      subject: `Time off request from ${who}`,
+      html: emailLayout(
+        "Time off request",
+        [
+          `${who} requested time off for <strong>${range}</strong>.`,
+          row.reason?.trim() ? `Reason: ${row.reason.trim()}` : "No reason given.",
+          "Approve or deny it from the schedule.",
+        ],
+        { href: appUrl("/admin/schedule?timeoff=1"), label: "Review request" }
+      ),
+    });
+  }
+
+  await createNotifications({
+    organizationId: row.organizationId,
+    userIds: admins.map((a) => a.id),
+    category: "COMPANY",
+    type: "time_off_requested",
+    title: "Time off request",
+    body: row.reason?.trim() ? `${who} · ${range} · ${row.reason.trim()}` : `${who} · ${range}`,
+    actorId: row.user?.id ?? null,
+    actorName: row.user?.name ?? null,
+    href: "/admin/schedule?timeoff=1",
+  });
+}
+
+// The office approved or denied a worker's request -> the requester.
+export async function notifyWorkerTimeOffDecision(
+  timeOffId: string,
+  approved: boolean,
+  actor?: Actor
+): Promise<void> {
+  const row = await prisma.timeOff.findUnique({
+    where: { id: timeOffId },
+    select: {
+      userId: true,
+      organizationId: true,
+      startDate: true,
+      endDate: true,
+    },
+  });
+  if (!row) return;
+
+  const startLabel = dayMonthFmt.format(row.startDate);
+  const endLabel = dayMonthFmt.format(row.endDate);
+  const range =
+    row.startDate.getTime() === row.endDate.getTime()
+      ? startLabel
+      : `${startLabel} – ${endLabel}`;
+  await createNotifications({
+    organizationId: row.organizationId,
+    userIds: [row.userId],
+    category: "PERSONAL",
+    type: approved ? "time_off_approved" : "time_off_denied",
+    title: approved ? "Time off approved" : "Time off request denied",
+    body: range,
+    actorId: actor?.id ?? null,
+    actorName: actor?.name ?? null,
+    href: "/records/profile",
+  });
+}
+
 // Someone commented on a photo -> tell whoever took it (in-app only; photo
 // comments have no email path to avoid a back-and-forth email storm). Personal
 // notification, so it reaches the owner whatever their role. Skips notifying a

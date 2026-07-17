@@ -4,8 +4,9 @@ import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, CalendarOff
 import Link from "next/link";
 import type { RecordStatus } from "@prisma/client";
 
-import { useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { AvatarInitials } from "@/components/ui/avatar-initials";
+import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import {
   SettingsSection,
 } from "@/components/settings/SettingsList";
 import { updateProfileNameAction, updateProfilePhoneAction, saveStoredSignatureAction, clearStoredSignatureAction, addSkillAction, removeSkillAction, updateProfileAvatarAction, removeProfileAvatarAction } from "@/actions/profile";
+import { requestTimeOffAction, cancelTimeOffRequestAction, type TimeOffFormState } from "@/actions/timeOff";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +80,7 @@ interface TimeOffEntry {
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
   reason: string | null;
+  status: "PENDING" | "APPROVED" | "DENIED";
 }
 
 export function ProfileScreen({
@@ -161,8 +164,9 @@ export function ProfileScreen({
   const [skillError, setSkillError] = useState<string | null>(null);
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-  // Signature and skills live in bottom sheets, opened from Account rows.
-  const [sheet, setSheet] = useState<null | "signature" | "skills">(null);
+  // Signature and skills live in bottom sheets, opened from Account rows; the
+  // time-off request form opens in one too.
+  const [sheet, setSheet] = useState<null | "signature" | "skills" | "timeoff">(null);
 
   // Which tabs to show. Workers get a rich Summary; the Activity tab only
   // appears when there's something in it; Account is always present. When only
@@ -172,12 +176,9 @@ export function ProfileScreen({
   const hasMonthCompare =
     !isAdmin &&
     (monthCompare.records.current > 0 || monthCompare.records.previous > 0);
-  const hasSummary =
-    !isAdmin ||
-    teams.length > 0 ||
-    upcomingJobs.length > 0 ||
-    timeOff.length > 0 ||
-    incomplete;
+  // Always show Summary now that the time-off request lives there and is
+  // available to everyone.
+  const hasSummary = true;
 
   const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
@@ -390,9 +391,10 @@ export function ProfileScreen({
             </SettingsSection>
           )}
 
-          {/* Time off - upcoming days off, scheduled by the office (read-only) */}
-          {timeOff.length > 0 && (
-            <SettingsSection title={t.timeOffTitle} description={t.timeOffDesc}>
+          {/* Time off - the worker's own days off + pending requests, with a
+              button to request more (office approves). */}
+          <SettingsSection title={t.timeOffTitle} description={t.timeOffDesc}>
+            {timeOff.length > 0 && (
               <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
                 {timeOff.map((entry) => {
                   const start = asUtc(entry.startDate);
@@ -402,26 +404,31 @@ export function ProfileScreen({
                       ? dateFmt.format(start)
                       : `${dateFmt.format(start)} – ${dateFmt.format(end)}`;
                   return (
-                    <div key={entry.id} className="flex items-center gap-3 px-4 py-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                        <CalendarOff className="h-4 w-4" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-neutral-900 tabular-nums dark:text-neutral-100">
-                          {range}
-                        </p>
-                        {entry.reason && (
-                          <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
-                            {entry.reason}
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                    <TimeOffRequestRow
+                      key={entry.id}
+                      entry={entry}
+                      range={range}
+                      pendingLabel={t.timeOffPending}
+                      approvedLabel={t.timeOffApproved}
+                      deniedLabel={t.timeOffDenied}
+                      withdrawLabel={t.timeOffWithdraw}
+                    />
                   );
                 })}
               </div>
-            </SettingsSection>
-          )}
+            )}
+            <div className="p-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => setSheet("timeoff")}
+              >
+                <CalendarOff className="h-4 w-4" />
+                {t.timeOffRequest}
+              </Button>
+            </div>
+          </SettingsSection>
 
           {/* Completeness nudge - only until every useful field is filled */}
           {incomplete && (
@@ -800,7 +807,168 @@ export function ProfileScreen({
           )}
         </form>
       </BottomSheet>
+
+      {/* Time off request sheet */}
+      <BottomSheet
+        open={sheet === "timeoff"}
+        onClose={() => setSheet(null)}
+        title={t.timeOffRequest}
+        closeLabel={tc.close}
+      >
+        <TimeOffRequestForm
+          labels={{
+            start: t.timeOffStart,
+            end: t.timeOffEnd,
+            reason: t.timeOffReason,
+            reasonPlaceholder: t.timeOffReasonPlaceholder,
+            send: t.timeOffSend,
+            sending: t.timeOffSending,
+            error: t.timeOffRequestError,
+          }}
+          onDone={() => setSheet(null)}
+        />
+      </BottomSheet>
     </div>
+  );
+}
+
+// A worker's own time-off entry on the profile: date range + status badge, and
+// a Withdraw button while it's still pending.
+function TimeOffRequestRow({
+  entry,
+  range,
+  pendingLabel,
+  approvedLabel,
+  deniedLabel,
+  withdrawLabel,
+}: {
+  entry: TimeOffEntry;
+  range: string;
+  pendingLabel: string;
+  approvedLabel: string;
+  deniedLabel: string;
+  withdrawLabel: string;
+}) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+        <CalendarOff className="h-4 w-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-neutral-900 tabular-nums dark:text-neutral-100">
+          {range}
+        </p>
+        {entry.reason && (
+          <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+            {entry.reason}
+          </p>
+        )}
+      </div>
+      {entry.status === "PENDING" ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => startTransition(() => cancelTimeOffRequestAction(entry.id))}
+          className="shrink-0 text-xs font-medium text-neutral-400 hover:text-destructive-text disabled:opacity-50 dark:text-neutral-500"
+        >
+          {withdrawLabel}
+        </button>
+      ) : null}
+      <Badge
+        variant={
+          entry.status === "APPROVED"
+            ? "success"
+            : entry.status === "DENIED"
+              ? "destructive"
+              : "warning"
+        }
+      >
+        {entry.status === "APPROVED"
+          ? approvedLabel
+          : entry.status === "DENIED"
+            ? deniedLabel
+            : pendingLabel}
+      </Badge>
+    </div>
+  );
+}
+
+// The time-off request form (worker asks for days off; the office approves).
+function TimeOffRequestForm({
+  labels,
+  onDone,
+}: {
+  labels: {
+    start: string;
+    end: string;
+    reason: string;
+    reasonPlaceholder: string;
+    send: string;
+    sending: string;
+    error: string;
+  };
+  onDone: () => void;
+}) {
+  const [state, formAction, pending] = useActionState<TimeOffFormState, FormData>(
+    requestTimeOffAction,
+    undefined
+  );
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+
+  // Close the sheet once the request lands cleanly.
+  useEffect(() => {
+    if (state?.ok) onDone();
+  }, [state?.ok, onDone]);
+
+  return (
+    <form action={formAction} className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="req-start" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            {labels.start}
+          </label>
+          <Input
+            id="req-start"
+            name="startDate"
+            type="date"
+            required
+            value={start}
+            onChange={(e) => {
+              setStart(e.target.value);
+              if (!end || end < e.target.value) setEnd(e.target.value);
+            }}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="req-end" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            {labels.end}
+          </label>
+          <Input
+            id="req-end"
+            name="endDate"
+            type="date"
+            required
+            min={start || undefined}
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="req-reason" className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          {labels.reason}
+        </label>
+        <Input id="req-reason" name="reason" placeholder={labels.reasonPlaceholder} maxLength={120} />
+      </div>
+      {state?.error && (
+        <p className="text-sm text-destructive-text" role="alert">{labels.error}</p>
+      )}
+      <Button type="submit" disabled={pending} className="w-full">
+        {pending ? labels.sending : labels.send}
+      </Button>
+    </form>
   );
 }
 

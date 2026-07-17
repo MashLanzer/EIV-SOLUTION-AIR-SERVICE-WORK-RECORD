@@ -2,9 +2,11 @@
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CalendarOff, Plus, Trash2 } from "lucide-react";
+import { Check, CalendarOff, Plus, Trash2, X } from "lucide-react";
+import type { TimeOffStatus } from "@prisma/client";
 
 import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,6 +17,7 @@ import { Select } from "@/components/ui/select";
 import {
   addTimeOffAction,
   deleteTimeOffAction,
+  reviewTimeOffAction,
   type TimeOffFormState,
 } from "@/actions/timeOff";
 import { useT } from "@/components/i18n/LocaleProvider";
@@ -25,6 +28,7 @@ export interface TimeOffEntry {
   // Pre-formatted, locale-aware range label built on the server.
   range: string;
   reason: string | null;
+  status: TimeOffStatus;
 }
 
 // The office manages worker time off (vacation / sick / personal) from the
@@ -191,29 +195,63 @@ function TimeOffList({ entries }: { entries: TimeOffEntry[] }) {
 function TimeOffRow({ entry }: { entry: TimeOffEntry }) {
   const t = useT().schedule;
   const [pending, startTransition] = useTransition();
+  const isPending = entry.status === "PENDING";
   return (
     <li className="flex items-center gap-3 rounded-lg border border-neutral-200 px-3 py-2 dark:border-neutral-800">
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
-          {entry.workerName}
+        <span className="flex items-center gap-2">
+          <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+            {entry.workerName}
+          </span>
+          {entry.status === "PENDING" && <Badge variant="warning">{t.timeOffPending}</Badge>}
+          {entry.status === "DENIED" && <Badge variant="destructive">{t.timeOffDenied}</Badge>}
         </span>
         <span className="block truncate text-xs text-neutral-500 dark:text-neutral-400">
           {entry.range}
           {entry.reason ? ` · ${entry.reason}` : ""}
         </span>
       </span>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        disabled={pending}
-        aria-label={t.timeOffRemove}
-        title={t.timeOffRemove}
-        className="text-destructive-text"
-        onClick={() => startTransition(() => deleteTimeOffAction(entry.id))}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
+      {isPending ? (
+        <span className="flex shrink-0 items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={pending}
+            aria-label={t.timeOffApprove}
+            title={t.timeOffApprove}
+            className="text-success-text"
+            onClick={() => startTransition(() => reviewTimeOffAction(entry.id, true))}
+          >
+            <Check className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={pending}
+            aria-label={t.timeOffDeny}
+            title={t.timeOffDeny}
+            className="text-destructive-text"
+            onClick={() => startTransition(() => reviewTimeOffAction(entry.id, false))}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </span>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          disabled={pending}
+          aria-label={t.timeOffRemove}
+          title={t.timeOffRemove}
+          className="shrink-0 text-destructive-text"
+          onClick={() => startTransition(() => deleteTimeOffAction(entry.id))}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
     </li>
   );
 }

@@ -5,9 +5,14 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
+import { requireAuth } from "@/lib/session";
 import { requirePermission } from "@/lib/authz";
-import { notifyWorkerTimeOff } from "@/lib/notifications";
-import { timeOffSchema } from "@/lib/validations";
+import {
+  notifyWorkerTimeOff,
+  notifyOfficeTimeOffRequest,
+  notifyWorkerTimeOffDecision,
+} from "@/lib/notifications";
+import { timeOffRequestSchema, timeOffSchema } from "@/lib/validations";
 
 export type TimeOffFormState =
   | { error?: string; fieldErrors?: Record<string, string[]>; ok?: boolean }
@@ -15,6 +20,13 @@ export type TimeOffFormState =
 
 const SCHEDULE_PATH = "/admin/schedule";
 const WORKER_SCHEDULE_PATH = "/records/schedule";
+const PROFILE_PATHS = ["/records/profile", "/admin/profile"];
+
+function revalidateAll() {
+  revalidatePath(SCHEDULE_PATH);
+  revalidatePath(WORKER_SCHEDULE_PATH);
+  for (const p of PROFILE_PATHS) revalidatePath(p);
+}
 
 // A DATE column wants a UTC-midnight Date; the form sends "YYYY-MM-DD".
 function toDateOnly(value: string): Date {
@@ -58,6 +70,7 @@ export async function addTimeOffAction(
       startDate: toDateOnly(startDate),
       endDate: toDateOnly(endDate),
       reason: reason || null,
+      status: "APPROVED",
       createdById: session.user.id,
     },
     select: { id: true },
@@ -65,8 +78,7 @@ export async function addTimeOffAction(
   // Let the person know it's on their calendar (in-app; time off has no email).
   await notifyWorkerTimeOff(created.id, session.user);
 
-  revalidatePath(SCHEDULE_PATH);
-  revalidatePath(WORKER_SCHEDULE_PATH);
+  revalidateAll();
   return { ok: true };
 }
 
@@ -76,6 +88,75 @@ export async function deleteTimeOffAction(id: string) {
   const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
   await prisma.timeOff.deleteMany({ where: { id, organizationId } });
-  revalidatePath(SCHEDULE_PATH);
-  revalidatePath(WORKER_SCHEDULE_PATH);
+  revalidateAll();
+}
+
+// A worker requests their own time off from their profile. Any authenticated,
+// active member of the org may ask; it lands as PENDING for the office to
+// approve, so it doesn't mark them unavailable until then.
+export async function requestTimeOffAction(
+  _prev: TimeOffFormState,
+  formData: FormData
+): Promise<TimeOffFormState> {
+  const session = await requireAuth();
+  const organizationId = requireOrgId(session);
+
+  const parsed = timeOffRequestSchema.safeParse({
+    startDate: formData.get("startDate"),
+    endDate: formData.get("endDate"),
+    reason: formData.get("reason") || "",
+  });
+  if (!parsed.success) {
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+  const { startDate, endDate, reason } = parsed.data;
+
+  const created = await prisma.timeOff.create({
+    data: {
+      organizationId,
+      userId: session.user.id,
+      startDate: toDateOnly(startDate),
+      endDate: toDateOnly(endDate),
+      reason: reason || null,
+      status: "PENDING",
+      createdById: session.user.id,
+    },
+    select: { id: true },
+  });
+  await notifyOfficeTimeOffRequest(created.id);
+
+  revalidateAll();
+  return { ok: true };
+}
+
+// A worker withdraws their own still-pending request. Scoped to the requester
+// and PENDING only, so it can't remove approved office entries or others'.
+export async function cancelTimeOffRequestAction(id: string) {
+  const session = await requireAuth();
+  const organizationId = requireOrgId(session);
+  await prisma.timeOff.deleteMany({
+    where: { id, organizationId, userId: session.user.id, status: "PENDING" },
+  });
+  revalidateAll();
+}
+
+// The office approves or denies a pending request. Approving makes it count as
+// real time off (marks the worker unavailable); denying keeps the record but
+// inert. Either way the worker is notified.
+export async function reviewTimeOffAction(id: string, approve: boolean) {
+  const session = await requirePermission("schedule.manage");
+  const organizationId = requireOrgId(session);
+  const { count } = await prisma.timeOff.updateMany({
+    where: { id, organizationId, status: "PENDING" },
+    data: {
+      status: approve ? "APPROVED" : "DENIED",
+      reviewedById: session.user.id,
+      reviewedAt: new Date(),
+    },
+  });
+  if (count > 0) await notifyWorkerTimeOffDecision(id, approve, session.user);
+  revalidateAll();
 }

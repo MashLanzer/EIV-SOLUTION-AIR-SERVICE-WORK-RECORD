@@ -545,6 +545,7 @@ model User {
   createdJobs      ScheduledJob[] @relation("CreatedJobs")
   timeOff          TimeOff[]      @relation("UserTimeOff")
   timeOffCreated   TimeOff[]      @relation("TimeOffCreatedBy")
+  timeOffReviewed  TimeOff[]      @relation("TimeOffReviewedBy")
   notifications    Notification[] @relation("NotificationRecipient")
   reviewEvents     RecordReviewEvent[] @relation("ReviewActor")
   roleChangesMade  RoleChangeEvent[]   @relation("RoleChangeActor")
@@ -766,21 +767,37 @@ model JobStatusEvent {
 // A worker's day (or run of days) off — vacation, sick, personal. The scheduler
 // reads these to warn the office before booking someone who's away, and to show
 // "off" on the calendar. Date-only, inclusive on both ends. Org-scoped.
+// Time off is either entered by the office (status APPROVED straight away) or
+// requested by the worker from their profile (status PENDING until an office
+// user approves/denies it). Only APPROVED entries mark someone unavailable on
+// the schedule.
+enum TimeOffStatus {
+  PENDING
+  APPROVED
+  DENIED
+}
+
 model TimeOff {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   userId         String
-  user           User         @relation("UserTimeOff", fields: [userId], references: [id], onDelete: Cascade)
+  user           User          @relation("UserTimeOff", fields: [userId], references: [id], onDelete: Cascade)
   // Inclusive date range (a single day = start == end).
-  startDate      DateTime     @db.Date
-  endDate        DateTime     @db.Date
+  startDate      DateTime      @db.Date
+  endDate        DateTime      @db.Date
   reason         String?
+  // APPROVED by default so existing office-entered rows keep marking people off.
+  status         TimeOffStatus @default(APPROVED)
+  reviewedById   String?
+  reviewedBy     User?         @relation("TimeOffReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt     DateTime?
   createdById    String?
-  createdBy      User?        @relation("TimeOffCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt      DateTime     @default(now())
+  createdBy      User?         @relation("TimeOffCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
 
   @@index([organizationId, startDate])
+  @@index([organizationId, status])
   @@index([userId])
 }
 

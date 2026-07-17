@@ -167,6 +167,7 @@ async function timeOffWarning(params: {
     where: {
       organizationId,
       userId: assignedToId,
+      status: "APPROVED",
       startDate: { lte: scheduledFor },
       endDate: { gte: scheduledFor },
     },

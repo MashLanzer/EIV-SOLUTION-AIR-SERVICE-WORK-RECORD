@@ -164,13 +164,14 @@ export async function getProfileData(userId: string, organizationId: string) {
       where: { submittedById: userId, date: { gte: analyticsStart } },
       select: { date: true, status: true, arrivalTime: true, departureTime: true },
     }),
-    // Upcoming time off (read-only here; the office schedules it). Anything that
-    // hasn't ended yet, soonest first.
+    // The person's own time off: upcoming entries plus any still-pending
+    // request (whatever its dates), so they can track and withdraw it. Pending
+    // first, then soonest.
     prisma.timeOff.findMany({
-      where: { userId, endDate: { gte: today } },
-      orderBy: { startDate: "asc" },
-      take: 6,
-      select: { id: true, startDate: true, endDate: true, reason: true },
+      where: { userId, OR: [{ endDate: { gte: today } }, { status: "PENDING" }] },
+      orderBy: [{ status: "asc" }, { startDate: "asc" }],
+      take: 8,
+      select: { id: true, startDate: true, endDate: true, reason: true, status: true },
     }),
   ]);
 
@@ -219,6 +220,7 @@ export async function getProfileData(userId: string, organizationId: string) {
     startDate: t.startDate.toISOString().slice(0, 10),
     endDate: t.endDate.toISOString().slice(0, 10),
     reason: t.reason,
+    status: t.status,
   }));
 
   return {
