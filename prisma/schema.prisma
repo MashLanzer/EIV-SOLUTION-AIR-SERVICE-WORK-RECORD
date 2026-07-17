@@ -148,6 +148,9 @@ model Organization {
   // --- Localization ---
   // Clock format for times shown across the app: "12" or "24".
   timeFormat       String   @default("12")
+  // IANA time zone (e.g. "America/New_York") used to turn a job's wall-clock
+  // start into a real instant for reminders. "UTC" keeps the prior behaviour.
+  timeZone         String   @default("UTC")
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   users     User[]

@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowRight,
-  CalendarDays,
+  CalendarClock,
+  Camera,
   ClipboardList,
   Download,
+  ListChecks,
   Mail,
   MapPin,
   Phone,
@@ -16,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataField } from "@/components/ui/data-field";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
+import { StatTile } from "@/components/ui/stat-tile";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { Tabs } from "@/components/ui/tabs";
 import {
@@ -29,6 +32,7 @@ import {
 import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
 import { ProjectManageSheet } from "@/components/projects/ProjectManageSheet";
 import { ProjectSchedule, type ProjectScheduleJob } from "@/components/projects/ProjectSchedule";
+import { ProjectSummarySheet } from "@/components/projects/ProjectSummarySheet";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
 import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
 import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
@@ -242,8 +246,59 @@ export default async function AdminProjectPage({
     status: j.status,
   }));
 
+  // Next upcoming visit for the at-a-glance tile (the list is already sorted).
+  const nextVisit = scheduledJobs[0];
+  const summaryRecords = records.slice(0, 4).map((r) => ({
+    id: r.id,
+    jobNumber: r.jobNumber,
+    dateLabel: formatDate(r.date, locale),
+    typeOfWork: r.typeOfWork,
+    status: r.status,
+  }));
+
   const overviewPanel = (
     <div className="flex flex-col gap-4">
+      {/* At-a-glance tiles: the project's headline numbers, replacing the old
+          dense stats card. The full breakdown lives one tap away in the sheet. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile
+          icon={ClipboardList}
+          value={recordCount}
+          label={t.workRecords}
+          sub={recordCount > 0 ? t.approvedCount.replace("{n}", String(statusCount("APPROVED"))) : undefined}
+        />
+        <StatTile icon={Camera} value={photoCount} label={t.tabPhotos} />
+        <StatTile
+          icon={ListChecks}
+          value={checklistItemCount > 0 ? `${checklistPct}%` : "—"}
+          label={t.checklistProgress}
+          sub={checklistItemCount > 0 ? `${checklistDoneCount}/${checklistItemCount}` : undefined}
+        />
+        <StatTile
+          icon={CalendarClock}
+          value={nextVisit ? nextVisit.dateLabel : "—"}
+          label={t.nextVisit}
+          center
+        />
+      </div>
+
+      <ProjectSummarySheet
+        status={{
+          approved: statusCount("APPROVED"),
+          pending: statusCount("SUBMITTED"),
+          needsChanges: statusCount("NEEDS_CHANGES"),
+          total: recordCount,
+        }}
+        checklist={
+          checklistItemCount > 0
+            ? { done: checklistDoneCount, total: checklistItemCount, pct: checklistPct }
+            : null
+        }
+        createdLabel={t.created.replace("{date}", formatSince(project.createdAt, locale))}
+        recent={summaryRecords}
+        recordHrefBase="/admin/records/"
+      />
+
       <ProjectSchedule
         jobs={scheduledJobs}
         title={t.upcomingVisits}
@@ -259,66 +314,6 @@ export default async function AdminProjectPage({
       {!located && project.address && (
         <GeocodeNotice projectId={project.id} address={project.address} canRetry />
       )}
-
-      <Card>
-        <CardContent className="flex flex-col gap-4 p-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
-              <ClipboardList className="h-5 w-5" />
-            </span>
-            <div>
-              <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                {recordCount}
-              </div>
-              <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                {t.workRecords}
-              </div>
-            </div>
-          </div>
-          {recordCount > 0 && (
-            <div className="grid grid-cols-3 gap-3 border-t border-neutral-200 dark:border-neutral-800 pt-4">
-              <div>
-                <div className="text-lg font-semibold tabular-nums text-success-text">
-                  {statusCount("APPROVED")}
-                </div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400">{t.approved}</div>
-              </div>
-              <div>
-                <div className="text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                  {statusCount("SUBMITTED")}
-                </div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400">{t.pending}</div>
-              </div>
-              <div>
-                <div className="text-lg font-semibold tabular-nums text-warning-text">
-                  {statusCount("NEEDS_CHANGES")}
-                </div>
-                <div className="text-xs text-neutral-500 dark:text-neutral-400">{t.needsChanges}</div>
-              </div>
-            </div>
-          )}
-          {checklistItemCount > 0 && (
-            <div className="flex flex-col gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-neutral-500 dark:text-neutral-400">{t.checklistProgress}</span>
-                <span className="font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
-                  {checklistDoneCount}/{checklistItemCount} · {checklistPct}%
-                </span>
-              </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
-                <div
-                  className="h-full rounded-full bg-neutral-900 dark:bg-neutral-100"
-                  style={{ width: `${checklistPct}%` }}
-                />
-              </div>
-            </div>
-          )}
-          <div className="flex items-center gap-1.5 border-t border-neutral-200 dark:border-neutral-800 pt-4 text-sm text-neutral-500 dark:text-neutral-400">
-            <CalendarDays className="h-4 w-4 shrink-0" />
-            {t.created.replace("{date}", formatSince(project.createdAt, locale))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 

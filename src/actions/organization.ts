@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { deleteProjectPhoto, uploadCompanyLogo } from "@/lib/blob";
 import { requireOrgId } from "@/lib/orgScope";
+import { isValidTimeZone } from "@/lib/timezone";
 import { requirePermission } from "@/lib/authz";
 import { generateJoinCode } from "@/lib/joinCode";
 import { updateOrganizationNameSchema } from "@/lib/validations";
@@ -369,6 +370,20 @@ export async function setTimeFormatAction(value: string) {
   await prisma.organization.update({
     where: { id: organizationId },
     data: { timeFormat: value === "24" ? "24" : "12" },
+  });
+  revalidatePath("/admin/settings");
+}
+
+// The org's IANA time zone (drives reminder timing). Only a zone the runtime
+// recognises is stored; anything else falls back to UTC so we never persist
+// garbage that would break the reminder math.
+export async function setTimeZoneAction(value: string) {
+  const session = await requirePermission("settings.manage");
+  const organizationId = requireOrgId(session);
+  const timeZone = isValidTimeZone(value) ? value : "UTC";
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { timeZone },
   });
   revalidatePath("/admin/settings");
 }

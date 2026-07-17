@@ -367,6 +367,12 @@ export const en = {
     upcomingVisits: "Upcoming visits",
     noUpcomingVisits: "No visits scheduled yet.",
     viewCalendar: "Calendar",
+    // Overview tiles + summary sheet
+    nextVisit: "Next visit",
+    approvedCount: "{n} approved",
+    projectDetails: "Project details",
+    projectDetailsHint: "Records by status, checklist, recent activity",
+    recentRecords: "Recent records",
     // Delete + edit + geocode
     deleteProjectTitle: "Delete this project?",
     deleteProjectDesc:
@@ -1894,6 +1900,8 @@ export const en = {
       timeFormatHint: "12-hour (2:30 PM) or 24-hour (14:30).",
       format12: "12-hour",
       format24: "24-hour",
+      timeZone: "Time zone",
+      timeZoneHint: "Used to send job reminders at the right local time.",
     },
   },
 } as const;

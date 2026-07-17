@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { appUrl, emailLayout, sendEmail } from "@/lib/email";
 import { createNotifications } from "@/lib/inappNotify";
 import { toMinutes } from "@/lib/schedule";
+import { zonedWallTimeToUtc } from "@/lib/timezone";
 
 // Pre-job reminders. Runs hourly (see vercel.json) and, for each timed job,
 // emails + notifies the assigned worker once its start comes within the org's
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
       assignedTo: { select: { email: true } },
       customer: { select: { name: true } },
       project: { select: { name: true } },
-      organization: { select: { reminderLeadHours: true, notifyReminders: true } },
+      organization: { select: { reminderLeadHours: true, notifyReminders: true, timeZone: true } },
     },
   });
 
@@ -69,8 +70,16 @@ export async function GET(request: Request) {
     const startMin = toMinutes(job.startTime);
     if (startMin == null || !job.assignedToId) continue;
 
-    // Absolute job start = its UTC calendar day + wall-clock start.
-    const jobStart = new Date(job.scheduledFor.getTime() + startMin * 60 * 1000);
+    // Absolute job start = its calendar day + wall-clock start, interpreted in
+    // the org's time zone so the reminder fires at the right real-world moment.
+    const jobStart = zonedWallTimeToUtc(
+      job.scheduledFor.getUTCFullYear(),
+      job.scheduledFor.getUTCMonth() + 1,
+      job.scheduledFor.getUTCDate(),
+      Math.floor(startMin / 60),
+      startMin % 60,
+      job.organization.timeZone ?? "UTC"
+    );
     const lead = job.organization.reminderLeadHours ?? 24;
     const leadEdge = new Date(now.getTime() + lead * 60 * 60 * 1000);
     // Due when the start is still ahead of us but within the lead window.

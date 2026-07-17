@@ -368,6 +368,12 @@ export const es: Dictionary = {
     upcomingVisits: "Próximas visitas",
     noUpcomingVisits: "Aún no hay visitas agendadas.",
     viewCalendar: "Calendario",
+    // Overview tiles + summary sheet
+    nextVisit: "Próxima visita",
+    approvedCount: "{n} aprobados",
+    projectDetails: "Detalles del proyecto",
+    projectDetailsHint: "Registros por estado, checklist, actividad reciente",
+    recentRecords: "Registros recientes",
     // Delete + edit + geocode
     deleteProjectTitle: "¿Eliminar este proyecto?",
     deleteProjectDesc:
@@ -1891,6 +1897,8 @@ export const es: Dictionary = {
       timeFormatHint: "12 horas (2:30 PM) o 24 horas (14:30).",
       format12: "12 horas",
       format24: "24 horas",
+      timeZone: "Zona horaria",
+      timeZoneHint: "Se usa para enviar recordatorios de trabajos a la hora local correcta.",
     },
   },
 };
