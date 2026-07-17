@@ -47,16 +47,19 @@ export default async function WorkerSchedulePage({
   const selectedKey = dayKey(selected);
   const todayKey = dayKey(startOfUtcDay(new Date()));
 
-  const gridDays = monthGridDays(selected);
+  // Read the org's week-start up front so the grid range and headers line up.
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { scheduleOverloadThreshold: true, timeFormat: true, weekStartsOn: true },
+  });
+  const weekStart = org?.weekStartsOn ?? 1;
+
+  const gridDays = monthGridDays(selected, weekStart);
   const from = gridDays[0];
   const to = addUtcDays(gridDays[gridDays.length - 1], 1);
 
-  const [jobs, org, me] = await Promise.all([
+  const [jobs, me] = await Promise.all([
     getScheduledJobs({ session, organizationId, from, to }),
-    prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { scheduleOverloadThreshold: true },
-    }),
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: { scheduleOverloadThreshold: true },
@@ -65,6 +68,7 @@ export default async function WorkerSchedulePage({
   // The worker's own threshold wins when set; otherwise the org default.
   const overloadThreshold =
     me?.scheduleOverloadThreshold ?? org?.scheduleOverloadThreshold ?? 4;
+  const use24 = org?.timeFormat === "24";
 
   // Canceled visits are hidden - they're not something to act on.
   type Row = WorkerJobView & { day: string };
@@ -143,7 +147,7 @@ export default async function WorkerSchedulePage({
     timeZone: "UTC",
   });
   const weekdayLabels = Array.from({ length: 7 }, (_, i) =>
-    weekdayFmt.format(utcDay(2024, 0, 1 + i))
+    weekdayFmt.format(utcDay(2024, 0, 7 + weekStart + i))
   );
 
   return (
@@ -195,6 +199,7 @@ export default async function WorkerSchedulePage({
           jobs={selectedJobs}
           conflictIds={conflictIds}
           conflictLabel={t.conflictBadge}
+          use24={use24}
         />
       )}
 

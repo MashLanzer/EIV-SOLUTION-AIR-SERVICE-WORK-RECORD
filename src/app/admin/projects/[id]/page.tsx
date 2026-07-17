@@ -39,6 +39,8 @@ import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { getWeather } from "@/lib/weather";
 import { requireOrgId } from "@/lib/orgScope";
+import { getUse24Hour } from "@/lib/timeFormat";
+import { formatTimeRange } from "@/lib/format";
 import { requirePermission } from "@/lib/authz";
 import { dayKey, startOfUtcDay } from "@/lib/schedule";
 import { getLocale, getT } from "@/lib/i18n/server";
@@ -82,6 +84,7 @@ export default async function AdminProjectPage({
   if (!project) notFound();
 
   const dict = await getT();
+  const use24 = await getUse24Hour(organizationId);
   const t = dict.projects;
   const locale = await getLocale();
 
@@ -234,10 +237,7 @@ export default async function AdminProjectPage({
     title: j.title,
     dateKey: dayKey(j.scheduledFor),
     dateLabel: visitDateFmt.format(j.scheduledFor),
-    timeLabel:
-      j.startTime && j.endTime
-        ? `${j.startTime}–${j.endTime}`
-        : j.startTime || dict.schedule.allDay,
+    timeLabel: formatTimeRange(j.startTime, j.endTime, use24, dict.schedule.allDay),
     who: j.assignedTo?.name ?? j.team?.name ?? null,
     status: j.status,
   }));

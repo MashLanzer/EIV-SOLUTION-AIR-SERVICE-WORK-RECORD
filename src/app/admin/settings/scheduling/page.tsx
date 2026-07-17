@@ -47,7 +47,7 @@ export default async function SchedulingSettingsPage() {
           icon={CalendarDays}
           label={s.weekStart}
           sublabel={s.weekStartHint}
-          value={String(org?.weekStartsOn ?? 0)}
+          value={String(org?.weekStartsOn ?? 1)}
           options={[
             { value: "0", label: s.sunday },
             { value: "1", label: s.monday },

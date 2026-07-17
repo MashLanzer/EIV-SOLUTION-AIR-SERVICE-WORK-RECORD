@@ -22,6 +22,9 @@ export type PdfCompany = {
   // Optional footer line printed at the bottom of each record page (Settings →
   // Documents), e.g. "Thank you for your business".
   footer?: string | null;
+  // The org's 12/24-hour time preference (Settings → Localization), so printed
+  // arrival/departure times match the rest of the app.
+  use24?: boolean;
 };
 
 const styles = StyleSheet.create({
@@ -185,8 +188,8 @@ function RecordPage({ record, company }: { record: RecordWithWorker; company: Pd
         <Field label="Helper" value={record.helperName ?? ""} />
         <Field label="Customer Name" value={record.customerName} />
         <Field label="Customer Address" value={record.customerAddress} />
-        <Field label="Arrival Time" value={formatTime(record.arrivalTime)} />
-        <Field label="Departure Time" value={formatTime(record.departureTime)} />
+        <Field label="Arrival Time" value={formatTime(record.arrivalTime, company.use24)} />
+        <Field label="Departure Time" value={formatTime(record.departureTime, company.use24)} />
         <Field label="Type of Work" value={record.typeOfWork} />
         <Field
           label="Lead Installer Pay"

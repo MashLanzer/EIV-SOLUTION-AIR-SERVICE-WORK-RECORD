@@ -49,6 +49,13 @@ describe("schedule date math", () => {
     expect(dayKey(from)).toBe("2026-07-13");
     expect(dayKey(to)).toBe("2026-07-20");
   });
+
+  it("starts the week on Sunday when weekStartsOn is 0", () => {
+    // 2026-07-14 is a Tuesday; a Sunday-first week runs Sun 12 .. Sat 18.
+    const { from, to } = weekRange(utcDay(2026, 6, 14), 0);
+    expect(dayKey(from)).toBe("2026-07-12");
+    expect(dayKey(to)).toBe("2026-07-19");
+  });
 });
 
 describe("monthRange", () => {
@@ -76,6 +83,12 @@ describe("monthGridDays", () => {
   it("starts on the 1st when the month begins on a Monday", () => {
     const days = monthGridDays(utcDay(2026, 5, 10)); // June 2026 (1st is Monday)
     expect(dayKey(days[0])).toBe("2026-06-01");
+  });
+
+  it("starts the grid on the Sunday before the 1st when weekStartsOn is 0", () => {
+    const days = monthGridDays(utcDay(2026, 6, 14), 0); // July 2026 (1st is Wed)
+    expect(days).toHaveLength(42);
+    expect(dayKey(days[0])).toBe("2026-06-28"); // Sunday
   });
 });
 

@@ -28,6 +28,7 @@ const META: Record<string, { icon: LucideIcon; tone: "neutral" | "success" | "wa
   job_scheduled: { icon: CalendarPlus, tone: "neutral" },
   job_reassigned: { icon: UserCheck, tone: "neutral" },
   job_rescheduled: { icon: CalendarClock, tone: "neutral" },
+  job_reminder: { icon: CalendarClock, tone: "neutral" },
   job_series: { icon: Repeat, tone: "neutral" },
   time_off_added: { icon: CalendarOff, tone: "neutral" },
   photo_comment: { icon: MessageSquare, tone: "neutral" },

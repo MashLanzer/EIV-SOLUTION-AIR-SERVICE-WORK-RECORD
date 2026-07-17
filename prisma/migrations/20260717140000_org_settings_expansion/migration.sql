@@ -9,7 +9,7 @@ ALTER TABLE "Organization"
   ADD COLUMN "notifyReplyTo" TEXT,
   ADD COLUMN "defaultJobDurationMinutes" INTEGER NOT NULL DEFAULT 120,
   ADD COLUMN "reminderLeadHours" INTEGER NOT NULL DEFAULT 24,
-  ADD COLUMN "weekStartsOn" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN "weekStartsOn" INTEGER NOT NULL DEFAULT 1,
   ADD COLUMN "jobNumberPrefix" TEXT,
   ADD COLUMN "pdfFooter" TEXT,
   ADD COLUMN "receiptExpiryDays" INTEGER,

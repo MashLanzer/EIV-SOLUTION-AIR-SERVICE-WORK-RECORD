@@ -47,6 +47,7 @@ export async function companyForPdf(organizationId: string): Promise<PdfCompany>
       logoUrl: true,
       currencySymbol: true,
       pdfFooter: true,
+      timeFormat: true,
     },
   });
   return {
@@ -57,6 +58,7 @@ export async function companyForPdf(organizationId: string): Promise<PdfCompany>
     logoUrl: org?.logoUrl ?? null,
     currency: org?.currencySymbol || "$",
     footer: org?.pdfFooter ?? null,
+    use24: org?.timeFormat === "24",
   };
 }
 

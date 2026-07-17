@@ -10,6 +10,8 @@ import {
 import { ScheduleStatusBadge } from "@/components/schedule/ScheduleStatusBadge";
 import type { JobOption } from "@/components/schedule/ScheduleJobForm";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { useUse24Hour } from "@/components/i18n/TimeFormatProvider";
+import { formatTimeRange } from "@/lib/format";
 
 // A day's job shown as a compact row (time · title · who · status) that expands
 // on tap into the full editable card. Keeps the day view a short, scannable list
@@ -31,6 +33,7 @@ export function ExpandableJobCard({
   conflict?: boolean;
 }) {
   const t = useT().schedule;
+  const use24 = useUse24Hour();
   const [open, setOpen] = useState(false);
 
   if (open) {
@@ -56,10 +59,7 @@ export function ExpandableJobCard({
     );
   }
 
-  const timeLabel =
-    job.startTime && job.endTime
-      ? `${job.startTime}–${job.endTime}`
-      : job.startTime || t.allDay;
+  const timeLabel = formatTimeRange(job.startTime, job.endTime, use24, t.allDay);
   const who = job.assignedToName ?? job.teamName ?? t.unassigned;
   const canceled = job.status === "CANCELED";
 

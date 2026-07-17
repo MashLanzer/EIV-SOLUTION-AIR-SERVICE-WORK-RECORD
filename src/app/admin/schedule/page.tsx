@@ -288,16 +288,30 @@ export default async function SchedulePage({
   const selectedKey = dayKey(selected);
   const todayKey = dayKey(startOfUtcDay(new Date()));
 
+  // The org's calendar/scheduling prefs drive both which day the week starts on
+  // (so the range below and the grid line up) and the display prefs used later,
+  // so they're read up front rather than inside the parallel batch.
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: {
+      scheduleOverloadThreshold: true,
+      defaultJobDurationMinutes: true,
+      timeFormat: true,
+      weekStartsOn: true,
+    },
+  });
+  const weekStart = org?.weekStartsOn ?? 1;
+
   // Month view fetches the whole 6-week grid (so the calendar can show per-day
   // activity); week view its 7 days; day view just the one. Either way, one query.
-  const gridDays = monthGridDays(selected);
+  const gridDays = monthGridDays(selected, weekStart);
   let from: Date;
   let to: Date;
   if (view === "day") {
     from = selected;
     to = addUtcDays(selected, 1);
   } else if (view === "week" || view === "team") {
-    const range = weekRange(selected);
+    const range = weekRange(selected, weekStart);
     from = range.from;
     to = range.to;
   } else {
@@ -305,7 +319,7 @@ export default async function SchedulePage({
     to = addUtcDays(gridDays[gridDays.length - 1], 1);
   }
 
-  const [jobs, workers, teams, customers, projects, org, skillRows, skillSuggestions] = await Promise.all([
+  const [jobs, workers, teams, customers, projects, skillRows, skillSuggestions] = await Promise.all([
     getScheduledJobs({ session, organizationId, from, to, assignedToId: worker }),
     prisma.user.findMany({
       where: { organizationId, active: true },
@@ -327,10 +341,6 @@ export default async function SchedulePage({
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
-    prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { scheduleOverloadThreshold: true, defaultJobDurationMinutes: true },
-    }),
     prisma.userSkill.findMany({
       where: { user: { organizationId } },
       select: { userId: true, name: true },
@@ -341,6 +351,7 @@ export default async function SchedulePage({
   // Each worker's effective overload threshold: their personal override when
   // set, otherwise the org default. A single lookup used by every view.
   const orgOverloadDefault = org?.scheduleOverloadThreshold ?? 4;
+  const use24 = org?.timeFormat === "24";
   const workerThreshold = new Map(workers.map((w) => [w.id, w.scheduleOverloadThreshold]));
   const thresholdFor = (id: string) => workerThreshold.get(id) ?? orgOverloadDefault;
 
@@ -512,7 +523,11 @@ export default async function SchedulePage({
     weekOf: new Intl.DateTimeFormat(intlLocale, { month: "short", day: "numeric", timeZone: "UTC" }),
     weekday: new Intl.DateTimeFormat(intlLocale, { weekday: "short", timeZone: "UTC" }),
   };
-  const weekdayLabels = Array.from({ length: 7 }, (_, i) => intl.weekday.format(utcDay(2024, 0, 1 + i)));
+  // Weekday headers starting on the org's first day of the week. Jan 7 2024 is a
+  // Sunday (getUTCDay 0), so 7 + weekStart lands on that first day, then +i wraps.
+  const weekdayLabels = Array.from({ length: 7 }, (_, i) =>
+    intl.weekday.format(utcDay(2024, 0, 7 + weekStart + i))
+  );
   const count = (n: number) =>
     (n === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(n));
 
@@ -678,6 +693,7 @@ export default async function SchedulePage({
           pins={dayGeo.pins}
           count={count}
           t={t}
+          use24={use24}
         />
       ) : view === "team" ? (
         <TeamView
@@ -915,6 +931,7 @@ function DayView({
   pins,
   count,
   t,
+  use24,
 }: {
   selected: Date;
   selectedKey: string;
@@ -931,6 +948,7 @@ function DayView({
   offByDay: Map<string, Set<string>>;
   thresholdFor: (id: string) => number;
   dayLabel: string;
+  use24: boolean;
   weather: { day: WeatherDay; placeLabel: string } | null;
   route: DayRoute | null;
   pins: MapPin[];
@@ -1001,6 +1019,7 @@ function DayView({
                 jobs={dayJobs}
                 conflictIds={conflictIds}
                 conflictLabel={t.conflictBadge}
+                use24={use24}
               />
             </SheetButton>
           )}

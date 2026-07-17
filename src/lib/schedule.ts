@@ -49,11 +49,14 @@ export function dayKeysInRange(
 
 // The Monday..Sunday week that contains `date` (UTC). Field service weeks read
 // most naturally Monday-first, matching the rest of the app's calendars.
-export function weekRange(date: Date): { from: Date; to: Date } {
+// The week [from, to) containing `date`. weekStartsOn picks the first column
+// (0 = Sunday, 1 = Monday, …, matching JS getUTCDay); it defaults to Monday to
+// preserve the app's original layout for callers that don't pass a preference.
+export function weekRange(date: Date, weekStartsOn = 1): { from: Date; to: Date } {
   const start = startOfUtcDay(date);
-  // getUTCDay: 0=Sun..6=Sat; shift so Monday is the first column.
-  const isoDow = (start.getUTCDay() + 6) % 7; // 0=Mon..6=Sun
-  const from = addUtcDays(start, -isoDow);
+  // Days elapsed since the configured first day of the week.
+  const dow = (start.getUTCDay() - weekStartsOn + 7) % 7;
+  const from = addUtcDays(start, -dow);
   const to = addUtcDays(from, 7); // exclusive upper bound
   return { from, to };
 }
@@ -66,12 +69,13 @@ export function monthRange(date: Date): { from: Date; to: Date } {
   return { from, to };
 }
 
-// The 42-day (6-week) grid that renders a month calendar, starting on the
-// Monday of the week containing the 1st so leading/trailing days of the
-// adjacent months fill the grid. Always 42 days for a stable 6-row layout.
-export function monthGridDays(date: Date): Date[] {
+// The 42-day (6-week) grid that renders a month calendar, starting on the first
+// day of the week (weekStartsOn, default Monday) of the week containing the 1st
+// so leading/trailing days of the adjacent months fill the grid. Always 42 days
+// for a stable 6-row layout.
+export function monthGridDays(date: Date, weekStartsOn = 1): Date[] {
   const first = monthRange(date).from;
-  const gridStart = weekRange(first).from;
+  const gridStart = weekRange(first, weekStartsOn).from;
   return Array.from({ length: 42 }, (_, i) => addUtcDays(gridStart, i));
 }
 

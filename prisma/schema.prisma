@@ -137,7 +137,7 @@ model Organization {
   // How many hours before a job its reminder should go out.
   reminderLeadHours Int @default(24)
   // First day of the week on the calendar: 0 = Sunday, 1 = Monday.
-  weekStartsOn     Int @default(0)
+  weekStartsOn     Int @default(1)
   // --- Numbering & documents ---
   // Optional prefix shown before the suggested next job number (e.g. "WO-").
   jobNumberPrefix  String?
@@ -729,6 +729,10 @@ model ScheduledJob {
   createdById    String?
   createdBy      User?              @relation("CreatedJobs", fields: [createdById], references: [id], onDelete: SetNull)
   statusEvents   JobStatusEvent[]
+  // When the pre-job reminder was sent (Settings → Scheduling lead time), so the
+  // hourly reminder pass sends each timed job's reminder at most once. Null until
+  // reminded.
+  reminderSentAt DateTime?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 

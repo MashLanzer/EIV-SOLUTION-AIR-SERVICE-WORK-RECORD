@@ -2,6 +2,7 @@ import type { ScheduledJobStatus } from "@prisma/client";
 import { AlertTriangle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { formatTime } from "@/lib/format";
 import { toMinutes } from "@/lib/schedule";
 
 // The minimum a job needs to appear on the timeline. Both the admin's
@@ -77,11 +78,19 @@ export function ScheduleDayTimeline({
   jobs,
   conflictIds,
   conflictLabel,
+  use24 = false,
 }: {
   jobs: TimelineJob[];
   conflictIds: Set<string>;
   conflictLabel: string;
+  // The org's 12/24-hour preference (Settings → Localization). Keeps the axis
+  // ruler and each block's start time in the same format as the rest of the app.
+  use24?: boolean;
 }) {
+  // Compact hour label for the ~40px gutter: "07"/"14" in 24-hour, "7a"/"2p" in
+  // 12-hour (a full "2:00 PM" would overflow the ruler).
+  const hourLabel = (h: number) =>
+    use24 ? String(h).padStart(2, "0") : `${h % 12 || 12}${h < 12 ? "a" : "p"}`;
   const slots: Slot[] = [];
   for (const job of jobs) {
     if (job.status === "CANCELED") continue;
@@ -112,7 +121,7 @@ export function ScheduleDayTimeline({
               className="absolute right-2 -translate-y-1/2 text-[11px] tabular-nums text-neutral-400 dark:text-neutral-500"
               style={{ top: (h - startHour) * HOUR_PX }}
             >
-              {String(h).padStart(2, "0")}
+              {hourLabel(h)}
             </span>
           ))}
         </div>
@@ -164,7 +173,7 @@ export function ScheduleDayTimeline({
               >
                 <span className="flex items-center gap-1 text-[10px] font-medium tabular-nums leading-none text-neutral-500 dark:text-neutral-400">
                   {conflict && <AlertTriangle className="h-2.5 w-2.5 shrink-0" aria-label={conflictLabel} />}
-                  {p.job.startTime}
+                  {p.job.startTime ? formatTime(p.job.startTime, use24) : ""}
                 </span>
                 <span
                   className={cn(

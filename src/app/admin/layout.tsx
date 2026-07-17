@@ -1,5 +1,6 @@
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { TimeFormatProvider } from "@/components/i18n/TimeFormatProvider";
 import { ImpersonationBanner } from "@/components/super/ImpersonationBanner";
 import { SupportActiveNotice } from "@/components/super/SupportActiveNotice";
 import { AnnouncementBanner } from "@/components/super/AnnouncementBanner";
@@ -7,6 +8,7 @@ import { getActiveAnnouncement } from "@/lib/announcements";
 import { getLatestActivityAt } from "@/lib/activity";
 import { getUnreadNotificationCount } from "@/lib/inappNotify";
 import { prisma } from "@/lib/prisma";
+import { getUse24Hour } from "@/lib/timeFormat";
 import { requireOrgId } from "@/lib/orgScope";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 import { getActiveSupportSessionForOrg } from "@/lib/support";
@@ -41,7 +43,7 @@ export default async function AdminLayout({
   );
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
-  const [pendingReviewCount, latestActivityAt, unreadNotifications, features, announcement, createData] =
+  const [pendingReviewCount, latestActivityAt, unreadNotifications, features, announcement, use24, createData] =
     await Promise.all([
       prisma.workRecord.count({
         where: { organizationId, status: "SUBMITTED" },
@@ -50,6 +52,7 @@ export default async function AdminLayout({
       getUnreadNotificationCount(session.user.id),
       getOrgFeatures(organizationId),
       getActiveAnnouncement(),
+      getUse24Hour(organizationId),
       canCreate
         ? Promise.all([
             prisma.team.findMany({
@@ -84,6 +87,7 @@ export default async function AdminLayout({
     ]);
 
   return (
+    <TimeFormatProvider use24={use24}>
     <div className="min-h-screen bg-background">
       {session.user.impersonating && (
         <ImpersonationBanner
@@ -113,5 +117,6 @@ export default async function AdminLayout({
         {children}
       </main>
     </div>
+    </TimeFormatProvider>
   );
 }

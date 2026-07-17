@@ -27,6 +27,7 @@ import { computeTotals } from "@/lib/invoices";
 import { prisma } from "@/lib/prisma";
 import { getAssignablePositions } from "@/lib/positions";
 import { getCurrencySymbol } from "@/lib/currency";
+import { getUse24Hour } from "@/lib/timeFormat";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireOfficeAccess } from "@/lib/authz";
 import { addUtcDays, startOfUtcDay } from "@/lib/schedule";
@@ -146,6 +147,7 @@ export default async function AdminDashboardPage() {
     currencySymbol,
     returnedCount,
     sentInvoices,
+    use24,
   ] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId } }),
     prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
@@ -256,6 +258,7 @@ export default async function AdminDashboardPage() {
       where: { organizationId, status: "SENT" },
       select: { taxRate: true, lineItems: { select: { quantity: true, unitPrice: true } } },
     }),
+    getUse24Hour(organizationId),
   ]);
 
   // One unified metrics grid: a headline "Total Records" hero, then the
@@ -504,7 +507,7 @@ export default async function AdminDashboardPage() {
               {todaySchedule.map((job) => {
                 const who = job.assignedTo?.name ?? job.team?.name ?? t.unassigned;
                 const when = job.startTime
-                  ? `${formatTime(job.startTime)}${job.endTime ? `–${formatTime(job.endTime)}` : ""}`
+                  ? `${formatTime(job.startTime, use24)}${job.endTime ? `–${formatTime(job.endTime, use24)}` : ""}`
                   : t.allDay;
                 return (
                   <Link
@@ -632,7 +635,7 @@ export default async function AdminDashboardPage() {
                       </div>
                       <div className="text-sm tabular-nums text-neutral-500 dark:text-neutral-400">
                         {record.submittedBy?.name ?? "—"} · {formatDate(record.date, locale)} ·{" "}
-                        {formatTime(record.arrivalTime)}
+                        {formatTime(record.arrivalTime, use24)}
                       </div>
                     </div>
                     <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />

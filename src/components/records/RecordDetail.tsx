@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DataField } from "@/components/ui/data-field";
 import { RecordPhotoGrid } from "@/components/records/RecordPhotoGrid";
 import { formatMoney, formatTime, workDuration } from "@/lib/format";
+import { getUse24Hour } from "@/lib/timeFormat";
 import { getLocale, getT } from "@/lib/i18n/server";
 
 function formatDate(date: Date, locale: string) {
@@ -41,6 +42,7 @@ export async function RecordDetail({
 }) {
   const t = (await getT()).records;
   const locale = await getLocale();
+  const use24 = record.organizationId ? await getUse24Hour(record.organizationId) : false;
   const hours = workDuration(record.arrivalTime, record.departureTime);
   const leadPay = Number(record.leadInstallerPay);
   const helperPay = record.helperPay != null ? Number(record.helperPay) : 0;
@@ -76,8 +78,8 @@ export async function RecordDetail({
       {/* Schedule & crew */}
       <Section title={t.scheduleCrew}>
         <div className="grid grid-cols-2 gap-3">
-          <DataField label={t.arrival} value={formatTime(record.arrivalTime)} />
-          <DataField label={t.departure} value={formatTime(record.departureTime)} />
+          <DataField label={t.arrival} value={formatTime(record.arrivalTime, use24)} />
+          <DataField label={t.departure} value={formatTime(record.departureTime, use24)} />
         </div>
         {hours && (
           <div className="flex items-center gap-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-300">

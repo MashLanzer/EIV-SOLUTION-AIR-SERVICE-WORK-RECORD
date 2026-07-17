@@ -45,6 +45,8 @@ import {
   setJobStatusAction,
 } from "@/actions/schedule";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { useUse24Hour } from "@/components/i18n/TimeFormatProvider";
+import { formatTimeRange } from "@/lib/format";
 
 export interface ScheduleJobView {
   id: string;
@@ -123,10 +125,7 @@ export function ScheduleJobCard({
     router.push(`/admin/schedule?${p.toString()}`, { scroll: false });
   }
 
-  const timeLabel =
-    job.startTime && job.endTime
-      ? `${job.startTime}–${job.endTime}`
-      : job.startTime || t.allDay;
+  const timeLabel = formatTimeRange(job.startTime, job.endTime, useUse24Hour(), t.allDay);
 
   const canceled = job.status === "CANCELED";
 

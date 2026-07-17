@@ -6,6 +6,8 @@ import { CalendarClock, Clock, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { useUse24Hour } from "@/components/i18n/TimeFormatProvider";
+import { formatTime } from "@/lib/format";
 
 export interface BriefJob {
   id: string;
@@ -30,6 +32,7 @@ export function MorningBriefDialog({
 }) {
   const t = useT().schedule;
   const tc = useT().common;
+  const use24 = useUse24Hour();
   const [open, setOpen] = useState(false);
   const storageKey = `aerotrack:morningBrief:${userId}`;
 
@@ -99,7 +102,7 @@ export function MorningBriefDialog({
             <li key={j.id} className="flex items-center gap-3 py-2.5">
               <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
                 <Clock className="h-3.5 w-3.5" />
-                {j.startTime ?? t.allDay}
+                {j.startTime ? formatTime(j.startTime, use24) : t.allDay}
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
