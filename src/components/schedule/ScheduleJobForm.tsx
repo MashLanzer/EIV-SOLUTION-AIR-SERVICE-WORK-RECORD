@@ -63,9 +63,23 @@ function Group({
 // The create/edit form for a scheduled job. In create mode it lives in the
 // collapsible panel at the top of the schedule page and resets itself after a
 // save; in edit mode it renders inline inside a job card and closes via onDone.
+// Add whole minutes to a "HH:MM" time, clamping at end-of-day rather than
+// wrapping past midnight (a job crossing midnight is a rare edge we don't
+// auto-guess). Returns "" for an unparseable input.
+function addMinutes(time: string, minutes: number): string {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(time);
+  if (!m) return "";
+  const total = Number(m[1]) * 60 + Number(m[2]) + minutes;
+  const clamped = Math.min(total, 23 * 60 + 59);
+  const hh = String(Math.floor(clamped / 60)).padStart(2, "0");
+  const mm = String(clamped % 60).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 export function ScheduleJobForm({
   jobId,
   defaultDate,
+  defaultDurationMinutes,
   defaultProjectId,
   defaultValues,
   workers,
@@ -81,6 +95,9 @@ export function ScheduleJobForm({
   jobId?: string;
   // Pre-fills the date in create mode so a job lands on the day being viewed.
   defaultDate?: string;
+  // Company default job length; when set (create mode), picking a start time
+  // auto-fills the end time this many minutes later unless the user typed one.
+  defaultDurationMinutes?: number;
   // Pre-selects a project in create mode (used by the "needs scheduling"
   // backlog, which opens the sheet already pointed at that project).
   defaultProjectId?: string;
@@ -105,6 +122,26 @@ export function ScheduleJobForm({
   const [requiredSkill, setRequiredSkill] = useState(defaultValues?.requiredSkill ?? "");
   const [date, setDate] = useState(defaultValues?.scheduledFor ?? defaultDate ?? "");
   const [assignedToId, setAssignedToId] = useState(defaultValues?.assignedToId ?? "");
+  // Start/end are controlled so the company default duration can auto-fill the
+  // end time. endEdited tracks whether the user typed their own end, in which
+  // case we stop auto-deriving it.
+  const [startTime, setStartTime] = useState(defaultValues?.startTime ?? "");
+  const [endTime, setEndTime] = useState(defaultValues?.endTime ?? "");
+  const endEdited = useRef(Boolean(defaultValues?.endTime));
+
+  // Only auto-fill in create mode with a configured duration.
+  const autoDuration = !jobId ? defaultDurationMinutes : undefined;
+  function onStartChange(value: string) {
+    setStartTime(value);
+    if (autoDuration && value && !endEdited.current) {
+      setEndTime(addMinutes(value, autoDuration));
+    }
+  }
+  function onEndChange(value: string) {
+    setEndTime(value);
+    // A cleared field returns to "auto"; anything else is a manual choice.
+    endEdited.current = value !== "";
+  }
   // Recurrence (create mode only). "none" or weekly/biweekly/monthly; when set,
   // the count field appears and the server materializes the whole series.
   const [repeat, setRepeat] = useState("none");
@@ -155,7 +192,10 @@ export function ScheduleJobForm({
     setAssignedToId("");
     setRequiredSkill("");
     setRepeat("none");
+    setStartTime("");
+    setEndTime("");
     /* eslint-enable react-hooks/set-state-in-effect */
+    endEdited.current = false;
     onDone?.();
   }, [state?.ok, state?.warning, jobId, onDone, defaultDate]);
 
@@ -200,7 +240,8 @@ export function ScheduleJobForm({
               id={`start-${uid}`}
               name="startTime"
               type="time"
-              defaultValue={defaultValues?.startTime}
+              value={startTime}
+              onChange={(e) => onStartChange(e.target.value)}
             />
           </div>
           <div className="flex flex-col gap-1.5">
@@ -209,7 +250,8 @@ export function ScheduleJobForm({
               id={`end-${uid}`}
               name="endTime"
               type="time"
-              defaultValue={defaultValues?.endTime}
+              value={endTime}
+              onChange={(e) => onEndChange(e.target.value)}
               aria-invalid={err("endTime") ? true : undefined}
             />
             <FieldError id={`end-${uid}-error`} message={err("endTime")} />

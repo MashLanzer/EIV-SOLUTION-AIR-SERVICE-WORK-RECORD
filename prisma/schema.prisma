@@ -124,6 +124,30 @@ model Organization {
   // Default sales-tax rate (percent, e.g. 8.25) pre-filled on new invoices.
   // Null = no default; each invoice can still set its own rate.
   defaultTaxRate   Decimal? @db.Decimal(5, 2)
+  // --- Notifications: company-wide switches the notify helpers honour before
+  // sending. Default on, matching prior always-send behaviour. ---
+  notifyOnSubmit   Boolean  @default(true)
+  notifyOnReview   Boolean  @default(true)
+  notifyReminders  Boolean  @default(true)
+  // Reply-to address for outbound emails (blank = provider default).
+  notifyReplyTo    String?
+  // --- Scheduling defaults ---
+  // Pre-filled length of a new scheduled job, in minutes.
+  defaultJobDurationMinutes Int @default(120)
+  // How many hours before a job its reminder should go out.
+  reminderLeadHours Int @default(24)
+  // First day of the week on the calendar: 0 = Sunday, 1 = Monday.
+  weekStartsOn     Int @default(0)
+  // --- Numbering & documents ---
+  // Optional prefix shown before the suggested next job number (e.g. "WO-").
+  jobNumberPrefix  String?
+  // Footer line printed on the work-record PDF / receipt.
+  pdfFooter        String?  @db.Text
+  // Default number of days a shared receipt link stays valid. Null = never.
+  receiptExpiryDays Int?
+  // --- Localization ---
+  // Clock format for times shown across the app: "12" or "24".
+  timeFormat       String   @default("12")
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   users     User[]

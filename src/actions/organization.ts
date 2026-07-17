@@ -108,7 +108,13 @@ export type CompanyField =
   | "helperPay"
   | "currency"
   | "taxRate"
-  | "overloadThreshold";
+  | "overloadThreshold"
+  | "jobNumberPrefix"
+  | "pdfFooter"
+  | "notifyReplyTo"
+  | "reminderLeadHours"
+  | "defaultJobDuration"
+  | "receiptExpiryDays";
 
 type CompanyFieldState = { error?: string; ok?: boolean } | undefined;
 
@@ -152,6 +158,50 @@ export async function updateCompanyFieldAction(
         return { error: "Enter a whole number of 1 or more." };
       }
       data = { scheduleOverloadThreshold: Math.min(50, n) };
+    }
+  } else if (field === "jobNumberPrefix") {
+    // Short prefix shown before the suggested next job number (e.g. "WO-").
+    data = { jobNumberPrefix: raw.slice(0, 10) || null };
+  } else if (field === "pdfFooter") {
+    // One-line footer printed on the work-record PDF / receipt.
+    data = { pdfFooter: raw.slice(0, 200) || null };
+  } else if (field === "notifyReplyTo") {
+    if (raw && !raw.includes("@")) {
+      return { error: "Enter a valid email address." };
+    }
+    data = { notifyReplyTo: raw || null };
+  } else if (field === "reminderLeadHours") {
+    // Hours before a job that its reminder goes out. Blank resets to 24.
+    if (!raw) {
+      data = { reminderLeadHours: 24 };
+    } else {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0 || n > 168) {
+        return { error: "Enter a whole number of hours (0–168)." };
+      }
+      data = { reminderLeadHours: n };
+    }
+  } else if (field === "defaultJobDuration") {
+    // Default length of a new scheduled job, in minutes. Blank resets to 120.
+    if (!raw) {
+      data = { defaultJobDurationMinutes: 120 };
+    } else {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || !Number.isInteger(n) || n < 15 || n > 1440) {
+        return { error: "Enter a duration in minutes (15–1440)." };
+      }
+      data = { defaultJobDurationMinutes: n };
+    }
+  } else if (field === "receiptExpiryDays") {
+    // Default days a shared receipt link stays valid. Blank = never expires.
+    if (!raw) {
+      data = { receiptExpiryDays: null };
+    } else {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1 || n > 365) {
+        return { error: "Enter a number of days (1–365)." };
+      }
+      data = { receiptExpiryDays: n };
     }
   } else {
     // Pay defaults: blank clears; otherwise a non-negative amount.
@@ -280,6 +330,47 @@ export async function updateCompanyLogoAction(
 
   revalidatePath("/admin/settings");
   return { ok: true };
+}
+
+// Toggle one of the company-wide notification switches (admin only). The
+// notify helpers read these before sending, so turning one off silences that
+// class of email/in-app alert for the whole company.
+export async function setNotifyFlagAction(
+  flag: "onSubmit" | "onReview" | "reminders",
+  enabled: boolean
+) {
+  const session = await requirePermission("settings.manage");
+  const organizationId = requireOrgId(session);
+  const column =
+    flag === "onSubmit" ? "notifyOnSubmit" : flag === "onReview" ? "notifyOnReview" : "notifyReminders";
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { [column]: enabled },
+  });
+  revalidatePath("/admin/settings");
+}
+
+// Set the first day of the week on the calendar (admin only): "0" = Sunday,
+// "1" = Monday. Anything else falls back to Sunday.
+export async function setWeekStartsOnAction(value: string) {
+  const session = await requirePermission("settings.manage");
+  const organizationId = requireOrgId(session);
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { weekStartsOn: value === "1" ? 1 : 0 },
+  });
+  revalidatePath("/admin/settings");
+}
+
+// Set the clock format shown across the app (admin only): "12" or "24".
+export async function setTimeFormatAction(value: string) {
+  const session = await requirePermission("settings.manage");
+  const organizationId = requireOrgId(session);
+  await prisma.organization.update({
+    where: { id: organizationId },
+    data: { timeFormat: value === "24" ? "24" : "12" },
+  });
+  revalidatePath("/admin/settings");
 }
 
 // Remove the company logo (admin only).

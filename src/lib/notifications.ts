@@ -24,6 +24,25 @@ async function activeAdmins(
   });
 }
 
+// Company-wide notification switches (Settings → Notifications). A missing org
+// or column falls back to "on", so notifications only stop when explicitly
+// turned off. Best-effort like everything else here.
+async function orgNotifyEnabled(
+  organizationId: string | null,
+  flag: "notifyOnSubmit" | "notifyOnReview" | "notifyReminders"
+): Promise<boolean> {
+  if (!organizationId) return true;
+  try {
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { notifyOnSubmit: true, notifyOnReview: true, notifyReminders: true },
+    });
+    return org ? org[flag] : true;
+  } catch {
+    return true;
+  }
+}
+
 // New record submitted, or a worker resubmitted after changes -> admins.
 export async function notifyAdminsRecordForReview(
   recordId: string,
@@ -40,6 +59,7 @@ export async function notifyAdminsRecordForReview(
     },
   });
   if (!record) return;
+  if (!(await orgNotifyEnabled(record.organizationId, "notifyOnSubmit"))) return;
   const admins = await activeAdmins(record.organizationId);
   if (admins.length === 0) return;
 
@@ -90,6 +110,7 @@ export async function notifyWorkerReturned(recordId: string, actor?: Actor): Pro
     },
   });
   if (!record) return;
+  if (!(await orgNotifyEnabled(record.organizationId, "notifyOnReview"))) return;
   const email = record.submittedBy?.email;
 
   if (email) {
@@ -157,6 +178,7 @@ export async function notifyWorkerJobScheduled(
     },
   });
   if (!job || !job.assignedToId || job.status === "CANCELED") return;
+  if (!(await orgNotifyEnabled(job.organizationId, "notifyReminders"))) return;
 
   const dateLabel = jobDateFmt.format(job.scheduledFor);
   const timeLabel = job.startTime
@@ -220,6 +242,7 @@ export async function notifyWorkerSeriesScheduled(
     select: { email: true, organizationId: true },
   });
   if (!worker) return;
+  if (!(await orgNotifyEnabled(worker.organizationId, "notifyReminders"))) return;
   const jobTitle = title || "Scheduled job";
   const startLabel = jobDateFmt.format(firstDate);
   if (worker.email) {
@@ -369,6 +392,7 @@ export async function notifyWorkerApproved(recordId: string, actor?: Actor): Pro
     },
   });
   if (!record) return;
+  if (!(await orgNotifyEnabled(record.organizationId, "notifyOnReview"))) return;
   const email = record.submittedBy?.email;
 
   if (email) {

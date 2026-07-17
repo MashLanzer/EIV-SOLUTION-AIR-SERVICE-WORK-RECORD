@@ -18,6 +18,7 @@ export function ShareReceiptButton({
   recordId,
   initialToken,
   initialExpiresAt = null,
+  defaultExpiryDays = null,
   customerPhone = null,
   customerEmail = null,
   className,
@@ -25,6 +26,9 @@ export function ShareReceiptButton({
   recordId: string;
   initialToken: string | null;
   initialExpiresAt?: string | null;
+  // Company default expiry (Settings → Documents) that pre-selects the picker;
+  // null keeps the historical "never" default.
+  defaultExpiryDays?: number | null;
   customerPhone?: string | null;
   customerEmail?: string | null;
   // Styling for the trigger tile so it matches the surrounding action grid.
@@ -35,7 +39,7 @@ export function ShareReceiptButton({
   const [open, setOpen] = useState(false);
   const [token, setToken] = useState(initialToken);
   const [expiresAt, setExpiresAt] = useState<string | null>(initialExpiresAt);
-  const [expiryDays, setExpiryDays] = useState("0");
+  const [expiryDays, setExpiryDays] = useState(String(defaultExpiryDays ?? 0));
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -125,6 +129,14 @@ export function ShareReceiptButton({
                 <option value="0">{t.expiryNever}</option>
                 <option value="7">{t.expiry7}</option>
                 <option value="30">{t.expiry30}</option>
+                {/* The company default may be a value that isn't one of the
+                    presets (Settings → Documents) - keep it selectable. */}
+                {defaultExpiryDays != null &&
+                  ![0, 7, 30].includes(defaultExpiryDays) && (
+                    <option value={String(defaultExpiryDays)}>
+                      {t.expiryDays.replace("{days}", String(defaultExpiryDays))}
+                    </option>
+                  )}
               </Select>
             </div>
             <Button type="button" disabled={pending} onClick={share} className="w-full">

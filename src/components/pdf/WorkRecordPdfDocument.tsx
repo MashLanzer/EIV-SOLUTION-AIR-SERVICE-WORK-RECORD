@@ -19,6 +19,9 @@ export type PdfCompany = {
   license?: string | null;
   logoUrl?: string | null;
   currency?: string;
+  // Optional footer line printed at the bottom of each record page (Settings →
+  // Documents), e.g. "Thank you for your business".
+  footer?: string | null;
 };
 
 const styles = StyleSheet.create({
@@ -107,6 +110,15 @@ const styles = StyleSheet.create({
     borderTopColor: "#cbd5e1",
     borderTopStyle: "solid",
     paddingTop: 4,
+  },
+  footer: {
+    position: "absolute",
+    bottom: 20,
+    left: 32,
+    right: 32,
+    fontSize: 8,
+    color: "#94a3b8",
+    textAlign: "center",
   },
 });
 
@@ -203,6 +215,12 @@ function RecordPage({ record, company }: { record: RecordWithWorker; company: Pd
           <Text style={styles.signatureCaption}>Installer Signature</Text>
         </View>
       </View>
+
+      {company.footer?.trim() ? (
+        <Text style={styles.footer} fixed>
+          {company.footer.trim()}
+        </Text>
+      ) : null}
     </Page>
   );
 }

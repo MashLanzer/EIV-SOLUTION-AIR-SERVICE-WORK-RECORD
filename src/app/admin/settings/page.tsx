@@ -1,7 +1,11 @@
 import {
+  Bell,
   Building2,
+  CalendarDays,
   ClipboardList,
   CreditCard,
+  FileText,
+  Globe,
   Info,
   Palette,
   ShieldCheck,
@@ -65,6 +69,33 @@ export default async function AdminSettingsPage() {
               label={h.team}
               sublabel={h.teamHint}
               href="/admin/settings/team"
+            />
+          </SettingsSection>
+
+          <SettingsSection>
+            <SettingsRow
+              icon={Bell}
+              label={h.notifications}
+              sublabel={h.notificationsHint}
+              href="/admin/settings/notifications"
+            />
+            <SettingsRow
+              icon={CalendarDays}
+              label={h.scheduling}
+              sublabel={h.schedulingHint}
+              href="/admin/settings/scheduling"
+            />
+            <SettingsRow
+              icon={FileText}
+              label={h.documents}
+              sublabel={h.documentsHint}
+              href="/admin/settings/documents"
+            />
+            <SettingsRow
+              icon={Globe}
+              label={h.localization}
+              sublabel={h.localizationHint}
+              href="/admin/settings/localization"
             />
           </SettingsSection>
 

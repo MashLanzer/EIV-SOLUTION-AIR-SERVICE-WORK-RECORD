@@ -46,6 +46,7 @@ export async function companyForPdf(organizationId: string): Promise<PdfCompany>
       licenseNumber: true,
       logoUrl: true,
       currencySymbol: true,
+      pdfFooter: true,
     },
   });
   return {
@@ -55,6 +56,7 @@ export async function companyForPdf(organizationId: string): Promise<PdfCompany>
     license: org?.licenseNumber ?? null,
     logoUrl: org?.logoUrl ?? null,
     currency: org?.currencySymbol || "$",
+    footer: org?.pdfFooter ?? null,
   };
 }
 

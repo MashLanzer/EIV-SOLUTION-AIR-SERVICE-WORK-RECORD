@@ -66,6 +66,12 @@ export default async function AdminReviewRecordPage({
   const isAdmin = session.user.role === "ADMIN";
   const linkedInvoice = record.invoices[0] ?? null;
   const currency = await getCurrencySymbol(requireOrgId(session));
+  // Company default for how long a shared receipt link stays live (Settings →
+  // Documents). Pre-selects the expiry when sharing; null means "never".
+  const org = await prisma.organization.findUnique({
+    where: { id: requireOrgId(session) },
+    select: { receiptExpiryDays: true },
+  });
   const dict = await getT();
   const t = dict.adminRecords;
   const locale = await getLocale();
@@ -129,6 +135,7 @@ export default async function AdminReviewRecordPage({
                 recordId={record.id}
                 initialToken={record.publicToken}
                 initialExpiresAt={record.publicTokenExpiresAt?.toISOString() ?? null}
+                defaultExpiryDays={org?.receiptExpiryDays ?? null}
                 customerPhone={record.customer?.phone ?? null}
                 customerEmail={record.customer?.email ?? null}
                 className={ACTION_TILE}

@@ -329,7 +329,7 @@ export default async function SchedulePage({
     }),
     prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { scheduleOverloadThreshold: true },
+      select: { scheduleOverloadThreshold: true, defaultJobDurationMinutes: true },
     }),
     prisma.userSkill.findMany({
       where: { user: { organizationId } },
@@ -551,6 +551,7 @@ export default async function SchedulePage({
           <TimeOffManager workers={workers} entries={timeOffEntries} defaultDate={formDefaultDate} />
           <NewScheduledJobButton
             defaultDate={formDefaultDate}
+            defaultDurationMinutes={org?.defaultJobDurationMinutes ?? 120}
             workers={workers}
             teams={teams}
             customers={customers}

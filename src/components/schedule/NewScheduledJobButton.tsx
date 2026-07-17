@@ -15,6 +15,7 @@ import { useT } from "@/components/i18n/LocaleProvider";
 // pre-filled with that day's date.
 export function NewScheduledJobButton({
   defaultDate,
+  defaultDurationMinutes,
   workers,
   teams,
   customers,
@@ -24,6 +25,9 @@ export function NewScheduledJobButton({
   loadByDay,
 }: {
   defaultDate?: string;
+  // Company default job length (Settings → Scheduling); auto-fills the end time
+  // once a start time is picked in create mode.
+  defaultDurationMinutes?: number;
   workers: JobOption[];
   teams: JobOption[];
   customers: JobOption[];
@@ -60,6 +64,7 @@ export function NewScheduledJobButton({
       <BottomSheet open={open} onClose={() => setParam(false)} title={t.newJob} closeLabel={tc.close}>
         <ScheduleJobForm
           defaultDate={defaultDate}
+          defaultDurationMinutes={defaultDurationMinutes}
           defaultProjectId={newProject}
           workers={workers}
           teams={teams}
