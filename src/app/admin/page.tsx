@@ -353,53 +353,7 @@ export default async function AdminDashboardPage() {
 
       {quickCreateData && <DashboardQuickActions data={quickCreateData} />}
 
-      {todaySchedule.length > 0 && (
-        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "60ms" }}>
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.todaySchedule}
-            </h2>
-            <Link
-              href="/admin/schedule"
-              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            >
-              {t.viewAll}
-            </Link>
-          </div>
-          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
-              {todaySchedule.map((job) => {
-                const who = job.assignedTo?.name ?? job.team?.name ?? t.unassigned;
-                const when = job.startTime
-                  ? `${formatTime(job.startTime)}${job.endTime ? `–${formatTime(job.endTime)}` : ""}`
-                  : t.allDay;
-                return (
-                  <Link
-                    key={job.id}
-                    href="/admin/schedule"
-                    className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  >
-                    <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
-                      <CalendarClock className="h-3.5 w-3.5 shrink-0" />
-                      {when}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
-                        {job.title}
-                      </div>
-                      <div className="truncate text-sm text-neutral-500 dark:text-neutral-400">
-                        {who}
-                        {job.customer?.name ? ` · ${job.customer.name}` : ""}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                  </Link>
-                );
-              })}
-          </div>
-        </section>
-      )}
-
-      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "60ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {t.overview}
         </h2>
@@ -445,6 +399,52 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
       </section>
+
+      {todaySchedule.length > 0 && (
+        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.todaySchedule}
+            </h2>
+            <Link
+              href="/admin/schedule"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              {t.viewAll}
+            </Link>
+          </div>
+          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+              {todaySchedule.map((job) => {
+                const who = job.assignedTo?.name ?? job.team?.name ?? t.unassigned;
+                const when = job.startTime
+                  ? `${formatTime(job.startTime)}${job.endTime ? `–${formatTime(job.endTime)}` : ""}`
+                  : t.allDay;
+                return (
+                  <Link
+                    key={job.id}
+                    href="/admin/schedule"
+                    className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  >
+                    <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
+                      <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                      {when}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
+                        {job.title}
+                      </div>
+                      <div className="truncate text-sm text-neutral-500 dark:text-neutral-400">
+                        {who}
+                        {job.customer?.name ? ` · ${job.customer.name}` : ""}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                );
+              })}
+          </div>
+        </section>
+      )}
 
       {recentActiveProjects.length > 0 && (
         <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
