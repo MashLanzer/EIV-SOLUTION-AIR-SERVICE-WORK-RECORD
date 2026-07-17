@@ -63,7 +63,7 @@ export default async function AdminLayout({
             prisma.user.findMany({
               where: { organizationId },
               orderBy: { name: "asc" },
-              select: { id: true, name: true },
+              select: { id: true, name: true, email: true, role: true },
             }),
             prisma.project.findMany({
               where: { organizationId, status: { not: "COMPLETED" } },

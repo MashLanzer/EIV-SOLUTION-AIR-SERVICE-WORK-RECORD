@@ -1203,7 +1203,13 @@ export const en = {
     // Members form
     saveMembers: "Save members",
     roleAdmin: "Admin",
+    roleSupervisor: "Supervisor",
     roleWorker: "Worker",
+    // Section headers when picking members, grouped by access level
+    membersAdmins: "Admins",
+    membersSupervisors: "Supervisors",
+    membersWorkers: "Workers",
+    membersEmpty: "No people to add yet.",
     // Assign projects form
     createProjectFirst:
       "Create a project first, then assign it to this team here.",

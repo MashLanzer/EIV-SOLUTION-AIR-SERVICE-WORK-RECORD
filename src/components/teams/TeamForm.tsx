@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MemberChecklist, type MemberOption } from "@/components/teams/MemberChecklist";
 import {
   createTeamAction,
   updateTeamAction,
@@ -30,7 +31,7 @@ export function TeamForm({
   defaultColor?: string | null;
   // Only used when creating - seed members/projects up front. On the edit page
   // these are managed by dedicated forms instead.
-  users?: { id: string; name: string }[];
+  users?: MemberOption[];
   projects?: { id: string; name: string }[];
 }) {
   const action = teamId ? updateTeamAction.bind(null, teamId) : createTeamAction;
@@ -95,7 +96,9 @@ export function TeamForm({
         </p>
       </div>
 
-      {/* On create only: seed members and projects right away. */}
+      {/* On create only: seed members and projects right away. Members are
+          grouped by access level (Admins / Supervisors / Workers) so it's clear
+          who's who while building the team. */}
       {!teamId && users.length > 0 && (
         <div className="flex flex-col gap-2">
           <Label>
@@ -104,16 +107,8 @@ export function TeamForm({
               ({tc.optional})
             </span>
           </Label>
-          <div className="flex max-h-56 flex-col divide-y divide-neutral-200 dark:divide-neutral-800 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
-            {users.map((u) => (
-              <label
-                key={u.id}
-                className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm"
-              >
-                <Checkbox name="userId" value={u.id} />
-                <span className="text-neutral-800 dark:text-neutral-200">{u.name}</span>
-              </label>
-            ))}
+          <div className="max-h-72 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-800 p-3">
+            <MemberChecklist users={users} name="userId" />
           </div>
         </div>
       )}

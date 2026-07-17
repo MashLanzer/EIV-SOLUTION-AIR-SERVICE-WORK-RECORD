@@ -1198,7 +1198,13 @@ export const es: Dictionary = {
     // Members form
     saveMembers: "Guardar miembros",
     roleAdmin: "Admin",
+    roleSupervisor: "Supervisor",
     roleWorker: "Trabajador",
+    // Encabezados al elegir miembros, agrupados por nivel de acceso
+    membersAdmins: "Administradores",
+    membersSupervisors: "Supervisores",
+    membersWorkers: "Trabajadores",
+    membersEmpty: "Aún no hay personas para agregar.",
     // Assign projects form
     createProjectFirst:
       "Primero crea un proyecto, luego asígnalo a este equipo aquí.",

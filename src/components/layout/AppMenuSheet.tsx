@@ -8,6 +8,7 @@ import { BottomSheet } from "@/components/layout/BottomSheet";
 import { BottomSheet as FormSheet } from "@/components/ui/bottom-sheet";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { TeamForm } from "@/components/teams/TeamForm";
+import type { MemberOption } from "@/components/teams/MemberChecklist";
 import { WorkerForm } from "@/components/workers/WorkerForm";
 import { useT } from "@/components/i18n/LocaleProvider";
 
@@ -33,7 +34,8 @@ export interface MoreItem {
 export interface CreateData {
   teams: { id: string; name: string }[];
   customers: { id: string; name: string }[];
-  users: { id: string; name: string }[];
+  // Team members carry their access level so the picker can group them.
+  users: MemberOption[];
   projects: { id: string; name: string }[];
   positions: { id: string; name: string }[];
 }

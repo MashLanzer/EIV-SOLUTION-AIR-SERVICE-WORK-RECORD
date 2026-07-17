@@ -6,6 +6,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { TeamForm } from "@/components/teams/TeamForm";
+import type { MemberOption } from "@/components/teams/MemberChecklist";
 import { useT } from "@/components/i18n/LocaleProvider";
 
 // "New team" as a bottom sheet instead of a separate page. On success the
@@ -16,7 +17,7 @@ export function NewTeamButton({
   variant = "default",
   className,
 }: {
-  users: { id: string; name: string }[];
+  users: MemberOption[];
   projects: { id: string; name: string }[];
   variant?: "default" | "outline";
   className?: string;
