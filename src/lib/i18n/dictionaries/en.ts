@@ -89,6 +89,10 @@ export const en = {
     // Needs attention (returned records)
     needsAttention: "Needs your attention",
     needsAttentionDesc: "Records sent back for changes.",
+    // Tabs
+    tabSummary: "Summary",
+    tabActivity: "Activity",
+    tabAccount: "Account",
   },
   errors: {
     somethingWrong: "Something went wrong",

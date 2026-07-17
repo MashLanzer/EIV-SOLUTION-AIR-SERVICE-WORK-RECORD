@@ -89,6 +89,10 @@ export const es: Dictionary = {
     // Necesita tu atención (registros devueltos)
     needsAttention: "Necesita tu atención",
     needsAttentionDesc: "Registros devueltos para corregir.",
+    // Pestañas
+    tabSummary: "Resumen",
+    tabActivity: "Actividad",
+    tabAccount: "Cuenta",
   },
   errors: {
     somethingWrong: "Algo salió mal",
