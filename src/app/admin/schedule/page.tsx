@@ -649,13 +649,15 @@ function MonthView({
   return (
     <>
       <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
-        <StatTile label={t.summaryJobs} value={String(summary.total)} />
+        <StatTile center label={t.summaryJobs} value={String(summary.total)} />
         <StatTile
+          center
           label={t.summaryCompleted}
           value={`${summary.donePct}%`}
           sub={`${summary.done}/${summary.total}`}
         />
         <StatTile
+          center
           label={t.summaryBusiest}
           value={summary.busiest?.name ?? "—"}
           sub={summary.busiest ? count(summary.busiest.count) : undefined}

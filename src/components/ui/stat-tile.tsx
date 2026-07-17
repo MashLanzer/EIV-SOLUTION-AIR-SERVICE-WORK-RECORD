@@ -25,6 +25,7 @@ export function StatTile({
   sub,
   href,
   tone = "default",
+  center = false,
 }: {
   icon?: LucideIcon;
   value: string | number;
@@ -32,11 +33,17 @@ export function StatTile({
   sub?: string;
   href?: string;
   tone?: StatTileTone;
+  // Center the content and let the text wrap instead of truncating — for tiles
+  // whose value can be long text (e.g. a worker name), so nothing gets cut off.
+  center?: boolean;
 }) {
+  // When centered, the value can be free text (a name), so scale it down a touch
+  // and let it wrap; the truncating default stays for numeric tiles.
+  const textFlow = center ? "break-words" : "truncate";
   const inner = (
-    <CardContent className="flex h-full flex-col gap-2 p-3">
+    <CardContent className={cn("flex h-full flex-col gap-2 p-3", center && "items-center text-center")}>
       {Icon ? (
-        <div className="flex items-center justify-between">
+        <div className="flex w-full items-center justify-between">
           <span
             className={cn(
               "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
@@ -50,13 +57,19 @@ export function StatTile({
           ) : null}
         </div>
       ) : null}
-      <div className="min-w-0">
-        <div className="truncate text-xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+      <div className="min-w-0 w-full">
+        <div
+          className={cn(
+            "font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100",
+            center ? "text-base leading-tight" : "text-xl",
+            textFlow
+          )}
+        >
           {value}
         </div>
-        <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">{label}</div>
+        <div className={cn("text-xs text-neutral-500 dark:text-neutral-400", textFlow)}>{label}</div>
         {sub ? (
-          <div className="truncate text-[11px] tabular-nums text-neutral-400 dark:text-neutral-500">
+          <div className={cn("text-[11px] tabular-nums text-neutral-400 dark:text-neutral-500", textFlow)}>
             {sub}
           </div>
         ) : null}
