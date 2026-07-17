@@ -19,13 +19,13 @@ export function DeleteWorkerButton({
   const t = useT().workers;
 
   return (
-    <form ref={formRef} action={deleteWorkerAction.bind(null, workerId)}>
+    <form ref={formRef} action={deleteWorkerAction.bind(null, workerId)} className="w-full">
       <ConfirmDialog
         title={t.deleteTitle.replace("{name}", name)}
         description={t.deleteDesc}
         confirmLabel={t.deleteAccount}
         trigger={
-          <Button type="button" variant="destructive" size="sm">
+          <Button type="button" variant="outline" className="w-full text-destructive-text">
             <Trash2 className="h-4 w-4" />
             {t.deleteAccount}
           </Button>

@@ -201,7 +201,7 @@ export default async function WorkerDetailPage({
               />
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-neutral-200 dark:border-neutral-800 pt-4">
+            <div className="grid grid-cols-2 items-start gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
               <ToggleWorkerActiveButton
                 workerId={worker.id}
                 active={worker.active}
@@ -213,7 +213,7 @@ export default async function WorkerDetailPage({
                   available. Their work records are kept either way. */}
               {worker.active ? (
                 <div className="flex flex-col gap-1">
-                  <Button type="button" variant="destructive" size="sm" disabled>
+                  <Button type="button" variant="outline" className="w-full text-destructive-text" disabled>
                     <Trash2 className="h-4 w-4" />
                     {t.deleteAccount}
                   </Button>

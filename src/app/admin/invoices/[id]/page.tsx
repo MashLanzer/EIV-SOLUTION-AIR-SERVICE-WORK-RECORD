@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Copy, Download, FolderKanban, Pencil, User } from "lucide-react";
+import { Download, FolderKanban, Pencil, User } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,14 @@ import {
 } from "@/components/ui/table";
 import { InvoiceStatusBadge } from "@/components/invoices/InvoiceStatusBadge";
 import { InvoiceStatusControls } from "@/components/invoices/InvoiceStatusControls";
-import { ShareInvoiceButton } from "@/components/invoices/ShareInvoiceButton";
-import { EmailToCustomerButton } from "@/components/shared/EmailToCustomerButton";
-import { duplicateInvoiceAction, emailInvoiceAction } from "@/actions/invoices";
-import { DeleteInvoiceButton } from "@/components/invoices/DeleteInvoiceButton";
+import { DocumentActions } from "@/components/shared/DocumentActions";
+import {
+  deleteInvoiceAction,
+  duplicateInvoiceAction,
+  emailInvoiceAction,
+  shareInvoiceAction,
+  unshareInvoiceAction,
+} from "@/actions/invoices";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { computeTotals, formatInvoiceNumber, isOverdue } from "@/lib/invoices";
@@ -237,28 +241,38 @@ export default async function InvoiceDetailPage({
             ? t.createdBy.replace("{name}", invoice.createdBy.name)
             : formatInvoiceNumber(invoice.number)}
         </h2>
-        <ShareInvoiceButton invoiceId={invoice.id} initialToken={invoice.publicToken} />
-        <form action={duplicateInvoiceAction.bind(null, invoice.id)}>
-          <Button type="submit" variant="outline" className="w-full">
-            <Copy className="h-4 w-4" />
-            {t.duplicate}
-          </Button>
-        </form>
-        <EmailToCustomerButton
-          action={emailInvoiceAction.bind(null, invoice.id)}
-          label={t.emailToCustomer}
-          sendingLabel={t.emailSending}
-          sentLabel={t.emailSent}
-          errors={{
-            no_email: t.emailNoEmail,
-            not_configured: t.emailNotConfigured,
-            not_found: t.emailError,
-            default: t.emailError,
-          }}
-        />
-        <div className="mt-1 border-t border-neutral-200 pt-3 dark:border-neutral-800">
-          <DeleteInvoiceButton invoiceId={invoice.id} fullWidth />
-        </div>
+        <Card>
+          <CardContent className="p-3">
+            <DocumentActions
+              initialToken={invoice.publicToken}
+              publicPath="invoice"
+              shareAction={shareInvoiceAction.bind(null, invoice.id)}
+              unshareAction={unshareInvoiceAction.bind(null, invoice.id)}
+              duplicateAction={duplicateInvoiceAction.bind(null, invoice.id)}
+              emailAction={emailInvoiceAction.bind(null, invoice.id)}
+              deleteAction={deleteInvoiceAction.bind(null, invoice.id)}
+              labels={{
+                share: t.shareLink,
+                stopSharing: t.stopSharing,
+                copyLink: t.copyLink,
+                copied: t.copied,
+                shareHint: t.shareHint,
+                duplicate: t.duplicate,
+                email: t.emailToCustomer,
+                emailSending: t.emailSending,
+                emailSent: t.emailSent,
+                delete: t.delete,
+                deleteConfirm: t.deleteConfirm,
+                emailErrors: {
+                  no_email: t.emailNoEmail,
+                  not_configured: t.emailNotConfigured,
+                  not_found: t.emailError,
+                  default: t.emailError,
+                },
+              }}
+            />
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

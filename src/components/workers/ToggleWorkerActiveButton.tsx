@@ -27,8 +27,8 @@ export function ToggleWorkerActiveButton({
   // Reactivating is harmless - no confirmation needed.
   if (!active) {
     return (
-      <form action={toggleWorkerActiveAction.bind(null, workerId)}>
-        <Button type="submit">
+      <form action={toggleWorkerActiveAction.bind(null, workerId)} className="w-full">
+        <Button type="submit" className="w-full">
           <CheckCircle2 className="h-4 w-4" />
           {t.reactivate}
         </Button>
@@ -39,7 +39,7 @@ export function ToggleWorkerActiveButton({
   if (disableDeactivate) {
     return (
       <div className="flex flex-col gap-1">
-        <Button type="button" variant="destructive" disabled>
+        <Button type="button" variant="outline" className="w-full text-destructive-text" disabled>
           <Ban className="h-4 w-4" />
           {t.deactivate}
         </Button>
@@ -51,13 +51,13 @@ export function ToggleWorkerActiveButton({
   }
 
   return (
-    <form ref={formRef} action={toggleWorkerActiveAction.bind(null, workerId)}>
+    <form ref={formRef} action={toggleWorkerActiveAction.bind(null, workerId)} className="w-full">
       <ConfirmDialog
         title={t.deactivateTitle.replace("{name}", name)}
         description={t.deactivateDesc}
         confirmLabel={t.deactivate}
         trigger={
-          <Button type="button" variant="destructive">
+          <Button type="button" variant="outline" className="w-full text-destructive-text">
             <Ban className="h-4 w-4" />
             {t.deactivate}
           </Button>
