@@ -1,20 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
+  Check,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Download,
   ExternalLink,
   MapPin,
   MessageSquare,
   Tag as TagIcon,
+  Trash2,
   User,
   X,
 } from "lucide-react";
 
+import { Alert } from "@/components/ui/alert";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Input } from "@/components/ui/input";
+import { bulkDeletePhotosAction, bulkTagPhotosAction } from "@/actions/photosBulk";
+import { downloadPhotosZip } from "@/lib/clientZip";
 import { useT, useLocale } from "@/components/i18n/LocaleProvider";
 import type { Dictionary } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 export interface FeedPhoto {
   id: string;
@@ -77,21 +89,35 @@ function MetaCounts({ photo, light }: { photo: FeedPhoto; light?: boolean }) {
   );
 }
 
-// Company/team photo feed: photos grouped by day, tapping one opens a
-// full-screen viewer (prev/next across the whole list) with a link out to the
-// photo's detail page for comments/tags. `basePath` picks the admin vs worker
-// project route.
+// Company/team photo feed: photos grouped by day. Tapping one opens a
+// full-screen viewer (prev/next across the whole list); a "Select" mode turns
+// the grid into a multi-select for bulk download (ZIP), tagging (admin) and
+// deleting. `basePath` picks the admin vs worker project route.
 export function PhotoFeed({
   photos,
   basePath,
+  canTag = false,
+  tagSuggestions = [],
 }: {
   photos: FeedPhoto[];
   basePath: string;
+  // Admins can bulk-tag (tags are a company-wide taxonomy).
+  canTag?: boolean;
+  tagSuggestions?: string[];
 }) {
   const t = useT().photos;
   const tc = useT().common;
   const locale = useLocale();
   const [open, setOpen] = useState<number | null>(null);
+
+  // Selection mode
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [tagOpen, setTagOpen] = useState(false);
+  const [tagName, setTagName] = useState("");
+  const [zipping, setZipping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
   const groups = useMemo(() => {
     const map = new Map<number, { label: string; items: FeedPhoto[] }>();
@@ -100,7 +126,6 @@ export function PhotoFeed({
       if (!map.has(key)) map.set(key, { label: dayLabel(p.takenAt, t, locale), items: [] });
       map.get(key)!.items.push(p);
     }
-    // photos arrive newest-first, so insertion order is already correct
     return Array.from(map.values());
   }, [photos, t, locale]);
 
@@ -122,12 +147,112 @@ export function PhotoFeed({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, close, go]);
 
-  // Flat index so the viewer can page across day groups seamlessly.
   const flat = photos;
   const active = open != null ? flat[open] : null;
 
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function exitSelect() {
+    setSelectMode(false);
+    setSelected(new Set());
+    setError(null);
+  }
+
+  function onThumb(index: number, id: string) {
+    if (selectMode) toggle(id);
+    else setOpen(index);
+  }
+
+  const selectedPhotos = photos.filter((p) => selected.has(p.id));
+
+  async function doDownload() {
+    if (selectedPhotos.length === 0) return;
+    setZipping(true);
+    setError(null);
+    try {
+      const items = selectedPhotos.map((p, i) => ({
+        url: p.url,
+        name: `${p.projectName.replace(/[^a-z0-9]+/gi, "-").toLowerCase() || "photo"}-${i + 1}.jpg`,
+      }));
+      const n = await downloadPhotosZip(items, `photos-${Date.now()}.zip`);
+      if (n === 0) setError(t.zipFailed);
+      else exitSelect();
+    } catch {
+      setError(t.zipFailed);
+    } finally {
+      setZipping(false);
+    }
+  }
+
+  function doDelete() {
+    const ids = [...selected];
+    startTransition(async () => {
+      await bulkDeletePhotosAction(ids);
+      exitSelect();
+    });
+  }
+
+  function doTag() {
+    const ids = [...selected];
+    const name = tagName.trim();
+    if (!name) return;
+    startTransition(async () => {
+      await bulkTagPhotosAction(ids, name);
+      setTagOpen(false);
+      setTagName("");
+      exitSelect();
+    });
+  }
+
+  const busy = pending || zipping;
+
   return (
     <>
+      {/* Toolbar: enter/exit select mode */}
+      <div className="flex items-center justify-between gap-2">
+        {selectMode ? (
+          <>
+            <span className="text-sm font-medium text-neutral-700 dark:text-neutral-200">
+              {t.selectedCount.replace("{n}", String(selected.size))}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setSelected(
+                    selected.size === photos.length ? new Set() : new Set(photos.map((p) => p.id))
+                  )
+                }
+              >
+                {selected.size === photos.length ? t.clearSelection : t.selectAll}
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={exitSelect}>
+                {tc.cancel}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="text-xs text-neutral-400 dark:text-neutral-500" />
+            <Button type="button" variant="outline" size="sm" onClick={() => setSelectMode(true)}>
+              <CheckCircle2 className="h-4 w-4" />
+              {t.select}
+            </Button>
+          </>
+        )}
+      </div>
+
+      {error && <Alert variant="error">{error}</Alert>}
+
       <div className="flex flex-col gap-5">
         {groups.map((group) => {
           const startIndex = flat.indexOf(group.items[0]);
@@ -142,20 +267,46 @@ export function PhotoFeed({
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
                 {group.items.map((photo) => {
                   const index = flat.indexOf(photo);
+                  const isSel = selected.has(photo.id);
                   return (
                     <button
                       key={photo.id}
                       type="button"
-                      onClick={() => setOpen(index)}
-                      className="group relative aspect-square overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-800"
-                      aria-label={t.openPhotoFrom.replace("{name}", photo.projectName)}
+                      onClick={() => onThumb(index, photo.id)}
+                      className={cn(
+                        "group relative aspect-square overflow-hidden rounded-lg border transition-all",
+                        isSel
+                          ? "border-primary ring-2 ring-primary"
+                          : "border-neutral-200 dark:border-neutral-800"
+                      )}
+                      aria-label={
+                        selectMode
+                          ? t.togglePhoto.replace("{name}", photo.projectName)
+                          : t.openPhotoFrom.replace("{name}", photo.projectName)
+                      }
+                      aria-pressed={selectMode ? isSel : undefined}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={photo.url}
                         alt=""
-                        className="h-full w-full object-cover transition-transform group-active:scale-95"
+                        className={cn(
+                          "h-full w-full object-cover transition-transform group-active:scale-95",
+                          isSel && "scale-95"
+                        )}
                       />
+                      {selectMode && (
+                        <span
+                          className={cn(
+                            "absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full border-2",
+                            isSel
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-white/90 bg-black/30"
+                          )}
+                        >
+                          {isSel && <Check className="h-3 w-3" />}
+                        </span>
+                      )}
                       <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1 text-[10px] text-white">
                         <span className="truncate">{photo.projectName}</span>
                         <MetaCounts photo={photo} light />
@@ -169,13 +320,71 @@ export function PhotoFeed({
         })}
       </div>
 
+      {/* Sticky bulk action bar */}
+      {selectMode && selected.size > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/95">
+          <div className="mx-auto flex max-w-3xl items-center gap-2">
+            <Button type="button" size="sm" onClick={doDownload} disabled={busy} className="flex-1">
+              <Download className="h-4 w-4" />
+              {zipping ? t.zipping : t.downloadZip}
+            </Button>
+            {canTag && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setTagOpen(true)}
+                disabled={busy}
+                className="flex-1"
+              >
+                <TagIcon className="h-4 w-4" />
+                {t.tagSelected}
+              </Button>
+            )}
+            <ConfirmDialog
+              title={t.deleteSelectedTitle}
+              description={t.deleteSelectedDesc.replace("{n}", String(selected.size))}
+              confirmLabel={t.deleteSelectedConfirm}
+              trigger={
+                <Button type="button" variant="outline" size="sm" disabled={busy} className="text-destructive-text">
+                  <Trash2 className="h-4 w-4" />
+                  {t.deleteSelected}
+                </Button>
+              }
+              onConfirm={doDelete}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Bulk tag sheet */}
+      <BottomSheet open={tagOpen} onClose={() => setTagOpen(false)} title={t.tagSelected} closeLabel={tc.close}>
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            {t.tagSelectedHint.replace("{n}", String(selected.size))}
+          </p>
+          <Input
+            value={tagName}
+            onChange={(e) => setTagName(e.target.value)}
+            list="bulk-tag-suggestions"
+            placeholder={t.addTagPlaceholder}
+            autoComplete="off"
+            maxLength={30}
+          />
+          <datalist id="bulk-tag-suggestions">
+            {tagSuggestions.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
+          <Button type="button" onClick={doTag} disabled={busy || !tagName.trim()} className="w-full">
+            <TagIcon className="h-4 w-4" />
+            {t.add}
+          </Button>
+        </div>
+      </BottomSheet>
+
       {active && open != null && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col bg-black/95"
-          role="dialog"
-          aria-modal="true"
-        >
-          {/* Top bar: project + close */}
+        <div className="fixed inset-0 z-50 flex flex-col bg-black/95" role="dialog" aria-modal="true">
           <div className="flex items-center justify-between gap-2 px-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3 text-white">
             <div className="min-w-0">
               <div className="truncate text-sm font-medium">{active.projectName}</div>
@@ -200,7 +409,6 @@ export function PhotoFeed({
             </button>
           </div>
 
-          {/* Image */}
           <div className="relative flex flex-1 items-center justify-center overflow-hidden px-2">
             {photos.length > 1 && (
               <>
@@ -223,14 +431,9 @@ export function PhotoFeed({
               </>
             )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={active.url}
-              alt=""
-              className="max-h-full max-w-full object-contain"
-            />
+            <img src={active.url} alt="" className="max-h-full max-w-full object-contain" />
           </div>
 
-          {/* Bottom bar: counter + details link */}
           <div className="flex items-center justify-between gap-2 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
             <span className="rounded-full bg-white/10 px-3 py-1 text-sm tabular-nums text-white">
               {open + 1} / {photos.length}

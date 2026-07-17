@@ -1,5 +1,6 @@
-import { Images } from "lucide-react";
+import { FileDown, Images } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
@@ -112,16 +113,30 @@ export default async function WorkerPhotosPage({
     activeTag || activeProject || activeUntagged || activeRange !== "all"
   );
 
+  const reportParams = new URLSearchParams();
+  if (activeTag) reportParams.set("tag", activeTag);
+  if (activeProject) reportParams.set("project", activeProject);
+  if (activeRange !== "all") reportParams.set("range", activeRange);
+  if (activeUntagged) reportParams.set("untagged", "1");
+  const reportHref = `/records/photos/report${reportParams.toString() ? `?${reportParams}` : ""}`;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
-        <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
-          {(photos.length === 1 ? t.countOne : t.countMany).replace(
-            "{n}",
-            String(photos.length)
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
+            {(photos.length === 1 ? t.countOne : t.countMany).replace("{n}", String(photos.length))}
+          </span>
+          {photos.length > 0 && (
+            <Button asChild variant="outline" size="sm">
+              <a href={reportHref}>
+                <FileDown className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.exportPdf}</span>
+              </a>
+            </Button>
           )}
-        </span>
+        </div>
       </div>
 
       <PhotoFilters

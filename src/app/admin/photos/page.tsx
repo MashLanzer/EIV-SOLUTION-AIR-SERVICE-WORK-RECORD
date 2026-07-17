@@ -1,5 +1,6 @@
-import { Images } from "lucide-react";
+import { FileDown, Images } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -113,14 +114,33 @@ export default async function AdminPhotosPage({
     activeTag || activeProject || activePhotographer || activeUntagged || activeRange !== "all"
   );
 
+  // A PDF of the current view (respects every active filter).
+  const reportParams = new URLSearchParams();
+  if (activeTag) reportParams.set("tag", activeTag);
+  if (activeProject) reportParams.set("project", activeProject);
+  if (activePhotographer) reportParams.set("by", activePhotographer);
+  if (activeRange !== "all") reportParams.set("range", activeRange);
+  if (activeUntagged) reportParams.set("untagged", "1");
+  const reportHref = `/admin/photos/report${reportParams.toString() ? `?${reportParams}` : ""}`;
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title={t.title}
         action={
-          <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
-            {(totalPhotos === 1 ? t.countOne : t.countMany).replace("{n}", String(totalPhotos))}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
+              {(totalPhotos === 1 ? t.countOne : t.countMany).replace("{n}", String(totalPhotos))}
+            </span>
+            {totalPhotos > 0 && (
+              <Button asChild variant="outline" size="sm">
+                <a href={reportHref}>
+                  <FileDown className="h-4 w-4" />
+                  <span className="hidden sm:inline">{t.exportPdf}</span>
+                </a>
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -158,7 +178,12 @@ export default async function AdminPhotosPage({
           </CardContent>
         </Card>
       ) : (
-        <PhotoFeed photos={photos} basePath="/admin/projects" />
+        <PhotoFeed
+          photos={photos}
+          basePath="/admin/projects"
+          canTag
+          tagSuggestions={usableTags.map((tg) => tg.name)}
+        />
       )}
     </div>
   );
