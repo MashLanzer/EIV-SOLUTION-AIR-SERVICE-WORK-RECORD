@@ -915,6 +915,7 @@ export const en = {
     nextDay: "Next day",
     routeTitle: "Suggested route",
     routeOpen: "Open in Maps",
+    mapTitle: "Map",
     timeline: "Timeline",
     month: "Month",
     week: "Week",

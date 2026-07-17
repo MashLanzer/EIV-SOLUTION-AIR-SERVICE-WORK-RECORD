@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Clock,
   GripVertical,
+  MapPin as MapPinIcon,
   Navigation,
   Route,
   TriangleAlert,
@@ -36,6 +37,8 @@ import { SuccessToast } from "@/components/ui/success-toast";
 import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
 import { ScheduleSelectFilter } from "@/components/schedule/ScheduleSelectFilter";
 import { loadNewRecordFormData } from "@/lib/newRecordForm";
+import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
+import type { MapPin } from "@/components/projects/ProjectsMap";
 import { WeekBoard } from "@/components/schedule/WeekBoard";
 import {
   ScheduleMonthCalendar,
@@ -178,16 +181,18 @@ export type DayRoute = {
   mapsUrl: string;
 };
 
-// Suggested driving order for the day's geocoded jobsites: nearest-neighbour
-// from the first job, plus a Google Maps link chaining every stop. Null when
-// fewer than two of the day's jobs have a geocoded project.
-async function getDayRoute(
+// The day's geocoded jobsites, resolved once: map pins for every located job
+// (one is enough to plot) and a suggested driving route (nearest-neighbour from
+// the first job + a Google Maps link chaining the stops) once there are two or
+// more. Both null/empty when nothing that day is geocoded.
+async function getDayGeo(
   organizationId: string,
   dayJobs: ScheduleJobView[]
-): Promise<DayRoute | null> {
+): Promise<{ pins: MapPin[]; route: DayRoute | null }> {
+  const empty = { pins: [] as MapPin[], route: null };
   const withProject = dayJobs.filter((j) => j.status !== "CANCELED" && j.projectId);
   const projectIds = [...new Set(withProject.map((j) => j.projectId as string))];
-  if (projectIds.length === 0) return null;
+  if (projectIds.length === 0) return empty;
 
   const projects = await prisma.project.findMany({
     where: {
@@ -208,13 +213,23 @@ async function getDayRoute(
         : null;
     })
     .filter((x): x is NonNullable<typeof x> => x != null);
-  if (points.length < 2) return null;
+  if (points.length === 0) return empty;
+
+  const pins: MapPin[] = points.map((pt) => ({
+    id: pt.id,
+    name: pt.title || pt.place,
+    latitude: pt.lat,
+    longitude: pt.lng,
+    subtitle: pt.place,
+  }));
+
+  if (points.length < 2) return { pins, route: null };
 
   const stops = orderByRoute(points);
   const mapsUrl = `https://www.google.com/maps/dir/${stops
     .map((s) => `${s.lat},${s.lng}`)
     .join("/")}`;
-  return { stops, mapsUrl };
+  return { pins, route: { stops, mapsUrl } };
 }
 
 export default async function SchedulePage({
@@ -482,8 +497,10 @@ export default async function SchedulePage({
   // the short forecast window (getDayWeather returns null otherwise).
   const dayWeather =
     view === "day" ? await getDayWeather(organizationId, byDay.get(selectedKey) ?? [], selectedKey) : null;
-  const dayRoute =
-    view === "day" ? await getDayRoute(organizationId, byDay.get(selectedKey) ?? []) : null;
+  const dayGeo =
+    view === "day"
+      ? await getDayGeo(organizationId, byDay.get(selectedKey) ?? [])
+      : { pins: [] as MapPin[], route: null };
 
   const intl = {
     month: new Intl.DateTimeFormat(intlLocale, { month: "long", year: "numeric", timeZone: "UTC" }),
@@ -649,7 +666,8 @@ export default async function SchedulePage({
           thresholdFor={thresholdFor}
           dayLabel={intl.dayLong.format(selected)}
           weather={dayWeather}
-          route={dayRoute}
+          route={dayGeo.route}
+          pins={dayGeo.pins}
           count={count}
           t={t}
         />
@@ -885,6 +903,7 @@ function DayView({
   dayLabel,
   weather,
   route,
+  pins,
   count,
   t,
 }: {
@@ -905,6 +924,7 @@ function DayView({
   dayLabel: string;
   weather: { day: WeatherDay; placeLabel: string } | null;
   route: DayRoute | null;
+  pins: MapPin[];
   count: (n: number) => string;
   t: SchedT;
 }) {
@@ -950,12 +970,21 @@ function DayView({
       {/* A compact day-meta row: weather stays glanceable inline; the tall clock
           timeline and the driving route tuck into bottom sheets so the day view
           leads with the actual job cards instead of a screen-tall clock. */}
-      {(weather || route || hasTimeline) && (
+      {(weather || route || hasTimeline || pins.length > 0) && (
         <div className="flex flex-wrap items-stretch gap-2">
           {weather && (
             <div className="min-w-[14rem] flex-1">
               <ScheduleDayWeather day={weather.day} placeLabel={weather.placeLabel} />
             </div>
+          )}
+          {pins.length > 0 && (
+            <SheetButton
+              label={`${t.mapTitle} · ${pins.length}`}
+              icon={<MapPinIcon className="h-4 w-4" />}
+              title={t.mapTitle}
+            >
+              <ProjectsMapCard pins={pins} />
+            </SheetButton>
           )}
           {hasTimeline && (
             <SheetButton label={t.timeline} icon={<Clock className="h-4 w-4" />} title={t.timeline}>
