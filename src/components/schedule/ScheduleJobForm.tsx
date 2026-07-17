@@ -377,6 +377,9 @@ export function ScheduleJobForm({
       {state?.ok && state.warning === "conflict" && (
         <Alert variant="warning">{t.conflictWarning}</Alert>
       )}
+      {state?.ok && state.warning === "timeoff" && (
+        <Alert variant="warning">{t.timeOffWarning}</Alert>
+      )}
       {state?.ok && !state.warning && !jobId && (
         <Alert variant="success">{t.saved}</Alert>
       )}

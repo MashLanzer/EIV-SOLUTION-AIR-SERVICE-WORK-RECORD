@@ -29,6 +29,24 @@ export function dayKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+// Every YYYY-MM-DD key from `start` to `end` inclusive (both UTC-midnight
+// DATEs), clamped to the half-open [rangeFrom, rangeTo) window so an open-ended
+// time-off doesn't spin over the whole calendar. Used to paint per-day "off".
+export function dayKeysInRange(
+  start: Date,
+  end: Date,
+  rangeFrom: Date,
+  rangeTo: Date
+): string[] {
+  const from = start > rangeFrom ? start : rangeFrom;
+  const lastExclusive = addUtcDays(end, 1) < rangeTo ? addUtcDays(end, 1) : rangeTo;
+  const keys: string[] = [];
+  for (let d = startOfUtcDay(from); d < lastExclusive; d = addUtcDays(d, 1)) {
+    keys.push(dayKey(d));
+  }
+  return keys;
+}
+
 // The Monday..Sunday week that contains `date` (UTC). Field service weeks read
 // most naturally Monday-first, matching the rest of the app's calendars.
 export function weekRange(date: Date): { from: Date; to: Date } {

@@ -153,6 +153,28 @@ async function conflictWarning(params: {
   return clash ? "conflict" : null;
 }
 
+// Warn (never block) when the assigned worker has time off covering the day the
+// job is booked for. Returns "timeoff" or null. Takes priority over the overlap
+// warning since being away is the bigger flag.
+async function timeOffWarning(params: {
+  organizationId: string;
+  assignedToId: string | null;
+  scheduledFor: Date;
+}): Promise<string | null> {
+  const { organizationId, assignedToId, scheduledFor } = params;
+  if (!assignedToId) return null;
+  const off = await prisma.timeOff.findFirst({
+    where: {
+      organizationId,
+      userId: assignedToId,
+      startDate: { lte: scheduledFor },
+      endDate: { gte: scheduledFor },
+    },
+    select: { id: true },
+  });
+  return off ? "timeoff" : null;
+}
+
 export async function createScheduledJobAction(
   _prev: ScheduleFormState,
   formData: FormData
@@ -175,14 +197,17 @@ export async function createScheduledJobAction(
   const date = toDateOnly(scheduledFor);
 
   // Check for an overlap BEFORE inserting, so the new job isn't compared against
-  // itself (which would flag every timed job as a false conflict).
-  const warning = await conflictWarning({
-    organizationId,
-    assignedToId,
-    scheduledFor: date,
-    startTime: startTime || "",
-    endTime: endTime || "",
-  });
+  // itself (which would flag every timed job as a false conflict). A worker who's
+  // off that day is the stronger flag, so it wins when both apply.
+  const warning =
+    (await timeOffWarning({ organizationId, assignedToId, scheduledFor: date })) ??
+    (await conflictWarning({
+      organizationId,
+      assignedToId,
+      scheduledFor: date,
+      startTime: startTime || "",
+      endTime: endTime || "",
+    }));
 
   const recurrence = parseRecurrence(formData);
   const base = {
@@ -271,14 +296,16 @@ export async function updateScheduledJobAction(
     },
   });
 
-  const warning = await conflictWarning({
-    organizationId,
-    assignedToId,
-    scheduledFor: date,
-    startTime: startTime || "",
-    endTime: endTime || "",
-    ignoreJobId: jobId,
-  });
+  const warning =
+    (await timeOffWarning({ organizationId, assignedToId, scheduledFor: date })) ??
+    (await conflictWarning({
+      organizationId,
+      assignedToId,
+      scheduledFor: date,
+      startTime: startTime || "",
+      endTime: endTime || "",
+      ignoreJobId: jobId,
+    }));
 
   revalidatePath(SCHEDULE_PATH);
   revalidatePath(WORKER_SCHEDULE_PATH);

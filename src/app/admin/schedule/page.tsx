@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ScheduledJobStatus } from "@prisma/client";
 import {
   CalendarDays,
+  CalendarOff,
   CalendarPlus,
   CalendarArrowDown,
   ChevronLeft,
@@ -24,6 +25,10 @@ import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
 import { NewScheduledJobButton } from "@/components/schedule/NewScheduledJobButton";
 import { UnscheduledBacklog } from "@/components/schedule/UnscheduledBacklog";
+import {
+  TimeOffManager,
+  type TimeOffEntry,
+} from "@/components/schedule/TimeOffManager";
 import { StartRecordSheet } from "@/components/schedule/StartRecordSheet";
 import { DaySheet } from "@/components/schedule/DaySheet";
 import { SheetButton } from "@/components/schedule/SheetButton";
@@ -48,6 +53,7 @@ import { getT, getLocale } from "@/lib/i18n/server";
 import {
   addUtcDays,
   dayKey,
+  dayKeysInRange,
   getScheduledJobs,
   monthGridDays,
   startOfUtcDay,
@@ -424,6 +430,53 @@ export default async function SchedulePage({
         })
       : [];
 
+  // Worker time off. Two reads: the entries overlapping the fetched range (to
+  // paint "off" on the calendar) and the upcoming list (for the manage sheet).
+  const [timeOffInRange, upcomingTimeOff] = await Promise.all([
+    prisma.timeOff.findMany({
+      where: { organizationId, startDate: { lt: to }, endDate: { gte: from } },
+      select: { userId: true, startDate: true, endDate: true },
+    }),
+    prisma.timeOff.findMany({
+      where: { organizationId, endDate: { gte: startOfUtcDay(new Date()) } },
+      orderBy: { startDate: "asc" },
+      take: 30,
+      select: {
+        id: true,
+        reason: true,
+        startDate: true,
+        endDate: true,
+        user: { select: { name: true } },
+      },
+    }),
+  ]);
+
+  // dateKey -> set of worker ids off that day, across the visible range.
+  const offByDay = new Map<string, Set<string>>();
+  for (const row of timeOffInRange) {
+    for (const key of dayKeysInRange(row.startDate, row.endDate, from, to)) {
+      const set = offByDay.get(key) ?? new Set<string>();
+      set.add(row.userId);
+      offByDay.set(key, set);
+    }
+  }
+
+  const timeOffRangeFmt = new Intl.DateTimeFormat(intlLocale, {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  const timeOffEntries: TimeOffEntry[] = upcomingTimeOff.map((r) => {
+    const startLabel = timeOffRangeFmt.format(r.startDate);
+    const endLabel = timeOffRangeFmt.format(r.endDate);
+    return {
+      id: r.id,
+      workerName: r.user?.name ?? "—",
+      range: dayKey(r.startDate) === dayKey(r.endDate) ? startLabel : `${startLabel} – ${endLabel}`,
+      reason: r.reason,
+    };
+  });
+
   // Day view: best-effort weather for the selected day at its first geocoded
   // jobsite. Only fetched in day view, and only shown when the day falls inside
   // the short forecast window (getDayWeather returns null otherwise).
@@ -475,6 +528,7 @@ export default async function SchedulePage({
               <span className="hidden sm:inline">{t.addToCalendar}</span>
             </a>
           </Button>
+          <TimeOffManager workers={workers} entries={timeOffEntries} defaultDate={formDefaultDate} />
           <NewScheduledJobButton
             defaultDate={formDefaultDate}
             workers={workers}
@@ -591,6 +645,7 @@ export default async function SchedulePage({
           teams={teams}
           customers={customers}
           projects={projects}
+          offByDay={offByDay}
           thresholdFor={thresholdFor}
           dayLabel={intl.dayLong.format(selected)}
           weather={dayWeather}
@@ -608,6 +663,7 @@ export default async function SchedulePage({
           teamFilter={teamFilter}
           skillFilter={skillFilter}
           workers={workers}
+          offByDay={offByDay}
           thresholdFor={thresholdFor}
           weekOfFmt={intl.weekOf}
           weekdayFmt={intl.weekday}
@@ -824,6 +880,7 @@ function DayView({
   teams,
   customers,
   projects,
+  offByDay,
   thresholdFor,
   dayLabel,
   weather,
@@ -843,6 +900,7 @@ function DayView({
   teams: Opt[];
   customers: Opt[];
   projects: Opt[];
+  offByDay: Map<string, Set<string>>;
   thresholdFor: (id: string) => number;
   dayLabel: string;
   weather: { day: WeatherDay; placeLabel: string } | null;
@@ -856,6 +914,11 @@ function DayView({
   const prevKey = dayKey(addUtcDays(selected, -1));
   const nextKey = dayKey(addUtcDays(selected, 1));
   const isToday = selectedKey === todayKey;
+  // Who's off this day (respecting the worker filter), for the "off" notice.
+  const offSet = offByDay.get(selectedKey);
+  const offNames = offSet
+    ? workers.filter((w) => offSet.has(w.id) && (!worker || w.id === worker)).map((w) => w.name)
+    : [];
   // Only worth a timeline when something is actually timed that day.
   const hasTimeline = dayJobs.some((j) => j.status !== "CANCELED" && j.startTime);
 
@@ -946,6 +1009,18 @@ function DayView({
         </div>
       )}
 
+      {offNames.length > 0 && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-neutral-200 bg-neutral-50 px-3.5 py-2.5 text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900/40 dark:text-neutral-300">
+          <CalendarOff className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400" />
+          <p className="text-sm">
+            {(offNames.length === 1 ? t.offToday : t.offTodayMany).replace(
+              "{names}",
+              offNames.join(", ")
+            )}
+          </p>
+        </div>
+      )}
+
       <DaySection
         heading={isToday ? `${t.today} · ${dayLabel}` : dayLabel}
         jobs={dayJobs}
@@ -975,6 +1050,7 @@ function TeamView({
   teamFilter,
   skillFilter,
   workers,
+  offByDay,
   thresholdFor,
   weekOfFmt,
   weekdayFmt,
@@ -988,6 +1064,7 @@ function TeamView({
   teamFilter?: string;
   skillFilter?: string;
   workers: Opt[];
+  offByDay: Map<string, Set<string>>;
   thresholdFor: (id: string) => number;
   weekOfFmt: Intl.DateTimeFormat;
   weekdayFmt: Intl.DateTimeFormat;
@@ -1099,13 +1176,20 @@ function TeamView({
                 {days.map((d) => {
                   const k = dayKey(d);
                   const n = cellFor(row.id, k);
+                  const isOff = row.id != null && (offByDay.get(k)?.has(row.id) ?? false);
                   if (n === 0) {
                     return (
                       <div
                         key={k}
-                        className="flex items-center justify-center py-2.5 text-neutral-200 dark:text-neutral-700"
+                        className={cn(
+                          "flex items-center justify-center py-2.5",
+                          isOff
+                            ? "text-[10px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
+                            : "text-neutral-200 dark:text-neutral-700"
+                        )}
+                        title={isOff ? t.offLabel : undefined}
                       >
-                        ·
+                        {isOff ? t.offLabel : "·"}
                       </div>
                     );
                   }

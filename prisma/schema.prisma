@@ -147,6 +147,7 @@ model Organization {
   estimates          Estimate[]
   supportSessions    ImpersonationSession[]
   positions          Position[]
+  timeOff            TimeOff[]
 }
 
 enum SupportMode {
@@ -514,6 +515,8 @@ model User {
   skills           UserSkill[]
   assignedJobs     ScheduledJob[] @relation("AssignedJobs")
   createdJobs      ScheduledJob[] @relation("CreatedJobs")
+  timeOff          TimeOff[]      @relation("UserTimeOff")
+  timeOffCreated   TimeOff[]      @relation("TimeOffCreatedBy")
   reviewEvents     RecordReviewEvent[] @relation("ReviewActor")
   roleChangesMade  RoleChangeEvent[]   @relation("RoleChangeActor")
   roleChangesGot   RoleChangeEvent[]   @relation("RoleChangeTarget")
@@ -725,6 +728,27 @@ model JobStatusEvent {
   createdAt DateTime           @default(now())
 
   @@index([jobId, createdAt])
+}
+
+// A worker's day (or run of days) off — vacation, sick, personal. The scheduler
+// reads these to warn the office before booking someone who's away, and to show
+// "off" on the calendar. Date-only, inclusive on both ends. Org-scoped.
+model TimeOff {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation("UserTimeOff", fields: [userId], references: [id], onDelete: Cascade)
+  // Inclusive date range (a single day = start == end).
+  startDate      DateTime     @db.Date
+  endDate        DateTime     @db.Date
+  reason         String?
+  createdById    String?
+  createdBy      User?        @relation("TimeOffCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, startDate])
+  @@index([userId])
 }
 
 enum InvoiceStatus {

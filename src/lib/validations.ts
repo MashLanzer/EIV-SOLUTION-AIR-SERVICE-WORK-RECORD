@@ -154,6 +154,20 @@ export const scheduledJobSchema = z
     { message: "End time must be after start time", path: ["endTime"] }
   );
 
+// A worker's day(s) off. Date-only strings ("YYYY-MM-DD"), inclusive; the end
+// day must not fall before the start day (a single day = same start and end).
+export const timeOffSchema = z
+  .object({
+    userId: z.string().min(1, "Pick a worker"),
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "A start date is required"),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "An end date is required"),
+    reason: z.string().trim().max(120, "Reason is too long").optional().or(z.literal("")),
+  })
+  .refine((d) => d.endDate >= d.startDate, {
+    message: "The end date can't be before the start date",
+    path: ["endDate"],
+  });
+
 export const updateOrganizationNameSchema = z.object({
   name: z
     .string()
