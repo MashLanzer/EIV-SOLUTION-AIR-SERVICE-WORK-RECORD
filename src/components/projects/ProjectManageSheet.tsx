@@ -10,6 +10,7 @@ import { DeleteProjectButton } from "@/components/projects/DeleteProjectButton";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { useBackDismiss } from "@/hooks/useBackDismiss";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scrollLock";
 
 interface ProjectValues {
   name: string;
@@ -49,12 +50,12 @@ export function ProjectManageSheet({
       if (e.key === "Escape") setOpen(false);
     };
     document.addEventListener("keydown", onKey);
-    // Keep the page behind the sheet from scrolling while it's open.
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // Keep the page behind the sheet from scrolling while it's open (ref-counted
+    // so stacked overlays don't leave the page stuck at overflow:hidden).
+    lockBodyScroll();
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
     };
   }, [open]);
 

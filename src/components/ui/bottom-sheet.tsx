@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 import { useBackDismiss } from "@/hooks/useBackDismiss";
+import { lockBodyScroll, unlockBodyScroll } from "@/lib/scrollLock";
 
 // A shared bottom sheet: slides up from the bottom on mobile, becomes a
 // centered dialog on desktop, dims the page behind it and closes on Escape or
@@ -32,11 +33,12 @@ export function BottomSheet({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // Ref-counted so a sheet opened on top of another (day sheet → start-record
+    // sheet) doesn't leave the page stuck at overflow:hidden when both close.
+    lockBodyScroll();
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
+      unlockBodyScroll();
     };
   }, [open, onClose]);
 
