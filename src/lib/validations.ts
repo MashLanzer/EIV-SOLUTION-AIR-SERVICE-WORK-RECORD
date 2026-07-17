@@ -10,7 +10,7 @@ export const TYPE_OF_WORK_OPTIONS = [
   "Other",
 ] as const;
 
-export const MAX_PHOTOS = 4;
+export const MAX_PHOTOS = 10;
 
 // "HH:mm" (native <input type="time"> format) to minutes since midnight.
 function timeToMinutes(value: string): number {
