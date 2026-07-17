@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
@@ -14,6 +16,62 @@ import { getOrgFeatures } from "@/lib/features";
 export type CustomerFormState =
   | { error?: string; fieldErrors?: Record<string, string[]> }
   | undefined;
+
+// Create a customer from scratch (the office pre-registering someone before a
+// job, rather than waiting for the first record to spawn them). Uniqueness is
+// enforced by a raw functional index UNIQUE(lower(name), lower(address)); a
+// clash surfaces as a friendly message instead of a 500.
+export async function createCustomerAction(
+  _prevState: CustomerFormState,
+  formData: FormData
+): Promise<CustomerFormState> {
+  const session = await requirePermission("customers.manage");
+  const organizationId = requireOrgId(session);
+
+  const parsed = customerSchema.safeParse({
+    name: formData.get("name"),
+    address: formData.get("address"),
+    phone: formData.get("phone") || undefined,
+    email: formData.get("email") || undefined,
+  });
+  if (!parsed.success) {
+    return {
+      error: "Please fix the highlighted fields.",
+      fieldErrors: z.flattenError(parsed.error).fieldErrors,
+    };
+  }
+
+  const { name, address, phone, email } = parsed.data;
+  let created: { id: string };
+  try {
+    created = await prisma.customer.create({
+      data: {
+        organizationId,
+        name,
+        address,
+        phone: phone ? phone : null,
+        email: email ? email : null,
+      },
+      select: { id: true },
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
+      return { error: "A customer with this name and address already exists." };
+    }
+    throw err;
+  }
+
+  await logAudit({
+    organizationId,
+    actor: { id: session.user.id, name: session.user.name },
+    action: "customer.create",
+    entityType: "customer",
+    entityId: created.id,
+    summary: `Added customer ${name}`,
+  });
+  revalidatePath("/admin/customers");
+  redirect(`/admin/customers/${created.id}?saved=1`);
+}
 
 export async function updateCustomerAction(
   customerId: string,

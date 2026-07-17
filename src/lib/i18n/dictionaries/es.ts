@@ -1358,6 +1358,21 @@ export const es: Dictionary = {
       "Los clientes se guardan automáticamente cuando se envían registros de trabajo.",
     countOne: "{n} cliente",
     countMany: "{n} clientes",
+    // Nuevo cliente (bottom sheet)
+    newCustomer: "Nuevo cliente",
+    newCustomerDesc: "Registra un cliente antes de su primer trabajo.",
+    createCustomer: "Crear cliente",
+    creating: "Creando…",
+    // Filtros rápidos
+    filterAll: "Todos",
+    filterUpcoming: "Con visitas próximas",
+    filterNoContact: "Sin contacto",
+    // Indicadores
+    kpiTotal: "Clientes",
+    kpiWithContact: "Con contacto",
+    kpiUpcoming: "Próximas",
+    // Exportar
+    exportCsv: "Exportar CSV",
     colName: "Nombre",
     colAddress: "Dirección",
     colContact: "Contacto",

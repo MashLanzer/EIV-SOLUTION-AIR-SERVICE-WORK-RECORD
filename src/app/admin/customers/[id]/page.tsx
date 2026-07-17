@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import {
   ArrowRight,
   CalendarDays,
-  ChevronDown,
   ChevronRight,
   ClipboardList,
   FolderKanban,
@@ -30,7 +29,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CustomerEditForm } from "@/components/customers/CustomerEditForm";
+import { EditCustomerButton } from "@/components/customers/EditCustomerButton";
 import { DeleteCustomerButton } from "@/components/customers/DeleteCustomerButton";
 import { MergeCustomerForm } from "@/components/customers/MergeCustomerForm";
 import { ShareCustomerPortalButton } from "@/components/customers/ShareCustomerPortalButton";
@@ -483,7 +482,9 @@ export default async function AdminCustomerPage({
         </section>
       )}
 
-      {/* Manage - editing collapsed by default, secondary to viewing */}
+      {/* Manage - editing, merging and deleting as a compact action row.
+          Editing opens in a bottom sheet (like the rest of the app) so the
+          form no longer dominates the page; viewing comes first. */}
       <section
         className="flex animate-fade-up flex-col gap-3"
         style={{ animationDelay: "160ms", animationFillMode: "both" }}
@@ -492,33 +493,19 @@ export default async function AdminCustomerPage({
           {t.manage}
         </h2>
         <Card>
-          {/* Collapsed by default so the edit form no longer dominates the
-              page - the same details/summary pattern the records filter uses.
-              Viewing the customer + history comes first; editing is a tap. */}
-          <details className="group">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4 [&::-webkit-details-marker]:hidden [&::marker]:hidden">
-              <span className="text-base font-semibold text-neutral-900 dark:text-neutral-100">
-                {t.customerDetails}
-              </span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="flex flex-col gap-4 px-4 pb-4">
-              <CustomerEditForm
-                customerId={customer.id}
-                defaultValues={{
-                  name: customer.name,
-                  address: customer.address,
-                  phone: customer.phone ?? "",
-                  email: customer.email ?? "",
-                }}
-              />
-
-              <div className="flex flex-wrap items-center gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-4">
-                <MergeCustomerForm sourceId={customer.id} others={others} />
-                <DeleteCustomerButton customerId={customer.id} />
-              </div>
-            </div>
-          </details>
+          <CardContent className="flex flex-wrap items-center gap-2 p-4">
+            <EditCustomerButton
+              customerId={customer.id}
+              defaultValues={{
+                name: customer.name,
+                address: customer.address,
+                phone: customer.phone ?? "",
+                email: customer.email ?? "",
+              }}
+            />
+            <MergeCustomerForm sourceId={customer.id} others={others} />
+            <DeleteCustomerButton customerId={customer.id} />
+          </CardContent>
         </Card>
       </section>
     </div>

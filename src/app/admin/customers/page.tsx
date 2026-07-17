@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ChevronRight, Contact, Search, SearchX, ArrowRight, MapPin, Mail, Phone } from "lucide-react";
+import { ChevronRight, Contact, Search, SearchX, ArrowRight, MapPin, Mail, Phone, Sheet } from "lucide-react";
 
 import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterChip } from "@/components/ui/filter-chip";
 import { Input } from "@/components/ui/input";
 import { Pagination } from "@/components/ui/pagination";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
@@ -19,10 +20,18 @@ import {
 import { SortHeader } from "@/components/ui/sort-header";
 import { MobileCardList } from "@/components/ui/responsive-table";
 import { PageHeader } from "@/components/ui/page-header";
+import { NewCustomerButton } from "@/components/customers/NewCustomerButton";
 import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
+import {
+  customerFilterWhere,
+  customerSearchWhere,
+  normalizeCustomerFilter,
+  type CustomerFilter,
+} from "@/lib/customerFilters";
+import { startOfUtcDay } from "@/lib/schedule";
 import { getLocale, getT } from "@/lib/i18n/server";
 import type { Prisma } from "@prisma/client";
 
@@ -61,6 +70,8 @@ export default async function AdminCustomersPage({
   const rawParams = await searchParams;
   const rawQ = Array.isArray(rawParams.q) ? rawParams.q[0] : rawParams.q;
   const query = rawQ?.trim() || undefined;
+  const rawFilter = Array.isArray(rawParams.filter) ? rawParams.filter[0] : rawParams.filter;
+  const filter = normalizeCustomerFilter(rawFilter);
   const page = parsePage(rawParams.page);
   const { sort, dir } = parseSort(
     rawParams.sort,
@@ -69,21 +80,18 @@ export default async function AdminCustomersPage({
     { sort: "name", dir: "asc" }
   );
 
-  const where = {
+  const today = startOfUtcDay(new Date());
+  const searchWhere = customerSearchWhere(query);
+  const where: Prisma.CustomerWhereInput = {
     organizationId,
-    ...(query
-      ? {
-          OR: [
-            { name: { contains: query, mode: "insensitive" as const } },
-            { address: { contains: query, mode: "insensitive" as const } },
-            { phone: { contains: query, mode: "insensitive" as const } },
-            { email: { contains: query, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
+    ...searchWhere,
+    ...customerFilterWhere(filter, today),
   };
+  // Chip counts honor the search term but not the active filter, so each chip
+  // shows how many it would land on (mirrors the records list chips).
+  const searchScoped: Prisma.CustomerWhereInput = { organizationId, ...searchWhere };
 
-  const [total, customers] = await Promise.all([
+  const [total, customers, allCount, upcomingCount, noContactCount] = await Promise.all([
     prisma.customer.count({ where }),
     prisma.customer.findMany({
       where,
@@ -95,23 +103,64 @@ export default async function AdminCustomersPage({
       orderBy: customerOrderBy(sort, dir),
       ...paginationArgs(page),
     }),
+    prisma.customer.count({ where: searchScoped }),
+    prisma.customer.count({
+      where: { ...searchScoped, ...customerFilterWhere("upcoming", today) },
+    }),
+    prisma.customer.count({
+      where: { ...searchScoped, ...customerFilterWhere("nocontact", today) },
+    }),
   ]);
   const pages = pageCount(total);
   const sortProps = {
     sort,
     dir,
     basePath: "/admin/customers",
-    params: { q: query },
+    params: { q: query, filter },
   };
   const dict = await getT();
   const t = dict.customers;
   const locale = await getLocale();
 
+  // Quick filter chips, keeping any active search term.
+  const filterChips: { label: string; value?: CustomerFilter; count: number }[] = [
+    { label: t.filterAll, count: allCount },
+    { label: t.filterUpcoming, value: "upcoming", count: upcomingCount },
+    { label: t.filterNoContact, value: "nocontact", count: noContactCount },
+  ];
+  function chipHref(next?: CustomerFilter) {
+    const p = new URLSearchParams();
+    if (query) p.set("q", query);
+    if (next) p.set("filter", next);
+    const qs = p.toString();
+    return qs ? `/admin/customers?${qs}` : "/admin/customers";
+  }
+  const exportParams = new URLSearchParams();
+  if (query) exportParams.set("q", query);
+  if (filter) exportParams.set("filter", filter);
+  const exportHref = `/admin/customers/export${
+    exportParams.toString() ? `?${exportParams.toString()}` : ""
+  }`;
+
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title={t.title} />
+      <PageHeader
+        title={t.title}
+        action={
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <a href={exportHref}>
+                <Sheet className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.exportCsv}</span>
+              </a>
+            </Button>
+            <NewCustomerButton />
+          </div>
+        }
+      />
 
       <form method="get" className="relative max-w-md">
+        {filter && <input type="hidden" name="filter" value={filter} />}
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
         <Input
           type="search"
@@ -123,12 +172,23 @@ export default async function AdminCustomersPage({
         />
       </form>
 
+      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {filterChips.map((chip) => {
+          const active = (chip.value ?? undefined) === (filter ?? undefined);
+          return (
+            <FilterChip key={chip.label} href={chipHref(chip.value)} active={active} count={chip.count}>
+              {chip.label}
+            </FilterChip>
+          );
+        })}
+      </div>
+
       {customers.length === 0 ? (
-        query ? (
+        query || filter ? (
           <EmptyState
             icon={SearchX}
             title={t.noMatches}
-            description={t.nothingFound.replace("{q}", query)}
+            description={query ? t.nothingFound.replace("{q}", query) : t.noCustomersDesc}
             action={
               <Button asChild variant="outline" className="mt-2">
                 <Link href="/admin/customers">{t.clearSearch}</Link>
@@ -277,7 +337,7 @@ export default async function AdminCustomersPage({
         page={page}
         pageCount={pages}
         basePath="/admin/customers"
-        params={{ q: query, sort, dir }}
+        params={{ q: query, filter, sort, dir }}
       />
     </div>
   );

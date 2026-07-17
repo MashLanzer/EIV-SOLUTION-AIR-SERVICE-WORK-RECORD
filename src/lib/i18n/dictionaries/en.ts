@@ -1363,6 +1363,21 @@ export const en = {
       "Customers are saved automatically when work records are submitted.",
     countOne: "{n} Customer",
     countMany: "{n} Customers",
+    // New customer (bottom sheet)
+    newCustomer: "New customer",
+    newCustomerDesc: "Pre-register a customer before their first job.",
+    createCustomer: "Create customer",
+    creating: "Creating…",
+    // Quick filters
+    filterAll: "All",
+    filterUpcoming: "Upcoming visits",
+    filterNoContact: "No contact info",
+    // KPIs
+    kpiTotal: "Customers",
+    kpiWithContact: "With contact",
+    kpiUpcoming: "Upcoming",
+    // Export
+    exportCsv: "Export CSV",
     colName: "Name",
     colAddress: "Address",
     colContact: "Contact",
