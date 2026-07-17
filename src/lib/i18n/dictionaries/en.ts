@@ -1516,6 +1516,11 @@ export const en = {
     jobCountOne: "{n} job",
     jobCountMany: "{n} jobs",
     lastActivePrefix: "Last active {date}",
+    // Status filter + peek
+    filterAll: "All",
+    filterActive: "Active",
+    filterInactive: "Inactive",
+    viewRecords: "View records",
     // Detail
     roleAdmin: "Admin",
     roleSupervisor: "Supervisor",

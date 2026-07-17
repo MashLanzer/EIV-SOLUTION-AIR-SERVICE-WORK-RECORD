@@ -1511,6 +1511,11 @@ export const es: Dictionary = {
     jobCountOne: "{n} trabajo",
     jobCountMany: "{n} trabajos",
     lastActivePrefix: "Última actividad {date}",
+    // Filtro de estado + vista rápida
+    filterAll: "Todos",
+    filterActive: "Activos",
+    filterInactive: "Inactivos",
+    viewRecords: "Ver registros",
     // Detail
     roleAdmin: "Admin",
     roleSupervisor: "Supervisor",

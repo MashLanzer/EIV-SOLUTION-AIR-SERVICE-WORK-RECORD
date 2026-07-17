@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
 import { NewWorkerButton } from "@/components/workers/NewWorkerButton";
-import { WorkersSection, type WorkerStat } from "@/components/workers/WorkersTable";
+import { WorkerList, type WorkerPeek } from "@/components/workers/WorkerList";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getAssignablePositions } from "@/lib/positions";
@@ -28,6 +28,8 @@ export default async function AdminWorkersPage({
   const query = rawQ?.trim() || undefined;
   const rawSkill = Array.isArray(rawParams.skill) ? rawParams.skill[0] : rawParams.skill;
   const skill = rawSkill?.trim() || undefined;
+  const rawStatus = Array.isArray(rawParams.status) ? rawParams.status[0] : rawParams.status;
+  const status = rawStatus === "active" || rawStatus === "inactive" ? rawStatus : undefined;
 
   const where: Prisma.UserWhereInput = {
     organizationId,
@@ -43,7 +45,11 @@ export default async function AdminWorkersPage({
   };
 
   const [users, recordStats, skillNames, teams, positions] = await Promise.all([
-    prisma.user.findMany({ where, orderBy: { name: "asc" } }),
+    prisma.user.findMany({
+      where,
+      orderBy: { name: "asc" },
+      include: { skills: { select: { name: true }, orderBy: { name: "asc" } } },
+    }),
     // Jobs submitted + last activity per person (submittedById is SetNull, so
     // some records have no author - those don't attribute to anyone).
     prisma.workRecord.groupBy({
@@ -78,7 +84,7 @@ export default async function AdminWorkersPage({
     return qs ? `/admin/workers?${qs}` : "/admin/workers";
   };
 
-  const stats: Record<string, WorkerStat> = {};
+  const stats: Record<string, { jobs: number; lastActive: string | null }> = {};
   for (const row of recordStats) {
     if (!row.submittedById) continue;
     stats[row.submittedById] = {
@@ -87,11 +93,44 @@ export default async function AdminWorkersPage({
     };
   }
 
-  const admins = users.filter((u) => u.role === "ADMIN");
-  const supervisors = users.filter((u) => u.role === "SUPERVISOR");
-  const fieldWorkers = users.filter((u) => u.role === "WORKER");
+  const toPeek = (u: (typeof users)[number]): WorkerPeek => ({
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    role: u.role,
+    active: u.active,
+    avatarUrl: u.avatarUrl ?? null,
+    createdAt: u.createdAt.toISOString(),
+    skills: u.skills.map((s) => s.name),
+    jobs: stats[u.id]?.jobs ?? 0,
+    lastActive: stats[u.id]?.lastActive ?? null,
+  });
+
   const activeCount = users.filter((u) => u.active).length;
+  const adminCount = users.filter((u) => u.role === "ADMIN").length;
+  // Status filter chips honor the search/skill scope but not the status itself.
+  const visible = status
+    ? users.filter((u) => (status === "active" ? u.active : !u.active))
+    : users;
+  const admins = visible.filter((u) => u.role === "ADMIN").map(toPeek);
+  const supervisors = visible.filter((u) => u.role === "SUPERVISOR").map(toPeek);
+  const fieldWorkers = visible.filter((u) => u.role === "WORKER").map(toPeek);
   const t = (await getT()).workers;
+
+  // Preserve query + skill when switching status chips.
+  const statusHref = (s?: "active" | "inactive") => {
+    const p = new URLSearchParams();
+    if (query) p.set("q", query);
+    if (skill) p.set("skill", skill);
+    if (s) p.set("status", s);
+    const qs = p.toString();
+    return qs ? `/admin/workers?${qs}` : "/admin/workers";
+  };
+  const statusChips: { label: string; value?: "active" | "inactive"; count: number }[] = [
+    { label: t.filterAll, count: users.length },
+    { label: t.filterActive, value: "active", count: activeCount },
+    { label: t.filterInactive, value: "inactive", count: users.length - activeCount },
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -103,7 +142,7 @@ export default async function AdminWorkersPage({
         <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
           <StatTile icon={Users} value={users.length} label={t.members} />
           <StatTile icon={Users} value={activeCount} label={t.active} />
-          <StatTile icon={Shield} value={admins.length} label={t.admins} />
+          <StatTile icon={Shield} value={adminCount} label={t.admins} />
         </div>
       )}
 
@@ -119,6 +158,22 @@ export default async function AdminWorkersPage({
         />
         {skill && <input type="hidden" name="skill" value={skill} />}
       </form>
+
+      {/* Status filter - active / inactive with counts. */}
+      {users.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {statusChips.map((chip) => (
+            <FilterChip
+              key={chip.label}
+              href={statusHref(chip.value)}
+              active={(chip.value ?? undefined) === (status ?? undefined)}
+              count={chip.count}
+            >
+              {chip.label}
+            </FilterChip>
+          ))}
+        </div>
+      )}
 
       {/* Skill filter - the org's skills as chips, so an admin can find who's
           qualified for a job. */}
@@ -158,30 +213,38 @@ export default async function AdminWorkersPage({
             description={t.noAccountsDesc}
           />
         )
+      ) : visible.length === 0 ? (
+        <EmptyState
+          icon={SearchX}
+          title={t.noMatches}
+          description={t.nothingFound.replace("{q}", status === "active" ? t.filterActive : t.filterInactive)}
+          action={
+            <Button asChild variant="outline" className="mt-2">
+              <Link href={skillHref(skill)}>{t.clearSearch}</Link>
+            </Button>
+          }
+        />
       ) : (
         <>
-          <WorkersSection
+          <WorkerList
             title={t.administrators}
             workers={admins}
-            stats={stats}
             className="animate-fade-up"
             style={{ animationDelay: "40ms", animationFillMode: "both" }}
           />
           {/* Only surfaced once at least one supervisor exists, so orgs that
               don't use the role don't see an empty section. */}
           {supervisors.length > 0 && (
-            <WorkersSection
+            <WorkerList
               title={t.supervisors}
               workers={supervisors}
-              stats={stats}
               className="animate-fade-up"
               style={{ animationDelay: "80ms", animationFillMode: "both" }}
             />
           )}
-          <WorkersSection
+          <WorkerList
             title={t.fieldWorkers}
             workers={fieldWorkers}
-            stats={stats}
             className="animate-fade-up"
             style={{ animationDelay: "120ms", animationFillMode: "both" }}
           />
