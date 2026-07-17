@@ -83,7 +83,8 @@ export default async function AdminPhotosPage({
         longitude: true,
         project: { select: { id: true, name: true } },
         takenBy: { select: { name: true } },
-        _count: { select: { photoTags: true, comments: true } },
+        photoTags: { select: { tag: { select: { name: true } } } },
+        _count: { select: { comments: true } },
       },
     }),
     prisma.photo.count({ where: photoWhere }),
@@ -101,7 +102,8 @@ export default async function AdminPhotosPage({
     projectName: p.project.name,
     takenByName: p.takenBy?.name ?? null,
     hasGps: p.latitude != null,
-    tagCount: p._count.photoTags,
+    tags: p.photoTags.map((pt) => pt.tag.name),
+    tagCount: p.photoTags.length,
     commentCount: p._count.comments,
   }));
 

@@ -36,6 +36,7 @@ export interface FeedPhoto {
   projectName: string;
   takenByName?: string | null;
   hasGps: boolean;
+  tags?: string[];
   tagCount: number;
   commentCount: number;
 }
@@ -109,6 +110,7 @@ export function PhotoFeed({
   const tc = useT().common;
   const locale = useLocale();
   const [open, setOpen] = useState<number | null>(null);
+  const [zoom, setZoom] = useState(false);
 
   // Selection mode
   const [selectMode, setSelectMode] = useState(false);
@@ -129,10 +131,15 @@ export function PhotoFeed({
     return Array.from(map.values());
   }, [photos, t, locale]);
 
-  const close = useCallback(() => setOpen(null), []);
+  const close = useCallback(() => {
+    setOpen(null);
+    setZoom(false);
+  }, []);
   const go = useCallback(
-    (dir: number) =>
-      setOpen((i) => (i == null ? i : (i + dir + photos.length) % photos.length)),
+    (dir: number) => {
+      setZoom(false);
+      setOpen((i) => (i == null ? i : (i + dir + photos.length) % photos.length));
+    },
     [photos.length]
   );
 
@@ -398,6 +405,19 @@ export function PhotoFeed({
                 <span>{timeAgo(active.takenAt, t)}</span>
                 <MetaCounts photo={active} light />
               </div>
+              {active.tags && active.tags.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {active.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-white/90"
+                    >
+                      <TagIcon className="h-2.5 w-2.5" />
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <button
               type="button"
@@ -409,14 +429,21 @@ export function PhotoFeed({
             </button>
           </div>
 
-          <div className="relative flex flex-1 items-center justify-center overflow-hidden px-2">
-            {photos.length > 1 && (
+          <div
+            className={cn(
+              "relative flex flex-1 px-2",
+              zoom
+                ? "items-start justify-start overflow-auto"
+                : "items-center justify-center overflow-hidden"
+            )}
+          >
+            {photos.length > 1 && !zoom && (
               <>
                 <button
                   type="button"
                   onClick={() => go(-1)}
                   aria-label={t.previousPhoto}
-                  className="absolute left-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                  className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
                 >
                   <ChevronLeft className="h-6 w-6" />
                 </button>
@@ -424,14 +451,24 @@ export function PhotoFeed({
                   type="button"
                   onClick={() => go(1)}
                   aria-label={t.nextPhoto}
-                  className="absolute right-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                  className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
                 >
                   <ChevronRight className="h-6 w-6" />
                 </button>
               </>
             )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={active.url} alt="" className="max-h-full max-w-full object-contain" />
+            <img
+              src={active.url}
+              alt=""
+              onDoubleClick={() => setZoom((z) => !z)}
+              className={cn(
+                "select-none transition-transform",
+                zoom
+                  ? "m-auto w-[170%] max-w-none cursor-zoom-out"
+                  : "max-h-full max-w-full object-contain cursor-zoom-in"
+              )}
+            />
           </div>
 
           <div className="flex items-center justify-between gap-2 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
