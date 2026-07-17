@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 
 import { buildFeedPhotoReport } from "@/lib/photoReportFeed";
-import { normalizePhotoRange, photoRangeCutoff } from "@/lib/photoFilters";
+import {
+  normalizePhotoRange,
+  photoRangeCutoff,
+  normalizePhotoSource,
+  photoSourceWhere,
+} from "@/lib/photoFilters";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
@@ -19,6 +24,7 @@ export async function GET(request: Request) {
 
   const tag = sp.get("tag")?.trim().toLowerCase() || null;
   const project = sp.get("project")?.trim() || null;
+  const source = normalizePhotoSource(sp.get("source") ?? undefined);
   const range = normalizePhotoRange(sp.get("range") ?? undefined);
   const untagged = sp.get("untagged") === "1";
   const cutoff = photoRangeCutoff(range);
@@ -33,6 +39,7 @@ export async function GET(request: Request) {
     organizationId,
     ...projectScope,
     ...(project ? { projectId: project } : {}),
+    ...photoSourceWhere(source),
     ...(cutoff ? { takenAt: { gte: cutoff } } : {}),
     ...(untagged
       ? { photoTags: { none: {} } }

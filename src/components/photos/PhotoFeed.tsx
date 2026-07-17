@@ -7,14 +7,17 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   Download,
   ExternalLink,
+  ListChecks,
   MapPin,
   MessageSquare,
   Tag as TagIcon,
   Trash2,
   User,
   X,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
@@ -26,6 +29,7 @@ import { bulkDeletePhotosAction, bulkTagPhotosAction } from "@/actions/photosBul
 import { downloadPhotosZip } from "@/lib/clientZip";
 import { useT, useLocale } from "@/components/i18n/LocaleProvider";
 import type { Dictionary } from "@/lib/i18n";
+import type { PhotoSource } from "@/lib/photoFilters";
 import { cn } from "@/lib/utils";
 
 export interface FeedPhoto {
@@ -39,7 +43,19 @@ export interface FeedPhoto {
   tags?: string[];
   tagCount: number;
   commentCount: number;
+  // Which part of the app the photo came from (project gallery, checklist
+  // proof, or a work record), for the corner badge.
+  source?: PhotoSource;
 }
+
+// Corner badge icon per source. Project is the default upload and stays
+// unbadged to keep the grid quiet; checklist/record get a small marker.
+const SOURCE_ICON: Record<PhotoSource, LucideIcon | null> = {
+  // Project is the default upload; leave it unbadged to keep the grid quiet.
+  project: null,
+  checklist: ListChecks,
+  record: ClipboardList,
+};
 
 function timeAgo(iso: string, t: Dictionary["photos"]): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -314,6 +330,20 @@ export function PhotoFeed({
                           {isSel && <Check className="h-3 w-3" />}
                         </span>
                       )}
+                      {(() => {
+                        const Icon = photo.source ? SOURCE_ICON[photo.source] : null;
+                        if (!Icon) return null;
+                        const label =
+                          photo.source === "checklist" ? t.sourceChecklist : t.sourceRecord;
+                        return (
+                          <span
+                            className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-md bg-black/45 text-white"
+                            title={label}
+                          >
+                            <Icon className="h-3 w-3" />
+                          </span>
+                        );
+                      })()}
                       <span className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-1 text-[10px] text-white">
                         <span className="truncate">{photo.projectName}</span>
                         <MetaCounts photo={photo} light />

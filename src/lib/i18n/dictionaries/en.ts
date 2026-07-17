@@ -412,6 +412,11 @@ export const en = {
     allProjects: "All projects",
     filterByPhotographer: "Filter by who took it",
     allPhotographers: "Anyone",
+    // Source categories (which part of the app a photo came from)
+    allSources: "All",
+    sourceProject: "Project",
+    sourceChecklist: "Checklist",
+    sourceRecord: "Work record",
     untagged: "Untagged",
     rangeAll: "All time",
     rangeToday: "Today",

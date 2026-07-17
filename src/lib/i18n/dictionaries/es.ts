@@ -413,6 +413,11 @@ export const es: Dictionary = {
     allProjects: "Todos los proyectos",
     filterByPhotographer: "Filtrar por quién la tomó",
     allPhotographers: "Cualquiera",
+    // Categorías de origen (de qué parte de la app salió la foto)
+    allSources: "Todas",
+    sourceProject: "Proyecto",
+    sourceChecklist: "Checklist",
+    sourceRecord: "Registro",
     untagged: "Sin etiquetar",
     rangeAll: "Todo",
     rangeToday: "Hoy",

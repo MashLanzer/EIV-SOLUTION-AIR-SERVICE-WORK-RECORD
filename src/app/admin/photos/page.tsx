@@ -7,7 +7,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
 import { PhotoFilters, type PhotoRange } from "@/components/photos/PhotoFilters";
 import { PhotoMapButton } from "@/components/photos/PhotoMapButton";
-import { photoRangeCutoff, normalizePhotoRange } from "@/lib/photoFilters";
+import {
+  photoRangeCutoff,
+  normalizePhotoRange,
+  normalizePhotoSource,
+  photoSourceWhere,
+  derivePhotoSource,
+  type PhotoSource,
+} from "@/lib/photoFilters";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
@@ -24,6 +31,7 @@ export default async function AdminPhotosPage({
     tag?: string;
     project?: string;
     by?: string;
+    source?: string;
     range?: string;
     untagged?: string;
     n?: string;
@@ -32,10 +40,11 @@ export default async function AdminPhotosPage({
   const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const t = (await getT()).photos;
-  const { tag, project, by, range, untagged, n } = await searchParams;
+  const { tag, project, by, source, range, untagged, n } = await searchParams;
   const activeTag = tag?.trim().toLowerCase() || null;
   const activeProject = project?.trim() || null;
   const activePhotographer = by?.trim() || null;
+  const activeSource = normalizePhotoSource(source);
   const activeRange: PhotoRange = normalizePhotoRange(range);
   const activeUntagged = untagged === "1";
   const cutoff = photoRangeCutoff(activeRange);
@@ -43,7 +52,9 @@ export default async function AdminPhotosPage({
   // pull the whole library at once.
   const shown = Math.min(Math.max(Number(n) || PHOTO_PAGE, PHOTO_PAGE), PHOTO_MAX);
 
-  const photoWhere = {
+  // Everything except the source filter, so the source-chip counts reflect the
+  // other active filters but still show every category.
+  const baseWhere = {
     organizationId,
     ...(activeProject ? { projectId: activeProject } : {}),
     ...(activePhotographer ? { takenById: activePhotographer } : {}),
@@ -54,8 +65,9 @@ export default async function AdminPhotosPage({
         ? { photoTags: { some: { tag: { name: activeTag } } } }
         : {}),
   };
+  const photoWhere = { ...baseWhere, ...photoSourceWhere(activeSource) };
 
-  const [tags, projects, photographers, photoRows, totalPhotos] = await Promise.all([
+  const [tags, projects, photographers, photoRows, totalPhotos, sourceCounts] = await Promise.all([
     prisma.tag.findMany({
       where: { organizationId },
       orderBy: { name: "asc" },
@@ -83,11 +95,18 @@ export default async function AdminPhotosPage({
         longitude: true,
         project: { select: { id: true, name: true } },
         takenBy: { select: { name: true } },
+        workRecordId: true,
         photoTags: { select: { tag: { select: { name: true } } } },
-        _count: { select: { comments: true } },
+        _count: { select: { comments: true, checklistItems: true } },
       },
     }),
     prisma.photo.count({ where: photoWhere }),
+    // Per-source counts (respecting the other filters) for the category chips.
+    Promise.all([
+      prisma.photo.count({ where: { ...baseWhere, ...photoSourceWhere("project") } }),
+      prisma.photo.count({ where: { ...baseWhere, ...photoSourceWhere("checklist") } }),
+      prisma.photo.count({ where: { ...baseWhere, ...photoSourceWhere("record") } }),
+    ]).then(([project, checklist, record]) => ({ project, checklist, record })),
   ]);
 
   const usableTags = tags
@@ -105,7 +124,21 @@ export default async function AdminPhotosPage({
     tags: p.photoTags.map((pt) => pt.tag.name),
     tagCount: p.photoTags.length,
     commentCount: p._count.comments,
+    source: derivePhotoSource({
+      workRecordId: p.workRecordId,
+      hasChecklist: p._count.checklistItems > 0,
+    }),
   }));
+
+  // Category chips: only sources that actually have photos (given other filters).
+  const sourceLabel: Record<PhotoSource, string> = {
+    project: t.sourceProject,
+    checklist: t.sourceChecklist,
+    record: t.sourceRecord,
+  };
+  const sourceChips = (["project", "checklist", "record"] as PhotoSource[])
+    .filter((s) => sourceCounts[s] > 0)
+    .map((s) => ({ value: s, label: sourceLabel[s], count: sourceCounts[s] }));
 
   const photoPins = photoRows
     .filter((p) => p.latitude != null && p.longitude != null)
@@ -121,7 +154,12 @@ export default async function AdminPhotosPage({
     }));
 
   const isFiltered = Boolean(
-    activeTag || activeProject || activePhotographer || activeUntagged || activeRange !== "all"
+    activeTag ||
+      activeProject ||
+      activePhotographer ||
+      activeSource !== "all" ||
+      activeUntagged ||
+      activeRange !== "all"
   );
 
   // A PDF of the current view (respects every active filter).
@@ -129,6 +167,7 @@ export default async function AdminPhotosPage({
   if (activeTag) reportParams.set("tag", activeTag);
   if (activeProject) reportParams.set("project", activeProject);
   if (activePhotographer) reportParams.set("by", activePhotographer);
+  if (activeSource !== "all") reportParams.set("source", activeSource);
   if (activeRange !== "all") reportParams.set("range", activeRange);
   if (activeUntagged) reportParams.set("untagged", "1");
   const reportHref = `/admin/photos/report${reportParams.toString() ? `?${reportParams}` : ""}`;
@@ -174,9 +213,11 @@ export default async function AdminPhotosPage({
         tags={usableTags}
         projects={projects}
         photographers={photographers.map((p) => ({ id: p.id, name: p.name }))}
+        sources={sourceChips}
         activeTag={activeTag}
         activeProject={activeProject}
         activePhotographer={activePhotographer}
+        activeSource={activeSource === "all" ? null : activeSource}
         activeRange={activeRange}
         activeUntagged={activeUntagged}
       />

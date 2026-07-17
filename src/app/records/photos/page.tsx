@@ -6,7 +6,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
 import { PhotoFilters, type PhotoRange } from "@/components/photos/PhotoFilters";
 import { PhotoMapButton } from "@/components/photos/PhotoMapButton";
-import { photoRangeCutoff, normalizePhotoRange } from "@/lib/photoFilters";
+import {
+  photoRangeCutoff,
+  normalizePhotoRange,
+  normalizePhotoSource,
+  photoSourceWhere,
+  derivePhotoSource,
+  type PhotoSource,
+} from "@/lib/photoFilters";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
@@ -22,6 +29,7 @@ export default async function WorkerPhotosPage({
   searchParams: Promise<{
     tag?: string;
     project?: string;
+    source?: string;
     range?: string;
     untagged?: string;
     n?: string;
@@ -29,9 +37,10 @@ export default async function WorkerPhotosPage({
 }) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
-  const { tag, project, range, untagged, n } = await searchParams;
+  const { tag, project, source, range, untagged, n } = await searchParams;
   const activeTag = tag?.trim().toLowerCase() || null;
   const activeProject = project?.trim() || null;
+  const activeSource = normalizePhotoSource(source);
   const activeRange: PhotoRange = normalizePhotoRange(range);
   const activeUntagged = untagged === "1";
   const cutoff = photoRangeCutoff(activeRange);
@@ -42,7 +51,7 @@ export default async function WorkerPhotosPage({
   // Restrict every photo query to the worker's team projects.
   const projectScope = isAdmin ? {} : { project: { teamId: { in: teamIds ?? [] } } };
 
-  const photoWhere = {
+  const baseWhere = {
     organizationId,
     ...projectScope,
     ...(activeProject ? { projectId: activeProject } : {}),
@@ -53,8 +62,9 @@ export default async function WorkerPhotosPage({
         ? { photoTags: { some: { tag: { name: activeTag } } } }
         : {}),
   };
+  const photoWhere = { ...baseWhere, ...photoSourceWhere(activeSource) };
 
-  const [tags, projects, photoRows, totalPhotos] = await Promise.all([
+  const [tags, projects, photoRows, totalPhotos, sourceCounts] = await Promise.all([
     prisma.tag.findMany({
       where: {
         organizationId,
@@ -84,11 +94,17 @@ export default async function WorkerPhotosPage({
         longitude: true,
         project: { select: { id: true, name: true } },
         takenBy: { select: { name: true } },
+        workRecordId: true,
         photoTags: { select: { tag: { select: { name: true } } } },
-        _count: { select: { comments: true } },
+        _count: { select: { comments: true, checklistItems: true } },
       },
     }),
     prisma.photo.count({ where: photoWhere }),
+    Promise.all([
+      prisma.photo.count({ where: { ...baseWhere, ...photoSourceWhere("project") } }),
+      prisma.photo.count({ where: { ...baseWhere, ...photoSourceWhere("checklist") } }),
+      prisma.photo.count({ where: { ...baseWhere, ...photoSourceWhere("record") } }),
+    ]).then(([project, checklist, record]) => ({ project, checklist, record })),
   ]);
 
   const t = (await getT()).photos;
@@ -104,7 +120,20 @@ export default async function WorkerPhotosPage({
     tags: p.photoTags.map((pt) => pt.tag.name),
     tagCount: p.photoTags.length,
     commentCount: p._count.comments,
+    source: derivePhotoSource({
+      workRecordId: p.workRecordId,
+      hasChecklist: p._count.checklistItems > 0,
+    }),
   }));
+
+  const sourceLabel: Record<PhotoSource, string> = {
+    project: t.sourceProject,
+    checklist: t.sourceChecklist,
+    record: t.sourceRecord,
+  };
+  const sourceChips = (["project", "checklist", "record"] as PhotoSource[])
+    .filter((s) => sourceCounts[s] > 0)
+    .map((s) => ({ value: s, label: sourceLabel[s], count: sourceCounts[s] }));
 
   const photoPins = photoRows
     .filter((p) => p.latitude != null && p.longitude != null)
@@ -120,12 +149,13 @@ export default async function WorkerPhotosPage({
     }));
 
   const isFiltered = Boolean(
-    activeTag || activeProject || activeUntagged || activeRange !== "all"
+    activeTag || activeProject || activeSource !== "all" || activeUntagged || activeRange !== "all"
   );
 
   const reportParams = new URLSearchParams();
   if (activeTag) reportParams.set("tag", activeTag);
   if (activeProject) reportParams.set("project", activeProject);
+  if (activeSource !== "all") reportParams.set("source", activeSource);
   if (activeRange !== "all") reportParams.set("range", activeRange);
   if (activeUntagged) reportParams.set("untagged", "1");
   const reportHref = `/records/photos/report${reportParams.toString() ? `?${reportParams}` : ""}`;
@@ -158,8 +188,10 @@ export default async function WorkerPhotosPage({
         basePath="/records/photos"
         tags={usableTags}
         projects={projects}
+        sources={sourceChips}
         activeTag={activeTag}
         activeProject={activeProject}
+        activeSource={activeSource === "all" ? null : activeSource}
         activeRange={activeRange}
         activeUntagged={activeUntagged}
       />
