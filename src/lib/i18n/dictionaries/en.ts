@@ -951,6 +951,37 @@ export const en = {
     outstanding: "Outstanding",
     taxCollected: "Total tax",
     note: "Revenue from paid invoices; labor cost from approved records this month.",
+    // Period selector
+    periodMonth: "This month",
+    periodLastMonth: "Last month",
+    periodQuarter: "This quarter",
+    periodYear: "This year",
+    // KPIs
+    margin: "Margin",
+    // Revenue trend
+    revenueTrend: "Revenue trend",
+    revenueTrendDesc: "Paid revenue over the last 6 months.",
+    noRevenue: "No paid revenue yet",
+    // Accounts receivable
+    receivables: "Accounts receivable",
+    receivablesDesc: "Unpaid (sent) invoices by how overdue they are.",
+    agingCurrent: "Current",
+    aging1_30: "1–30 days",
+    aging31_60: "31–60 days",
+    aging61plus: "60+ days",
+    dueIn: "Due",
+    overdueDaysOne: "{n} day overdue",
+    overdueDaysMany: "{n} days overdue",
+    noReceivables: "Nothing outstanding",
+    noReceivablesDesc: "All sent invoices are paid or none are open.",
+    invoiceCountOne: "{n} invoice",
+    invoiceCountMany: "{n} invoices",
+    // Top customers
+    topCustomers: "Top customers",
+    topCustomersDesc: "By paid revenue this period.",
+    noCustomers: "No paid revenue this period",
+    exportCsv: "Export CSV",
+    viewInvoices: "View invoices",
   },
   reports: {
     title: "Pay Report",

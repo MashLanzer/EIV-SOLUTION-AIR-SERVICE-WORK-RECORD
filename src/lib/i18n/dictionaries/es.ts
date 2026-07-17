@@ -945,6 +945,37 @@ export const es: Dictionary = {
     outstanding: "Por cobrar",
     taxCollected: "Impuesto total",
     note: "Ingresos de facturas pagadas; costo de mano de obra de registros aprobados este mes.",
+    // Selector de período
+    periodMonth: "Este mes",
+    periodLastMonth: "Mes pasado",
+    periodQuarter: "Este trimestre",
+    periodYear: "Este año",
+    // KPIs
+    margin: "Margen",
+    // Tendencia de ingresos
+    revenueTrend: "Tendencia de ingresos",
+    revenueTrendDesc: "Ingresos cobrados en los últimos 6 meses.",
+    noRevenue: "Aún no hay ingresos cobrados",
+    // Cuentas por cobrar
+    receivables: "Cuentas por cobrar",
+    receivablesDesc: "Facturas enviadas sin pagar, por antigüedad de vencimiento.",
+    agingCurrent: "Corriente",
+    aging1_30: "1–30 días",
+    aging31_60: "31–60 días",
+    aging61plus: "60+ días",
+    dueIn: "Vence",
+    overdueDaysOne: "{n} día vencida",
+    overdueDaysMany: "{n} días vencida",
+    noReceivables: "Nada por cobrar",
+    noReceivablesDesc: "Todas las facturas enviadas están pagadas o no hay abiertas.",
+    invoiceCountOne: "{n} factura",
+    invoiceCountMany: "{n} facturas",
+    // Top clientes
+    topCustomers: "Top clientes",
+    topCustomersDesc: "Por ingreso cobrado en este período.",
+    noCustomers: "Sin ingresos cobrados en este período",
+    exportCsv: "Exportar CSV",
+    viewInvoices: "Ver facturas",
   },
   reports: {
     title: "Reporte de pago",
