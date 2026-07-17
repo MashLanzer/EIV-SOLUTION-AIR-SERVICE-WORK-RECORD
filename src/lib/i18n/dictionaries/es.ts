@@ -1015,6 +1015,11 @@ export const es: Dictionary = {
     noJobsWeek: "No hay trabajos programados esta semana",
     noJobsWeekDesc: "Usa “Programar trabajo” arriba para planificar las visitas del equipo.",
     noJobsDay: "Nada programado",
+    // Bandeja sin agendar (vista de mes): proyectos activos sin próxima visita.
+    backlogTitle: "Sin agendar",
+    backlogHint: "Proyectos activos sin próxima visita — agéndales la siguiente.",
+    backlogSchedule: "Agendar",
+    backlogForProject: "Agendar una visita para {project}",
     // Morning brief (once-a-day dialog)
     morningTitle: "Tu día",
     morningSubtitleOne: "Tienes {n} trabajo programado hoy.",

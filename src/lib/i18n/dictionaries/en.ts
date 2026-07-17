@@ -1021,6 +1021,11 @@ export const en = {
     noJobsWeek: "No jobs scheduled this week",
     noJobsWeekDesc: "Use “Schedule a job” above to plan the crew's visits.",
     noJobsDay: "Nothing scheduled",
+    // Unscheduled backlog (month view): active projects with no upcoming visit.
+    backlogTitle: "Needs scheduling",
+    backlogHint: "Active projects with no upcoming visit — book their next one.",
+    backlogSchedule: "Schedule",
+    backlogForProject: "Book a visit for {project}",
     // Morning brief (once-a-day dialog)
     morningTitle: "Your day",
     morningSubtitleOne: "You have {n} job scheduled today.",

@@ -37,11 +37,16 @@ export function NewScheduledJobButton({
   const params = useSearchParams();
   const router = useRouter();
   const open = params.get("new") === "1";
+  // Opened from the "needs scheduling" backlog: pre-point the form at a project.
+  const newProject = params.get("newProject") ?? undefined;
 
   function setParam(next: boolean) {
     const p = new URLSearchParams(params.toString());
     if (next) p.set("new", "1");
-    else p.delete("new");
+    else {
+      p.delete("new");
+      p.delete("newProject");
+    }
     const qs = p.toString();
     router.replace(qs ? `/admin/schedule?${qs}` : "/admin/schedule", { scroll: false });
   }
@@ -55,6 +60,7 @@ export function NewScheduledJobButton({
       <BottomSheet open={open} onClose={() => setParam(false)} title={t.newJob} closeLabel={tc.close}>
         <ScheduleJobForm
           defaultDate={defaultDate}
+          defaultProjectId={newProject}
           workers={workers}
           teams={teams}
           customers={customers}

@@ -66,6 +66,7 @@ function Group({
 export function ScheduleJobForm({
   jobId,
   defaultDate,
+  defaultProjectId,
   defaultValues,
   workers,
   teams,
@@ -80,6 +81,9 @@ export function ScheduleJobForm({
   jobId?: string;
   // Pre-fills the date in create mode so a job lands on the day being viewed.
   defaultDate?: string;
+  // Pre-selects a project in create mode (used by the "needs scheduling"
+  // backlog, which opens the sheet already pointed at that project).
+  defaultProjectId?: string;
   defaultValues?: JobFormValues;
   workers: JobOption[];
   teams: JobOption[];
@@ -346,7 +350,7 @@ export function ScheduleJobForm({
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor={`project-${uid}`}>{t.project}</Label>
-            <Select id={`project-${uid}`} name="projectId" defaultValue={defaultValues?.projectId ?? ""}>
+            <Select id={`project-${uid}`} name="projectId" defaultValue={defaultValues?.projectId ?? defaultProjectId ?? ""}>
               <option value="">{t.noProject}</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>

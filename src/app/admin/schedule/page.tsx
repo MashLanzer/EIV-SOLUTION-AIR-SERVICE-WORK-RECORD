@@ -23,6 +23,7 @@ import { ExpandableJobCard } from "@/components/schedule/ExpandableJobCard";
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
 import { NewScheduledJobButton } from "@/components/schedule/NewScheduledJobButton";
+import { UnscheduledBacklog } from "@/components/schedule/UnscheduledBacklog";
 import { StartRecordSheet } from "@/components/schedule/StartRecordSheet";
 import { DaySheet } from "@/components/schedule/DaySheet";
 import { SheetButton } from "@/components/schedule/SheetButton";
@@ -73,6 +74,8 @@ function schedHref(params: {
   team?: string;
   skill?: string;
   create?: boolean;
+  // Pre-points the new-job sheet at a project (needs-scheduling backlog).
+  newProject?: string;
   // Opens the tapped day's jobs in a bottom sheet (month view) instead of
   // stacking them under the calendar.
   day?: boolean;
@@ -85,6 +88,7 @@ function schedHref(params: {
   if (params.team) p.set("team", params.team);
   if (params.skill) p.set("skill", params.skill);
   if (params.create) p.set("new", "1");
+  if (params.newProject) p.set("newProject", params.newProject);
   if (params.day) p.set("day", "1");
   const qs = p.toString();
   // ?new=1 opens the "new job" bottom sheet (read from the query by
@@ -396,6 +400,29 @@ export default async function SchedulePage({
   // lands there); for a plain week visit with no selection it falls to today.
   const formDefaultDate = selectedKey;
 
+  // "Needs scheduling" backlog (month view only): active projects with no
+  // upcoming, non-canceled visit on the books. Each links straight into the
+  // new-job sheet pre-pointed at that project. Capped so it stays a nudge, not
+  // a second list.
+  const backlogProjects =
+    view === "month"
+      ? await prisma.project.findMany({
+          where: {
+            organizationId,
+            status: "ACTIVE",
+            scheduledJobs: {
+              none: {
+                scheduledFor: { gte: startOfUtcDay(new Date()) },
+                status: { not: "CANCELED" },
+              },
+            },
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 6,
+          select: { id: true, name: true, customer: { select: { name: true } } },
+        })
+      : [];
+
   // Day view: best-effort weather for the selected day at its first geocoded
   // jobsite. Only fetched in day view, and only shown when the day falls inside
   // the short forecast window (getDayWeather returns null otherwise).
@@ -541,6 +568,7 @@ export default async function SchedulePage({
           teams={teams}
           customers={customers}
           projects={projects}
+          backlogProjects={backlogProjects}
           thresholdFor={thresholdFor}
           monthLabel={intl.month.format(selected)}
           weekdayLabels={weekdayLabels}
@@ -642,6 +670,7 @@ function MonthView({
   teams,
   customers,
   projects,
+  backlogProjects,
   thresholdFor,
   monthLabel,
   weekdayLabels,
@@ -662,6 +691,7 @@ function MonthView({
   teams: Opt[];
   customers: Opt[];
   projects: Opt[];
+  backlogProjects: { id: string; name: string; customer: { name: string } | null }[];
   thresholdFor: (id: string) => number;
   monthLabel: string;
   weekdayLabels: string[];
@@ -741,6 +771,22 @@ function MonthView({
           </p>
         </div>
       )}
+      <UnscheduledBacklog
+        projects={backlogProjects}
+        scheduleHref={(projectId) =>
+          schedHref({
+            view: "month",
+            date: selectedKey,
+            worker,
+            status: statusFilter,
+            team: teamFilter,
+            skill: skillFilter,
+            create: true,
+            newProject: projectId,
+          })
+        }
+        t={t}
+      />
       <DaySheet
         title={selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
       >
