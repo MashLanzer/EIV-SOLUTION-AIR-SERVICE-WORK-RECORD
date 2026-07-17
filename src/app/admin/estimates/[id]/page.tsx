@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, FolderKanban, Pencil, User } from "lucide-react";
+import { Copy, FolderKanban, Pencil, User } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -17,10 +17,10 @@ import {
 import { EstimateStatusBadge } from "@/components/estimates/EstimateStatusBadge";
 import { EstimateStatusControls } from "@/components/estimates/EstimateStatusControls";
 import { ShareEstimateButton } from "@/components/estimates/ShareEstimateButton";
+import { ConvertEstimateButton } from "@/components/estimates/ConvertEstimateButton";
 import { EmailToCustomerButton } from "@/components/shared/EmailToCustomerButton";
-import { emailEstimateAction } from "@/actions/estimates";
+import { duplicateEstimateAction, emailEstimateAction } from "@/actions/estimates";
 import { DeleteEstimateButton } from "@/components/estimates/DeleteEstimateButton";
-import { convertEstimateToInvoiceAction } from "@/actions/estimates";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { computeTotals, formatInvoiceNumber } from "@/lib/invoices";
@@ -108,12 +108,7 @@ export default async function EstimateDetailPage({
               </Link>
             </Alert>
           ) : (
-            <form action={convertEstimateToInvoiceAction.bind(null, estimate.id)}>
-              <Button type="submit" size="sm">
-                <ArrowRight className="h-4 w-4" />
-                {t.convertToInvoice}
-              </Button>
-            </form>
+            <ConvertEstimateButton estimateId={estimate.id} />
           )}
 
           <div className="grid gap-4 border-t border-neutral-200 pt-4 dark:border-neutral-800 sm:grid-cols-2">
@@ -234,6 +229,12 @@ export default async function EstimateDetailPage({
             : formatEstimateNumber(estimate.number)}
         </h2>
         <ShareEstimateButton estimateId={estimate.id} initialToken={estimate.publicToken} />
+        <form action={duplicateEstimateAction.bind(null, estimate.id)}>
+          <Button type="submit" variant="outline" className="w-full">
+            <Copy className="h-4 w-4" />
+            {t.duplicate}
+          </Button>
+        </form>
         <EmailToCustomerButton
           action={emailEstimateAction.bind(null, estimate.id)}
           label={t.emailToCustomer}

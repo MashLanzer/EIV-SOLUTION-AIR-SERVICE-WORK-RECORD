@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ChevronRight, ClipboardList, CircleDollarSign, FileText, Plus, Search, SearchX } from "lucide-react";
+import { ArrowRight, ChevronRight, ClipboardList, CircleDollarSign, FileText, Plus, Search, SearchX, Sheet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,6 +41,8 @@ export default async function AdminEstimatesPage({
   const status = ESTIMATE_STATUSES.includes(rawStatus as EstimateStatus)
     ? (rawStatus as EstimateStatus)
     : undefined;
+  // "expired" is a derived pseudo-status (not stored) so it gets its own flag.
+  const expiredFilter = rawStatus === "expired";
 
   const [rows, currency] = await Promise.all([
     prisma.estimate.findMany({
@@ -84,6 +86,7 @@ export default async function AdminEstimatesPage({
   const countByStatus = new Map<EstimateStatus, number>();
   for (const s of ESTIMATE_STATUSES) countByStatus.set(s, 0);
   for (const e of estimates) countByStatus.set(e.status, (countByStatus.get(e.status) ?? 0) + 1);
+  const expiredCount = estimates.filter((e) => e.expired).length;
 
   const dict = await getT();
   const t = dict.estimates;
@@ -98,40 +101,61 @@ export default async function AdminEstimatesPage({
 
   const filtered = estimates.filter((e) => {
     if (status && e.status !== status) return false;
+    if (expiredFilter && !e.expired) return false;
     if (query) {
       const hay = `${formatEstimateNumber(e.number)} ${e.customerName}`.toLowerCase();
       if (!hay.includes(query)) return false;
     }
     return true;
   });
+  // Total value of the current view, so the office reads the money for a filter
+  // (e.g. everything still SENT) without exporting.
+  const filteredValue = filtered.reduce((s, e) => s + e.total, 0);
 
-  const chipHref = (next?: EstimateStatus) => {
+  const chipHref = (next?: EstimateStatus | "expired") => {
     const p = new URLSearchParams();
     if (query) p.set("q", q!.trim());
     if (next) p.set("status", next);
     const s = p.toString();
     return s ? `/admin/estimates?${s}` : "/admin/estimates";
   };
-  const chips: { label: string; status?: EstimateStatus }[] = [
-    { label: t.chipAll },
-    { label: t.statusDraft, status: "DRAFT" },
-    { label: t.statusSent, status: "SENT" },
-    { label: t.statusAccepted, status: "ACCEPTED" },
-    { label: t.statusDeclined, status: "DECLINED" },
+  const chips: { label: string; status?: EstimateStatus | "expired"; count: number }[] = [
+    { label: t.chipAll, count: estimates.length },
+    { label: t.statusDraft, status: "DRAFT", count: countByStatus.get("DRAFT") ?? 0 },
+    { label: t.statusSent, status: "SENT", count: countByStatus.get("SENT") ?? 0 },
+    { label: t.statusAccepted, status: "ACCEPTED", count: countByStatus.get("ACCEPTED") ?? 0 },
+    { label: t.statusDeclined, status: "DECLINED", count: countByStatus.get("DECLINED") ?? 0 },
+    { label: t.chipExpired, status: "expired", count: expiredCount },
   ];
-  const showSummary = !query && !status && estimates.length > 0;
+  const activeStatus = expiredFilter ? "expired" : status;
+  const showSummary = !query && !status && !expiredFilter && estimates.length > 0;
+
+  const exportParams = new URLSearchParams();
+  if (query) exportParams.set("q", q!.trim());
+  if (activeStatus) exportParams.set("status", activeStatus);
+  const exportHref = `/admin/estimates/export${
+    exportParams.toString() ? `?${exportParams.toString()}` : ""
+  }`;
 
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
         title={t.title}
         action={
-          <Button asChild>
-            <Link href="/admin/estimates/new">
-              <Plus className="h-4 w-4" />
-              {t.newEstimate}
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm">
+              <a href={exportHref}>
+                <Sheet className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.exportCsv}</span>
+              </a>
+            </Button>
+            <Button asChild>
+              <Link href="/admin/estimates/new">
+                <Plus className="h-4 w-4" />
+                {t.newEstimate}
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -152,15 +176,14 @@ export default async function AdminEstimatesPage({
           className="pl-9"
           aria-label={t.searchAria}
         />
-        {status && <input type="hidden" name="status" value={status} />}
+        {activeStatus && <input type="hidden" name="status" value={activeStatus} />}
       </form>
 
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {chips.map((chip) => {
-          const active = (chip.status ?? undefined) === (status ?? undefined);
-          const count = chip.status ? countByStatus.get(chip.status) ?? 0 : estimates.length;
+          const active = (chip.status ?? undefined) === (activeStatus ?? undefined);
           return (
-            <FilterChip key={chip.label} href={chipHref(chip.status)} active={active} count={count}>
+            <FilterChip key={chip.label} href={chipHref(chip.status)} active={active} count={chip.count}>
               {chip.label}
             </FilterChip>
           );
@@ -196,6 +219,20 @@ export default async function AdminEstimatesPage({
         )
       ) : (
         <>
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {(filtered.length === 1 ? t.resultCountOne : t.resultCountMany).replace(
+                "{n}",
+                String(filtered.length)
+              )}
+            </h2>
+            <span className="text-xs text-neutral-400 dark:text-neutral-500">
+              {t.filteredValue}{" "}
+              <span className="font-semibold tabular-nums text-neutral-700 dark:text-neutral-200">
+                {money(filteredValue)}
+              </span>
+            </span>
+          </div>
           <div className="hidden sm:block">
             <Card>
               <CardContent className="p-0">

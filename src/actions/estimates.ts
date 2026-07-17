@@ -234,6 +234,53 @@ export async function deleteEstimateAction(estimateId: string) {
   redirect("/admin/estimates");
 }
 
+// Re-quote a similar job: copy an estimate's customer, project, tax, notes and
+// line items into a fresh DRAFT (new number, issued today, no expiry yet) and
+// open it for editing. Works even on a locked (converted) estimate.
+export async function duplicateEstimateAction(estimateId: string) {
+  const session = await requirePermission("estimates.manage");
+  const organizationId = requireOrgId(session);
+  const src = await prisma.estimate.findFirst({
+    where: { id: estimateId, organizationId },
+    include: { lineItems: { orderBy: { position: "asc" } } },
+  });
+  if (!src) redirect("/admin/estimates");
+
+  const today = new Date();
+  const issueDate = new Date(
+    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
+  );
+  const newId = await allocateEstimate(organizationId, {
+    customerId: src.customerId,
+    projectId: src.projectId,
+    customerName: src.customerName,
+    customerAddress: src.customerAddress,
+    issueDate,
+    expiryDate: null,
+    taxRate: src.taxRate,
+    notes: src.notes,
+    createdById: session.user.id,
+    lineItems: {
+      create: src.lineItems.map((li, i) => ({
+        description: li.description,
+        quantity: li.quantity,
+        unitPrice: li.unitPrice,
+        position: i,
+      })),
+    },
+  });
+  await logAudit({
+    organizationId,
+    actor: actor(session),
+    action: "estimate.duplicate",
+    entityType: "estimate",
+    entityId: newId,
+    summary: `Duplicated ${formatEstimateNumber(src.number)}`,
+  });
+  revalidatePath("/admin/estimates");
+  redirect(`/admin/estimates/${newId}/edit`);
+}
+
 export async function shareEstimateAction(estimateId: string): Promise<{ token: string } | null> {
   const session = await requirePermission("estimates.manage");
   const organizationId = requireOrgId(session);
