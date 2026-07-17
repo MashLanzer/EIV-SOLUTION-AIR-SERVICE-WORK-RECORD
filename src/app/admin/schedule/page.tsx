@@ -21,7 +21,10 @@ import { ScheduleJobCard, type ScheduleJobView } from "@/components/schedule/Sch
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
 import { NewScheduledJobButton } from "@/components/schedule/NewScheduledJobButton";
+import { StartRecordSheet } from "@/components/schedule/StartRecordSheet";
+import { SuccessToast } from "@/components/ui/success-toast";
 import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
+import { loadNewRecordFormData } from "@/lib/newRecordForm";
 import { WeekBoard } from "@/components/schedule/WeekBoard";
 import {
   ScheduleMonthCalendar,
@@ -194,7 +197,15 @@ async function getDayRoute(
 export default async function SchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; view?: string; worker?: string; status?: string; new?: string }>;
+  searchParams: Promise<{
+    date?: string;
+    view?: string;
+    worker?: string;
+    status?: string;
+    new?: string;
+    record?: string;
+    saved?: string;
+  }>;
 }) {
   const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
@@ -202,7 +213,14 @@ export default async function SchedulePage({
   const locale = await getLocale();
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
 
-  const { date, view: viewParam, worker: workerParam, status: statusParam } = await searchParams;
+  const {
+    date,
+    view: viewParam,
+    worker: workerParam,
+    status: statusParam,
+    record: recordJobId,
+    saved: savedParam,
+  } = await searchParams;
   const view =
     viewParam === "week"
       ? "week"
@@ -371,8 +389,23 @@ export default async function SchedulePage({
   const count = (n: number) =>
     (n === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(n));
 
+  // "Start record" from a job card opens the office record form in a bottom
+  // sheet (?record=<jobId>). The heavier form data is fetched only when the
+  // param is present, so it costs nothing on a normal calendar view.
+  const recordFormData = recordJobId
+    ? await loadNewRecordFormData(session, organizationId, recordJobId)
+    : null;
+  const recordSavedMsg = (await getT()).records.recordSaved;
+
   return (
     <div className="flex flex-col gap-4">
+      {recordFormData && (
+        <StartRecordSheet
+          data={recordFormData}
+          storedSignature={session.user.storedSignature}
+        />
+      )}
+      {savedParam && <SuccessToast message={recordSavedMsg} aboveMobileNav />}
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
           <CalendarDays className="h-5 w-5" />

@@ -123,6 +123,10 @@ interface WorkRecordFormProps {
   // worker's records list; the office flow points it back into /admin so the
   // admin isn't dropped into the worker app.
   redirectTo?: string;
+  // Rendered inside a bottom sheet (e.g. "start record" from the calendar). The
+  // stepper and action bar then flow inline instead of sticking to / fixing at
+  // the viewport, so they don't fight the sheet or the app's tab bar.
+  embedded?: boolean;
 }
 
 // The wizard steps, in order. Each carries its icon + the field ids that live
@@ -203,6 +207,7 @@ export function WorkRecordForm({
   attributeWorkers,
   attributeDefaultId,
   redirectTo,
+  embedded = false,
 }: WorkRecordFormProps) {
   const t = useT().form;
   const tc = useT().common;
@@ -560,7 +565,14 @@ export function WorkRecordForm({
       {/* Stepper: tappable dots (with completion checks) + a slim progress bar
           + the current step's title. Sticky so it stays as the worker scrolls
           a long step. */}
-      <div className="sticky top-0 z-10 -mx-4 border-b border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 px-4 pb-3 pt-3 backdrop-blur native:pt-[calc(0.75rem+env(safe-area-inset-top))] sm:static sm:mx-0 sm:rounded-xl sm:border sm:pt-3">
+      <div
+        className={cn(
+          "border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 px-4 pb-3 pt-3 sm:static sm:mx-0 sm:rounded-xl sm:border sm:pt-3",
+          embedded
+            ? "rounded-xl border"
+            : "sticky top-0 z-10 -mx-4 border-b backdrop-blur native:pt-[calc(0.75rem+env(safe-area-inset-top))]"
+        )}
+      >
         <div className="flex items-center justify-between gap-1">
           {STEPS.map((s, i) => {
             const active = i === step;
@@ -994,10 +1006,20 @@ export function WorkRecordForm({
           </Alert>
         )}
 
-        {/* Spacer so the fixed mobile action bar doesn't cover the last section */}
-        <div className="h-[calc(4rem+env(safe-area-inset-bottom))] sm:hidden" />
+        {/* Spacer so the fixed mobile action bar doesn't cover the last section.
+            Not needed when embedded (the bar flows inline inside the sheet). */}
+        {!embedded && (
+          <div className="h-[calc(4rem+env(safe-area-inset-bottom))] sm:hidden" />
+        )}
 
-        <div className="fixed inset-x-0 bottom-0 z-20 flex gap-3 border-t border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0">
+        <div
+          className={cn(
+            "flex gap-3 sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0",
+            embedded
+              ? "pt-1"
+              : "fixed inset-x-0 bottom-0 z-20 border-t border-neutral-200 dark:border-neutral-800 bg-white/95 dark:bg-neutral-900/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur"
+          )}
+        >
           {step === 0 ? (
             guardUnsaved && dirty ? (
               <ConfirmDialog

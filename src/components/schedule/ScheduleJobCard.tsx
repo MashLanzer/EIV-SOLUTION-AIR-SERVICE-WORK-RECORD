@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import type { ScheduledJobStatus } from "@prisma/client";
 import {
@@ -84,11 +85,21 @@ export function ScheduleJobCard({
 }) {
   const t = useT().schedule;
   const tc = useT().common;
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [editing, setEditing] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function setStatus(status: ScheduledJobStatus) {
     startTransition(() => setJobStatusAction(job.id, status));
+  }
+
+  // Open the office "start record" bottom sheet for this job, keeping the
+  // current view/day/filters in the URL.
+  function openStartRecord() {
+    const p = new URLSearchParams(searchParams.toString());
+    p.set("record", job.id);
+    router.push(`/admin/schedule?${p.toString()}`, { scroll: false });
   }
 
   const timeLabel =
@@ -226,16 +237,17 @@ export function ScheduleJobCard({
         </Link>
       ) : (
         !canceled && (
-          <Link
-            href={`/admin/records/new?jobId=${job.id}`}
-            className="mt-3 flex items-center gap-2 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 px-3 py-2 text-sm transition-colors hover:border-neutral-400 dark:hover:border-neutral-600"
+          <button
+            type="button"
+            onClick={openStartRecord}
+            className="mt-3 flex w-full items-center gap-2 rounded-lg border border-dashed border-neutral-300 dark:border-neutral-700 px-3 py-2 text-sm transition-colors hover:border-neutral-400 dark:hover:border-neutral-600"
           >
             <FilePlus2 className="h-4 w-4 shrink-0 text-neutral-400" />
-            <span className="flex-1 truncate font-medium text-neutral-700 dark:text-neutral-200">
+            <span className="flex-1 truncate text-left font-medium text-neutral-700 dark:text-neutral-200">
               {t.startRecord}
             </span>
             <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-neutral-400" />
-          </Link>
+          </button>
         )
       )}
 
