@@ -191,6 +191,7 @@ export const es: Dictionary = {
     pleaseReviewResubmit: "Revisa y reenvía este registro.",
     tapEditPrefix: "Toca ",
     tapEditSuffix: " para corregir y reenviar.",
+    fixAndResubmit: "Corregir y reenviar",
   },
   form: {
     // Page titles / headers
@@ -1212,6 +1213,7 @@ export const es: Dictionary = {
     filters: "Filtros",
     recordCountOne: "{n} registro",
     recordCountMany: "{n} registros",
+    totalPay: "Pago total",
     exportPdf: "Exportar a PDF",
     exportPdfTitle: "Las exportaciones masivas de PDF no incluyen fotos del trabajo",
     exportExcel: "Exportar a Excel",

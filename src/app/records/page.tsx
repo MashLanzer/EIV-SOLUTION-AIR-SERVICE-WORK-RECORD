@@ -93,6 +93,9 @@ export default async function RecordsPage({
           typeOfWork: true,
           status: true,
           reviewNote: true,
+          arrivalTime: true,
+          departureTime: true,
+          _count: { select: { photos: true } },
         },
         orderBy: { date: "desc" },
         ...paginationArgs(page),
@@ -255,7 +258,7 @@ export default async function RecordsPage({
             {records.map((record) => (
               <RecordCard
                 key={record.id}
-                record={record}
+                record={{ ...record, photoCount: record._count.photos }}
                 href={`/records/${record.id}`}
               />
             ))}

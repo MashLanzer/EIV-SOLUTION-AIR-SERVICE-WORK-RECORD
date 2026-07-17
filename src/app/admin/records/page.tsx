@@ -15,6 +15,8 @@ import { prisma } from "@/lib/prisma";
 import { buildRecordWhereClause, parseRecordFilterParams } from "@/lib/recordFilters";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireOfficeAccess } from "@/lib/authz";
+import { getCurrencySymbol } from "@/lib/currency";
+import { formatMoney } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import { parseSort } from "@/lib/sort";
 import type { Prisma, RecordStatus } from "@prisma/client";
@@ -70,7 +72,7 @@ export default async function AdminRecordsPage({
     dir: "desc",
   });
 
-  const [total, records, workers, statusCounts] = await Promise.all([
+  const [total, records, workers, statusCounts, payTotals, currency] = await Promise.all([
     prisma.workRecord.count({ where }),
     prisma.workRecord.findMany({
       where,
@@ -83,7 +85,10 @@ export default async function AdminRecordsPage({
         typeOfWork: true,
         status: true,
         reviewNote: true,
+        arrivalTime: true,
+        departureTime: true,
         submittedBy: { select: { name: true } },
+        _count: { select: { photos: true } },
       },
       orderBy: recordOrderBy(sort, dir),
       ...paginationArgs(page),
@@ -98,7 +103,17 @@ export default async function AdminRecordsPage({
       where: whereNoStatus,
       _count: { _all: true },
     }),
+    // Total pay across the whole filtered set (not just the current page), so
+    // the office can read the money for a filter (e.g. a worker in a date
+    // range) without exporting.
+    prisma.workRecord.aggregate({
+      where,
+      _sum: { leadInstallerPay: true, helperPay: true },
+    }),
+    getCurrencySymbol(organizationId),
   ]);
+  const totalPay =
+    Number(payTotals._sum.leadInstallerPay ?? 0) + Number(payTotals._sum.helperPay ?? 0);
   const countByStatus = new Map<RecordStatus, number>(
     statusCounts.map((s) => [s.status, s._count._all])
   );
@@ -182,8 +197,19 @@ export default async function AdminRecordsPage({
 
       <section className="flex flex-col gap-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {(total === 1 ? t.recordCountOne : t.recordCountMany).replace("{n}", String(total))}
+          <h2 className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            <span>
+              {(total === 1 ? t.recordCountOne : t.recordCountMany).replace("{n}", String(total))}
+            </span>
+            {total > 0 && (
+              <span className="flex items-center gap-1 normal-case text-neutral-400 dark:text-neutral-500">
+                <span aria-hidden>·</span>
+                {t.totalPay}{" "}
+                <span className="font-semibold tabular-nums text-neutral-700 dark:text-neutral-200">
+                  {formatMoney(totalPay, currency)}
+                </span>
+              </span>
+            )}
           </h2>
           <form id={EXPORT_FORM_ID} method="GET" className="flex flex-wrap items-center gap-2">
             <input type="hidden" name="dateFrom" value={filters.dateFrom ?? ""} />

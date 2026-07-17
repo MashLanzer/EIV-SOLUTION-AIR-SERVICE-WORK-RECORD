@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Download, Pencil } from "lucide-react";
+import { Download, Pencil, Wrench } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -76,17 +76,24 @@ export default async function RecordDetailPage({
       </div>
 
       {record.status === "NEEDS_CHANGES" && (
-        <Alert variant="warning">
-          <span className="font-medium">
-            {t.records.supervisorAskedChanges}
-          </span>{" "}
-          {record.reviewNote
-            ? record.reviewNote
-            : t.records.pleaseReviewResubmit}{" "}
-          {t.records.tapEditPrefix}
-          <span className="font-medium">{t.common.edit}</span>
-          {t.records.tapEditSuffix}
-        </Alert>
+        <div className="flex flex-col gap-3">
+          <Alert variant="warning">
+            <span className="font-medium">
+              {t.records.supervisorAskedChanges}
+            </span>{" "}
+            {record.reviewNote
+              ? record.reviewNote
+              : t.records.pleaseReviewResubmit}
+          </Alert>
+          {canEdit && (
+            <Button asChild size="lg" className="w-full">
+              <Link href={`/records/${record.id}/edit`}>
+                <Wrench className="h-4 w-4" />
+                {t.records.fixAndResubmit}
+              </Link>
+            </Button>
+          )}
+        </div>
       )}
 
       <RecordDetail record={record} currency={currency} />

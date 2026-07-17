@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { WorkRecord } from "@prisma/client";
-import { ChevronRight, ClipboardList, Eye, Download } from "lucide-react";
+import { ChevronRight, ClipboardList, Clock, Eye, Download, Image as ImageIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,13 +20,22 @@ import { RequestChangesButton } from "@/components/records/RequestChangesButton"
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { MobileCardList } from "@/components/ui/responsive-table";
 import { SortHeader } from "@/components/ui/sort-header";
+import { workDuration } from "@/lib/format";
 import { getLocale, getT } from "@/lib/i18n/server";
 import type { SortDir } from "@/lib/sort";
 
 type RecordWithWorker = Pick<
   WorkRecord,
-  "id" | "date" | "jobNumber" | "customerName" | "typeOfWork" | "status" | "reviewNote"
-> & { submittedBy: { name: string } | null };
+  | "id"
+  | "date"
+  | "jobNumber"
+  | "customerName"
+  | "typeOfWork"
+  | "status"
+  | "reviewNote"
+  | "arrivalTime"
+  | "departureTime"
+> & { submittedBy: { name: string } | null; _count: { photos: number } };
 
 function formatDate(date: Date, locale: string) {
   return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
@@ -182,6 +191,27 @@ export async function RecordsTable({
                 <div className="truncate text-xs text-neutral-500 dark:text-neutral-400">
                   {record.submittedBy?.name ?? "—"}
                 </div>
+                {(() => {
+                  const hours = workDuration(record.arrivalTime, record.departureTime);
+                  const photos = record._count.photos;
+                  if (!hours && photos === 0) return null;
+                  return (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                      {hours && (
+                        <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                          <Clock className="h-3 w-3" />
+                          <span className="tabular-nums">{hours}</span>
+                        </span>
+                      )}
+                      {photos > 0 && (
+                        <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                          <ImageIcon className="h-3 w-3" />
+                          <span className="tabular-nums">{photos}</span>
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
                 {record.status === "NEEDS_CHANGES" && record.reviewNote && (
                   <p className="mt-1.5 text-xs text-warning-text">
                     <span className="font-medium">{t.returnedPrefix}</span> {record.reviewNote}

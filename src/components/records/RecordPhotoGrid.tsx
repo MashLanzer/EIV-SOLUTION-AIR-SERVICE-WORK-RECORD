@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 import { useT } from "@/components/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 
 interface RecordPhoto {
   id: string;
@@ -18,14 +19,20 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
   const t = useT().photos;
   const tc = useT().common;
   const [open, setOpen] = useState<number | null>(null);
+  const [zoom, setZoom] = useState(false);
 
-  const close = useCallback(() => setOpen(null), []);
+  const close = useCallback(() => {
+    setOpen(null);
+    setZoom(false);
+  }, []);
   const go = useCallback(
-    (dir: number) =>
+    (dir: number) => {
+      setZoom(false);
       setOpen((i) => {
         if (i == null) return i;
         return (i + dir + photos.length) % photos.length;
-      }),
+      });
+    },
     [photos.length]
   );
 
@@ -63,7 +70,10 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
 
       {open != null && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          className={cn(
+            "fixed inset-0 z-50 flex bg-black/90 p-4",
+            zoom ? "items-start justify-start overflow-auto" : "items-center justify-center"
+          )}
           onClick={close}
           role="dialog"
           aria-modal="true"
@@ -76,13 +86,13 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
           >
             <X className="h-5 w-5" />
           </button>
-          {photos.length > 1 && (
+          {photos.length > 1 && !zoom && (
             <>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); go(-1); }}
                 aria-label={t.previousPhoto}
-                className="absolute left-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                className="absolute left-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
               >
                 <ChevronLeft className="h-6 w-6" />
               </button>
@@ -90,7 +100,7 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
                 type="button"
                 onClick={(e) => { e.stopPropagation(); go(1); }}
                 aria-label={t.nextPhoto}
-                className="absolute right-3 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                className="absolute right-3 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
               >
                 <ChevronRight className="h-6 w-6" />
               </button>
@@ -101,7 +111,13 @@ export function RecordPhotoGrid({ photos }: { photos: RecordPhoto[] }) {
             src={photos[open].dataUrl}
             alt={t.workPhoto.replace("{n}", String(photos[open].position + 1))}
             onClick={(e) => e.stopPropagation()}
-            className="max-h-full max-w-full rounded-lg object-contain"
+            onDoubleClick={(e) => { e.stopPropagation(); setZoom((z) => !z); }}
+            className={cn(
+              "select-none rounded-lg transition-transform",
+              zoom
+                ? "m-auto w-[170%] max-w-none cursor-zoom-out"
+                : "max-h-full max-w-full object-contain cursor-zoom-in"
+            )}
           />
           <span className="absolute bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-sm tabular-nums text-white">
             {open + 1} / {photos.length}

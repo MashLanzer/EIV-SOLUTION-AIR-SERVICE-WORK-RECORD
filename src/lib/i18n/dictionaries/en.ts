@@ -191,6 +191,7 @@ export const en = {
     pleaseReviewResubmit: "Please review and resubmit this record.",
     tapEditPrefix: "Tap ",
     tapEditSuffix: " to fix and resubmit.",
+    fixAndResubmit: "Fix & resubmit",
   },
   form: {
     // Page titles / headers
@@ -1218,6 +1219,7 @@ export const en = {
     filters: "Filters",
     recordCountOne: "{n} Record",
     recordCountMany: "{n} Records",
+    totalPay: "Total pay",
     exportPdf: "Export to PDF",
     exportPdfTitle: "Bulk PDF exports don't include work photos",
     exportExcel: "Export to Excel",
