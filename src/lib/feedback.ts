@@ -19,8 +19,15 @@ export interface FeedbackSummary {
   needsResponse: number; // rated but not yet replied to
 }
 
+export interface WorkerRating {
+  name: string;
+  average: number;
+  count: number;
+}
+
 export interface FeedbackOverview {
   summary: FeedbackSummary;
+  byWorker: WorkerRating[];
   items: FeedbackItem[];
 }
 
@@ -32,7 +39,7 @@ export async function getFeedbackOverview(
 ): Promise<FeedbackOverview> {
   const rated = { organizationId, customerRating: { not: null } } as const;
 
-  const [byRating, agg, needsResponse, rows] = await Promise.all([
+  const [byRating, agg, needsResponse, byWorkerRaw, rows] = await Promise.all([
     prisma.workRecord.groupBy({
       by: ["customerRating"],
       where: rated,
@@ -45,6 +52,13 @@ export async function getFeedbackOverview(
     }),
     prisma.workRecord.count({
       where: { ...rated, feedbackResponse: null },
+    }),
+    // Average rating per lead installer — how each worker is treating customers.
+    prisma.workRecord.groupBy({
+      by: ["leadInstallerName"],
+      where: rated,
+      _avg: { customerRating: true },
+      _count: true,
     }),
     prisma.workRecord.findMany({
       where: {
@@ -74,6 +88,16 @@ export async function getFeedbackOverview(
     if (r && r >= 1 && r <= 5) distribution[r as 1 | 2 | 3 | 4 | 5] = g._count;
   }
 
+  const byWorker: WorkerRating[] = byWorkerRaw
+    .filter((w) => w.leadInstallerName)
+    .map((w) => ({
+      name: w.leadInstallerName,
+      average: w._avg.customerRating ? Math.round(w._avg.customerRating * 10) / 10 : 0,
+      count: w._count,
+    }))
+    .sort((a, b) => b.average - a.average || b.count - a.count)
+    .slice(0, 12);
+
   return {
     summary: {
       count: agg._count,
@@ -81,6 +105,7 @@ export async function getFeedbackOverview(
       distribution,
       needsResponse,
     },
+    byWorker,
     items: rows.map((r) => ({
       recordId: r.id,
       jobNumber: r.jobNumber,

@@ -181,6 +181,17 @@ export default async function ReceiptPage({
               {record.customerFeedback && (
                 <p className="text-sm text-neutral-600">{record.customerFeedback}</p>
               )}
+              {record.feedbackResponse && (
+                <div className="mt-1 w-full rounded-lg border border-neutral-200 bg-white p-3 text-left">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                    {t.businessReply.replace(
+                      "{company}",
+                      record.organization?.name ?? ""
+                    )}
+                  </div>
+                  <p className="mt-1 text-sm text-neutral-600">{record.feedbackResponse}</p>
+                </div>
+              )}
             </div>
           ) : (
             <ReceiptRatingForm token={token} />

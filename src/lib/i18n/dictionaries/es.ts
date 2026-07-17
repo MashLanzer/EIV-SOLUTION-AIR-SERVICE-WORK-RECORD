@@ -130,6 +130,8 @@ export const es: Dictionary = {
     title: "Opiniones de clientes",
     description: "Cómo califican tus clientes el trabajo, en un solo lugar.",
     overall: "Calificación general",
+    byWorkerTitle: "Por trabajador",
+    byWorkerDesc: "Calificación promedio de cada instalador principal.",
     reviewsOne: "{n} opinión",
     reviewsMany: "{n} opiniones",
     noneYet: "Aún no hay opiniones",
@@ -743,6 +745,7 @@ export const es: Dictionary = {
     submitRating: "Enviar comentario",
     ratingThanks: "¡Gracias por tu comentario!",
     yourRating: "Tu calificación",
+    businessReply: "Respuesta de {company}",
   },
   reviewQueue: {
     title: "Cola de revisión",

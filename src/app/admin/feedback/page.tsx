@@ -23,7 +23,7 @@ export default async function AdminFeedbackPage({
     ratingParam && /^[1-5]$/.test(ratingParam) ? Number(ratingParam) : undefined;
   const needsResponse = needs === "1";
 
-  const { summary, items } = await getFeedbackOverview(organizationId, {
+  const { summary, byWorker, items } = await getFeedbackOverview(organizationId, {
     rating,
     needsResponse,
   });
@@ -119,6 +119,46 @@ export default async function AdminFeedbackPage({
               </div>
             </CardContent>
           </Card>
+
+          {/* Average rating per worker */}
+          {byWorker.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <div className="px-1">
+                <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                  {t.byWorkerTitle}
+                </h2>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.byWorkerDesc}</p>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white divide-y divide-neutral-100 dark:divide-neutral-800 dark:border-neutral-800 dark:bg-neutral-950">
+                {byWorker.map((w) => (
+                  <div key={w.name} className="flex items-center gap-3 px-4 py-2.5">
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                      {w.name}
+                    </span>
+                    <span className="flex items-center gap-0.5">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <Star
+                          key={n}
+                          className={cn(
+                            "h-3.5 w-3.5",
+                            n <= Math.round(w.average)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-neutral-300 dark:text-neutral-600"
+                          )}
+                        />
+                      ))}
+                    </span>
+                    <span className="w-8 shrink-0 text-right text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                      {w.average.toFixed(1)}
+                    </span>
+                    <span className="w-6 shrink-0 text-right text-xs tabular-nums text-neutral-400 dark:text-neutral-500">
+                      {w.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Filters */}
           <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-0.5">

@@ -130,6 +130,8 @@ export const en = {
     title: "Customer feedback",
     description: "How your customers rate the work, in one place.",
     overall: "Overall rating",
+    byWorkerTitle: "By worker",
+    byWorkerDesc: "Average rating for each lead installer.",
     reviewsOne: "{n} review",
     reviewsMany: "{n} reviews",
     noneYet: "No feedback yet",
@@ -741,6 +743,7 @@ export const en = {
     submitRating: "Send feedback",
     ratingThanks: "Thank you for your feedback!",
     yourRating: "Your rating",
+    businessReply: "Reply from {company}",
   },
   reviewQueue: {
     title: "Review queue",
