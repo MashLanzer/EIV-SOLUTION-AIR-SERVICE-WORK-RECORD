@@ -252,7 +252,7 @@ export default async function AdminProjectPage({
       />
       {hasMap && (
         <>
-          <GeoPhotoMap projectPins={projectPins} photoPins={photoPins} />
+          <GeoPhotoMap projectPins={projectPins} photoPins={photoPins} showAllOption={false} />
           {located && weather && <WeatherCard weather={weather} />}
         </>
       )}
