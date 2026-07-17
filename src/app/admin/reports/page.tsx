@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { BarChart3, ChevronDown, Clock, DollarSign, FileText, Sheet, Users } from "lucide-react";
 
-import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { BarList } from "@/components/charts/BarList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,15 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilterActions, FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
-import { MobileCardList } from "@/components/ui/responsive-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { PayReportTable } from "@/components/reports/PayReportTable";
 import { buildPayReport, defaultPayReportRange, parsePayReportParams } from "@/lib/payReport";
 import { getCurrencySymbol } from "@/lib/currency";
 import { formatMoney } from "@/lib/format";
@@ -91,6 +82,11 @@ export default async function AdminReportsPage({
               <div className="text-sm text-neutral-500 dark:text-neutral-400">
                 {t.totalToPay}
               </div>
+              {report.grand.jobs > 0 && (
+                <div className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
+                  {t.avgPerJob}: {moneyString(report.grand.total / report.grand.jobs)}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -209,98 +205,13 @@ export default async function AdminReportsPage({
                 description={t.noRecordsDesc}
               />
             ) : (
-              <>
-                <div className="hidden sm:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t.colPerson}</TableHead>
-                        <TableHead>{t.colJobs}</TableHead>
-                        <TableHead className="text-right">{t.colLeadPay}</TableHead>
-                        <TableHead className="text-right">{t.colHelperPay}</TableHead>
-                        <TableHead className="text-right">{t.colTotal}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {report.rows.map((row) => (
-                        <TableRow key={row.name.toLowerCase()}>
-                          <TableCell className="font-medium text-neutral-900 dark:text-neutral-100">
-                            {row.name}
-                          </TableCell>
-                          <TableCell className="tabular-nums">{row.jobs}</TableCell>
-                          <TableCell className="text-right">
-                            {money(row.leadTotal)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {money(row.helperTotal)}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-neutral-900 dark:text-neutral-100">
-                            {money(row.total)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      <TableRow className="bg-neutral-50 dark:bg-neutral-800">
-                        <TableCell className="font-semibold text-neutral-900 dark:text-neutral-100">
-                          {t.grandTotal}
-                        </TableCell>
-                        <TableCell className="font-semibold tabular-nums">
-                          {report.grand.jobs}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {money(report.grand.leadTotal)}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {money(report.grand.helperTotal)}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-neutral-900 dark:text-neutral-100">
-                          {money(report.grand.total)}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-
-                <div className="p-4 sm:hidden">
-                  <MobileCardList>
-                    {report.rows.map((row) => (
-                      <Card key={row.name.toLowerCase()}>
-                        <div className="flex items-center gap-3 p-4">
-                          <AvatarInitials name={row.name} />
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
-                              {row.name}
-                            </div>
-                            <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                              {(row.jobs === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(row.jobs))} · {t.leadLabel} {money(row.leadTotal)} · {t.helperLabel} {money(row.helperTotal)}
-                            </div>
-                          </div>
-                          <div className="shrink-0 text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                            {money(row.total)}
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                    <Card className="border-primary/30 bg-accent-soft/40">
-                      <div className="flex items-center gap-3 p-4">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-                          <DollarSign className="h-5 w-5" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-semibold text-neutral-900 dark:text-neutral-100">
-                            {t.grandTotal}
-                          </div>
-                          <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                            {(report.grand.jobs === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(report.grand.jobs))} · {t.leadLabel} {money(report.grand.leadTotal)} · {t.helperLabel} {money(report.grand.helperTotal)}
-                          </div>
-                        </div>
-                        <div className="shrink-0 text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                          {money(report.grand.total)}
-                        </div>
-                      </div>
-                    </Card>
-                  </MobileCardList>
-                </div>
-              </>
+              <PayReportTable
+                rows={report.rows}
+                grand={report.grand}
+                currency={currency}
+                dateFrom={dateFrom}
+                dateTo={dateTo}
+              />
             )}
           </CardContent>
         </Card>

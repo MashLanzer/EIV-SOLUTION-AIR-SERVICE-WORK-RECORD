@@ -105,3 +105,94 @@ export async function buildPayReport(
 
   return { rows: sorted, grand, recordCount: records.length };
 }
+
+export interface PayBreakdownLine {
+  recordId: string;
+  date: string; // ISO (YYYY-MM-DD)
+  jobNumber: string;
+  customerName: string;
+  role: "lead" | "helper";
+  pay: number;
+}
+
+// The per-job breakdown behind one person's pay-report row: every APPROVED
+// record in the range where this name appears as lead or helper, with the
+// amount for that role. A record can produce two lines if the same name is
+// both lead and helper on it (rare, but the totals must still add up).
+export async function buildWorkerPayBreakdown(
+  { dateFrom, dateTo, name }: PayReportParams & { name: string },
+  organizationId: string
+) {
+  const trimmed = name.trim();
+  const where: Prisma.WorkRecordWhereInput = {
+    status: "APPROVED",
+    organizationId,
+    OR: [
+      { leadInstallerName: { equals: trimmed, mode: "insensitive" } },
+      { helperName: { equals: trimmed, mode: "insensitive" } },
+    ],
+  };
+  if (dateFrom || dateTo) {
+    where.date = {};
+    if (dateFrom) where.date.gte = new Date(dateFrom);
+    if (dateTo) where.date.lte = new Date(dateTo);
+  }
+
+  const records = await prisma.workRecord.findMany({
+    where,
+    orderBy: { date: "desc" },
+    select: {
+      id: true,
+      date: true,
+      jobNumber: true,
+      customerName: true,
+      leadInstallerName: true,
+      helperName: true,
+      leadInstallerPay: true,
+      helperPay: true,
+    },
+  });
+
+  const key = trimmed.toLowerCase();
+  const lines: PayBreakdownLine[] = [];
+  let leadTotal = 0;
+  let helperTotal = 0;
+  for (const r of records) {
+    const iso = r.date.toISOString().slice(0, 10);
+    if (r.leadInstallerName.trim().toLowerCase() === key) {
+      const pay = Number(r.leadInstallerPay);
+      leadTotal += pay;
+      lines.push({
+        recordId: r.id,
+        date: iso,
+        jobNumber: r.jobNumber,
+        customerName: r.customerName,
+        role: "lead",
+        pay,
+      });
+    }
+    if (r.helperName?.trim().toLowerCase() === key && r.helperPay != null) {
+      const pay = Number(r.helperPay);
+      helperTotal += pay;
+      lines.push({
+        recordId: r.id,
+        date: iso,
+        jobNumber: r.jobNumber,
+        customerName: r.customerName,
+        role: "helper",
+        pay,
+      });
+    }
+  }
+
+  const total = leadTotal + helperTotal;
+  return {
+    name: trimmed,
+    lines,
+    jobs: lines.length,
+    leadTotal,
+    helperTotal,
+    total,
+    avgPerJob: lines.length > 0 ? total / lines.length : 0,
+  };
+}

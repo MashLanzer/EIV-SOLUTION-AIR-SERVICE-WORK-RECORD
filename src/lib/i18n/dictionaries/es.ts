@@ -1026,6 +1026,14 @@ export const es: Dictionary = {
     jobCountMany: "{n} trabajos",
     leadLabel: "Líder",
     helperLabel: "Ayudante",
+    // Desglose por trabajador + búsqueda
+    searchPerson: "Buscar una persona",
+    noMatches: "Nadie coincide",
+    avgPerJob: "Prom. / trabajo",
+    roleLead: "Líder",
+    roleHelper: "Ayudante",
+    loadingBreakdown: "Cargando desglose…",
+    breakdownEmpty: "Sin trabajos en este rango.",
   },
   schedule: {
     title: "Agenda",

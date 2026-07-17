@@ -1032,6 +1032,14 @@ export const en = {
     jobCountMany: "{n} jobs",
     leadLabel: "Lead",
     helperLabel: "Helper",
+    // Per-worker breakdown + search
+    searchPerson: "Search a person",
+    noMatches: "No one matches",
+    avgPerJob: "Avg / job",
+    roleLead: "Lead",
+    roleHelper: "Helper",
+    loadingBreakdown: "Loading breakdown…",
+    breakdownEmpty: "No jobs in this range.",
   },
   schedule: {
     title: "Schedule",
