@@ -909,6 +909,7 @@ export const es: Dictionary = {
     nextDay: "Día siguiente",
     routeTitle: "Ruta sugerida",
     routeOpen: "Abrir en Maps",
+    timeline: "Línea de tiempo",
     month: "Mes",
     week: "Semana",
     day: "Día",

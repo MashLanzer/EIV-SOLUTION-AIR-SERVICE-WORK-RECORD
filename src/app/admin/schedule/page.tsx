@@ -6,6 +6,7 @@ import {
   CalendarArrowDown,
   ChevronLeft,
   ChevronRight,
+  Clock,
   GripVertical,
   Navigation,
   Route,
@@ -745,6 +746,8 @@ function DayView({
   const prevKey = dayKey(addUtcDays(selected, -1));
   const nextKey = dayKey(addUtcDays(selected, 1));
   const isToday = selectedKey === todayKey;
+  // Only worth a timeline when something is actually timed that day.
+  const hasTimeline = dayJobs.some((j) => j.status !== "CANCELED" && j.startTime);
 
   return (
     <>
@@ -771,14 +774,24 @@ function DayView({
         </Button>
       </div>
 
-      {/* A compact day-meta row: weather stays glanceable inline; the driving
-          route tucks into a bottom sheet so it doesn't stack down the page. */}
-      {(weather || route) && (
+      {/* A compact day-meta row: weather stays glanceable inline; the tall clock
+          timeline and the driving route tuck into bottom sheets so the day view
+          leads with the actual job cards instead of a screen-tall clock. */}
+      {(weather || route || hasTimeline) && (
         <div className="flex flex-wrap items-stretch gap-2">
           {weather && (
             <div className="min-w-[14rem] flex-1">
               <ScheduleDayWeather day={weather.day} placeLabel={weather.placeLabel} />
             </div>
+          )}
+          {hasTimeline && (
+            <SheetButton label={t.timeline} icon={<Clock className="h-4 w-4" />} title={t.timeline}>
+              <ScheduleDayTimeline
+                jobs={dayJobs}
+                conflictIds={conflictIds}
+                conflictLabel={t.conflictBadge}
+              />
+            </SheetButton>
           )}
           {route && (
             <SheetButton
@@ -811,12 +824,6 @@ function DayView({
           )}
         </div>
       )}
-
-      <ScheduleDayTimeline
-        jobs={dayJobs}
-        conflictIds={conflictIds}
-        conflictLabel={t.conflictBadge}
-      />
 
       {overload && (
         <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/70 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-2.5 text-amber-800 dark:text-amber-200">
