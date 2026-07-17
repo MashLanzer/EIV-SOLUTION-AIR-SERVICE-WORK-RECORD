@@ -920,6 +920,8 @@ export const es: Dictionary = {
     unassignedRow: "Sin asignar",
     weatherAt: "Clima en {place}",
     allWorkers: "Todos los trabajadores",
+    allTeams: "Todos los equipos",
+    allSkills: "Todas las habilidades",
     summaryJobs: "Trabajos del mes",
     summaryCompleted: "Completados",
     summaryBusiest: "Más ocupado",

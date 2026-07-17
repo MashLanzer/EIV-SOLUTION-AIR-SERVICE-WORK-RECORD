@@ -28,6 +28,7 @@ import { DaySheet } from "@/components/schedule/DaySheet";
 import { SheetButton } from "@/components/schedule/SheetButton";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { ScheduleWorkerFilter } from "@/components/schedule/ScheduleWorkerFilter";
+import { ScheduleSelectFilter } from "@/components/schedule/ScheduleSelectFilter";
 import { loadNewRecordFormData } from "@/lib/newRecordForm";
 import { WeekBoard } from "@/components/schedule/WeekBoard";
 import {
@@ -69,6 +70,8 @@ function schedHref(params: {
   date?: string;
   worker?: string;
   status?: string;
+  team?: string;
+  skill?: string;
   create?: boolean;
   // Opens the tapped day's jobs in a bottom sheet (month view) instead of
   // stacking them under the calendar.
@@ -79,6 +82,8 @@ function schedHref(params: {
   if (params.date) p.set("date", params.date);
   if (params.worker) p.set("worker", params.worker);
   if (params.status) p.set("status", params.status);
+  if (params.team) p.set("team", params.team);
+  if (params.skill) p.set("skill", params.skill);
   if (params.create) p.set("new", "1");
   if (params.day) p.set("day", "1");
   const qs = p.toString();
@@ -210,6 +215,8 @@ export default async function SchedulePage({
     view?: string;
     worker?: string;
     status?: string;
+    team?: string;
+    skill?: string;
     new?: string;
     record?: string;
     saved?: string;
@@ -226,6 +233,8 @@ export default async function SchedulePage({
     view: viewParam,
     worker: workerParam,
     status: statusParam,
+    team: teamParam,
+    skill: skillParam,
     record: recordJobId,
     saved: savedParam,
   } = await searchParams;
@@ -244,6 +253,9 @@ export default async function SchedulePage({
   const statusFilter = (SCHEDULED_JOB_STATUSES as readonly string[]).includes(statusParam ?? "")
     ? (statusParam as ScheduledJobStatus)
     : undefined;
+  // Optional team + required-skill filters (validated against the org below).
+  const teamFilter = teamParam?.trim() || undefined;
+  const skillFilter = skillParam?.trim() || undefined;
   const selected = parseDateParam(date);
   const selectedKey = dayKey(selected);
   const todayKey = dayKey(startOfUtcDay(new Date()));
@@ -350,9 +362,15 @@ export default async function SchedulePage({
     })),
   }));
 
-  // Apply the lifecycle chip filter (if any) once, so every view downstream
-  // works off the same filtered set.
-  const shownViews = statusFilter ? views.filter((v) => v.status === statusFilter) : views;
+  // Apply the active filters (status chip, team, required skill) once, so every
+  // view downstream works off the same filtered set.
+  const skillNeedle = skillFilter?.toLowerCase();
+  const shownViews = views.filter(
+    (v) =>
+      (!statusFilter || v.status === statusFilter) &&
+      (!teamFilter || v.teamId === teamFilter) &&
+      (!skillNeedle || (v.requiredSkill ?? "").toLowerCase().includes(skillNeedle))
+  );
 
   const byDay = new Map<string, ScheduleJobView[]>();
   for (const v of shownViews) {
@@ -447,13 +465,33 @@ export default async function SchedulePage({
         <SegmentedNav
           ariaLabel={t.title}
           items={[
-            { label: t.month, href: schedHref({ view: "month", date: selectedKey, worker, status: statusFilter }), active: view === "month" },
-            { label: t.week, href: schedHref({ view: "week", date: selectedKey, worker, status: statusFilter }), active: view === "week" },
-            { label: t.day, href: schedHref({ view: "day", date: selectedKey, worker, status: statusFilter }), active: view === "day" },
-            { label: t.teamView, href: schedHref({ view: "team", date: selectedKey, worker, status: statusFilter }), active: view === "team" },
+            { label: t.month, href: schedHref({ view: "month", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter }), active: view === "month" },
+            { label: t.week, href: schedHref({ view: "week", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter }), active: view === "week" },
+            { label: t.day, href: schedHref({ view: "day", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter }), active: view === "day" },
+            { label: t.teamView, href: schedHref({ view: "team", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter }), active: view === "team" },
           ]}
         />
-        <ScheduleWorkerFilter workers={workers} />
+        <div className="flex flex-wrap items-center gap-2">
+          <ScheduleWorkerFilter workers={workers} />
+          {teams.length > 0 && (
+            <ScheduleSelectFilter
+              param="team"
+              options={teams.map((tm) => ({ value: tm.id, label: tm.name }))}
+              allLabel={t.allTeams}
+              ariaLabel={t.team}
+              className="sm:max-w-44"
+            />
+          )}
+          {skillSuggestions.length > 0 && (
+            <ScheduleSelectFilter
+              param="skill"
+              options={skillSuggestions.map((s) => ({ value: s, label: s }))}
+              allLabel={t.allSkills}
+              ariaLabel={t.requiredSkill}
+              className="sm:max-w-44"
+            />
+          )}
+        </div>
       </div>
 
       {/* Lifecycle filter chips — narrow the calendar to one status at a time. */}
@@ -473,7 +511,7 @@ export default async function SchedulePage({
           return (
             <Link
               key={chip.value ?? "all"}
-              href={schedHref({ view, date: selectedKey, worker, status: chip.value })}
+              href={schedHref({ view, date: selectedKey, worker, status: chip.value, team: teamFilter, skill: skillFilter })}
               aria-current={active ? "true" : undefined}
               className={cn(
                 "shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-medium transition-colors",
@@ -497,6 +535,8 @@ export default async function SchedulePage({
           byDay={byDay}
           worker={worker}
           statusFilter={statusFilter}
+          teamFilter={teamFilter}
+          skillFilter={skillFilter}
           workers={workers}
           teams={teams}
           customers={customers}
@@ -516,6 +556,8 @@ export default async function SchedulePage({
           byDay={byDay}
           worker={worker}
           statusFilter={statusFilter}
+          teamFilter={teamFilter}
+          skillFilter={skillFilter}
           workers={workers}
           teams={teams}
           customers={customers}
@@ -534,6 +576,8 @@ export default async function SchedulePage({
           byDay={byDay}
           worker={worker}
           statusFilter={statusFilter}
+          teamFilter={teamFilter}
+          skillFilter={skillFilter}
           workers={workers}
           thresholdFor={thresholdFor}
           weekOfFmt={intl.weekOf}
@@ -547,6 +591,8 @@ export default async function SchedulePage({
           byDay={byDay}
           worker={worker}
           statusFilter={statusFilter}
+          teamFilter={teamFilter}
+          skillFilter={skillFilter}
           workers={workers}
           teams={teams}
           customers={customers}
@@ -590,6 +636,8 @@ function MonthView({
   byDay,
   worker,
   statusFilter,
+  teamFilter,
+  skillFilter,
   workers,
   teams,
   customers,
@@ -608,6 +656,8 @@ function MonthView({
   byDay: Map<string, ScheduleJobView[]>;
   worker?: string;
   statusFilter?: ScheduledJobStatus;
+  teamFilter?: string;
+  skillFilter?: string;
   workers: Opt[];
   teams: Opt[];
   customers: Opt[];
@@ -667,10 +717,10 @@ function MonthView({
         monthLabel={monthLabel}
         weekdayLabels={weekdayLabels}
         days={calendarDays}
-        dayHref={(key) => schedHref({ view: "month", date: key, worker, status: statusFilter, day: true })}
-        prevHref={schedHref({ view: "month", date: prevMonthKey, worker, status: statusFilter })}
-        nextHref={schedHref({ view: "month", date: nextMonthKey, worker, status: statusFilter })}
-        todayHref={schedHref({ view: "month", worker, status: statusFilter })}
+        dayHref={(key) => schedHref({ view: "month", date: key, worker, status: statusFilter, team: teamFilter, skill: skillFilter, day: true })}
+        prevHref={schedHref({ view: "month", date: prevMonthKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter })}
+        nextHref={schedHref({ view: "month", date: nextMonthKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter })}
+        todayHref={schedHref({ view: "month", worker, status: statusFilter, team: teamFilter, skill: skillFilter })}
         prevLabel={t.prevMonth}
         nextLabel={t.nextMonth}
         todayLabel={t.today}
@@ -692,7 +742,7 @@ function MonthView({
           heading={selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
           jobs={selectedJobs}
           conflictIds={conflictIds}
-          emptyCtaHref={schedHref({ view: "month", date: selectedKey, worker, status: statusFilter, create: true })}
+          emptyCtaHref={schedHref({ view: "month", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter, create: true })}
           workers={workers}
           teams={teams}
           customers={customers}
@@ -715,6 +765,8 @@ function DayView({
   byDay,
   worker,
   statusFilter,
+  teamFilter,
+  skillFilter,
   workers,
   teams,
   customers,
@@ -732,6 +784,8 @@ function DayView({
   byDay: Map<string, ScheduleJobView[]>;
   worker?: string;
   statusFilter?: ScheduledJobStatus;
+  teamFilter?: string;
+  skillFilter?: string;
   workers: Opt[];
   teams: Opt[];
   customers: Opt[];
@@ -756,7 +810,7 @@ function DayView({
     <>
       <div className="flex items-center justify-between gap-2">
         <Button asChild variant="outline" size="icon" aria-label={t.prevDay}>
-          <Link href={schedHref({ view: "day", date: prevKey, worker, status: statusFilter })}>
+          <Link href={schedHref({ view: "day", date: prevKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter })}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -766,12 +820,12 @@ function DayView({
           </span>
           {!isToday && (
             <Button asChild variant="ghost" size="sm">
-              <Link href={schedHref({ view: "day", worker, status: statusFilter })}>{t.today}</Link>
+              <Link href={schedHref({ view: "day", worker, status: statusFilter, team: teamFilter, skill: skillFilter })}>{t.today}</Link>
             </Button>
           )}
         </div>
         <Button asChild variant="outline" size="icon" aria-label={t.nextDay}>
-          <Link href={schedHref({ view: "day", date: nextKey, worker, status: statusFilter })}>
+          <Link href={schedHref({ view: "day", date: nextKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter })}>
             <ChevronRight className="h-4 w-4" />
           </Link>
         </Button>
@@ -843,7 +897,7 @@ function DayView({
         heading={isToday ? `${t.today} · ${dayLabel}` : dayLabel}
         jobs={dayJobs}
         conflictIds={conflictIds}
-        emptyCtaHref={schedHref({ view: "day", date: selectedKey, worker, status: statusFilter, create: true })}
+        emptyCtaHref={schedHref({ view: "day", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter, create: true })}
         workers={workers}
         teams={teams}
         customers={customers}
@@ -865,6 +919,8 @@ function TeamView({
   byDay,
   worker,
   statusFilter,
+  teamFilter,
+  skillFilter,
   workers,
   thresholdFor,
   weekOfFmt,
@@ -876,6 +932,8 @@ function TeamView({
   byDay: Map<string, ScheduleJobView[]>;
   worker?: string;
   statusFilter?: ScheduledJobStatus;
+  teamFilter?: string;
+  skillFilter?: string;
   workers: Opt[];
   thresholdFor: (id: string) => number;
   weekOfFmt: Intl.DateTimeFormat;
@@ -921,7 +979,7 @@ function TeamView({
     <>
       <div className="flex items-center justify-between gap-2">
         <Button asChild variant="outline" size="icon" aria-label={t.prevWeek}>
-          <Link href={schedHref({ view: "team", date: prevKey, worker, status: statusFilter })}>
+          <Link href={schedHref({ view: "team", date: prevKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter })}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -930,11 +988,11 @@ function TeamView({
             {t.weekOf.replace("{date}", weekOfFmt.format(from))}
           </span>
           <Button asChild variant="ghost" size="sm">
-            <Link href={schedHref({ view: "team", worker, status: statusFilter })}>{t.today}</Link>
+            <Link href={schedHref({ view: "team", worker, status: statusFilter, team: teamFilter, skill: skillFilter })}>{t.today}</Link>
           </Button>
         </div>
         <Button asChild variant="outline" size="icon" aria-label={t.nextWeek}>
-          <Link href={schedHref({ view: "team", date: nextKey, worker, status: statusFilter })}>
+          <Link href={schedHref({ view: "team", date: nextKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter })}>
             <ChevronRight className="h-4 w-4" />
           </Link>
         </Button>
@@ -1029,6 +1087,8 @@ function WeekView({
   byDay,
   worker,
   statusFilter,
+  teamFilter,
+  skillFilter,
   workers,
   teams,
   customers,
@@ -1042,6 +1102,8 @@ function WeekView({
   byDay: Map<string, ScheduleJobView[]>;
   worker?: string;
   statusFilter?: ScheduledJobStatus;
+  teamFilter?: string;
+  skillFilter?: string;
   workers: Opt[];
   teams: Opt[];
   customers: Opt[];
@@ -1060,7 +1122,7 @@ function WeekView({
     <>
       <div className="flex items-center justify-between gap-2">
         <Button asChild variant="outline" size="icon" aria-label={t.prevWeek}>
-          <Link href={schedHref({ view: "week", date: prevKey, worker, status: statusFilter })}>
+          <Link href={schedHref({ view: "week", date: prevKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter })}>
             <ChevronLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -1069,11 +1131,11 @@ function WeekView({
             {t.weekOf.replace("{date}", weekOfFmt.format(from))}
           </span>
           <Button asChild variant="ghost" size="sm">
-            <Link href={schedHref({ view: "week", worker, status: statusFilter })}>{t.today}</Link>
+            <Link href={schedHref({ view: "week", worker, status: statusFilter, team: teamFilter, skill: skillFilter })}>{t.today}</Link>
           </Button>
         </div>
         <Button asChild variant="outline" size="icon" aria-label={t.nextWeek}>
-          <Link href={schedHref({ view: "week", date: nextKey, worker, status: statusFilter })}>
+          <Link href={schedHref({ view: "week", date: nextKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter })}>
             <ChevronRight className="h-4 w-4" />
           </Link>
         </Button>
@@ -1098,8 +1160,8 @@ function WeekView({
                 key,
                 label: dayFmt.format(d),
                 isToday: key === todayKey,
-                createHref: schedHref({ view: "week", date: key, worker, status: statusFilter, create: true }),
-                dayHref: schedHref({ view: "day", date: key, worker, status: statusFilter }),
+                createHref: schedHref({ view: "week", date: key, worker, status: statusFilter, team: teamFilter, skill: skillFilter, create: true }),
+                dayHref: schedHref({ view: "day", date: key, worker, status: statusFilter, team: teamFilter, skill: skillFilter }),
               };
             })}
             initialJobsByDay={Object.fromEntries(

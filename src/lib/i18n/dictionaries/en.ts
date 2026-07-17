@@ -926,6 +926,8 @@ export const en = {
     unassignedRow: "Unassigned",
     weatherAt: "Weather at {place}",
     allWorkers: "All workers",
+    allTeams: "All teams",
+    allSkills: "All skills",
     summaryJobs: "Jobs this month",
     summaryCompleted: "Completed",
     summaryBusiest: "Busiest",
