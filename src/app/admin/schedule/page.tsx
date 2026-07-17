@@ -681,6 +681,12 @@ function MonthView({
       isSelected: key === selectedKey,
       count: dayJobs.length,
       overloaded: worstOverload(dayJobs, thresholdFor) !== null,
+      // Distinct team colors that day, so the cell shows whose day it is.
+      dots: [
+        ...new Set(
+          dayJobs.map((j) => j.teamColor).filter((c): c is string => !!c)
+        ),
+      ].slice(0, 3),
     };
   });
   const selectedJobs = byDay.get(selectedKey) ?? [];

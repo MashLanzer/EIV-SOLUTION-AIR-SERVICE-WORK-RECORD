@@ -14,6 +14,9 @@ export interface CalendarDay {
   // True when a worker is booked at or past the org's overload threshold that
   // day; the count badge turns amber to flag it.
   overloaded?: boolean;
+  // Up to a few team colors present that day, shown as small dots so you can
+  // see whose day it is at a glance.
+  dots?: string[];
 }
 
 // A month grid: seven weekday columns, six week rows. Each day links to
@@ -118,6 +121,18 @@ export function ScheduleMonthCalendar({
                 )}
               >
                 {d.count}
+              </span>
+            )}
+            {d.dots && d.dots.length > 0 && (
+              <span className="flex items-center gap-0.5">
+                {d.dots.slice(0, 3).map((c, i) => (
+                  <span
+                    key={i}
+                    aria-hidden="true"
+                    className="h-1.5 w-1.5 rounded-full ring-1 ring-black/5 dark:ring-white/10"
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
               </span>
             )}
           </Link>
