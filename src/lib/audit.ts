@@ -1,5 +1,7 @@
 import "server-only";
 
+import type { Prisma } from "@prisma/client";
+
 import { prisma } from "@/lib/prisma";
 
 // id is null for platform-owner actions: they aren't a User in this org, so
@@ -37,11 +39,33 @@ export async function logAudit(params: {
   }
 }
 
-export async function getAuditLog(organizationId: string, take = 150) {
+// Build the where clause shared by the log query and its type facet counts.
+function auditWhere(
+  organizationId: string,
+  opts: { type?: string; query?: string }
+): Prisma.AuditEventWhereInput {
+  return {
+    organizationId,
+    ...(opts.type ? { entityType: opts.type } : {}),
+    ...(opts.query
+      ? {
+          OR: [
+            { summary: { contains: opts.query, mode: "insensitive" } },
+            { actorName: { contains: opts.query, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+}
+
+export async function getAuditLog(
+  organizationId: string,
+  opts: { type?: string; query?: string; take?: number } = {}
+) {
   return prisma.auditEvent.findMany({
-    where: { organizationId },
+    where: auditWhere(organizationId, { type: opts.type, query: opts.query }),
     orderBy: { createdAt: "desc" },
-    take,
+    take: opts.take ?? 150,
     select: {
       id: true,
       actorName: true,
@@ -51,6 +75,17 @@ export async function getAuditLog(organizationId: string, take = 150) {
       createdAt: true,
     },
   });
+}
+
+// Per-entity-type counts for the filter chips. Honors the search term but not
+// the active type filter, so each chip shows how many it would land on.
+export async function getAuditTypeCounts(organizationId: string, query?: string) {
+  const rows = await prisma.auditEvent.groupBy({
+    by: ["entityType"],
+    where: auditWhere(organizationId, { query }),
+    _count: { _all: true },
+  });
+  return rows.map((r) => ({ type: r.entityType, count: r._count._all }));
 }
 
 // Cross-tenant audit feed for the platform console. Bypasses org scoping ON
