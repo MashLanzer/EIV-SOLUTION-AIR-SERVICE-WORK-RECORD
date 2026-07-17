@@ -493,18 +493,21 @@ export default async function AdminCustomerPage({
           {t.manage}
         </h2>
         <Card>
-          <CardContent className="flex flex-wrap items-center gap-2 p-4">
-            <EditCustomerButton
-              customerId={customer.id}
-              defaultValues={{
-                name: customer.name,
-                address: customer.address,
-                phone: customer.phone ?? "",
-                email: customer.email ?? "",
-              }}
-            />
+          <CardContent className="flex flex-col gap-2 p-4">
+            <div className="grid grid-cols-2 gap-2">
+              <EditCustomerButton
+                customerId={customer.id}
+                defaultValues={{
+                  name: customer.name,
+                  address: customer.address,
+                  phone: customer.phone ?? "",
+                  email: customer.email ?? "",
+                }}
+                fullWidth
+              />
+              <DeleteCustomerButton customerId={customer.id} fullWidth />
+            </div>
             <MergeCustomerForm sourceId={customer.id} others={others} />
-            <DeleteCustomerButton customerId={customer.id} />
           </CardContent>
         </Card>
       </section>

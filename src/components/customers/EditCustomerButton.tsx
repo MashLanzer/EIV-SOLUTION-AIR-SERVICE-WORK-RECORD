@@ -20,9 +20,11 @@ interface CustomerValues {
 export function EditCustomerButton({
   customerId,
   defaultValues,
+  fullWidth = false,
 }: {
   customerId: string;
   defaultValues: CustomerValues;
+  fullWidth?: boolean;
 }) {
   const t = useT().customers;
   const tc = useT().common;
@@ -30,7 +32,13 @@ export function EditCustomerButton({
 
   return (
     <>
-      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant="outline"
+        size={fullWidth ? undefined : "sm"}
+        onClick={() => setOpen(true)}
+        className={fullWidth ? "w-full" : undefined}
+      >
         <Pencil className="h-4 w-4" />
         {tc.edit}
       </Button>
