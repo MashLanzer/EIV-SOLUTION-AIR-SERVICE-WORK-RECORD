@@ -85,6 +85,8 @@ function schedHref(params: {
   create?: boolean;
   // Pre-points the new-job sheet at a project (needs-scheduling backlog).
   newProject?: string;
+  // Opens the "time off" manage sheet (read by TimeOffManager).
+  timeoff?: boolean;
   // Opens the tapped day's jobs in a bottom sheet (month view) instead of
   // stacking them under the calendar.
   day?: boolean;
@@ -98,6 +100,7 @@ function schedHref(params: {
   if (params.skill) p.set("skill", params.skill);
   if (params.create) p.set("new", "1");
   if (params.newProject) p.set("newProject", params.newProject);
+  if (params.timeoff) p.set("timeoff", "1");
   if (params.day) p.set("day", "1");
   const qs = p.toString();
   // ?new=1 opens the "new job" bottom sheet (read from the query by
@@ -874,6 +877,7 @@ function MonthView({
           jobs={selectedJobs}
           conflictIds={conflictIds}
           emptyCtaHref={schedHref({ view: "month", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter, create: true })}
+          timeOffHref={schedHref({ view: "month", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter, timeoff: true })}
           workers={workers}
           teams={teams}
           customers={customers}
@@ -1059,6 +1063,7 @@ function DayView({
         jobs={dayJobs}
         conflictIds={conflictIds}
         emptyCtaHref={schedHref({ view: "day", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter, create: true })}
+        timeOffHref={schedHref({ view: "day", date: selectedKey, worker, status: statusFilter, team: teamFilter, skill: skillFilter, timeoff: true })}
         workers={workers}
         teams={teams}
         customers={customers}
@@ -1357,6 +1362,7 @@ function DaySection({
   jobs,
   conflictIds,
   emptyCtaHref,
+  timeOffHref,
   workers,
   teams,
   customers,
@@ -1369,6 +1375,8 @@ function DaySection({
   jobs: ScheduleJobView[];
   conflictIds: Set<string>;
   emptyCtaHref: string;
+  // Opens the "time off" sheet pre-pointed at this day.
+  timeOffHref: string;
   workers: Opt[];
   teams: Opt[];
   customers: Opt[];
@@ -1391,14 +1399,8 @@ function DaySection({
       )}
       {jobs.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 p-0 pb-6">
+          <CardContent className="p-0 pb-6">
             <EmptyState icon={CalendarDays} title={t.noJobsDay} description={t.noJobsWeekDesc} />
-            <Button asChild size="sm">
-              <Link href={emptyCtaHref}>
-                <CalendarPlus className="h-4 w-4" />
-                {t.scheduleForDay}
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -1417,6 +1419,22 @@ function DaySection({
           ))}
         </div>
       )}
+      {/* Quick add for this day — a job or someone's time off — shown whether or
+          not the day already has jobs. */}
+      <div className="flex flex-wrap gap-2 pt-1">
+        <Button asChild size="sm" className="min-w-[9rem] flex-1">
+          <Link href={emptyCtaHref}>
+            <CalendarPlus className="h-4 w-4" />
+            {t.scheduleForDay}
+          </Link>
+        </Button>
+        <Button asChild size="sm" variant="outline" className="min-w-[9rem] flex-1">
+          <Link href={timeOffHref}>
+            <CalendarOff className="h-4 w-4" />
+            {t.timeOffTitle}
+          </Link>
+        </Button>
+      </div>
     </section>
   );
 }
