@@ -999,6 +999,8 @@ export const en = {
     dragHandle: "Drag to move",
     reopen: "Reopen",
     edit: "Edit",
+    expandJob: "Show details",
+    collapseJob: "Collapse",
     // Delete
     deleteTitle: "Delete this job?",
     deleteDesc:

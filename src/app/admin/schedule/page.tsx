@@ -18,7 +18,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { StatTile } from "@/components/ui/stat-tile";
-import { ScheduleJobCard, type ScheduleJobView } from "@/components/schedule/ScheduleJobCard";
+import { type ScheduleJobView } from "@/components/schedule/ScheduleJobCard";
+import { ExpandableJobCard } from "@/components/schedule/ExpandableJobCard";
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
 import { NewScheduledJobButton } from "@/components/schedule/NewScheduledJobButton";
@@ -1170,7 +1171,7 @@ function DaySection({
         <div className="flex flex-col gap-2">
           {jobs.map((job) => (
             <div key={job.id} id={`job-${job.id}`} className="scroll-mt-20">
-              <ScheduleJobCard
+              <ExpandableJobCard
                 job={job}
                 workers={workers}
                 teams={teams}
