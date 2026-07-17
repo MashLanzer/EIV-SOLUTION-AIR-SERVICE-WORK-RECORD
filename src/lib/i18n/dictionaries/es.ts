@@ -967,6 +967,9 @@ export const es: Dictionary = {
     expires: "Vence",
     createdBy: "Creado por {name}",
     edit: "Editar",
+    downloadPdf: "Descargar PDF",
+    pdfDisclaimer:
+      "Este estimado es una aproximación y no constituye un precio final. Los costos pueden cambiar según surjan especificaciones o condiciones. Válido por 30 días desde la fecha de emisión.",
     markSent: "Marcar como enviado",
     markAccepted: "Marcar aceptado",
     markDeclined: "Marcar rechazado",

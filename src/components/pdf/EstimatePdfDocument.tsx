@@ -2,32 +2,33 @@ import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/render
 
 import type { PdfCompany } from "@/components/pdf/WorkRecordPdfDocument";
 
-export type InvoiceLineForPdf = {
+export type EstimateLineForPdf = {
   description: string;
   quantity: number;
   unitPrice: number;
 };
 
-export type InvoiceForPdf = {
-  number: string; // pre-formatted, e.g. "INV-0042"
+export type EstimateForPdf = {
+  number: string; // pre-formatted, e.g. "EST-0042"
   statusLabel: string;
   customerName: string;
   customerAddress: string | null;
   issued: string; // formatted date
-  due: string | null; // formatted date
+  validTill: string | null; // formatted date
   taxRatePercent: number;
   notes: string | null;
-  lines: InvoiceLineForPdf[];
+  lines: EstimateLineForPdf[];
   subtotal: number;
   tax: number;
   total: number;
 };
 
-export type InvoiceLabels = {
-  invoice: string;
-  billTo: string;
+export type EstimateLabels = {
+  estimate: string;
+  quoteFor: string;
   issued: string;
-  due: string;
+  validTill: string;
+  status: string;
   description: string;
   qty: string;
   unitPrice: string;
@@ -36,12 +37,11 @@ export type InvoiceLabels = {
   tax: string;
   total: string;
   notes: string;
+  disclaimer: string;
 };
 
-// A refined, editorial invoice: a thin full-page frame, a wordmark title with a
-// monogram, an "amount due" callout, a banded line-item table and a solid
-// total bar. Monochrome to match the app (ink #171717 on paper), so it prints
-// clean and reads as one system with the rest of AeroTrack.
+// Matches the invoice PDF's editorial, monochrome system (ink #171717 on
+// paper) so a company's paperwork reads as one brand.
 const INK = "#171717";
 const MUTED = "#737373";
 const FAINT = "#a3a3a3";
@@ -49,26 +49,9 @@ const HAIR = "#e5e5e5";
 const SOFT = "#f5f5f5";
 
 const styles = StyleSheet.create({
-  page: {
-    padding: 24,
-    fontSize: 9.5,
-    fontFamily: "Helvetica",
-    color: INK,
-  },
-  frame: {
-    flexGrow: 1,
-    borderWidth: 1,
-    borderColor: HAIR,
-    borderStyle: "solid",
-    borderRadius: 6,
-    padding: 28,
-  },
-  // Header
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
+  page: { padding: 24, fontSize: 9.5, fontFamily: "Helvetica", color: INK },
+  frame: { flexGrow: 1, borderWidth: 1, borderColor: HAIR, borderStyle: "solid", borderRadius: 6, padding: 28 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   brand: { flexDirection: "row", alignItems: "center", gap: 10 },
   monogram: {
     width: 34,
@@ -84,33 +67,20 @@ const styles = StyleSheet.create({
   logo: { height: 40, maxWidth: 130, objectFit: "contain" },
   companyName: { fontSize: 12, fontWeight: 700, letterSpacing: 0.5 },
   companyMeta: { fontSize: 8, color: MUTED, marginTop: 1.5 },
-  title: {
-    fontSize: 24,
-    fontWeight: 700,
-    letterSpacing: 6,
-    textAlign: "right",
-  },
+  title: { fontSize: 22, fontWeight: 700, letterSpacing: 4, textAlign: "right" },
   titleMeta: { fontSize: 8.5, color: MUTED, marginTop: 3, textAlign: "right", letterSpacing: 1 },
   rule: { height: 1, backgroundColor: HAIR, marginVertical: 18 },
-  // Meta row
   metaRow: { flexDirection: "row", gap: 24, marginBottom: 20 },
   metaCol: { flexGrow: 1 },
   eyebrow: { fontSize: 7.5, color: FAINT, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 3 },
   metaValue: { fontSize: 10 },
-  // Bill + amount due
   billRow: { flexDirection: "row", justifyContent: "space-between", gap: 20, marginBottom: 22 },
   billTo: { flexGrow: 1, paddingRight: 12 },
   billName: { fontSize: 12, fontWeight: 700, marginBottom: 2 },
   billMeta: { fontSize: 9, color: MUTED, lineHeight: 1.4 },
-  dueBox: {
-    width: 210,
-    backgroundColor: SOFT,
-    borderRadius: 6,
-    padding: 14,
-  },
+  dueBox: { width: 210, backgroundColor: SOFT, borderRadius: 6, padding: 14 },
   dueAmount: { fontSize: 22, fontWeight: 700, marginTop: 2 },
   dueSub: { fontSize: 8, color: MUTED, marginTop: 4 },
-  // Table
   thead: {
     flexDirection: "row",
     backgroundColor: INK,
@@ -133,7 +103,6 @@ const styles = StyleSheet.create({
   cQty: { width: "12%", textAlign: "right" },
   cAmt: { width: "20%", textAlign: "right" },
   cellStrong: { fontWeight: 700 },
-  // Footer totals
   bottom: { flexDirection: "row", justifyContent: "space-between", gap: 24, marginTop: 18 },
   notes: { flexGrow: 1, paddingRight: 12 },
   notesBody: { fontSize: 9, color: MUTED, marginTop: 4, lineHeight: 1.45 },
@@ -153,22 +122,20 @@ const styles = StyleSheet.create({
   },
   grandLabel: { fontSize: 8.5, textTransform: "uppercase", letterSpacing: 1 },
   grandValue: { fontSize: 13, fontWeight: 700 },
-  // Page footer
   pageFoot: { marginTop: "auto", paddingTop: 16 },
   footRule: { height: 1, backgroundColor: HAIR, marginBottom: 10 },
-  payLabel: { fontSize: 7.5, color: FAINT, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 3 },
-  payBody: { fontSize: 8.5, color: MUTED, lineHeight: 1.45 },
+  disclaimer: { fontSize: 7.5, color: FAINT, lineHeight: 1.5 },
   footLine: { fontSize: 8, color: FAINT, textAlign: "center", marginTop: 12, letterSpacing: 0.5 },
 });
 
-export function InvoicePdfDocument({
-  invoice,
+export function EstimatePdfDocument({
+  estimate,
   company,
   labels,
 }: {
-  invoice: InvoiceForPdf;
+  estimate: EstimateForPdf;
   company: PdfCompany;
-  labels: InvoiceLabels;
+  labels: EstimateLabels;
 }) {
   const cur = company.currency || "$";
   const money = (n: number) => `${cur}${n.toFixed(2)}`;
@@ -178,7 +145,6 @@ export function InvoicePdfDocument({
     <Document>
       <Page size="LETTER" style={styles.page}>
         <View style={styles.frame}>
-          {/* Header */}
           <View style={styles.header}>
             <View style={styles.brand}>
               {company.logoUrl ? (
@@ -199,59 +165,56 @@ export function InvoicePdfDocument({
               )}
             </View>
             <View>
-              <Text style={styles.title}>{labels.invoice.toUpperCase()}</Text>
-              <Text style={styles.titleMeta}>{invoice.number}</Text>
+              <Text style={styles.title}>{labels.estimate.toUpperCase()}</Text>
+              <Text style={styles.titleMeta}>{estimate.number}</Text>
             </View>
           </View>
 
           <View style={styles.rule} />
 
-          {/* Meta */}
           <View style={styles.metaRow}>
             <View style={styles.metaCol}>
               <Text style={styles.eyebrow}>{labels.issued}</Text>
-              <Text style={styles.metaValue}>{invoice.issued}</Text>
+              <Text style={styles.metaValue}>{estimate.issued}</Text>
             </View>
-            {invoice.due ? (
+            {estimate.validTill ? (
               <View style={styles.metaCol}>
-                <Text style={styles.eyebrow}>{labels.due}</Text>
-                <Text style={styles.metaValue}>{invoice.due}</Text>
+                <Text style={styles.eyebrow}>{labels.validTill}</Text>
+                <Text style={styles.metaValue}>{estimate.validTill}</Text>
               </View>
             ) : null}
             <View style={styles.metaCol}>
-              <Text style={styles.eyebrow}>{labels.total}</Text>
-              <Text style={styles.metaValue}>{invoice.statusLabel}</Text>
+              <Text style={styles.eyebrow}>{labels.status}</Text>
+              <Text style={styles.metaValue}>{estimate.statusLabel}</Text>
             </View>
           </View>
 
-          {/* Bill to + amount due */}
           <View style={styles.billRow}>
             <View style={styles.billTo}>
-              <Text style={styles.eyebrow}>{labels.billTo}</Text>
-              <Text style={styles.billName}>{invoice.customerName}</Text>
-              {invoice.customerAddress ? (
-                <Text style={styles.billMeta}>{invoice.customerAddress}</Text>
+              <Text style={styles.eyebrow}>{labels.quoteFor}</Text>
+              <Text style={styles.billName}>{estimate.customerName}</Text>
+              {estimate.customerAddress ? (
+                <Text style={styles.billMeta}>{estimate.customerAddress}</Text>
               ) : null}
             </View>
             <View style={styles.dueBox}>
               <Text style={styles.eyebrow}>{labels.total}</Text>
-              <Text style={styles.dueAmount}>{money(invoice.total)}</Text>
-              {invoice.due ? (
+              <Text style={styles.dueAmount}>{money(estimate.total)}</Text>
+              {estimate.validTill ? (
                 <Text style={styles.dueSub}>
-                  {labels.due}: {invoice.due}
+                  {labels.validTill}: {estimate.validTill}
                 </Text>
               ) : null}
             </View>
           </View>
 
-          {/* Line items */}
           <View style={styles.thead}>
             <Text style={[styles.cDesc, styles.th]}>{labels.description}</Text>
             <Text style={[styles.cRate, styles.th]}>{labels.unitPrice}</Text>
             <Text style={[styles.cQty, styles.th]}>{labels.qty}</Text>
             <Text style={[styles.cAmt, styles.th]}>{labels.amount}</Text>
           </View>
-          {invoice.lines.map((li, i) => (
+          {estimate.lines.map((li, i) => (
             <View key={i} style={styles.trow}>
               <Text style={styles.cDesc}>{li.description}</Text>
               <Text style={styles.cRate}>{money(li.unitPrice)}</Text>
@@ -260,43 +223,36 @@ export function InvoicePdfDocument({
             </View>
           ))}
 
-          {/* Notes + totals */}
           <View style={styles.bottom}>
             <View style={styles.notes}>
-              {invoice.notes ? (
+              {estimate.notes ? (
                 <>
                   <Text style={styles.eyebrow}>{labels.notes}</Text>
-                  <Text style={styles.notesBody}>{invoice.notes}</Text>
+                  <Text style={styles.notesBody}>{estimate.notes}</Text>
                 </>
               ) : null}
             </View>
             <View style={styles.totals}>
               <View style={styles.totalLine}>
                 <Text style={styles.totalMuted}>{labels.subtotal}</Text>
-                <Text>{money(invoice.subtotal)}</Text>
+                <Text>{money(estimate.subtotal)}</Text>
               </View>
               <View style={styles.totalLine}>
                 <Text style={styles.totalMuted}>
-                  {labels.tax} ({invoice.taxRatePercent}%)
+                  {labels.tax} ({estimate.taxRatePercent}%)
                 </Text>
-                <Text>{money(invoice.tax)}</Text>
+                <Text>{money(estimate.tax)}</Text>
               </View>
               <View style={styles.grandBar}>
                 <Text style={styles.grandLabel}>{labels.total}</Text>
-                <Text style={styles.grandValue}>{money(invoice.total)}</Text>
+                <Text style={styles.grandValue}>{money(estimate.total)}</Text>
               </View>
             </View>
           </View>
 
-          {/* Footer */}
           <View style={styles.pageFoot}>
             <View style={styles.footRule} />
-            {company.footer ? (
-              <>
-                <Text style={styles.payLabel}>{company.name}</Text>
-                <Text style={styles.payBody}>{company.footer}</Text>
-              </>
-            ) : null}
+            <Text style={styles.disclaimer}>{labels.disclaimer}</Text>
             <Text style={styles.footLine}>
               {[company.name, company.phone, company.address].filter(Boolean).join("  ·  ")}
             </Text>

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FolderKanban, User } from "lucide-react";
+import { Download, FolderKanban, User } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import {
@@ -92,27 +93,35 @@ export default async function EstimateDetailPage({
         backLabel={t.backToEstimates}
         title={formatEstimateNumber(estimate.number)}
         action={
-          !locked ? (
-            <EditEstimateButton
-              estimateId={estimate.id}
-              customers={customers}
-              currency={currency}
-              defaultValues={{
-                customerId: estimate.customerId ?? "",
-                customerName: estimate.customerName,
-                customerAddress: estimate.customerAddress ?? "",
-                issueDate: isoDate(estimate.issueDate),
-                dueDate: isoDate(estimate.expiryDate),
-                taxRate: String(Number(estimate.taxRate)),
-                notes: estimate.notes ?? "",
-                items: estimate.lineItems.map((li) => ({
-                  description: li.description,
-                  quantity: String(Number(li.quantity)),
-                  unitPrice: String(Number(li.unitPrice)),
-                })),
-              }}
-            />
-          ) : undefined
+          <div className="flex flex-wrap gap-2">
+            {!locked && (
+              <EditEstimateButton
+                estimateId={estimate.id}
+                customers={customers}
+                currency={currency}
+                defaultValues={{
+                  customerId: estimate.customerId ?? "",
+                  customerName: estimate.customerName,
+                  customerAddress: estimate.customerAddress ?? "",
+                  issueDate: isoDate(estimate.issueDate),
+                  dueDate: isoDate(estimate.expiryDate),
+                  taxRate: String(Number(estimate.taxRate)),
+                  notes: estimate.notes ?? "",
+                  items: estimate.lineItems.map((li) => ({
+                    description: li.description,
+                    quantity: String(Number(li.quantity)),
+                    unitPrice: String(Number(li.unitPrice)),
+                  })),
+                }}
+              />
+            )}
+            <Button asChild variant="outline" size="sm">
+              <a href={`/admin/estimates/${estimate.id}/pdf`}>
+                <Download className="h-4 w-4" />
+                {t.downloadPdf}
+              </a>
+            </Button>
+          </div>
         }
       />
 

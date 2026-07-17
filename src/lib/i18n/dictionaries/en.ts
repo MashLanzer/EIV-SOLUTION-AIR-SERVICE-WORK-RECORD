@@ -973,6 +973,9 @@ export const en = {
     expires: "Expires",
     createdBy: "Created by {name}",
     edit: "Edit",
+    downloadPdf: "Download PDF",
+    pdfDisclaimer:
+      "This estimate is an approximation and does not constitute a final price. Costs may change as specifications or conditions emerge. Valid for 30 days from the issue date.",
     markSent: "Mark as sent",
     markAccepted: "Mark accepted",
     markDeclined: "Mark declined",

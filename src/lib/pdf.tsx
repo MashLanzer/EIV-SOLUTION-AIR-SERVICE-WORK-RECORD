@@ -27,6 +27,11 @@ import {
   type InvoiceForPdf,
   type InvoiceLabels,
 } from "@/components/pdf/InvoicePdfDocument";
+import {
+  EstimatePdfDocument,
+  type EstimateForPdf,
+  type EstimateLabels,
+} from "@/components/pdf/EstimatePdfDocument";
 import type { PayReportRow } from "@/lib/payReport";
 import type { UtilizationReport } from "@/lib/utilization";
 import { prisma } from "@/lib/prisma";
@@ -98,6 +103,16 @@ export async function renderInvoicePdf(
 ) {
   return renderToBuffer(
     <InvoicePdfDocument invoice={invoice} company={company} labels={labels} />
+  );
+}
+
+export async function renderEstimatePdf(
+  estimate: EstimateForPdf,
+  company: PdfCompany,
+  labels: EstimateLabels
+) {
+  return renderToBuffer(
+    <EstimatePdfDocument estimate={estimate} company={company} labels={labels} />
   );
 }
 
