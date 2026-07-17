@@ -3,7 +3,8 @@ import { Images } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
-import { PhotoFilters } from "@/components/photos/PhotoFilters";
+import { PhotoFilters, type PhotoRange } from "@/components/photos/PhotoFilters";
+import { photoRangeCutoff, normalizePhotoRange } from "@/lib/photoFilters";
 import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -14,13 +15,21 @@ import { getT } from "@/lib/i18n/server";
 export default async function WorkerPhotosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; project?: string }>;
+  searchParams: Promise<{
+    tag?: string;
+    project?: string;
+    range?: string;
+    untagged?: string;
+  }>;
 }) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
-  const { tag, project } = await searchParams;
+  const { tag, project, range, untagged } = await searchParams;
   const activeTag = tag?.trim().toLowerCase() || null;
   const activeProject = project?.trim() || null;
+  const activeRange: PhotoRange = normalizePhotoRange(range);
+  const activeUntagged = untagged === "1";
+  const cutoff = photoRangeCutoff(activeRange);
 
   const isAdmin = session.user.role === "ADMIN";
   const teamIds = isAdmin ? null : await getWorkerTeamIds(session.user.id);
@@ -50,7 +59,12 @@ export default async function WorkerPhotosPage({
         organizationId,
         ...projectScope,
         ...(activeProject ? { projectId: activeProject } : {}),
-        ...(activeTag ? { photoTags: { some: { tag: { name: activeTag } } } } : {}),
+        ...(cutoff ? { takenAt: { gte: cutoff } } : {}),
+        ...(activeUntagged
+          ? { photoTags: { none: {} } }
+          : activeTag
+            ? { photoTags: { some: { tag: { name: activeTag } } } }
+            : {}),
       },
       orderBy: { takenAt: "desc" },
       take: 120,
@@ -94,7 +108,9 @@ export default async function WorkerPhotosPage({
       href: `/records/projects/${p.project.id}/photos/${p.id}`,
     }));
 
-  const isFiltered = Boolean(activeTag || activeProject);
+  const isFiltered = Boolean(
+    activeTag || activeProject || activeUntagged || activeRange !== "all"
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -114,6 +130,8 @@ export default async function WorkerPhotosPage({
         projects={projects}
         activeTag={activeTag}
         activeProject={activeProject}
+        activeRange={activeRange}
+        activeUntagged={activeUntagged}
       />
 
       {photoPins.length > 0 && (

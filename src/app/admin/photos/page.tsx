@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
-import { PhotoFilters } from "@/components/photos/PhotoFilters";
+import { PhotoFilters, type PhotoRange } from "@/components/photos/PhotoFilters";
+import { photoRangeCutoff, normalizePhotoRange } from "@/lib/photoFilters";
 import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -14,22 +15,38 @@ import { getT } from "@/lib/i18n/server";
 export default async function AdminPhotosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tag?: string; project?: string }>;
+  searchParams: Promise<{
+    tag?: string;
+    project?: string;
+    by?: string;
+    range?: string;
+    untagged?: string;
+  }>;
 }) {
   const session = await requirePermission("projects.manage");
   const organizationId = requireOrgId(session);
   const t = (await getT()).photos;
-  const { tag, project } = await searchParams;
+  const { tag, project, by, range, untagged } = await searchParams;
   const activeTag = tag?.trim().toLowerCase() || null;
   const activeProject = project?.trim() || null;
+  const activePhotographer = by?.trim() || null;
+  const activeRange: PhotoRange = normalizePhotoRange(range);
+  const activeUntagged = untagged === "1";
+  const cutoff = photoRangeCutoff(activeRange);
 
   const photoWhere = {
     organizationId,
     ...(activeProject ? { projectId: activeProject } : {}),
-    ...(activeTag ? { photoTags: { some: { tag: { name: activeTag } } } } : {}),
+    ...(activePhotographer ? { takenById: activePhotographer } : {}),
+    ...(cutoff ? { takenAt: { gte: cutoff } } : {}),
+    ...(activeUntagged
+      ? { photoTags: { none: {} } }
+      : activeTag
+        ? { photoTags: { some: { tag: { name: activeTag } } } }
+        : {}),
   };
 
-  const [tags, projects, photoRows, totalPhotos] = await Promise.all([
+  const [tags, projects, photographers, photoRows, totalPhotos] = await Promise.all([
     prisma.tag.findMany({
       where: { organizationId },
       orderBy: { name: "asc" },
@@ -37,6 +54,11 @@ export default async function AdminPhotosPage({
     }),
     prisma.project.findMany({
       where: { organizationId, photos: { some: {} } },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.user.findMany({
+      where: { organizationId, photosTaken: { some: {} } },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
@@ -87,7 +109,9 @@ export default async function AdminPhotosPage({
       href: `/admin/projects/${p.project.id}/photos/${p.id}`,
     }));
 
-  const isFiltered = Boolean(activeTag || activeProject);
+  const isFiltered = Boolean(
+    activeTag || activeProject || activePhotographer || activeUntagged || activeRange !== "all"
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -113,8 +137,12 @@ export default async function AdminPhotosPage({
         basePath="/admin/photos"
         tags={usableTags}
         projects={projects}
+        photographers={photographers.map((p) => ({ id: p.id, name: p.name }))}
         activeTag={activeTag}
         activeProject={activeProject}
+        activePhotographer={activePhotographer}
+        activeRange={activeRange}
+        activeUntagged={activeUntagged}
       />
 
       {photoPins.length > 0 && (
