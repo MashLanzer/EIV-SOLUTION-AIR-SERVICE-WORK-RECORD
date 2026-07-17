@@ -527,8 +527,11 @@ export const es: Dictionary = {
     stepCountOne: "{n} paso",
     stepCountMany: "{n} pasos",
     edit: "Editar",
+    editTemplate: "Editar plantilla",
     saveChanges: "Guardar cambios",
     duplicate: "Duplicar",
+    searchTemplates: "Buscar plantillas",
+    noMatches: "Ninguna plantilla coincide",
     deleteTitle: "¿Eliminar esta plantilla?",
     deleteDesc:
       'Se eliminará "{name}". Los proyectos que ya la usaron conservan su lista.',

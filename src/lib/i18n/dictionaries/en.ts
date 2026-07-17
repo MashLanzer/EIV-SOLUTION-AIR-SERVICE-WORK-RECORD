@@ -525,8 +525,11 @@ export const en = {
     stepCountOne: "{n} step",
     stepCountMany: "{n} steps",
     edit: "Edit",
+    editTemplate: "Edit template",
     saveChanges: "Save changes",
     duplicate: "Duplicate",
+    searchTemplates: "Search templates",
+    noMatches: "No templates match",
     deleteTitle: "Delete this template?",
     deleteDesc:
       '"{name}" will be removed. Projects that already used it keep their checklist.',
