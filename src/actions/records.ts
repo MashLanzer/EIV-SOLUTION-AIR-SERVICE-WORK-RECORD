@@ -631,7 +631,7 @@ export async function resetHistoryAction(formData: FormData) {
   const organizationId = requireOrgId(session);
   const confirm = (formData.get("confirm") as string | null)?.trim();
   if (confirm !== "RESET") {
-    redirect("/admin/settings");
+    redirect("/admin/settings/advanced");
   }
 
   // Delete the blobs first (network, best-effort) before dropping the rows
@@ -674,5 +674,5 @@ export async function resetHistoryAction(formData: FormData) {
   revalidatePath("/admin/teams");
   revalidatePath("/records");
   revalidatePath("/records/projects");
-  redirect("/admin/settings?reset=1");
+  redirect("/admin/settings/advanced?reset=1");
 }
