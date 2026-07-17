@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, FolderKanban, Pencil, User } from "lucide-react";
+import { Download, FolderKanban, User } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table";
 import { InvoiceStatusBadge } from "@/components/invoices/InvoiceStatusBadge";
 import { InvoiceStatusControls } from "@/components/invoices/InvoiceStatusControls";
+import { EditInvoiceButton } from "@/components/invoices/EditInvoiceButton";
 import { DocumentActions } from "@/components/shared/DocumentActions";
 import {
   deleteInvoiceAction,
@@ -57,6 +58,16 @@ export default async function InvoiceDetailPage({
   const t = dict.invoices;
   const locale = await getLocale();
   const currency = await getCurrencySymbol(organizationId);
+  // Customers for the edit sheet's picker (only needed when editable).
+  const editable = invoice.status !== "PAID" && invoice.status !== "VOID";
+  const customers = editable
+    ? await prisma.customer.findMany({
+        where: { organizationId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, address: true },
+      })
+    : [];
+  const isoDate = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
   const money = (n: number) => `${currency}${n.toFixed(2)}`;
   const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
@@ -84,12 +95,25 @@ export default async function InvoiceDetailPage({
         action={
           <div className="flex flex-wrap gap-2">
             {!locked && (
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/invoices/${invoice.id}/edit`}>
-                  <Pencil className="h-4 w-4" />
-                  {t.edit}
-                </Link>
-              </Button>
+              <EditInvoiceButton
+                invoiceId={invoice.id}
+                customers={customers}
+                currency={currency}
+                defaultValues={{
+                  customerId: invoice.customerId ?? "",
+                  customerName: invoice.customerName,
+                  customerAddress: invoice.customerAddress ?? "",
+                  issueDate: isoDate(invoice.issueDate),
+                  dueDate: isoDate(invoice.dueDate),
+                  taxRate: String(Number(invoice.taxRate)),
+                  notes: invoice.notes ?? "",
+                  items: invoice.lineItems.map((li) => ({
+                    description: li.description,
+                    quantity: String(Number(li.quantity)),
+                    unitPrice: String(Number(li.unitPrice)),
+                  })),
+                }}
+              />
             )}
             <Button asChild variant="outline" size="sm">
               <a href={`/admin/invoices/${invoice.id}/pdf`}>

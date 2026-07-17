@@ -1,21 +1,24 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Download, Pencil, Receipt, Star } from "lucide-react";
+import { Download, Receipt, Star } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
+import { EditRecordButton } from "@/components/records/EditRecordButton";
 import { RecordDetail } from "@/components/records/RecordDetail";
 import { RequestChangesButton } from "@/components/records/RequestChangesButton";
 import { ReviewTimeline } from "@/components/records/ReviewTimeline";
 import { ShareReceiptButton } from "@/components/records/ShareReceiptButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { createInvoiceFromRecordAction } from "@/actions/invoices";
+import { updateRecordAction } from "@/actions/records";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
+import { getWorkTypeGroups } from "@/lib/workTypes";
 import { cn } from "@/lib/utils";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireOfficeAccess } from "@/lib/authz";
@@ -70,11 +73,25 @@ export default async function AdminReviewRecordPage({
   // Documents). Pre-selects the expiry when sharing; null means "never".
   const org = await prisma.organization.findUnique({
     where: { id: requireOrgId(session) },
-    select: { receiptExpiryDays: true },
+    select: { receiptExpiryDays: true, requireHelper: true, requireCustomerSignature: true },
   });
   const dict = await getT();
   const t = dict.adminRecords;
   const locale = await getLocale();
+
+  // Data for the "Edit" sheet's WorkRecordForm.
+  const [projects, workTypeGroups] = await Promise.all([
+    prisma.project.findMany({
+      where: { organizationId: requireOrgId(session) },
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        customer: { select: { name: true, address: true, phone: true, email: true } },
+      },
+    }),
+    getWorkTypeGroups(requireOrgId(session)),
+  ]);
 
   const summaryDate = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
@@ -121,10 +138,38 @@ export default async function AdminReviewRecordPage({
               delete is a quiet ghost row, so the card stays compact. */}
           <div className="flex flex-col gap-2 border-t border-neutral-200 dark:border-neutral-800 pt-3">
             <div className="grid grid-cols-4 gap-2">
-              <Link href={`/admin/records/${record.id}/edit`} className={ACTION_TILE}>
-                <Pencil className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
-                <span className="text-[11px] font-medium leading-tight">{dict.common.edit}</span>
-              </Link>
+              <EditRecordButton
+                tileClassName={ACTION_TILE}
+                editLabel={dict.common.edit}
+                title={`${dict.records.jobNumber}${record.jobNumber}`}
+                formProps={{
+                  action: updateRecordAction.bind(null, record.id),
+                  projects,
+                  workTypeGroups,
+                  currency,
+                  requireHelper: org?.requireHelper ?? false,
+                  requireCustomerSignature: org?.requireCustomerSignature ?? true,
+                  submitLabel: dict.common.save,
+                  defaultValues: {
+                    date: record.date.toISOString().slice(0, 10),
+                    jobNumber: record.jobNumber,
+                    projectId: record.projectId ?? "",
+                    leadInstallerName: record.leadInstallerName,
+                    helperName: record.helperName ?? "",
+                    customerName: record.customerName,
+                    customerAddress: record.customerAddress,
+                    arrivalTime: record.arrivalTime,
+                    departureTime: record.departureTime,
+                    typeOfWork: record.typeOfWork,
+                    workPerformedNotes: record.workPerformedNotes,
+                    leadInstallerPay: record.leadInstallerPay.toString(),
+                    helperPay: record.helperPay?.toString() ?? "",
+                    customerSignature: record.customerSignature,
+                    installerSignature: record.installerSignature,
+                    photos: record.photos.map((p) => p.dataUrl),
+                  },
+                }}
+              />
               <a href={`/admin/records/${record.id}/pdf`} className={ACTION_TILE}>
                 <Download className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
                 <span className="text-[11px] font-medium leading-tight">

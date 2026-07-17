@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FolderKanban, Pencil, User } from "lucide-react";
+import { FolderKanban, User } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import {
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { EstimateStatusBadge } from "@/components/estimates/EstimateStatusBadge";
 import { EstimateStatusControls } from "@/components/estimates/EstimateStatusControls";
+import { EditEstimateButton } from "@/components/estimates/EditEstimateButton";
 import { ConvertEstimateButton } from "@/components/estimates/ConvertEstimateButton";
 import { DocumentActions } from "@/components/shared/DocumentActions";
 import {
@@ -75,6 +75,15 @@ export default async function EstimateDetailPage({
   const converted = estimate.convertedInvoice;
   const locked = Boolean(converted);
   const expired = isEstimateExpired(estimate.status, estimate.expiryDate);
+  // Customers for the edit sheet's picker (only needed when editable).
+  const customers = locked
+    ? []
+    : await prisma.customer.findMany({
+        where: { organizationId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, address: true },
+      });
+  const isoDate = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : "");
 
   return (
     <div className="flex flex-col gap-4">
@@ -84,12 +93,25 @@ export default async function EstimateDetailPage({
         title={formatEstimateNumber(estimate.number)}
         action={
           !locked ? (
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/admin/estimates/${estimate.id}/edit`}>
-                <Pencil className="h-4 w-4" />
-                {t.edit}
-              </Link>
-            </Button>
+            <EditEstimateButton
+              estimateId={estimate.id}
+              customers={customers}
+              currency={currency}
+              defaultValues={{
+                customerId: estimate.customerId ?? "",
+                customerName: estimate.customerName,
+                customerAddress: estimate.customerAddress ?? "",
+                issueDate: isoDate(estimate.issueDate),
+                dueDate: isoDate(estimate.expiryDate),
+                taxRate: String(Number(estimate.taxRate)),
+                notes: estimate.notes ?? "",
+                items: estimate.lineItems.map((li) => ({
+                  description: li.description,
+                  quantity: String(Number(li.quantity)),
+                  unitPrice: String(Number(li.unitPrice)),
+                })),
+              }}
+            />
           ) : undefined
         }
       />

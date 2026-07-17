@@ -384,6 +384,7 @@ export async function notifyWorkerTimeOffDecision(
       organizationId: true,
       startDate: true,
       endDate: true,
+      reviewNote: true,
     },
   });
   if (!row) return;
@@ -394,13 +395,14 @@ export async function notifyWorkerTimeOffDecision(
     row.startDate.getTime() === row.endDate.getTime()
       ? startLabel
       : `${startLabel} – ${endLabel}`;
+  const note = row.reviewNote?.trim();
   await createNotifications({
     organizationId: row.organizationId,
     userIds: [row.userId],
     category: "PERSONAL",
     type: approved ? "time_off_approved" : "time_off_denied",
     title: approved ? "Time off approved" : "Time off request denied",
-    body: range,
+    body: note ? `${range} · ${note}` : range,
     actorId: actor?.id ?? null,
     actorName: actor?.name ?? null,
     href: "/records/profile",

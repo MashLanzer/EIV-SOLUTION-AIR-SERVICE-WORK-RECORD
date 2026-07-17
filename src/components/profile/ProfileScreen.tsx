@@ -81,6 +81,8 @@ interface TimeOffEntry {
   endDate: string; // YYYY-MM-DD
   reason: string | null;
   status: "PENDING" | "APPROVED" | "DENIED";
+  // The office's note (e.g. why it was denied), shown to the worker.
+  reviewNote: string | null;
 }
 
 export function ProfileScreen({
@@ -863,6 +865,9 @@ function TimeOffRequestRow({
           <p className="truncate text-xs text-neutral-500 dark:text-neutral-400">
             {entry.reason}
           </p>
+        )}
+        {entry.status === "DENIED" && entry.reviewNote && (
+          <p className="truncate text-xs text-destructive-text">{entry.reviewNote}</p>
         )}
       </div>
       {entry.status === "PENDING" ? (

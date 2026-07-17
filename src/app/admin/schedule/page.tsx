@@ -517,6 +517,8 @@ export default async function SchedulePage({
       range: dayKey(r.startDate) === dayKey(r.endDate) ? startLabel : `${startLabel} – ${endLabel}`,
       reason: r.reason,
       status: r.status,
+      startDate: dayKey(r.startDate),
+      endDate: dayKey(r.endDate),
     };
   });
 

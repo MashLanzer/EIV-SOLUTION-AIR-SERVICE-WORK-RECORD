@@ -171,7 +171,14 @@ export async function getProfileData(userId: string, organizationId: string) {
       where: { userId, OR: [{ endDate: { gte: today } }, { status: "PENDING" }] },
       orderBy: [{ status: "asc" }, { startDate: "asc" }],
       take: 8,
-      select: { id: true, startDate: true, endDate: true, reason: true, status: true },
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        reason: true,
+        status: true,
+        reviewNote: true,
+      },
     }),
   ]);
 
@@ -221,6 +228,7 @@ export async function getProfileData(userId: string, organizationId: string) {
     endDate: t.endDate.toISOString().slice(0, 10),
     reason: t.reason,
     status: t.status,
+    reviewNote: t.reviewNote,
   }));
 
   return {

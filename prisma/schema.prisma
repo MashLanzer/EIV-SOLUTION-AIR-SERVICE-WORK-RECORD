@@ -792,6 +792,8 @@ model TimeOff {
   reviewedById   String?
   reviewedBy     User?         @relation("TimeOffReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
   reviewedAt     DateTime?
+  // The office's note when denying (or adjusting) a request; shown to the worker.
+  reviewNote     String?
   createdById    String?
   createdBy      User?         @relation("TimeOffCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt      DateTime      @default(now())

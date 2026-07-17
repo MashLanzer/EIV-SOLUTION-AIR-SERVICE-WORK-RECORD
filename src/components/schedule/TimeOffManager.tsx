@@ -29,6 +29,9 @@ export interface TimeOffEntry {
   range: string;
   reason: string | null;
   status: TimeOffStatus;
+  // Raw YYYY-MM-DD, so the office can adjust the dates before approving.
+  startDate: string;
+  endDate: string;
 }
 
 // The office manages worker time off (vacation / sick / personal) from the
@@ -194,8 +197,23 @@ function TimeOffList({ entries }: { entries: TimeOffEntry[] }) {
 
 function TimeOffRow({ entry }: { entry: TimeOffEntry }) {
   const t = useT().schedule;
+  const tc = useT().common;
   const [pending, startTransition] = useTransition();
+  const [review, setReview] = useState(false);
   const isPending = entry.status === "PENDING";
+
+  // Editable dates + note, so the office can adjust before approving.
+  const [start, setStart] = useState(entry.startDate);
+  const [end, setEnd] = useState(entry.endDate);
+  const [note, setNote] = useState("");
+
+  function decide(approve: boolean) {
+    startTransition(async () => {
+      await reviewTimeOffAction(entry.id, approve, { startDate: start, endDate: end, note });
+      setReview(false);
+    });
+  }
+
   return (
     <li className="flex items-center gap-3 rounded-lg border border-neutral-200 px-3 py-2 dark:border-neutral-800">
       <span className="min-w-0 flex-1">
@@ -212,32 +230,15 @@ function TimeOffRow({ entry }: { entry: TimeOffEntry }) {
         </span>
       </span>
       {isPending ? (
-        <span className="flex shrink-0 items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            disabled={pending}
-            aria-label={t.timeOffApprove}
-            title={t.timeOffApprove}
-            className="text-success-text"
-            onClick={() => startTransition(() => reviewTimeOffAction(entry.id, true))}
-          >
-            <Check className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            disabled={pending}
-            aria-label={t.timeOffDeny}
-            title={t.timeOffDeny}
-            className="text-destructive-text"
-            onClick={() => startTransition(() => reviewTimeOffAction(entry.id, false))}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </span>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => setReview(true)}
+        >
+          {t.timeOffReview}
+        </Button>
       ) : (
         <Button
           type="button"
@@ -251,6 +252,78 @@ function TimeOffRow({ entry }: { entry: TimeOffEntry }) {
         >
           <Trash2 className="h-4 w-4" />
         </Button>
+      )}
+
+      {isPending && (
+        <BottomSheet
+          open={review}
+          onClose={() => setReview(false)}
+          title={`${t.timeOffReview} · ${entry.workerName}`}
+          closeLabel={tc.close}
+        >
+          <div className="flex flex-col gap-3">
+            {entry.reason && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                {t.timeOffReason}: <span className="text-neutral-900 dark:text-neutral-100">{entry.reason}</span>
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="review-start">{t.timeOffStart}</Label>
+                <Input
+                  id="review-start"
+                  type="date"
+                  value={start}
+                  onChange={(e) => {
+                    setStart(e.target.value);
+                    if (!end || end < e.target.value) setEnd(e.target.value);
+                  }}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="review-end">{t.timeOffEnd}</Label>
+                <Input
+                  id="review-end"
+                  type="date"
+                  min={start || undefined}
+                  value={end}
+                  onChange={(e) => setEnd(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="review-note">{t.timeOffNote}</Label>
+              <Input
+                id="review-note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={t.timeOffNotePlaceholder}
+                maxLength={200}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                disabled={pending}
+                className="flex-1"
+                onClick={() => decide(true)}
+              >
+                <Check className="h-4 w-4" />
+                {t.timeOffApprove}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                className="flex-1 text-destructive-text"
+                onClick={() => decide(false)}
+              >
+                <X className="h-4 w-4" />
+                {t.timeOffDeny}
+              </Button>
+            </div>
+          </div>
+        </BottomSheet>
       )}
     </li>
   );

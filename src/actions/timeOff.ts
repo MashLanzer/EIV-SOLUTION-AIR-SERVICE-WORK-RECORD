@@ -145,17 +145,48 @@ export async function cancelTimeOffRequestAction(id: string) {
 
 // The office approves or denies a pending request. Approving makes it count as
 // real time off (marks the worker unavailable); denying keeps the record but
-// inert. Either way the worker is notified.
-export async function reviewTimeOffAction(id: string, approve: boolean) {
+// inert. The office may adjust the dates before approving and leave a note
+// (shown to the worker, e.g. why it was denied). Either way the worker is
+// notified.
+export async function reviewTimeOffAction(
+  id: string,
+  approve: boolean,
+  opts?: { startDate?: string; endDate?: string; note?: string }
+) {
   const session = await requirePermission("schedule.manage");
   const organizationId = requireOrgId(session);
+
+  const data: {
+    status: "APPROVED" | "DENIED";
+    reviewedById: string;
+    reviewedAt: Date;
+    reviewNote: string | null;
+    startDate?: Date;
+    endDate?: Date;
+  } = {
+    status: approve ? "APPROVED" : "DENIED",
+    reviewedById: session.user.id,
+    reviewedAt: new Date(),
+    reviewNote: opts?.note?.trim() ? opts.note.trim().slice(0, 200) : null,
+  };
+  // Only apply adjusted dates when approving, and only if both are valid and in
+  // order. Ignore silently otherwise (the original request stands).
+  const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+  if (
+    approve &&
+    opts?.startDate &&
+    opts?.endDate &&
+    dateRe.test(opts.startDate) &&
+    dateRe.test(opts.endDate) &&
+    opts.endDate >= opts.startDate
+  ) {
+    data.startDate = toDateOnly(opts.startDate);
+    data.endDate = toDateOnly(opts.endDate);
+  }
+
   const { count } = await prisma.timeOff.updateMany({
     where: { id, organizationId, status: "PENDING" },
-    data: {
-      status: approve ? "APPROVED" : "DENIED",
-      reviewedById: session.user.id,
-      reviewedAt: new Date(),
-    },
+    data,
   });
   if (count > 0) await notifyWorkerTimeOffDecision(id, approve, session.user);
   revalidateAll();
