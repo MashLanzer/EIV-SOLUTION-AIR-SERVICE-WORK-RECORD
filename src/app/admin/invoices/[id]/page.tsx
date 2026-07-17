@@ -256,8 +256,8 @@ export default async function InvoiceDetailPage({
             default: t.emailError,
           }}
         />
-        <div>
-          <DeleteInvoiceButton invoiceId={invoice.id} />
+        <div className="mt-1 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+          <DeleteInvoiceButton invoiceId={invoice.id} fullWidth />
         </div>
       </section>
     </div>

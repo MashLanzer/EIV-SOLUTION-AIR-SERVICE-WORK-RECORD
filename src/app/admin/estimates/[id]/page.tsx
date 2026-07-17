@@ -247,8 +247,8 @@ export default async function EstimateDetailPage({
             default: t.emailError,
           }}
         />
-        <div>
-          <DeleteEstimateButton estimateId={estimate.id} />
+        <div className="mt-1 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+          <DeleteEstimateButton estimateId={estimate.id} fullWidth />
         </div>
       </section>
     </div>

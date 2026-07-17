@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowRight,
-  ChevronRight,
   CircleDollarSign,
   Download,
   Plus,
@@ -16,7 +15,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { Input } from "@/components/ui/input";
-import { MobileCardList } from "@/components/ui/responsive-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
 import {
@@ -28,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { InvoiceStatusBadge } from "@/components/invoices/InvoiceStatusBadge";
+import { InvoiceCards } from "@/components/invoices/InvoiceCards";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { computeTotals, formatInvoiceNumber, isOverdue, INVOICE_STATUSES } from "@/lib/invoices";
@@ -134,6 +133,18 @@ export default async function AdminInvoicesPage({
   // Total value of the current view, so the office reads the money for a filter
   // (e.g. everything still SENT) without exporting.
   const filteredValue = filtered.reduce((s, i) => s + i.total, 0);
+
+  // Serialized rows for the mobile peek-sheet cards (client component).
+  const invoicePeeks = filtered.map((i) => ({
+    id: i.id,
+    numberLabel: formatInvoiceNumber(i.number),
+    status: i.status,
+    customerName: i.customerName,
+    issuedLabel: dateFmt.format(i.issueDate),
+    dueLabel: i.dueDate ? dateFmt.format(i.dueDate) : null,
+    overdue: i.overdue,
+    totalLabel: money(i.total),
+  }));
 
   const activeStatus: InvoiceStatus | "overdue" | undefined = overdueFilter ? "overdue" : status;
 
@@ -325,45 +336,7 @@ export default async function AdminInvoicesPage({
             </Card>
           </div>
 
-          <MobileCardList>
-            {filtered.map((i) => (
-              <Card key={i.id}>
-                <Link
-                  href={`/admin/invoices/${i.id}`}
-                  className="flex items-start gap-3 p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                    <Receipt className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                        {formatInvoiceNumber(i.number)}
-                      </span>
-                      <InvoiceStatusBadge status={i.status} />
-                    </div>
-                    <div className="mt-0.5 truncate text-sm text-neutral-500 dark:text-neutral-400">
-                      {i.customerName}
-                    </div>
-                    <div className="mt-0.5 flex items-center justify-between gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                      <span className="tabular-nums">
-                        {dateFmt.format(i.issueDate)}
-                        {i.dueDate ? (
-                          <span className={i.overdue ? "font-medium text-warning-text" : undefined}>
-                            {" "}· {t.due} {dateFmt.format(i.dueDate)}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
-                        {money(i.total)}
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                </Link>
-              </Card>
-            ))}
-          </MobileCardList>
+          <InvoiceCards invoices={invoicePeeks} />
         </>
       )}
     </div>

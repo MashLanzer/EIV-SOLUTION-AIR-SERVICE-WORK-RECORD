@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, ChevronRight, ClipboardList, CircleDollarSign, FileText, Plus, Search, SearchX, Sheet } from "lucide-react";
+import { ArrowRight, ClipboardList, CircleDollarSign, FileText, Plus, Search, SearchX, Sheet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { Input } from "@/components/ui/input";
-import { MobileCardList } from "@/components/ui/responsive-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
 import {
@@ -18,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EstimateStatusBadge } from "@/components/estimates/EstimateStatusBadge";
+import { EstimateCards } from "@/components/estimates/EstimateCards";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { computeTotals } from "@/lib/invoices";
@@ -111,6 +111,18 @@ export default async function AdminEstimatesPage({
   // Total value of the current view, so the office reads the money for a filter
   // (e.g. everything still SENT) without exporting.
   const filteredValue = filtered.reduce((s, e) => s + e.total, 0);
+
+  // Serialized rows for the mobile peek-sheet cards (client component).
+  const estimatePeeks = filtered.map((e) => ({
+    id: e.id,
+    numberLabel: formatEstimateNumber(e.number),
+    status: e.status,
+    customerName: e.customerName,
+    issuedLabel: dateFmt.format(e.issueDate),
+    expiresLabel: e.expiryDate ? dateFmt.format(e.expiryDate) : null,
+    expired: e.expired,
+    totalLabel: money(e.total),
+  }));
 
   const chipHref = (next?: EstimateStatus | "expired") => {
     const p = new URLSearchParams();
@@ -288,38 +300,7 @@ export default async function AdminEstimatesPage({
             </Card>
           </div>
 
-          <MobileCardList>
-            {filtered.map((e) => (
-              <Card key={e.id}>
-                <Link
-                  href={`/admin/estimates/${e.id}`}
-                  className="flex items-start gap-3 p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                    <FileText className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                        {formatEstimateNumber(e.number)}
-                      </span>
-                      <EstimateStatusBadge status={e.status} />
-                    </div>
-                    <div className="mt-0.5 truncate text-sm text-neutral-500 dark:text-neutral-400">
-                      {e.customerName}
-                    </div>
-                    <div className="mt-0.5 flex items-center justify-between gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-                      <span className="tabular-nums">{dateFmt.format(e.issueDate)}</span>
-                      <span className="font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
-                        {money(e.total)}
-                      </span>
-                    </div>
-                  </div>
-                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                </Link>
-              </Card>
-            ))}
-          </MobileCardList>
+          <EstimateCards estimates={estimatePeeks} />
         </>
       )}
     </div>

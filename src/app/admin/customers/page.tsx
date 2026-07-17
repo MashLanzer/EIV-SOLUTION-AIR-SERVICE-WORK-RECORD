@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ChevronRight, Contact, Search, SearchX, ArrowRight, MapPin, Mail, Phone, Sheet } from "lucide-react";
+import { Contact, Search, SearchX, ArrowRight, Mail, Phone, Sheet } from "lucide-react";
 
-import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -18,9 +17,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SortHeader } from "@/components/ui/sort-header";
-import { MobileCardList } from "@/components/ui/responsive-table";
 import { PageHeader } from "@/components/ui/page-header";
 import { NewCustomerButton } from "@/components/customers/NewCustomerButton";
+import { CustomerCards } from "@/components/customers/CustomerCards";
 import { parseSort } from "@/lib/sort";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -121,6 +120,21 @@ export default async function AdminCustomersPage({
   const dict = await getT();
   const t = dict.customers;
   const locale = await getLocale();
+
+  // Serialized rows for the mobile peek-sheet cards (client component).
+  const customerPeeks = customers.map((c) => ({
+    id: c.id,
+    name: c.name,
+    address: c.address,
+    phone: c.phone,
+    email: c.email,
+    jobCount: c._count.records,
+    jobCountLabel: (c._count.records === 1 ? t.jobCountOne : t.jobCountMany).replace(
+      "{n}",
+      String(c._count.records)
+    ),
+    lastVisitLabel: c.records[0] ? formatDate(c.records[0].date, locale) : null,
+  }));
 
   // Quick filter chips, keeping any active search term.
   const filterChips: { label: string; value?: CustomerFilter; count: number }[] = [
@@ -282,54 +296,7 @@ export default async function AdminCustomersPage({
             </Card>
           </div>
 
-          <MobileCardList>
-            {customers.map((customer) => (
-              <Card key={customer.id}>
-                <Link
-                  href={`/admin/customers/${customer.id}`}
-                  className="flex items-start gap-3 p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
-                >
-                  <AvatarInitials name={customer.name} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
-                        {customer.name}
-                      </span>
-                      <span className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
-                        {(customer._count.records === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(customer._count.records))}
-                      </span>
-                    </div>
-                    {customer.records[0] && (
-                      <div className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
-                        {t.colLastVisit}: {formatDate(customer.records[0].date, locale)}
-                      </div>
-                    )}
-                    <div className="mt-0.5 flex items-start gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      <span className="min-w-0">{customer.address}</span>
-                    </div>
-                    {(customer.phone || customer.email) && (
-                      <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-                        {customer.phone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3 w-3" />
-                            {customer.phone}
-                          </span>
-                        )}
-                        {customer.email && (
-                          <span className="flex min-w-0 items-center gap-1">
-                            <Mail className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{customer.email}</span>
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                </Link>
-              </Card>
-            ))}
-          </MobileCardList>
+          <CustomerCards customers={customerPeeks} />
         </section>
       )}
 
