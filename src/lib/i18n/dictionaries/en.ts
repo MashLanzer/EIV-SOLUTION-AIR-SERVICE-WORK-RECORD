@@ -93,6 +93,13 @@ export const en = {
     tabSummary: "Summary",
     tabActivity: "Activity",
     tabAccount: "Account",
+    // Quick actions + sheet rows
+    quickActions: "Quick actions",
+    signatureSaved: "Saved",
+    signatureNotSet: "Not saved yet",
+    manageSignature: "Manage signature",
+    manageSkills: "Manage skills",
+    noSkillsYet: "None added yet",
   },
   errors: {
     somethingWrong: "Something went wrong",

@@ -1,6 +1,6 @@
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
 import { getProfileData } from "@/lib/profileData";
-import { getLocale } from "@/lib/i18n/server";
+import { getLocale, getT } from "@/lib/i18n/server";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireOfficeAccess } from "@/lib/authz";
 
@@ -8,6 +8,7 @@ export default async function AdminProfilePage() {
   const { session } = await requireOfficeAccess();
   const data = await getProfileData(session.user.id, requireOrgId(session));
   const locale = await getLocale();
+  const nav = (await getT()).nav;
   const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     weekday: "short",
     month: "short",
@@ -55,6 +56,12 @@ export default async function AdminProfilePage() {
       skills={data.skills}
       payThisMonth={data.payThisMonth}
       currency={data.currency}
+      quickActions={[
+        { icon: "review", label: nav.reviewQueue, href: "/admin/review" },
+        { icon: "schedule", label: nav.schedule, href: "/admin/schedule" },
+        { icon: "projects", label: nav.projects, href: "/admin/projects" },
+        { icon: "photos", label: nav.photos, href: "/admin/photos" },
+      ]}
     />
   );
 }

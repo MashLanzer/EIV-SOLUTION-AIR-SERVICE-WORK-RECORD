@@ -93,6 +93,13 @@ export const es: Dictionary = {
     tabSummary: "Resumen",
     tabActivity: "Actividad",
     tabAccount: "Cuenta",
+    // Accesos rápidos + filas de sheet
+    quickActions: "Accesos rápidos",
+    signatureSaved: "Guardada",
+    signatureNotSet: "Sin guardar",
+    manageSignature: "Gestionar firma",
+    manageSkills: "Gestionar habilidades",
+    noSkillsYet: "Ninguna añadida",
   },
   errors: {
     somethingWrong: "Algo salió mal",

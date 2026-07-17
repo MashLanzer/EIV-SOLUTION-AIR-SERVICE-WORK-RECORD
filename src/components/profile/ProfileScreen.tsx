@@ -1,18 +1,19 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, Camera, CheckCircle2, ChevronRight, Circle, Clock, DollarSign, ListTodo, Mail, MapPin, PenLine, Percent, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, CalendarDays, Camera, CheckCircle2, ChevronRight, Circle, ClipboardCheck, Clock, DollarSign, FilePlus2, FolderKanban, Image as ImageIcon, ListTodo, Mail, MapPin, PenLine, Percent, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, Wrench, X } from "lucide-react";
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import type { RecordStatus } from "@prisma/client";
 
 import { useRef, useState } from "react";
 import { AvatarInitials } from "@/components/ui/avatar-initials";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { InlineEditRow } from "@/components/settings/InlineEditRow";
 import { SignaturePad, type SignaturePadHandle } from "@/components/forms/SignaturePad";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import {
-  SettingsCustomRow,
   SettingsRow,
   SettingsSection,
 } from "@/components/settings/SettingsList";
@@ -60,6 +61,30 @@ interface UpcomingJob {
   subtitle: string | null;
 }
 
+// Role-appropriate shortcuts shown in the Summary tab. The icon is a stable
+// key (a string) rather than a component, since these cross the server→client
+// boundary from the page.
+type QuickActionIcon =
+  | "newRecord"
+  | "records"
+  | "schedule"
+  | "photos"
+  | "review"
+  | "projects";
+interface QuickAction {
+  icon: QuickActionIcon;
+  label: string;
+  href: string;
+}
+const QUICK_ACTION_ICONS: Record<QuickActionIcon, LucideIcon> = {
+  newRecord: FilePlus2,
+  records: ListTodo,
+  schedule: CalendarDays,
+  photos: ImageIcon,
+  review: ClipboardCheck,
+  projects: FolderKanban,
+};
+
 export function ProfileScreen({
   name,
   email,
@@ -80,6 +105,7 @@ export function ProfileScreen({
   skillSuggestions,
   payThisMonth,
   currency,
+  quickActions,
 }: {
   name: string;
   email: string;
@@ -106,6 +132,8 @@ export function ProfileScreen({
   // symbol. Workers only.
   payThisMonth: number;
   currency: string;
+  // Role-appropriate shortcuts for the Summary tab.
+  quickActions: QuickAction[];
 }) {
   const isAdmin = role === "ADMIN";
   const t = useT().profile;
@@ -129,12 +157,18 @@ export function ProfileScreen({
   const [skillError, setSkillError] = useState<string | null>(null);
   const [avatarSaving, setAvatarSaving] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  // Signature and skills live in bottom sheets, opened from Account rows.
+  const [sheet, setSheet] = useState<null | "signature" | "skills">(null);
 
   // Which tabs to show. Workers get a rich Summary; the Activity tab only
   // appears when there's something in it; Account is always present. When only
   // one tab qualifies we drop the tab bar entirely (nothing to switch to).
   const hasSummary =
-    !isAdmin || teams.length > 0 || upcomingJobs.length > 0 || incomplete;
+    quickActions.length > 0 ||
+    !isAdmin ||
+    teams.length > 0 ||
+    upcomingJobs.length > 0 ||
+    incomplete;
   const hasActivity = needsAttention.length > 0 || recentRecords.length > 0;
   const availableTabs = [
     hasSummary ? ("summary" as const) : null,
@@ -289,6 +323,35 @@ export function ProfileScreen({
       {/* ---------------- SUMMARY ---------------- */}
       {tab === "summary" && hasSummary && (
         <div className="flex flex-col gap-5">
+          {/* Quick actions - role-appropriate shortcuts to the things this
+              person does most, so the Summary always has a clear use. */}
+          {quickActions.length > 0 && (
+            <section className="flex flex-col gap-2">
+              <h2 className="px-1 text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                {t.quickActions}
+              </h2>
+              <div className="grid grid-cols-2 gap-2">
+                {quickActions.map((a) => {
+                  const Icon = QUICK_ACTION_ICONS[a.icon];
+                  return (
+                    <Link
+                      key={a.href}
+                      href={a.href}
+                      className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:bg-neutral-900"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent-text">
+                        <Icon className="h-4.5 w-4.5" />
+                      </span>
+                      <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                        {a.label}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {/* Completeness nudge - only until every useful field is filled */}
           {incomplete && (
             <div className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
@@ -507,131 +570,165 @@ export function ProfileScreen({
             />
             <SettingsRow icon={Mail} label={email} sublabel={t.signedInGoogle} />
             <SettingsRow icon={ShieldCheck} label={roleLabel} sublabel={t.accessLevel} />
-          </SettingsSection>
-
-          {/* Stored signature */}
-          <SettingsSection title={t.savedSignature} description={t.savedSigDesc}>
-            <form
-              action={async (formData) => {
-                setSaving(true);
-                setSigError(null);
-                const res = await saveStoredSignatureAction(undefined, formData);
-                if (res?.error) setSigError(res.error);
-                setSaving(false);
-              }}
-            >
-              <SettingsCustomRow className="flex flex-col gap-3">
-                <input type="hidden" name="signature" id="sig-hidden" />
-                <SignaturePad
-                  ref={sigRef}
-                  label={t.yourSignature}
-                  defaultValue={storedSignature ?? undefined}
-                />
-                {sigError && (
-                  <p className="text-sm text-destructive" role="alert">{sigError}</p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={saving}
-                    onClick={() => {
-                      const dataUrl = sigRef.current?.getDataUrl();
-                      if (!dataUrl) return;
-                      const input = document.getElementById("sig-hidden") as HTMLInputElement;
-                      if (input) input.value = dataUrl;
-                      const form = input.closest("form");
-                      if (form) form.requestSubmit();
-                    }}
-                  >
-                    <PenLine className="h-3.5 w-3.5" />
-                    {storedSignature ? t.update : t.saveSignature}
-                  </Button>
-                  {storedSignature && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        await clearStoredSignatureAction();
-                      }}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      {t.clear}
-                    </Button>
-                  )}
-                </div>
-              </SettingsCustomRow>
-            </form>
-          </SettingsSection>
-
-          {/* Skills */}
-          <SettingsSection title={t.skills} description={t.skillsDesc}>
-            <form
-              action={async (formData) => {
-                setSkillError(null);
-                const res = await addSkillAction(undefined, formData);
-                if (res?.error) setSkillError(res.error);
-                else setSkillInput("");
-              }}
-              onSubmit={(e) => {
-                if (!skillInput.trim()) e.preventDefault();
-              }}
-            >
-              <SettingsCustomRow className="flex flex-col gap-3">
-                {skills.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {skills.map((s) => (
-                      <span
-                        key={s.id}
-                        className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
-                      >
-                        {s.name}
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            await removeSkillAction(s.id);
-                          }}
-                          className="ml-0.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
-                          aria-label={t.removeSkillAria.replace("{name}", s.name)}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <Input
-                    name="name"
-                    placeholder={t.skillsPlaceholder}
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    className="flex-1"
-                    list="skill-suggestions"
-                    autoComplete="off"
-                  />
-                  {skillSuggestions.length > 0 && (
-                    <datalist id="skill-suggestions">
-                      {skillSuggestions.map((s) => (
-                        <option key={s} value={s} />
-                      ))}
-                    </datalist>
-                  )}
-                  <Button type="submit" variant="outline" size="default">
-                    <Plus className="h-4 w-4" />
-                    {t.add}
-                  </Button>
-                </div>
-                {skillError && (
-                  <p className="text-sm text-destructive" role="alert">{skillError}</p>
-                )}
-              </SettingsCustomRow>
-            </form>
+            {/* Signature and skills open in a sheet, keeping the tab compact. */}
+            <SettingsRow
+              icon={PenLine}
+              label={t.savedSignature}
+              sublabel={storedSignature ? t.signatureSaved : t.signatureNotSet}
+              onClick={() => setSheet("signature")}
+              trailing={
+                <ChevronRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+              }
+            />
+            <SettingsRow
+              icon={Wrench}
+              label={t.skills}
+              sublabel={
+                skills.length > 0
+                  ? skills.map((s) => s.name).join(", ")
+                  : t.noSkillsYet
+              }
+              onClick={() => setSheet("skills")}
+              trailing={
+                <ChevronRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+              }
+            />
           </SettingsSection>
         </div>
       )}
+
+      {/* Signature sheet */}
+      <BottomSheet
+        open={sheet === "signature"}
+        onClose={() => setSheet(null)}
+        title={t.savedSignature}
+        closeLabel={tc.close}
+      >
+        <form
+          action={async (formData) => {
+            setSaving(true);
+            setSigError(null);
+            const res = await saveStoredSignatureAction(undefined, formData);
+            if (res?.error) setSigError(res.error);
+            setSaving(false);
+            if (!res?.error) setSheet(null);
+          }}
+          className="flex flex-col gap-3"
+        >
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.savedSigDesc}</p>
+          <input type="hidden" name="signature" id="sig-hidden" />
+          <SignaturePad
+            ref={sigRef}
+            label={t.yourSignature}
+            defaultValue={storedSignature ?? undefined}
+          />
+          {sigError && (
+            <p className="text-sm text-destructive" role="alert">{sigError}</p>
+          )}
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={saving}
+              className="flex-1"
+              onClick={() => {
+                const dataUrl = sigRef.current?.getDataUrl();
+                if (!dataUrl) return;
+                const input = document.getElementById("sig-hidden") as HTMLInputElement;
+                if (input) input.value = dataUrl;
+                const form = input.closest("form");
+                if (form) form.requestSubmit();
+              }}
+            >
+              <PenLine className="h-4 w-4" />
+              {storedSignature ? t.update : t.saveSignature}
+            </Button>
+            {storedSignature && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={async () => {
+                  await clearStoredSignatureAction();
+                  setSheet(null);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+                {t.clear}
+              </Button>
+            )}
+          </div>
+        </form>
+      </BottomSheet>
+
+      {/* Skills sheet */}
+      <BottomSheet
+        open={sheet === "skills"}
+        onClose={() => setSheet(null)}
+        title={t.skills}
+        closeLabel={tc.close}
+      >
+        <form
+          action={async (formData) => {
+            setSkillError(null);
+            const res = await addSkillAction(undefined, formData);
+            if (res?.error) setSkillError(res.error);
+            else setSkillInput("");
+          }}
+          onSubmit={(e) => {
+            if (!skillInput.trim()) e.preventDefault();
+          }}
+          className="flex flex-col gap-3"
+        >
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.skillsDesc}</p>
+          {skills.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {skills.map((s) => (
+                <span
+                  key={s.id}
+                  className="inline-flex items-center gap-1 rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                >
+                  {s.name}
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await removeSkillAction(s.id);
+                    }}
+                    className="ml-0.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+                    aria-label={t.removeSkillAria.replace("{name}", s.name)}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Input
+              name="name"
+              placeholder={t.skillsPlaceholder}
+              value={skillInput}
+              onChange={(e) => setSkillInput(e.target.value)}
+              className="flex-1"
+              list="skill-suggestions"
+              autoComplete="off"
+            />
+            {skillSuggestions.length > 0 && (
+              <datalist id="skill-suggestions">
+                {skillSuggestions.map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
+            )}
+            <Button type="submit" variant="outline" size="default">
+              <Plus className="h-4 w-4" />
+              {t.add}
+            </Button>
+          </div>
+          {skillError && (
+            <p className="text-sm text-destructive" role="alert">{skillError}</p>
+          )}
+        </form>
+      </BottomSheet>
     </div>
   );
 }
