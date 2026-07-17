@@ -400,126 +400,7 @@ export default async function AdminDashboardPage() {
         </div>
       </section>
 
-      {todaySchedule.length > 0 && (
-        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.todaySchedule}
-            </h2>
-            <Link
-              href="/admin/schedule"
-              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            >
-              {t.viewAll}
-            </Link>
-          </div>
-          <div className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
-              {todaySchedule.map((job) => {
-                const who = job.assignedTo?.name ?? job.team?.name ?? t.unassigned;
-                const when = job.startTime
-                  ? `${formatTime(job.startTime)}${job.endTime ? `–${formatTime(job.endTime)}` : ""}`
-                  : t.allDay;
-                return (
-                  <Link
-                    key={job.id}
-                    href="/admin/schedule"
-                    className="group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
-                  >
-                    <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
-                      <CalendarClock className="h-3.5 w-3.5 shrink-0" />
-                      {when}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
-                        {job.title}
-                      </div>
-                      <div className="truncate text-sm text-neutral-500 dark:text-neutral-400">
-                        {who}
-                        {job.customer?.name ? ` · ${job.customer.name}` : ""}
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                  </Link>
-                );
-              })}
-          </div>
-        </section>
-      )}
-
-      {recentActiveProjects.length > 0 && (
-        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.activeProjects}
-            </h2>
-            <Link
-              href="/admin/projects"
-              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-            >
-              {t.viewAll}
-            </Link>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {recentActiveProjects.map((p) => {
-              let total = 0;
-              let done = 0;
-              for (const c of p.checklists)
-                for (const item of c.items) {
-                  total++;
-                  if (item.done) done++;
-                }
-              const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-              return (
-                <Card
-                  key={p.id}
-                  className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
-                >
-                  <Link
-                    href={`/admin/projects/${p.id}`}
-                    className="flex items-center gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                      <FolderKanban className="h-5 w-5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
-                          {p.name}
-                        </span>
-                        <ProjectStatusBadge status={p.status} />
-                      </div>
-                      <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
-                        {total > 0 && (
-                          <span className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
-                              <span
-                                className="block h-full rounded-full bg-neutral-800 dark:bg-neutral-200"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </span>
-                            <span className="tabular-nums">{pct}%</span>
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <ImageIcon className="h-3.5 w-3.5" />
-                          <span className="tabular-nums">{p._count.photos}</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <ClipboardList className="h-3.5 w-3.5" />
-                          <span className="tabular-nums">{p._count.records}</span>
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                  </Link>
-                </Card>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "40ms" }}>
+      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "70ms" }}>
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {t.needsAttention}
@@ -605,34 +486,123 @@ export default async function AdminDashboardPage() {
         )}
       </section>
 
-      {recentPhotos.length > 0 && (
-        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "110ms" }}>
+      {todaySchedule.length > 0 && (
+        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "80ms" }}>
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.recentPhotos}
+              {t.todaySchedule}
             </h2>
             <Link
-              href="/admin/photos"
+              href="/admin/schedule"
               className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
             >
               {t.viewAll}
             </Link>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {recentPhotos.map((photo) => (
-              <Link
-                key={photo.id}
-                href={`/admin/projects/${photo.project.id}/photos/${photo.id}`}
-                className="shrink-0"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photo.url}
-                  alt={t.recentPhotoAlt}
-                  className="h-24 w-24 rounded-lg border border-neutral-200 object-cover transition-opacity hover:opacity-90 dark:border-neutral-800"
-                />
-              </Link>
-            ))}
+          <Card>
+            <CardContent className="flex flex-col divide-y divide-neutral-100 p-4 dark:divide-neutral-800">
+              {todaySchedule.map((job) => {
+                const who = job.assignedTo?.name ?? job.team?.name ?? t.unassigned;
+                const when = job.startTime
+                  ? `${formatTime(job.startTime)}${job.endTime ? `–${formatTime(job.endTime)}` : ""}`
+                  : t.allDay;
+                return (
+                  <Link
+                    key={job.id}
+                    href="/admin/schedule"
+                    className="group -mx-3 flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors first:pt-0 last:pb-0 hover:bg-neutral-50 dark:hover:bg-neutral-800"
+                  >
+                    <span className="flex w-16 shrink-0 items-center gap-1 text-xs font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
+                      <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                      {when}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium text-neutral-900 dark:text-neutral-100">
+                        {job.title}
+                      </div>
+                      <div className="truncate text-sm text-neutral-500 dark:text-neutral-400">
+                        {who}
+                        {job.customer?.name ? ` · ${job.customer.name}` : ""}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {recentActiveProjects.length > 0 && (
+        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "100ms" }}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.activeProjects}
+            </h2>
+            <Link
+              href="/admin/projects"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              {t.viewAll}
+            </Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {recentActiveProjects.map((p) => {
+              let total = 0;
+              let done = 0;
+              for (const c of p.checklists)
+                for (const item of c.items) {
+                  total++;
+                  if (item.done) done++;
+                }
+              const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+              return (
+                <Card
+                  key={p.id}
+                  className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700"
+                >
+                  <Link
+                    href={`/admin/projects/${p.id}`}
+                    className="flex items-center gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                      <FolderKanban className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
+                          {p.name}
+                        </span>
+                        <ProjectStatusBadge status={p.status} />
+                      </div>
+                      <div className="mt-1 flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+                        {total > 0 && (
+                          <span className="flex items-center gap-1.5">
+                            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+                              <span
+                                className="block h-full rounded-full bg-neutral-800 dark:bg-neutral-200"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </span>
+                            <span className="tabular-nums">{pct}%</span>
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <ImageIcon className="h-3.5 w-3.5" />
+                          <span className="tabular-nums">{p._count.photos}</span>
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <ClipboardList className="h-3.5 w-3.5" />
+                          <span className="tabular-nums">{p._count.records}</span>
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  </Link>
+                </Card>
+              );
+            })}
           </div>
         </section>
       )}
@@ -672,6 +642,38 @@ export default async function AdminDashboardPage() {
           </Card>
         )}
       </section>
+
+      {recentPhotos.length > 0 && (
+        <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "140ms" }}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.recentPhotos}
+            </h2>
+            <Link
+              href="/admin/photos"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              {t.viewAll}
+            </Link>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {recentPhotos.map((photo) => (
+              <Link
+                key={photo.id}
+                href={`/admin/projects/${photo.project.id}/photos/${photo.id}`}
+                className="shrink-0"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photo.url}
+                  alt={t.recentPhotoAlt}
+                  className="h-24 w-24 rounded-lg border border-neutral-200 object-cover transition-opacity hover:opacity-90 dark:border-neutral-800"
+                />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "160ms" }}>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
