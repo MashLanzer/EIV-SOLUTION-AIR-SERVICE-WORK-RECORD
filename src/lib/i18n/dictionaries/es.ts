@@ -389,6 +389,10 @@ export const es: Dictionary = {
       "Pídele a tu administrador que te agregue a un equipo para ver sus proyectos.",
     address: "Dirección",
     openAria: "Abrir {name}",
+    // Worker list filters + detail actions
+    filterAll: "Todos",
+    directions: "Cómo llegar",
+    startRecordHere: "Iniciar un registro aquí",
     // Admin list
     newProject: "Nuevo proyecto",
     searchPlaceholder: "Buscar por nombre, dirección o cliente",

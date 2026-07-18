@@ -13,7 +13,7 @@ import { getT } from "@/lib/i18n/server";
 export default async function NewRecordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ jobId?: string }>;
+  searchParams: Promise<{ jobId?: string; projectId?: string }>;
 }) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
@@ -54,7 +54,7 @@ export default async function NewRecordPage({
   // Coming from a scheduled job ("Start record"): pre-fill the customer and
   // project from the plan so the crew doesn't retype them. Role-scoped so a
   // worker can only seed from a job that's theirs. A saved draft still wins.
-  const { jobId } = await searchParams;
+  const { jobId, projectId } = await searchParams;
   let jobPrefill: {
     customerName?: string;
     customerAddress?: string;
@@ -88,6 +88,21 @@ export default async function NewRecordPage({
             ? job.projectId
             : undefined,
       };
+    }
+  }
+
+  // Coming from a project ("Start a record here"): pre-select the project and
+  // seed its customer. Only honored when the project is in the worker's own
+  // team-scoped list (that membership is the access check), and a job hasn't
+  // already seeded these.
+  if (projectId && !jobPrefill.projectId) {
+    const proj = projects.find((p) => p.id === projectId);
+    if (proj) {
+      jobPrefill.projectId = proj.id;
+      jobPrefill.customerName ??= proj.customer?.name || undefined;
+      jobPrefill.customerAddress ??= proj.customer?.address || undefined;
+      jobPrefill.customerPhone ??= proj.customer?.phone || undefined;
+      jobPrefill.customerEmail ??= proj.customer?.email || undefined;
     }
   }
 

@@ -388,6 +388,10 @@ export const en = {
       "Ask your admin to add you to a team so you can see its projects.",
     address: "Address",
     openAria: "Open {name}",
+    // Worker list filters + detail actions
+    filterAll: "All",
+    directions: "Directions",
+    startRecordHere: "Start a record here",
     // Admin list
     newProject: "New Project",
     searchPlaceholder: "Search by name, address, or customer",

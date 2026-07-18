@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, CalendarDays, ClipboardList, MapPin, Users2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  ClipboardList,
+  FilePlus2,
+  MapPin,
+  Navigation,
+  Users2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -184,6 +193,29 @@ export default async function WorkerProjectPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* Quick actions: navigate to the jobsite, or start a record already
+          tagged to this project. */}
+      <div className="flex flex-wrap gap-2">
+        {project.address && (
+          <Button asChild variant="outline" size="sm">
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Navigation className="h-4 w-4" aria-hidden="true" />
+              {tp.directions}
+            </a>
+          </Button>
+        )}
+        <Button asChild size="sm">
+          <Link href={`/records/new?projectId=${project.id}`}>
+            <FilePlus2 className="h-4 w-4" aria-hidden="true" />
+            {tp.startRecordHere}
+          </Link>
+        </Button>
+      </div>
 
       {hasMap && (
         <>
