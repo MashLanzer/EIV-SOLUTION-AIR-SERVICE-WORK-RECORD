@@ -189,6 +189,7 @@ export function InvoiceForm({
                 id="customerName"
                 name="customerName"
                 required
+                autoFocus={fullWidth}
                 value={customerName}
                 onChange={(e) => {
                   setCustomerName(e.target.value);
