@@ -1128,6 +1128,23 @@ export const en = {
     estPending: "Pending",
     estDraft: "Draft",
     noEstimates: "No estimates this period",
+    // Sales metrics
+    salesMetricsTitle: "Sales metrics",
+    avgDeal: "Avg. deal",
+    daysToClose: "Days to close",
+    invoicedShort: "Invoiced",
+    salesFunnelTitle: "Quote value",
+    salesWon: "Won",
+    salesLost: "Lost",
+    salesOpen: "Open",
+    realizedRevenue: "{value} already invoiced",
+    // Cost metrics
+    costMetricsTitle: "Cost efficiency",
+    laborRatio: "Labor / revenue",
+    costPerJob: "Cost per job",
+    perJobs: "over {n} jobs",
+    costByWorkerTitle: "Cost by worker",
+    costByWorkerDesc: "Crew pay by person this period.",
     // Labor by work type
     laborByTypeTitle: "Labor by work type",
     laborByTypeDesc: "Crew pay grouped by the kind of work.",

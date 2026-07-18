@@ -1122,6 +1122,23 @@ export const es: Dictionary = {
     estPending: "Pendientes",
     estDraft: "Borrador",
     noEstimates: "Sin estimados este período",
+    // Métricas de ventas
+    salesMetricsTitle: "Métricas de ventas",
+    avgDeal: "Ticket promedio",
+    daysToClose: "Días para cerrar",
+    invoicedShort: "Facturados",
+    salesFunnelTitle: "Valor de estimados",
+    salesWon: "Ganado",
+    salesLost: "Perdido",
+    salesOpen: "Abierto",
+    realizedRevenue: "{value} ya facturado",
+    // Métricas de costo
+    costMetricsTitle: "Eficiencia de costo",
+    laborRatio: "Mano de obra / ingresos",
+    costPerJob: "Costo por trabajo",
+    perJobs: "en {n} trabajos",
+    costByWorkerTitle: "Costo por trabajador",
+    costByWorkerDesc: "Pago de cuadrilla por persona este período.",
     // Mano de obra por tipo de trabajo
     laborByTypeTitle: "Mano de obra por tipo",
     laborByTypeDesc: "Pago de cuadrilla agrupado por tipo de trabajo.",

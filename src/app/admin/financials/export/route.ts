@@ -69,6 +69,18 @@ export async function GET(request: Request) {
   row("Total labor", fin.expenses.total.toFixed(2));
   row("");
 
+  row("Cost efficiency", "Value");
+  row("Labor / revenue %", fin.laborRatio.toFixed(1));
+  row("Avg. cost per job", fin.avgCostPerJob.toFixed(2));
+  row("Jobs", fin.jobCount);
+  row("");
+
+  row("Cost by worker", "Amount");
+  for (const w of fin.costByWorker) {
+    row(w.name, w.amount.toFixed(2));
+  }
+  row("");
+
   row("Labor by work type", "Jobs", "Amount");
   for (const l of fin.laborByType) {
     row(l.type, l.count, l.amount.toFixed(2));
@@ -88,6 +100,9 @@ export async function GET(request: Request) {
   row("Pending", fin.estimateStats.pending);
   row("Draft", fin.estimateStats.draft);
   row("Win rate %", fin.estimateStats.winRate.toFixed(1));
+  row("Converted to invoice", fin.estimateStats.converted, fin.estimateStats.convertedAmount.toFixed(2));
+  row("Avg. accepted value", fin.estimateStats.avgWonValue.toFixed(2));
+  row("Avg. days to close", fin.estimateStats.avgDaysToClose ?? "");
   row("");
 
   row("Accounts receivable aging", "Invoices", "Total");

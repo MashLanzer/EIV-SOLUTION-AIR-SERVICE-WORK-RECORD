@@ -181,7 +181,13 @@ export async function getFinancials(
       }),
       prisma.workRecord.findMany({
         where: { organizationId, status: "APPROVED", date: { gte: start, lt: end } },
-        select: { leadInstallerPay: true, helperPay: true, typeOfWork: true },
+        select: {
+          leadInstallerPay: true,
+          helperPay: true,
+          typeOfWork: true,
+          leadInstallerName: true,
+          helperName: true,
+        },
       }),
       prisma.workRecord.findMany({
         where: { organizationId, status: "APPROVED", date: { gte: prevStart, lt: prevEnd } },
@@ -193,6 +199,8 @@ export async function getFinancials(
         select: {
           status: true,
           convertedInvoiceId: true,
+          acceptedAt: true,
+          issueDate: true,
           taxRate: true,
           lineItems: { select: { quantity: true, unitPrice: true } },
         },
@@ -257,10 +265,22 @@ export async function getFinancials(
   // Labor cost split by the kind of work, so the owner sees which services
   // consume the crew's paid hours.
   const laborByTypeMap = new Map<string, { amount: number; count: number }>();
+  // Labor cost attributed per crew member (their pay across every job), so the
+  // owner sees who the payroll goes to.
+  const costByWorkerMap = new Map<string, number>();
+  const addWorkerCost = (name: string | null | undefined, amount: number) => {
+    const key = name?.trim();
+    if (!key || amount <= 0) return;
+    costByWorkerMap.set(key, (costByWorkerMap.get(key) ?? 0) + amount);
+  };
   for (const r of records) {
-    const pay = Number(r.leadInstallerPay) + Number(r.helperPay ?? 0);
-    leadPay += Number(r.leadInstallerPay);
-    helperPay += Number(r.helperPay ?? 0);
+    const lead = Number(r.leadInstallerPay);
+    const helper = Number(r.helperPay ?? 0);
+    const pay = lead + helper;
+    leadPay += lead;
+    helperPay += helper;
+    addWorkerCost(r.leadInstallerName, lead);
+    addWorkerCost(r.helperName, helper);
     const type = r.typeOfWork?.trim() || "—";
     const bucket = laborByTypeMap.get(type) ?? { amount: 0, count: 0 };
     bucket.amount += pay;
@@ -268,10 +288,19 @@ export async function getFinancials(
     laborByTypeMap.set(type, bucket);
   }
   const labor = leadPay + helperPay;
+  const jobCount = records.length;
   const laborByType = [...laborByTypeMap.entries()]
     .map(([type, v]) => ({ type, amount: round(v.amount), count: v.count }))
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 8);
+  const costByWorker = [...costByWorkerMap.entries()]
+    .map(([name, amount]) => ({ name, amount: round(amount) }))
+    .sort((a, b) => b.amount - a.amount)
+    .slice(0, 8);
+  // Efficiency ratios: what share of revenue goes to labor, and the average
+  // labor cost of a completed job.
+  const laborRatio = revenue > 0 ? round((labor / revenue) * 100) : 0;
+  const avgCostPerJob = jobCount > 0 ? round(labor / jobCount) : 0;
 
   let prevLabor = 0;
   for (const r of prevRecords) prevLabor += Number(r.leadInstallerPay) + Number(r.helperPay ?? 0);
@@ -367,13 +396,32 @@ export async function getFinancials(
     wonAmount: 0,
     lostAmount: 0,
     winRate: 0,
+    // Realised revenue: accepted quotes already turned into an invoice.
+    converted: 0,
+    convertedAmount: 0,
+    // Average accepted-deal size, and how long a quote takes to close.
+    avgWonValue: 0,
+    avgDaysToClose: null as number | null,
   };
+  let daysToCloseSum = 0;
+  let daysToCloseCount = 0;
   for (const e of periodEstimates) {
     const total = invTotal(e.lineItems, e.taxRate).total;
     const won = e.status === "ACCEPTED" || e.convertedInvoiceId != null;
     if (won) {
       estimateStats.accepted += 1;
       estimateStats.wonAmount += total;
+      if (e.convertedInvoiceId != null) {
+        estimateStats.converted += 1;
+        estimateStats.convertedAmount += total;
+      }
+      if (e.acceptedAt && e.issueDate) {
+        const days = Math.round((e.acceptedAt.getTime() - e.issueDate.getTime()) / 86_400_000);
+        if (days >= 0) {
+          daysToCloseSum += days;
+          daysToCloseCount += 1;
+        }
+      }
     } else if (e.status === "DECLINED") {
       estimateStats.declined += 1;
       estimateStats.lostAmount += total;
@@ -387,6 +435,11 @@ export async function getFinancials(
   estimateStats.winRate = decided > 0 ? round((estimateStats.accepted / decided) * 100) : 0;
   estimateStats.wonAmount = round(estimateStats.wonAmount);
   estimateStats.lostAmount = round(estimateStats.lostAmount);
+  estimateStats.convertedAmount = round(estimateStats.convertedAmount);
+  estimateStats.avgWonValue =
+    estimateStats.accepted > 0 ? round(estimateStats.wonAmount / estimateStats.accepted) : 0;
+  estimateStats.avgDaysToClose =
+    daysToCloseCount > 0 ? Math.round(daysToCloseSum / daysToCloseCount) : null;
 
   // Revenue goal for the window. The stored figure is monthly; scale it to the
   // period so quarter/year compare like-for-like.
@@ -422,6 +475,10 @@ export async function getFinancials(
       helperPay: round(helperPay),
       total: round(labor),
     },
+    jobCount,
+    laborRatio,
+    avgCostPerJob,
+    costByWorker,
     avgDaysToPay: daysToPayCount > 0 ? Math.round(daysToPaySum / daysToPayCount) : null,
     collections,
     estimateStats,

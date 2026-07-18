@@ -533,6 +533,22 @@ export default async function FinancialsPage({
 
   const salesPanel = (
     <>
+      {/* Sales metrics — the shape of the deals won this period. */}
+      {fin.estimateStats.total > 0 && (
+        <MetricCard label={t.salesMetricsTitle} cols="grid-cols-3">
+          <Metric value={moneyShort(fin.estimateStats.avgWonValue)} label={t.avgDeal} />
+          <Metric
+            value={
+              fin.estimateStats.avgDaysToClose != null
+                ? daysLabel(fin.estimateStats.avgDaysToClose)
+                : t.noDaysToPay
+            }
+            label={t.daysToClose}
+          />
+          <Metric value={String(fin.estimateStats.converted)} label={t.invoicedShort} />
+        </MetricCard>
+      )}
+
       {/* Estimate conversion — how quotes raised this period are landing. */}
       <Section
         title={t.conversionTitle}
@@ -579,6 +595,11 @@ export default async function FinancialsPage({
                 <Badge variant="secondary">{t.estPending}: {fin.estimateStats.pending}</Badge>
                 <Badge variant="secondary">{t.estDraft}: {fin.estimateStats.draft}</Badge>
               </div>
+              {fin.estimateStats.converted > 0 && (
+                <p className="border-t border-neutral-100 pt-3 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+                  {t.realizedRevenue.replace("{value}", money(fin.estimateStats.convertedAmount))}
+                </p>
+              )}
             </CardContent>
           </Card>
         )}
@@ -640,6 +661,14 @@ export default async function FinancialsPage({
 
   const costsPanel = (
     <>
+      {/* Cost efficiency — how hard the labor spend is working. */}
+      {fin.jobCount > 0 && (
+        <MetricCard label={t.costMetricsTitle} cols="grid-cols-2">
+          <Metric value={`${fin.laborRatio.toFixed(0)}%`} label={t.laborRatio} />
+          <Metric value={moneyShort(fin.avgCostPerJob)} label={t.costPerJob} />
+        </MetricCard>
+      )}
+
       {/* Expense breakdown — where the tracked labor cost goes. */}
       <Section title={t.expenseBreakdown} desc={t.expenseBreakdownDesc}>
         <Card>
@@ -669,6 +698,32 @@ export default async function FinancialsPage({
           </CardContent>
         </Card>
       </Section>
+
+      {/* Cost by crew member — who the payroll goes to. */}
+      {fin.costByWorker.length > 0 && (
+        <Section
+          title={t.costByWorkerTitle}
+          desc={t.costByWorkerDesc}
+          action={
+            <Link
+              href="/admin/reports"
+              className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            >
+              {dict.nav.payReport}
+            </Link>
+          }
+        >
+          <Card>
+            <CardContent className="p-4">
+              <BarList
+                data={fin.costByWorker.map((w) => ({ label: w.name, value: w.amount }))}
+                formatValue={money}
+                labelWidth="8rem"
+              />
+            </CardContent>
+          </Card>
+        </Section>
+      )}
 
       {/* Labor cost by work type. */}
       {fin.laborByType.length > 0 && (
