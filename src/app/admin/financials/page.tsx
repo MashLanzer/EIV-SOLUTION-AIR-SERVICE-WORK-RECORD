@@ -1,7 +1,9 @@
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowDownRight,
   ArrowRight,
+  ArrowUpRight,
   BarChart3,
   Contact,
   CreditCard,
@@ -9,6 +11,7 @@ import {
   FileText,
   HandCoins,
   Landmark,
+  Minus,
   Percent,
   PiggyBank,
   Receipt,
@@ -87,6 +90,62 @@ function PipelineTile({
   );
 }
 
+// One period-over-period figure: the current value, plus a delta pill comparing
+// it to the previous equal-length window. `goodWhenUp` colours the delta green
+// when the movement is desirable (revenue/profit up) vs amber when not (cost up).
+function CompareCell({
+  label,
+  current,
+  previous,
+  money,
+  goodWhenUp,
+  vsLabel,
+  noPrevLabel,
+}: {
+  label: string;
+  current: number;
+  previous: number;
+  money: (n: number) => string;
+  goodWhenUp: boolean;
+  vsLabel: (prev: string) => string;
+  noPrevLabel: string;
+}) {
+  const hasPrev = previous !== 0;
+  const delta = current - previous;
+  const pct = hasPrev ? (delta / Math.abs(previous)) * 100 : 0;
+  const flat = Math.abs(pct) < 0.5;
+  const up = delta > 0;
+  const Arrow = flat ? Minus : up ? ArrowUpRight : ArrowDownRight;
+  // A rise is "good" for revenue/profit, "bad" for a cost line — and vice-versa.
+  const good = flat ? null : up === goodWhenUp;
+  return (
+    <div className="flex min-w-0 flex-col gap-1 p-4">
+      <span className="truncate text-xs font-medium text-neutral-500 dark:text-neutral-400">{label}</span>
+      <span className="truncate text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+        {money(current)}
+      </span>
+      {hasPrev ? (
+        <span
+          className={cn(
+            "inline-flex items-center gap-1 text-xs font-medium tabular-nums",
+            good == null
+              ? "text-neutral-400 dark:text-neutral-500"
+              : good
+                ? "text-success-text"
+                : "text-warning-text"
+          )}
+        >
+          <Arrow className="h-3.5 w-3.5" />
+          {flat ? "0%" : `${up ? "+" : ""}${pct.toFixed(0)}%`}
+          <span className="text-neutral-400 dark:text-neutral-500">{vsLabel(money(previous))}</span>
+        </span>
+      ) : (
+        <span className="text-xs text-neutral-400 dark:text-neutral-500">{noPrevLabel}</span>
+      )}
+    </div>
+  );
+}
+
 // One tap-target in the quick-actions grid.
 function ActionTile({ icon: Icon, label, href }: { icon: typeof Receipt; label: string; href: string }) {
   return (
@@ -122,6 +181,7 @@ export default async function FinancialsPage({
   const t = dict.financials;
   const money = (n: number) => `${currency}${n.toFixed(2)}`;
   const docCount = (n: number) => (n === 1 ? t.countOne : t.countMany).replace("{n}", String(n));
+  const vsPrev = (prev: string) => t.vsPrevious.replace("{value}", prev);
   const moneyShort = (n: number) => `${currency}${Math.round(n).toLocaleString(locale === "es" ? "es-ES" : "en-US")}`;
 
   const monthFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
@@ -205,6 +265,83 @@ export default async function FinancialsPage({
           href="/admin/invoices?status=SENT"
         />
       </div>
+
+      {/* This period vs previous — is the business trending up or down? */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {t.comparison}
+          </h2>
+          <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.comparisonDesc}</p>
+        </div>
+        <Card>
+          <CardContent className="grid grid-cols-3 divide-x divide-neutral-100 p-0 dark:divide-neutral-800">
+            <CompareCell
+              label={t.revenue}
+              current={fin.revenue}
+              previous={fin.previous.revenue}
+              money={money}
+              goodWhenUp
+              vsLabel={vsPrev}
+              noPrevLabel={t.noPrevious}
+            />
+            <CompareCell
+              label={t.labor}
+              current={fin.labor}
+              previous={fin.previous.labor}
+              money={money}
+              goodWhenUp={false}
+              vsLabel={vsPrev}
+              noPrevLabel={t.noPrevious}
+            />
+            <CompareCell
+              label={t.grossProfit}
+              current={fin.grossProfit}
+              previous={fin.previous.grossProfit}
+              money={money}
+              goodWhenUp
+              vsLabel={vsPrev}
+              noPrevLabel={t.noPrevious}
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Expense breakdown — where the tracked labor cost goes. */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {t.expenseBreakdown}
+          </h2>
+          <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.expenseBreakdownDesc}</p>
+        </div>
+        <Card>
+          <CardContent className="p-4">
+            {fin.expenses.total === 0 ? (
+              <EmptyState icon={HandCoins} title={t.noExpenses} description={t.noExpensesDesc} />
+            ) : (
+              <div className="flex flex-col gap-3">
+                <BarList
+                  data={[
+                    { label: t.leadPay, value: fin.expenses.leadPay },
+                    { label: t.helperPay, value: fin.expenses.helperPay },
+                  ]}
+                  formatValue={money}
+                  labelWidth="9rem"
+                />
+                <div className="flex items-center justify-between border-t border-neutral-100 pt-3 dark:border-neutral-800">
+                  <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                    {t.totalExpenses}
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                    {money(fin.expenses.total)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Quick actions — create + jump to every money section. */}
       <section className="flex flex-col gap-3">

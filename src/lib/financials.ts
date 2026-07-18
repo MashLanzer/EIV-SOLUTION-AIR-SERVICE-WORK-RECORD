@@ -149,9 +149,13 @@ export async function getFinancials(
 
   // The 6-month trend window (this month + the five before it).
   const trendStart = utcMonthStart(now.getUTCFullYear(), now.getUTCMonth() - 5);
-  const paidSince = start < trendStart ? start : trendStart;
+  // The immediately-preceding equal-length window, for the vs-previous compare.
+  const monthsBack = period === "quarter" ? 3 : period === "year" ? 12 : 1;
+  const prevStart = utcMonthStart(start.getUTCFullYear(), start.getUTCMonth() - monthsBack);
+  const prevEnd = start;
+  const paidSince = [start, trendStart, prevStart].reduce((a, b) => (a < b ? a : b));
 
-  const [paidInvoices, sentInvoices, records] = await Promise.all([
+  const [paidInvoices, sentInvoices, records, prevRecords] = await Promise.all([
     prisma.invoice.findMany({
       where: { organizationId, status: "PAID", paidAt: { gte: paidSince } },
       select: {
@@ -177,6 +181,10 @@ export async function getFinancials(
       where: { organizationId, status: "APPROVED", date: { gte: start, lt: end } },
       select: { leadInstallerPay: true, helperPay: true },
     }),
+    prisma.workRecord.findMany({
+      where: { organizationId, status: "APPROVED", date: { gte: prevStart, lt: prevEnd } },
+      select: { leadInstallerPay: true, helperPay: true },
+    }),
   ]);
 
   const invTotal = (li: { quantity: unknown; unitPrice: unknown }[], taxRate: unknown) =>
@@ -188,6 +196,8 @@ export async function getFinancials(
   // Period P&L (revenue + tax from paid invoices whose payment landed in range).
   let revenue = 0;
   let tax = 0;
+  // The same figures for the immediately-preceding window, for the compare.
+  let prevRevenue = 0;
   const customerRevenue = new Map<string, number>();
   // 6-month trend buckets keyed by "YYYY-M".
   const trend = new Map<string, number>();
@@ -206,17 +216,29 @@ export async function getFinancials(
         (customerRevenue.get(inv.customerName) ?? 0) + totals.total
       );
     }
+    if (inRange(inv.paidAt, prevStart, prevEnd)) prevRevenue += totals.total;
     if (inv.paidAt) {
       const key = `${inv.paidAt.getUTCFullYear()}-${inv.paidAt.getUTCMonth()}`;
       if (trend.has(key)) trend.set(key, (trend.get(key) ?? 0) + totals.total);
     }
   }
 
-  let labor = 0;
-  for (const r of records) labor += Number(r.leadInstallerPay) + Number(r.helperPay ?? 0);
+  // Expense breakdown. The only tracked cost is crew labor, itemised into the
+  // lead installer's pay and the helpers' pay so the owner sees where it goes.
+  let leadPay = 0;
+  let helperPay = 0;
+  for (const r of records) {
+    leadPay += Number(r.leadInstallerPay);
+    helperPay += Number(r.helperPay ?? 0);
+  }
+  const labor = leadPay + helperPay;
+
+  let prevLabor = 0;
+  for (const r of prevRecords) prevLabor += Number(r.leadInstallerPay) + Number(r.helperPay ?? 0);
 
   const grossProfit = revenue - labor;
   const margin = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
+  const prevGrossProfit = prevRevenue - prevLabor;
 
   // Accounts-receivable aging: bucket each unpaid (SENT) invoice by how far
   // past its due date it is (null due date counts as current).
@@ -276,6 +298,16 @@ export async function getFinancials(
     margin: round(margin),
     tax: round(tax),
     outstanding: round(outstanding),
+    previous: {
+      revenue: round(prevRevenue),
+      labor: round(prevLabor),
+      grossProfit: round(prevGrossProfit),
+    },
+    expenses: {
+      leadPay: round(leadPay),
+      helperPay: round(helperPay),
+      total: round(labor),
+    },
     trend: trendSeries,
     aging,
     topCustomers,

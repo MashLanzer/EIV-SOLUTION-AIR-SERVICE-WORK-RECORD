@@ -1085,6 +1085,19 @@ export const en = {
     awaiting: "Awaiting",
     countOne: "{n} doc",
     countMany: "{n} docs",
+    // This period vs previous
+    comparison: "This period vs previous",
+    comparisonDesc: "How this window compares to the one before it.",
+    vsPrevious: "vs {value} prev.",
+    noPrevious: "No prior data",
+    // Expense breakdown
+    expenseBreakdown: "Expense breakdown",
+    expenseBreakdownDesc: "Where your labor cost goes this period.",
+    leadPay: "Lead installer pay",
+    helperPay: "Helper pay",
+    totalExpenses: "Total expenses",
+    noExpenses: "No labor cost this period",
+    noExpensesDesc: "No approved records with pay in this window.",
   },
   reports: {
     title: "Pay Report",

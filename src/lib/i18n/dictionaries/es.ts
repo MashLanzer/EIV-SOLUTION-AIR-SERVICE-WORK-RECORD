@@ -1079,6 +1079,19 @@ export const es: Dictionary = {
     awaiting: "Por cobrar",
     countOne: "{n} doc",
     countMany: "{n} docs",
+    // Este período vs anterior
+    comparison: "Este período vs anterior",
+    comparisonDesc: "Cómo se compara esta ventana con la anterior.",
+    vsPrevious: "vs {value} ant.",
+    noPrevious: "Sin datos previos",
+    // Desglose de gastos
+    expenseBreakdown: "Desglose de gastos",
+    expenseBreakdownDesc: "A dónde va tu costo de mano de obra este período.",
+    leadPay: "Pago instalador líder",
+    helperPay: "Pago ayudante",
+    totalExpenses: "Gastos totales",
+    noExpenses: "Sin costo de mano de obra este período",
+    noExpensesDesc: "No hay registros aprobados con pago en esta ventana.",
   },
   reports: {
     title: "Reporte de pago",
