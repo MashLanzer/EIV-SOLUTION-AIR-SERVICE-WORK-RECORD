@@ -4,7 +4,6 @@ import { MessageSquareHeart, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FeedbackList } from "@/components/feedback/FeedbackList";
-import { SectionTabs } from "@/components/layout/SectionTabs";
 import { getFeedbackOverview } from "@/lib/feedback";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
@@ -56,7 +55,6 @@ export default async function AdminFeedbackPage({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4">
-      <SectionTabs family="records" />
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
           <MessageSquareHeart className="h-5 w-5" />

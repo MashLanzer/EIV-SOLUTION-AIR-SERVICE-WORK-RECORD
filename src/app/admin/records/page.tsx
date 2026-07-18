@@ -153,7 +153,7 @@ export default async function AdminRecordsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionTabs family="records" />
+      <SectionTabs family="overview" />
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.allRecords}</h1>
       {rawParams.saved && <SuccessToast message={dict.records.recordSaved} aboveMobileNav />}
 

@@ -6,7 +6,7 @@ import { getT } from "@/lib/i18n/server";
 import type { Dictionary } from "@/lib/i18n";
 import { SectionTabsBar } from "@/components/layout/SectionTabsBar";
 
-export type SectionFamily = "overview" | "records" | "money" | "structure";
+export type SectionFamily = "overview" | "money" | "structure";
 
 // The secondary destinations grouped by family. These used to live in the
 // APK's center-menu "More" list; they now surface as a segmented sub-nav at the
@@ -22,11 +22,6 @@ const FAMILIES: Record<
     { href: "/admin", label: (d) => d.nav.dashboard },
     { href: "/admin/records", label: (d) => d.nav.records },
     { href: "/admin/review", label: (d) => d.nav.reviewQueue },
-  ],
-  records: [
-    { href: "/admin/records", label: (d) => d.nav.records },
-    { href: "/admin/review", label: (d) => d.nav.reviewQueue },
-    { href: "/admin/feedback", label: (d) => d.nav.feedback },
   ],
   money: [
     { href: "/admin/financials", label: (d) => d.nav.financials },

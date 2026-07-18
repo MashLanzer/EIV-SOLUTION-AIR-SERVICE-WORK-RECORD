@@ -80,7 +80,7 @@ export default async function ReviewQueuePage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionTabs family="records" />
+      <SectionTabs family="overview" />
       <PageHeader title={t.title} description={t.desc} />
       <ReviewQueue submitted={submittedQueue} returned={returnedQueue} />
     </div>
