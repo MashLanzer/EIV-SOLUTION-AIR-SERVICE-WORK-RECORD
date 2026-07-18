@@ -1718,6 +1718,8 @@ export const en = {
     newProject: "New project",
     newWorker: "New worker",
     newTeam: "New team",
+    newEstimate: "New estimate",
+    newInvoice: "New invoice",
     newRecord: "New record",
     newShort: "New",
     create: "Create",

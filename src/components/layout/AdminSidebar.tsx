@@ -74,6 +74,8 @@ function createItems(n: Dictionary["nav"]): CreateItem[] {
   { href: "/admin/projects/new", label: n.newProject, icon: FolderPlus },
   { href: "/admin/workers/new", label: n.newWorker, icon: UserPlus },
   { href: "/admin/teams/new", label: n.newTeam, icon: Users2 },
+  { href: "/admin/estimates/new", label: n.newEstimate, icon: FileText },
+  { href: "/admin/invoices/new", label: n.newInvoice, icon: Receipt },
   ];
 }
 
@@ -153,10 +155,14 @@ export function AdminSidebar({
   const disabledHrefs = new Set<string>();
   if (features && !features.invoicing) {
     disabledHrefs.add("/admin/invoices");
+    disabledHrefs.add("/admin/invoices/new");
     disabledHrefs.add("/admin/financials");
     disabledHrefs.add("/admin/payments");
   }
-  if (features && !features.estimates) disabledHrefs.add("/admin/estimates");
+  if (features && !features.estimates) {
+    disabledHrefs.add("/admin/estimates");
+    disabledHrefs.add("/admin/estimates/new");
+  }
   const byFeature = <T extends { href: string }>(list: T[]) =>
     disabledHrefs.size ? list.filter((i) => !disabledHrefs.has(i.href)) : list;
   // Modules turned off for the company are removed entirely; destinations the

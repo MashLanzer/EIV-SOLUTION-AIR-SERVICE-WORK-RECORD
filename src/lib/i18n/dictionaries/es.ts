@@ -1713,6 +1713,8 @@ export const es: Dictionary = {
     newProject: "Nuevo proyecto",
     newWorker: "Nuevo trabajador",
     newTeam: "Nuevo equipo",
+    newEstimate: "Nuevo estimado",
+    newInvoice: "Nueva factura",
     newRecord: "Nuevo registro",
     newShort: "Nuevo",
     create: "Crear",
