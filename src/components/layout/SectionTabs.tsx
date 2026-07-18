@@ -32,8 +32,8 @@ const FAMILIES: Record<
   structure: [
     { href: "/admin/projects", label: (d) => d.nav.projects },
     { href: "/admin/teams", label: (d) => d.teams.tabTeams },
-    { href: "/admin/workers", label: (d) => d.nav.workers },
     { href: "/admin/customers", label: (d) => d.nav.customers },
+    { href: "/admin/workers", label: (d) => d.nav.workers },
     { href: "/admin/photos", label: (d) => d.nav.photos },
   ],
 };
