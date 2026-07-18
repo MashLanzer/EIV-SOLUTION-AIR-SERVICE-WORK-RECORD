@@ -170,10 +170,10 @@ export async function RecordsTable({
             {/* Whole upper area taps through to the review page. */}
             <Link
               href={`/admin/records/${record.id}`}
-              className="flex items-start gap-3 p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+              className="flex items-start gap-3 p-3 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
             >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
-                <ClipboardList className="h-5 w-5" />
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+                <ClipboardList className="h-4 w-4" />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
@@ -196,7 +196,7 @@ export async function RecordsTable({
                   const photos = record._count.photos;
                   if (!hours && photos === 0) return null;
                   return (
-                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
                       {hours && (
                         <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
                           <Clock className="h-3 w-3" />
@@ -213,14 +213,14 @@ export async function RecordsTable({
                   );
                 })()}
                 {record.status === "NEEDS_CHANGES" && record.reviewNote && (
-                  <p className="mt-1.5 text-xs text-warning-text">
+                  <p className="mt-1 text-xs text-warning-text">
                     <span className="font-medium">{t.returnedPrefix}</span> {record.reviewNote}
                   </p>
                 )}
               </div>
               <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
             </Link>
-            <div className="flex justify-end gap-2 border-t border-neutral-100 dark:border-neutral-800 px-4 py-3">
+            <div className="flex justify-end gap-2 border-t border-neutral-100 dark:border-neutral-800 px-3 py-2">
               {record.status === "SUBMITTED" && (
                 <>
                   <ApproveRecordButton recordId={record.id} iconOnly />
