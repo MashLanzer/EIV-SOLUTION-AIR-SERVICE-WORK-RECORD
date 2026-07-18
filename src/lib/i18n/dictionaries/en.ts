@@ -1149,6 +1149,10 @@ export const en = {
     tabCollections: "Collections",
     tabSales: "Sales",
     tabCosts: "Costs",
+    // KPI card groups
+    kpiResult: "Result",
+    kpiRatios: "Indicators",
+    kpiBalances: "Balances",
   },
   reports: {
     title: "Pay Report",

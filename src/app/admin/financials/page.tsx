@@ -7,15 +7,12 @@ import {
   BarChart3,
   CalendarClock,
   CheckCircle2,
-  Clock,
   Contact,
   CreditCard,
   FilePlus2,
   FileText,
   HandCoins,
-  Landmark,
   Minus,
-  Percent,
   PiggyBank,
   Receipt,
   ReceiptText,
@@ -35,7 +32,6 @@ import { FilterChip } from "@/components/ui/filter-chip";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionTabs } from "@/components/layout/SectionTabs";
 import { FinancialsTabs } from "@/components/financials/FinancialsTabs";
-import { StatTile } from "@/components/ui/stat-tile";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { getCurrencySymbol } from "@/lib/currency";
 import {
@@ -160,6 +156,47 @@ function ActionTile({ icon: Icon, label, href }: { icon: typeof Receipt; label: 
     >
       <Icon className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
       <span className="text-[11px] font-medium leading-tight">{label}</span>
+    </Link>
+  );
+}
+
+// KPI helpers — the same grouped-card look as the dashboard overview: a small
+// label over a row of centred metrics, divided by hairlines. Monochrome for
+// consistency across the two screens.
+function KpiCard({ label, cols, children }: { label: string; cols: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="mb-3">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+          {label}
+        </span>
+      </div>
+      <div className={cn("grid divide-x divide-neutral-100 dark:divide-neutral-800", cols)}>{children}</div>
+    </div>
+  );
+}
+
+function Metric({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex min-w-0 flex-col items-center px-2 text-center">
+      <div className="max-w-full truncate text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+        {value}
+      </div>
+      <div className="mt-1 text-xs leading-tight text-neutral-500 dark:text-neutral-400">{label}</div>
+    </div>
+  );
+}
+
+function MetricLink({ value, label, href }: { value: string; label: string; href: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex min-w-0 flex-col items-center px-2 text-center transition-opacity hover:opacity-70"
+    >
+      <div className="max-w-full truncate text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
+        {value}
+      </div>
+      <div className="mt-1 text-xs leading-tight text-neutral-500 dark:text-neutral-400">{label}</div>
     </Link>
   );
 }
@@ -289,6 +326,19 @@ export default async function FinancialsPage({
 
   const summaryPanel = (
     <>
+      {/* Quick access — create + jump to every money section. */}
+      <Section title={t.quickActions}>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+          <ActionTile icon={ReceiptText} label={dict.nav.newInvoice} href="/admin/invoices/new" />
+          <ActionTile icon={FilePlus2} label={dict.nav.newEstimate} href="/admin/estimates/new" />
+          <ActionTile icon={Receipt} label={dict.nav.invoices} href="/admin/invoices" />
+          <ActionTile icon={FileText} label={dict.nav.estimates} href="/admin/estimates" />
+          <ActionTile icon={Contact} label={dict.nav.customers} href="/admin/customers" />
+          <ActionTile icon={BarChart3} label={dict.nav.payReport} href="/admin/reports" />
+          <ActionTile icon={CreditCard} label={dict.settings.paymentsRow} href="/admin/payments" />
+        </div>
+      </Section>
+
       {/* Revenue goal thermometer. */}
       {fin.goal.target != null ? (
         <Card>
@@ -336,36 +386,24 @@ export default async function FinancialsPage({
         </Link>
       )}
 
-      {/* Period P&L — each figure drills into where the money lives. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatTile icon={Wallet} value={money(fin.revenue)} label={t.revenue} tone="success" href="/admin/invoices?status=PAID" />
-        <StatTile icon={HandCoins} value={money(fin.labor)} label={t.labor} href="/admin/reports" />
-        <StatTile
-          icon={TrendingUp}
-          value={money(fin.grossProfit)}
-          label={t.grossProfit}
-          tone={fin.grossProfit >= 0 ? "success" : "warning"}
-          href="/admin/reports"
-        />
-        <StatTile
-          icon={Percent}
-          value={`${fin.margin.toFixed(0)}%`}
-          label={t.margin}
-          tone={fin.margin >= 0 ? "default" : "warning"}
-        />
-        <StatTile icon={Landmark} value={money(fin.tax)} label={t.tax} href="/admin/invoices?status=PAID" />
-        <StatTile
-          icon={PiggyBank}
-          value={money(fin.outstanding)}
-          label={t.outstanding}
-          tone={fin.outstanding > 0 ? "warning" : "default"}
-          href="/admin/invoices?status=SENT"
-        />
-        <StatTile
-          icon={Clock}
-          value={fin.avgDaysToPay != null ? daysLabel(fin.avgDaysToPay) : t.noDaysToPay}
-          label={t.avgDaysToPay}
-        />
+      {/* Period P&L — grouped metric cards, matching the dashboard overview. */}
+      <div className="flex flex-col gap-3">
+        <KpiCard label={t.kpiResult} cols="grid-cols-3">
+          <MetricLink value={moneyShort(fin.revenue)} label={t.revenue} href="/admin/invoices?status=PAID" />
+          <MetricLink value={moneyShort(fin.labor)} label={t.labor} href="/admin/reports" />
+          <MetricLink value={moneyShort(fin.grossProfit)} label={t.grossProfit} href="/admin/reports" />
+        </KpiCard>
+        <KpiCard label={t.kpiRatios} cols="grid-cols-2">
+          <Metric value={`${fin.margin.toFixed(0)}%`} label={t.margin} />
+          <Metric
+            value={fin.avgDaysToPay != null ? daysLabel(fin.avgDaysToPay) : t.noDaysToPay}
+            label={t.avgDaysToPay}
+          />
+        </KpiCard>
+        <KpiCard label={t.kpiBalances} cols="grid-cols-2">
+          <MetricLink value={moneyShort(fin.tax)} label={t.tax} href="/admin/invoices?status=PAID" />
+          <MetricLink value={moneyShort(fin.outstanding)} label={t.outstanding} href="/admin/invoices?status=SENT" />
+        </KpiCard>
       </div>
 
       {/* This period vs previous — is the business trending up or down? */}
@@ -413,19 +451,6 @@ export default async function FinancialsPage({
           </CardContent>
         </Card>
       )}
-
-      {/* Quick actions — create + jump to every money section. */}
-      <Section title={t.quickActions}>
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-          <ActionTile icon={ReceiptText} label={dict.nav.newInvoice} href="/admin/invoices/new" />
-          <ActionTile icon={FilePlus2} label={dict.nav.newEstimate} href="/admin/estimates/new" />
-          <ActionTile icon={Receipt} label={dict.nav.invoices} href="/admin/invoices" />
-          <ActionTile icon={FileText} label={dict.nav.estimates} href="/admin/estimates" />
-          <ActionTile icon={Contact} label={dict.nav.customers} href="/admin/customers" />
-          <ActionTile icon={BarChart3} label={dict.nav.payReport} href="/admin/reports" />
-          <ActionTile icon={CreditCard} label={dict.settings.paymentsRow} href="/admin/payments" />
-        </div>
-      </Section>
     </>
   );
 

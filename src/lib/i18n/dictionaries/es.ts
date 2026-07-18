@@ -1143,6 +1143,10 @@ export const es: Dictionary = {
     tabCollections: "Cobros",
     tabSales: "Ventas",
     tabCosts: "Gastos",
+    // Grupos de tarjetas KPI
+    kpiResult: "Resultado",
+    kpiRatios: "Indicadores",
+    kpiBalances: "Saldos",
   },
   reports: {
     title: "Reporte de pago",
