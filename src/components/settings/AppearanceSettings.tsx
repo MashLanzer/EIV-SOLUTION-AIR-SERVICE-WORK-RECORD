@@ -6,6 +6,7 @@ import { Check, Map as MapIcon, Monitor, Moon, Sun, Palette as PaletteIcon, Spar
 import { Switch } from "@/components/ui/switch";
 import { SettingsCustomRow, SettingsRow } from "@/components/settings/SettingsList";
 import { LanguageSetting } from "@/components/settings/LanguageSetting";
+import { TimeFormatSetting } from "@/components/settings/TimeFormatSetting";
 import { useT } from "@/components/i18n/LocaleProvider";
 import {
   DEFAULT_PALETTE_ID,
@@ -254,6 +255,8 @@ export function AppearanceSettings() {
           />
         }
       />
+
+      <TimeFormatSetting />
 
       <LanguageSetting />
     </>

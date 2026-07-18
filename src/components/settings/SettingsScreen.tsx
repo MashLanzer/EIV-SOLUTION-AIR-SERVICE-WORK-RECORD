@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import {
-  ArrowLeft,
   Building2,
   Camera,
   Coins,
@@ -22,8 +21,8 @@ import {
   Users,
   Wrench,
 } from "lucide-react";
-import Link from "next/link";
 
+import { PageHeader } from "@/components/ui/page-header";
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
 import { CompanyLogoRow } from "@/components/settings/CompanyLogoRow";
@@ -102,18 +101,7 @@ export function SettingsScreen({
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">
-      <div>
-        <Link
-          href={backHref}
-          className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t.common.back}
-        </Link>
-        <h1 className="mt-2 text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-          {s.title}
-        </h1>
-      </div>
+      <PageHeader title={s.title} backHref={backHref} backLabel={t.common.back} />
 
       {/* Appearance */}
       <SettingsSection

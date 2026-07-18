@@ -1923,6 +1923,8 @@ export const en = {
     mapColorHint: "Use a full-colour map instead of the monochrome one",
     language: "Language",
     languageHint: "The app's display language",
+    timeFormat: "Time format",
+    timeFormatHint: "How times show on this device",
   },
   settings: {
     title: "Settings",

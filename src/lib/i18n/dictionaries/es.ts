@@ -1918,6 +1918,8 @@ export const es: Dictionary = {
     mapColorHint: "Usa un mapa a todo color en vez del monocromático",
     language: "Idioma",
     languageHint: "El idioma de la aplicación",
+    timeFormat: "Formato de hora",
+    timeFormatHint: "Cómo se muestran las horas en este dispositivo",
   },
   settings: {
     title: "Ajustes",
