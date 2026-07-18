@@ -3,6 +3,7 @@ import { FileDown, Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
 import { PhotoFilters, type PhotoRange } from "@/components/photos/PhotoFilters";
 import { PhotoMapButton } from "@/components/photos/PhotoMapButton";
@@ -32,17 +33,19 @@ export default async function WorkerPhotosPage({
     source?: string;
     range?: string;
     untagged?: string;
+    mine?: string;
     n?: string;
   }>;
 }) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
-  const { tag, project, source, range, untagged, n } = await searchParams;
+  const { tag, project, source, range, untagged, mine, n } = await searchParams;
   const activeTag = tag?.trim().toLowerCase() || null;
   const activeProject = project?.trim() || null;
   const activeSource = normalizePhotoSource(source);
   const activeRange: PhotoRange = normalizePhotoRange(range);
   const activeUntagged = untagged === "1";
+  const activeMine = mine === "1";
   const cutoff = photoRangeCutoff(activeRange);
   const shown = Math.min(Math.max(Number(n) || PHOTO_PAGE, PHOTO_PAGE), PHOTO_MAX);
 
@@ -54,6 +57,7 @@ export default async function WorkerPhotosPage({
   const baseWhere = {
     organizationId,
     ...projectScope,
+    ...(activeMine ? { takenById: session.user.id } : {}),
     ...(activeProject ? { projectId: activeProject } : {}),
     ...(cutoff ? { takenAt: { gte: cutoff } } : {}),
     ...(activeUntagged
@@ -149,7 +153,12 @@ export default async function WorkerPhotosPage({
     }));
 
   const isFiltered = Boolean(
-    activeTag || activeProject || activeSource !== "all" || activeUntagged || activeRange !== "all"
+    activeTag ||
+      activeProject ||
+      activeSource !== "all" ||
+      activeUntagged ||
+      activeRange !== "all" ||
+      activeMine
   );
 
   const reportParams = new URLSearchParams();
@@ -158,6 +167,7 @@ export default async function WorkerPhotosPage({
   if (activeSource !== "all") reportParams.set("source", activeSource);
   if (activeRange !== "all") reportParams.set("range", activeRange);
   if (activeUntagged) reportParams.set("untagged", "1");
+  if (activeMine) reportParams.set("mine", "1");
   const reportHref = `/records/photos/report${reportParams.toString() ? `?${reportParams}` : ""}`;
 
   const canLoadMore = totalPhotos > photos.length && shown < PHOTO_MAX;
@@ -167,22 +177,23 @@ export default async function WorkerPhotosPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.title}</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-neutral-500 dark:text-neutral-400 tabular-nums">
-            {(totalPhotos === 1 ? t.countOne : t.countMany).replace("{n}", String(totalPhotos))}
-          </span>
-          {photos.length > 0 && (
+      <PageHeader
+        title={t.title}
+        description={(totalPhotos === 1 ? t.countOne : t.countMany).replace(
+          "{n}",
+          String(totalPhotos)
+        )}
+        action={
+          photos.length > 0 ? (
             <Button asChild variant="outline" size="sm">
               <a href={reportHref}>
-                <FileDown className="h-4 w-4" />
+                <FileDown className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{t.exportPdf}</span>
               </a>
             </Button>
-          )}
-        </div>
-      </div>
+          ) : undefined
+        }
+      />
 
       <PhotoFilters
         basePath="/records/photos"
@@ -194,6 +205,7 @@ export default async function WorkerPhotosPage({
         activeSource={activeSource === "all" ? null : activeSource}
         activeRange={activeRange}
         activeUntagged={activeUntagged}
+        activeMine={activeMine}
       />
 
       <PhotoMapButton photoPins={photoPins} />

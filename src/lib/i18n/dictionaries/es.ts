@@ -515,6 +515,7 @@ export const es: Dictionary = {
     sourceChecklist: "Checklist",
     sourceRecord: "Registro",
     untagged: "Sin etiquetar",
+    mine: "Mías",
     rangeAll: "Todo",
     rangeToday: "Hoy",
     range7d: "7 días",

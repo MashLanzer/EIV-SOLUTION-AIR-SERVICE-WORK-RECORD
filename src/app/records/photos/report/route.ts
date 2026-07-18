@@ -27,6 +27,7 @@ export async function GET(request: Request) {
   const source = normalizePhotoSource(sp.get("source") ?? undefined);
   const range = normalizePhotoRange(sp.get("range") ?? undefined);
   const untagged = sp.get("untagged") === "1";
+  const mine = sp.get("mine") === "1";
   const cutoff = photoRangeCutoff(range);
 
   const isAdmin = session.user.role === "ADMIN";
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
   const where: Prisma.PhotoWhereInput = {
     organizationId,
     ...projectScope,
+    ...(mine ? { takenById: session.user.id } : {}),
     ...(project ? { projectId: project } : {}),
     ...photoSourceWhere(source),
     ...(cutoff ? { takenAt: { gte: cutoff } } : {}),

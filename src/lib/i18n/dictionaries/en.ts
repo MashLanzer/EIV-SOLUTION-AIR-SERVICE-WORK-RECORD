@@ -514,6 +514,7 @@ export const en = {
     sourceChecklist: "Checklist",
     sourceRecord: "Work record",
     untagged: "Untagged",
+    mine: "Mine",
     rangeAll: "All time",
     rangeToday: "Today",
     range7d: "7 days",

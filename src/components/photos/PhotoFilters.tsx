@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Tag as TagIcon, TagsIcon } from "lucide-react";
+import { Tag as TagIcon, TagsIcon, UserRound } from "lucide-react";
 
 import { FilterChip } from "@/components/ui/filter-chip";
 import { Select } from "@/components/ui/select";
@@ -45,6 +45,7 @@ export function PhotoFilters({
   activeSource,
   activeRange,
   activeUntagged,
+  activeMine,
 }: {
   basePath: string;
   tags: TagOption[];
@@ -59,6 +60,10 @@ export function PhotoFilters({
   activeSource?: string | null;
   activeRange: PhotoRange;
   activeUntagged: boolean;
+  // Optional "only photos I took" toggle (worker feed only). When undefined the
+  // chip isn't rendered and `mine` never enters the query, so the admin feed is
+  // unaffected.
+  activeMine?: boolean;
 }) {
   const router = useRouter();
   const t = useT().photos;
@@ -71,6 +76,7 @@ export function PhotoFilters({
     source: activeSource ?? null,
     range: activeRange,
     untagged: activeUntagged,
+    mine: activeMine ?? false,
   };
 
   function hrefFor(next: Partial<typeof state>) {
@@ -82,6 +88,7 @@ export function PhotoFilters({
     if (s.source) p.set("source", s.source);
     if (s.range && s.range !== "all") p.set("range", s.range);
     if (s.untagged) p.set("untagged", "1");
+    if (s.mine) p.set("mine", "1");
     const qs = p.toString();
     return qs ? `${basePath}?${qs}` : basePath;
   }
@@ -163,9 +170,15 @@ export function PhotoFilters({
             {r.label}
           </FilterChip>
         ))}
+        {activeMine !== undefined && (
+          <FilterChip href={hrefFor({ mine: !activeMine })} active={activeMine}>
+            <UserRound className="h-3.5 w-3.5" aria-hidden="true" />
+            {t.mine}
+          </FilterChip>
+        )}
         {hasTags && (
           <FilterChip href={hrefFor({ untagged: !activeUntagged })} active={activeUntagged}>
-            <TagsIcon className="h-3.5 w-3.5" />
+            <TagsIcon className="h-3.5 w-3.5" aria-hidden="true" />
             {t.untagged}
           </FilterChip>
         )}
