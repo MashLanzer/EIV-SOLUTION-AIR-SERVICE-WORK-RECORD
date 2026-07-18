@@ -3,10 +3,11 @@ import { CreditCard, Info, ShieldCheck } from "lucide-react";
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { PageHeader } from "@/components/ui/page-header";
 import { SettingsRow, SettingsSection } from "@/components/settings/SettingsList";
-import { SettingsHub, type SettingsHubData } from "@/components/settings/SettingsHub";
+import { SettingsHub, type SettingsAuditData, type SettingsHubData } from "@/components/settings/SettingsHub";
 import { requireOfficeAccess } from "@/lib/authz";
 import { requireOrgId } from "@/lib/orgScope";
 import { getOrgFeatures } from "@/lib/features";
+import { getAuditLog } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { stripeEnabled } from "@/lib/stripe";
 import { PLANS, planLabel, planMaxUsers } from "@/lib/plans";
@@ -153,11 +154,55 @@ export default async function AdminSettingsPage() {
     }
   }
 
+  // Recent audit + role-change entries so those two logs open in a sheet rather
+  // than navigating away. Best-effort — a hiccup just leaves them empty.
+  let audit: SettingsAuditData | null = null;
+  if (isAdmin) {
+    try {
+      const organizationId = requireOrgId(session);
+      const [events, roleEvents] = await Promise.all([
+        getAuditLog(organizationId, { take: 30 }),
+        prisma.roleChangeEvent.findMany({
+          where: { organizationId },
+          orderBy: { createdAt: "desc" },
+          take: 30,
+          select: {
+            id: true,
+            actorName: true,
+            targetName: true,
+            fromRole: true,
+            toRole: true,
+            createdAt: true,
+          },
+        }),
+      ]);
+      audit = {
+        events: events.map((e) => ({
+          id: e.id,
+          actorName: e.actorName,
+          entityType: e.entityType,
+          summary: e.summary,
+          createdAt: e.createdAt.toISOString(),
+        })),
+        roleEvents: roleEvents.map((e) => ({
+          id: e.id,
+          actorName: e.actorName,
+          targetName: e.targetName,
+          fromRole: e.fromRole,
+          toRole: e.toRole,
+          createdAt: e.createdAt.toISOString(),
+        })),
+      };
+    } catch {
+      audit = null;
+    }
+  }
+
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">
       <PageHeader title={s.title} />
 
-      <SettingsHub isAdmin={isAdmin} data={data} />
+      <SettingsHub isAdmin={isAdmin} data={data} audit={audit} />
 
       {canPayments && (
         <SettingsSection>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -68,7 +69,36 @@ import {
 } from "@/actions/organization";
 import { createBillingPortalSessionAction, createCheckoutSessionAction } from "@/actions/billing";
 import { TIME_ZONES } from "@/lib/timezone";
-import { useT } from "@/components/i18n/LocaleProvider";
+import { useT, useLocale } from "@/components/i18n/LocaleProvider";
+
+// Entity icon for an audit row, reusing icons already imported here. Unknown
+// types fall back to the generic history icon.
+const AUDIT_ICON: Record<string, LucideIcon> = {
+  customer: Users,
+  project: ClipboardListIcon,
+  invoice: CreditCard,
+  estimate: FileText,
+  organization: Building2,
+  settings: Settings2,
+};
+
+export interface SettingsAuditData {
+  events: {
+    id: string;
+    actorName: string;
+    entityType: string;
+    summary: string;
+    createdAt: string;
+  }[];
+  roleEvents: {
+    id: string;
+    actorName: string;
+    targetName: string;
+    fromRole: string;
+    toRole: string;
+    createdAt: string;
+  }[];
+}
 
 export interface SettingsHubOrg {
   name: string;
@@ -128,6 +158,8 @@ type SectionKey =
   | "documents"
   | "localization"
   | "billing"
+  | "audit"
+  | "role-audit"
   | "advanced";
 
 // The settings hub rows. Tapping a row opens that section's controls in a
@@ -135,17 +167,28 @@ type SectionKey =
 export function SettingsHub({
   isAdmin,
   data,
+  audit = null,
 }: {
   isAdmin: boolean;
   data: SettingsHubData | null;
+  audit?: SettingsAuditData | null;
 }) {
   const t = useT();
   const s = t.settings;
   const h = s.hub;
   const tc = t.common;
+  const locale = useLocale();
   const [open, setOpen] = useState<SectionKey | null>(null);
 
   const org = data?.org;
+
+  const fmtDateTime = (iso: string) =>
+    new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(new Date(iso));
+  const roleLabel = (r: string) =>
+    r === "ADMIN" ? t.workers.roleAdmin : r === "SUPERVISOR" ? t.workers.roleSupervisor : t.workers.roleWorker;
 
   const sectionTitle: Record<SectionKey, string> = {
     general: h.general,
@@ -157,6 +200,8 @@ export function SettingsHub({
     documents: h.documents,
     localization: h.localization,
     billing: h.billing,
+    audit: t.audit.title,
+    "role-audit": s.audit.title,
     advanced: h.advanced,
   };
 
@@ -186,6 +231,8 @@ export function SettingsHub({
           <SettingsSection>{row(CreditCard, h.billing, h.billingHint, "billing")}</SettingsSection>
 
           <SettingsSection title={h.systemGroup}>
+            {row(History, t.audit.title, t.audit.desc, "audit")}
+            {row(ShieldCheck, s.audit.title, s.audit.rowHint, "role-audit")}
             {row(SlidersHorizontal, h.advanced, h.advancedHint, "advanced")}
           </SettingsSection>
         </>
@@ -198,7 +245,11 @@ export function SettingsHub({
         closeLabel={tc.close}
       >
         <div className="flex flex-col gap-5">
-          {open === "general" && <AppearanceSettings />}
+          {open === "general" && (
+            <SettingsSection>
+              <AppearanceSettings />
+            </SettingsSection>
+          )}
 
           {open === "company" && org && (
             <SettingsSection>
@@ -309,12 +360,79 @@ export function SettingsHub({
 
           {open === "billing" && data && <BillingPanel billing={data.billing} b={s.billing} />}
 
+          {open === "audit" && (
+            <div className="flex flex-col gap-3">
+              {(audit?.events.length ?? 0) === 0 ? (
+                <p className="px-1 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                  {t.audit.empty}
+                </p>
+              ) : (
+                <SettingsSection>
+                  {audit!.events.map((e) => {
+                    const Icon = AUDIT_ICON[e.entityType] ?? History;
+                    return (
+                      <div key={e.id} className="flex items-start gap-3 px-4 py-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                          <Icon className="h-4.5 w-4.5" />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-neutral-900 dark:text-neutral-100">{e.summary}</p>
+                          <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                            {e.actorName} · {fmtDateTime(e.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </SettingsSection>
+              )}
+              <Link
+                href="/admin/audit"
+                onClick={() => setOpen(null)}
+                className="self-start text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              >
+                {s.viewFullLog} →
+              </Link>
+            </div>
+          )}
+
+          {open === "role-audit" && (
+            <div className="flex flex-col gap-3">
+              {(audit?.roleEvents.length ?? 0) === 0 ? (
+                <p className="px-1 py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
+                  {s.audit.empty}
+                </p>
+              ) : (
+                <SettingsSection>
+                  {audit!.roleEvents.map((e) => (
+                    <div key={e.id} className="flex items-start gap-3 px-4 py-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
+                        <ShieldCheck className="h-4.5 w-4.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-neutral-900 dark:text-neutral-100">
+                          {s.audit.changed.replace("{actor}", e.actorName).replace("{target}", e.targetName)}
+                        </p>
+                        <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+                          {s.audit.fromTo.replace("{from}", roleLabel(e.fromRole)).replace("{to}", roleLabel(e.toRole))} · {fmtDateTime(e.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </SettingsSection>
+              )}
+              <Link
+                href="/admin/settings/audit"
+                onClick={() => setOpen(null)}
+                className="self-start text-sm font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+              >
+                {s.viewFullLog} →
+              </Link>
+            </div>
+          )}
+
           {open === "advanced" && (
             <>
-              <SettingsSection>
-                <SettingsRow icon={History} label={t.audit.title} sublabel={t.audit.desc} href="/admin/audit" />
-                <SettingsRow icon={ShieldCheck} label={s.audit.title} sublabel={s.audit.rowHint} href="/admin/settings/audit" />
-              </SettingsSection>
               <SettingsSection title={s.danger.section} description={s.danger.description}>
                 <div className="flex items-center gap-3 px-4 py-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-destructive-soft text-destructive-text">
