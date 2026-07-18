@@ -1138,6 +1138,11 @@ export const es: Dictionary = {
     alertEstimates: "{n} estimado esperando respuesta",
     alertEstimatesMany: "{n} estimados esperando respuesta",
     allClear: "Todo en orden — nada requiere atención",
+    // Pestañas de sección en la página
+    tabSummary: "Resumen",
+    tabCollections: "Cobros",
+    tabSales: "Ventas",
+    tabCosts: "Gastos",
   },
   reports: {
     title: "Reporte de pago",

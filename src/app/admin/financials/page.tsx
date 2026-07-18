@@ -34,6 +34,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionTabs } from "@/components/layout/SectionTabs";
+import { FinancialsTabs } from "@/components/financials/FinancialsTabs";
 import { StatTile } from "@/components/ui/stat-tile";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -163,6 +164,34 @@ function ActionTile({ icon: Icon, label, href }: { icon: typeof Receipt; label: 
   );
 }
 
+// A titled section wrapper, reused across the tab panels.
+function Section({
+  title,
+  desc,
+  action,
+  children,
+}: {
+  title: string;
+  desc?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {title}
+          </h2>
+          {desc && <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{desc}</p>}
+        </div>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 export const dynamic = "force-dynamic";
 
 export default async function FinancialsPage({
@@ -256,54 +285,10 @@ export default async function FinancialsPage({
   const goalClamped = Math.max(0, Math.min(100, goalPct));
   const goalRemaining = fin.goal.target != null ? Math.max(0, fin.goal.target - fin.revenue) : 0;
 
-  return (
-    <div className="flex flex-col gap-4">
-      <SectionTabs family="money" />
-      <PageHeader
-        title={t.title}
-        action={
-          <Button asChild variant="outline" size="sm">
-            <a href={`/admin/financials/export?period=${period}`}>
-              <Sheet className="h-4 w-4" />
-              <span className="hidden sm:inline">{t.exportCsv}</span>
-            </a>
-          </Button>
-        }
-      />
+  // ---- Tab panels ------------------------------------------------------
 
-      {/* Period selector */}
-      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {FINANCIAL_PERIODS.map((p) => (
-          <FilterChip key={p} href={`/admin/financials?period=${p}`} active={p === period}>
-            {periodLabel[p]}
-          </FilterChip>
-        ))}
-      </div>
-
-      {/* Action alerts — the few things worth doing something about. */}
-      {alerts.length > 0 ? (
-        <Card className="bg-warning-soft">
-          <CardContent className="flex flex-col divide-y divide-warning-text/15 p-0">
-            {alerts.map((a) => (
-              <Link
-                key={a.key}
-                href={a.href}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-warning-text/5"
-              >
-                <AlertTriangle className="h-4 w-4 shrink-0 text-warning-text" />
-                <span className="min-w-0 flex-1 font-medium text-warning-text">{a.text}</span>
-                <ArrowRight className="h-4 w-4 shrink-0 text-warning-text/70" />
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-success-text" />
-          {t.allClear}
-        </div>
-      )}
-
+  const summaryPanel = (
+    <>
       {/* Revenue goal thermometer. */}
       {fin.goal.target != null ? (
         <Card>
@@ -384,13 +369,7 @@ export default async function FinancialsPage({
       </div>
 
       {/* This period vs previous — is the business trending up or down? */}
-      <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {t.comparison}
-          </h2>
-          <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.comparisonDesc}</p>
-        </div>
+      <Section title={t.comparison} desc={t.comparisonDesc}>
         <Card>
           <CardContent className="grid grid-cols-3 divide-x divide-neutral-100 p-0 dark:divide-neutral-800">
             <CompareCell
@@ -422,197 +401,7 @@ export default async function FinancialsPage({
             />
           </CardContent>
         </Card>
-      </section>
-
-      {/* Expense breakdown — where the tracked labor cost goes. */}
-      <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {t.expenseBreakdown}
-          </h2>
-          <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.expenseBreakdownDesc}</p>
-        </div>
-        <Card>
-          <CardContent className="p-4">
-            {fin.expenses.total === 0 ? (
-              <EmptyState icon={HandCoins} title={t.noExpenses} description={t.noExpensesDesc} />
-            ) : (
-              <div className="flex flex-col gap-3">
-                <BarList
-                  data={[
-                    { label: t.leadPay, value: fin.expenses.leadPay },
-                    { label: t.helperPay, value: fin.expenses.helperPay },
-                  ]}
-                  formatValue={money}
-                  labelWidth="9rem"
-                />
-                <div className="flex items-center justify-between border-t border-neutral-100 pt-3 dark:border-neutral-800">
-                  <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
-                    {t.totalExpenses}
-                  </span>
-                  <span className="text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                    {money(fin.expenses.total)}
-                  </span>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Labor cost by work type. */}
-      {fin.laborByType.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.laborByTypeTitle}
-            </h2>
-            <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.laborByTypeDesc}</p>
-          </div>
-          <Card>
-            <CardContent className="p-4">
-              <BarList
-                data={fin.laborByType.map((l) => ({ label: l.type, value: l.amount }))}
-                formatValue={money}
-                labelWidth="9rem"
-              />
-            </CardContent>
-          </Card>
-        </section>
-      )}
-
-      {/* Collections forecast — expected cash from unpaid invoices by due date. */}
-      <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {t.collectionsTitle}
-          </h2>
-          <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.collectionsDesc}</p>
-        </div>
-        <Card>
-          <CardContent className="grid grid-cols-2 divide-x divide-y divide-neutral-100 p-0 dark:divide-neutral-800 sm:grid-cols-4 sm:divide-y-0">
-            <PipelineTile label={t.colOverdue} href="/admin/invoices?status=overdue" cell={fin.collections.overdue} money={money} countLabel={docCount} tone="warning" />
-            <PipelineTile label={t.colNext7} href="/admin/invoices?status=SENT" cell={fin.collections.next7} money={money} countLabel={docCount} />
-            <PipelineTile label={t.colNext30} href="/admin/invoices?status=SENT" cell={fin.collections.next30} money={money} countLabel={docCount} />
-            <PipelineTile label={t.colLater} href="/admin/invoices?status=SENT" cell={fin.collections.later} money={money} countLabel={docCount} />
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Estimate conversion — how quotes raised this period are landing. */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.conversionTitle}
-            </h2>
-            <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.conversionDesc}</p>
-          </div>
-          <Link
-            href="/admin/estimates"
-            className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-          >
-            {dict.nav.estimates}
-          </Link>
-        </div>
-        {fin.estimateStats.total === 0 ? (
-          <Card>
-            <CardContent className="p-0">
-              <EmptyState icon={FileText} title={t.noEstimates} />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col gap-4 p-4">
-              <div className="flex items-center gap-4">
-                <div className="flex shrink-0 flex-col items-center">
-                  <span className="text-3xl font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
-                    {fin.estimateStats.winRate.toFixed(0)}%
-                  </span>
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{t.winRate}</span>
-                </div>
-                <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="text-neutral-500 dark:text-neutral-400">{t.wonLabel}</span>
-                    <span className="font-semibold tabular-nums text-success-text">{money(fin.estimateStats.wonAmount)}</span>
-                  </span>
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="text-neutral-500 dark:text-neutral-400">{t.lostLabel}</span>
-                    <span className="font-semibold tabular-nums text-neutral-500 dark:text-neutral-400">{money(fin.estimateStats.lostAmount)}</span>
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant="secondary">{t.estAccepted}: {fin.estimateStats.accepted}</Badge>
-                <Badge variant="secondary">{t.estDeclined}: {fin.estimateStats.declined}</Badge>
-                <Badge variant="secondary">{t.estPending}: {fin.estimateStats.pending}</Badge>
-                <Badge variant="secondary">{t.estDraft}: {fin.estimateStats.draft}</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </section>
-
-      {/* Quick actions — create + jump to every money section. */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          {t.quickActions}
-        </h2>
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-          <ActionTile icon={ReceiptText} label={dict.nav.newInvoice} href="/admin/invoices/new" />
-          <ActionTile icon={FilePlus2} label={dict.nav.newEstimate} href="/admin/estimates/new" />
-          <ActionTile icon={Receipt} label={dict.nav.invoices} href="/admin/invoices" />
-          <ActionTile icon={FileText} label={dict.nav.estimates} href="/admin/estimates" />
-          <ActionTile icon={Contact} label={dict.nav.customers} href="/admin/customers" />
-          <ActionTile icon={BarChart3} label={dict.nav.payReport} href="/admin/reports" />
-          <ActionTile icon={CreditCard} label={dict.settings.paymentsRow} href="/admin/payments" />
-        </div>
-      </section>
-
-      {/* Invoices pipeline — open money grouped so it's actionable. */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {t.pipelineInvoices}
-          </h2>
-          <Link
-            href="/admin/invoices"
-            className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-          >
-            {t.viewInvoices}
-          </Link>
-        </div>
-        <Card>
-          <CardContent className="grid grid-cols-3 divide-x divide-neutral-100 p-0 dark:divide-neutral-800">
-            <PipelineTile label={dict.invoices.statusDraft} href="/admin/invoices?status=DRAFT" cell={pipeline.invoicesDraft} money={money} countLabel={docCount} />
-            <PipelineTile label={t.awaiting} href="/admin/invoices?status=SENT" cell={pipeline.invoicesAwaiting} money={money} countLabel={docCount} />
-            <PipelineTile label={dict.invoices.chipOverdue} href="/admin/invoices?status=overdue" cell={pipeline.invoicesOverdue} money={money} countLabel={docCount} tone="warning" />
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Estimates pipeline. */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {t.pipelineEstimates}
-          </h2>
-          <Link
-            href="/admin/estimates"
-            className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-          >
-            {dict.nav.estimates}
-          </Link>
-        </div>
-        <Card>
-          <CardContent className="grid grid-cols-2 divide-x divide-y divide-neutral-100 p-0 dark:divide-neutral-800 sm:grid-cols-4 sm:divide-y-0">
-            <PipelineTile label={dict.estimates.statusDraft} href="/admin/estimates?status=DRAFT" cell={pipeline.estimatesDraft} money={money} countLabel={docCount} />
-            <PipelineTile label={dict.estimates.pending} href="/admin/estimates?status=SENT" cell={pipeline.estimatesPending} money={money} countLabel={docCount} />
-            <PipelineTile label={dict.estimates.statusAccepted} href="/admin/estimates?status=ACCEPTED" cell={pipeline.estimatesAccepted} money={money} countLabel={docCount} />
-            <PipelineTile label={dict.estimates.chipExpired} href="/admin/estimates?status=expired" cell={pipeline.estimatesExpired} money={money} countLabel={docCount} tone="warning" />
-          </CardContent>
-        </Card>
-      </section>
+      </Section>
 
       {/* Revenue trend */}
       {hasTrend ? (
@@ -625,14 +414,58 @@ export default async function FinancialsPage({
         </Card>
       )}
 
-      {/* Accounts receivable aging */}
-      <section className="flex flex-col gap-3">
-        <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {t.receivables}
-          </h2>
-          <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.receivablesDesc}</p>
+      {/* Quick actions — create + jump to every money section. */}
+      <Section title={t.quickActions}>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+          <ActionTile icon={ReceiptText} label={dict.nav.newInvoice} href="/admin/invoices/new" />
+          <ActionTile icon={FilePlus2} label={dict.nav.newEstimate} href="/admin/estimates/new" />
+          <ActionTile icon={Receipt} label={dict.nav.invoices} href="/admin/invoices" />
+          <ActionTile icon={FileText} label={dict.nav.estimates} href="/admin/estimates" />
+          <ActionTile icon={Contact} label={dict.nav.customers} href="/admin/customers" />
+          <ActionTile icon={BarChart3} label={dict.nav.payReport} href="/admin/reports" />
+          <ActionTile icon={CreditCard} label={dict.settings.paymentsRow} href="/admin/payments" />
         </div>
+      </Section>
+    </>
+  );
+
+  const collectionsPanel = (
+    <>
+      {/* Collections forecast — expected cash from unpaid invoices by due date. */}
+      <Section title={t.collectionsTitle} desc={t.collectionsDesc}>
+        <Card>
+          <CardContent className="grid grid-cols-2 divide-x divide-y divide-neutral-100 p-0 dark:divide-neutral-800 sm:grid-cols-4 sm:divide-y-0">
+            <PipelineTile label={t.colOverdue} href="/admin/invoices?status=overdue" cell={fin.collections.overdue} money={money} countLabel={docCount} tone="warning" />
+            <PipelineTile label={t.colNext7} href="/admin/invoices?status=SENT" cell={fin.collections.next7} money={money} countLabel={docCount} />
+            <PipelineTile label={t.colNext30} href="/admin/invoices?status=SENT" cell={fin.collections.next30} money={money} countLabel={docCount} />
+            <PipelineTile label={t.colLater} href="/admin/invoices?status=SENT" cell={fin.collections.later} money={money} countLabel={docCount} />
+          </CardContent>
+        </Card>
+      </Section>
+
+      {/* Invoices pipeline — open money grouped so it's actionable. */}
+      <Section
+        title={t.pipelineInvoices}
+        action={
+          <Link
+            href="/admin/invoices"
+            className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            {t.viewInvoices}
+          </Link>
+        }
+      >
+        <Card>
+          <CardContent className="grid grid-cols-3 divide-x divide-neutral-100 p-0 dark:divide-neutral-800">
+            <PipelineTile label={dict.invoices.statusDraft} href="/admin/invoices?status=DRAFT" cell={pipeline.invoicesDraft} money={money} countLabel={docCount} />
+            <PipelineTile label={t.awaiting} href="/admin/invoices?status=SENT" cell={pipeline.invoicesAwaiting} money={money} countLabel={docCount} />
+            <PipelineTile label={dict.invoices.chipOverdue} href="/admin/invoices?status=overdue" cell={pipeline.invoicesOverdue} money={money} countLabel={docCount} tone="warning" />
+          </CardContent>
+        </Card>
+      </Section>
+
+      {/* Accounts receivable aging */}
+      <Section title={t.receivables} desc={t.receivablesDesc}>
         {agingActive.length === 0 ? (
           <Card>
             <CardContent className="p-0">
@@ -697,52 +530,14 @@ export default async function FinancialsPage({
             </Card>
           ))
         )}
-      </section>
-
-      {/* Top customers */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.topCustomers}
-            </h2>
-            <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.topCustomersDesc}</p>
-          </div>
-          {fin.outstanding > 0 && (
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/admin/invoices?status=overdue">
-                <AlertTriangle className="h-4 w-4" />
-                {t.viewInvoices}
-              </Link>
-            </Button>
-          )}
-        </div>
-        <Card>
-          <CardContent className="p-4">
-            {fin.topCustomers.length === 0 ? (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.noCustomers}</p>
-            ) : (
-              <BarList
-                data={fin.topCustomers.map((c) => ({ label: c.name, value: c.total }))}
-                formatValue={money}
-                labelWidth="8rem"
-              />
-            )}
-          </CardContent>
-        </Card>
-      </section>
+      </Section>
 
       {/* Who owes you — top debtors by open balance. */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {t.topDebtors}
-            </h2>
-            <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.topDebtorsDesc}</p>
-          </div>
-          <CalendarClock className="h-4 w-4 text-neutral-300 dark:text-neutral-600" />
-        </div>
+      <Section
+        title={t.topDebtors}
+        desc={t.topDebtorsDesc}
+        action={<CalendarClock className="h-4 w-4 text-neutral-300 dark:text-neutral-600" />}
+      >
         <Card>
           <CardContent className="p-4">
             {fin.topDebtors.length === 0 ? (
@@ -756,7 +551,223 @@ export default async function FinancialsPage({
             )}
           </CardContent>
         </Card>
-      </section>
+      </Section>
+    </>
+  );
+
+  const salesPanel = (
+    <>
+      {/* Estimate conversion — how quotes raised this period are landing. */}
+      <Section
+        title={t.conversionTitle}
+        desc={t.conversionDesc}
+        action={
+          <Link
+            href="/admin/estimates"
+            className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            {dict.nav.estimates}
+          </Link>
+        }
+      >
+        {fin.estimateStats.total === 0 ? (
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState icon={FileText} title={t.noEstimates} />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col gap-4 p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex shrink-0 flex-col items-center">
+                  <span className="text-3xl font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
+                    {fin.estimateStats.winRate.toFixed(0)}%
+                  </span>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{t.winRate}</span>
+                </div>
+                <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-neutral-500 dark:text-neutral-400">{t.wonLabel}</span>
+                    <span className="font-semibold tabular-nums text-success-text">{money(fin.estimateStats.wonAmount)}</span>
+                  </span>
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-neutral-500 dark:text-neutral-400">{t.lostLabel}</span>
+                    <span className="font-semibold tabular-nums text-neutral-500 dark:text-neutral-400">{money(fin.estimateStats.lostAmount)}</span>
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge variant="secondary">{t.estAccepted}: {fin.estimateStats.accepted}</Badge>
+                <Badge variant="secondary">{t.estDeclined}: {fin.estimateStats.declined}</Badge>
+                <Badge variant="secondary">{t.estPending}: {fin.estimateStats.pending}</Badge>
+                <Badge variant="secondary">{t.estDraft}: {fin.estimateStats.draft}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </Section>
+
+      {/* Estimates pipeline. */}
+      <Section
+        title={t.pipelineEstimates}
+        action={
+          <Link
+            href="/admin/estimates"
+            className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            {dict.nav.estimates}
+          </Link>
+        }
+      >
+        <Card>
+          <CardContent className="grid grid-cols-2 divide-x divide-y divide-neutral-100 p-0 dark:divide-neutral-800 sm:grid-cols-4 sm:divide-y-0">
+            <PipelineTile label={dict.estimates.statusDraft} href="/admin/estimates?status=DRAFT" cell={pipeline.estimatesDraft} money={money} countLabel={docCount} />
+            <PipelineTile label={dict.estimates.pending} href="/admin/estimates?status=SENT" cell={pipeline.estimatesPending} money={money} countLabel={docCount} />
+            <PipelineTile label={dict.estimates.statusAccepted} href="/admin/estimates?status=ACCEPTED" cell={pipeline.estimatesAccepted} money={money} countLabel={docCount} />
+            <PipelineTile label={dict.estimates.chipExpired} href="/admin/estimates?status=expired" cell={pipeline.estimatesExpired} money={money} countLabel={docCount} tone="warning" />
+          </CardContent>
+        </Card>
+      </Section>
+
+      {/* Top customers */}
+      <Section
+        title={t.topCustomers}
+        desc={t.topCustomersDesc}
+        action={
+          fin.outstanding > 0 ? (
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/admin/invoices?status=overdue">
+                <AlertTriangle className="h-4 w-4" />
+                {t.viewInvoices}
+              </Link>
+            </Button>
+          ) : undefined
+        }
+      >
+        <Card>
+          <CardContent className="p-4">
+            {fin.topCustomers.length === 0 ? (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.noCustomers}</p>
+            ) : (
+              <BarList
+                data={fin.topCustomers.map((c) => ({ label: c.name, value: c.total }))}
+                formatValue={money}
+                labelWidth="8rem"
+              />
+            )}
+          </CardContent>
+        </Card>
+      </Section>
+    </>
+  );
+
+  const costsPanel = (
+    <>
+      {/* Expense breakdown — where the tracked labor cost goes. */}
+      <Section title={t.expenseBreakdown} desc={t.expenseBreakdownDesc}>
+        <Card>
+          <CardContent className="p-4">
+            {fin.expenses.total === 0 ? (
+              <EmptyState icon={HandCoins} title={t.noExpenses} description={t.noExpensesDesc} />
+            ) : (
+              <div className="flex flex-col gap-3">
+                <BarList
+                  data={[
+                    { label: t.leadPay, value: fin.expenses.leadPay },
+                    { label: t.helperPay, value: fin.expenses.helperPay },
+                  ]}
+                  formatValue={money}
+                  labelWidth="9rem"
+                />
+                <div className="flex items-center justify-between border-t border-neutral-100 pt-3 dark:border-neutral-800">
+                  <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+                    {t.totalExpenses}
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                    {money(fin.expenses.total)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </Section>
+
+      {/* Labor cost by work type. */}
+      {fin.laborByType.length > 0 && (
+        <Section title={t.laborByTypeTitle} desc={t.laborByTypeDesc}>
+          <Card>
+            <CardContent className="p-4">
+              <BarList
+                data={fin.laborByType.map((l) => ({ label: l.type, value: l.amount }))}
+                formatValue={money}
+                labelWidth="9rem"
+              />
+            </CardContent>
+          </Card>
+        </Section>
+      )}
+    </>
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SectionTabs family="money" />
+      <PageHeader
+        title={t.title}
+        action={
+          <Button asChild variant="outline" size="sm">
+            <a href={`/admin/financials/export?period=${period}`}>
+              <Sheet className="h-4 w-4" />
+              <span className="hidden sm:inline">{t.exportCsv}</span>
+            </a>
+          </Button>
+        }
+      />
+
+      {/* Period selector */}
+      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {FINANCIAL_PERIODS.map((p) => (
+          <FilterChip key={p} href={`/admin/financials?period=${p}`} active={p === period}>
+            {periodLabel[p]}
+          </FilterChip>
+        ))}
+      </div>
+
+      {/* Action alerts — persistent above the tabs, since they're urgent. */}
+      {alerts.length > 0 ? (
+        <Card className="bg-warning-soft">
+          <CardContent className="flex flex-col divide-y divide-warning-text/15 p-0">
+            {alerts.map((a) => (
+              <Link
+                key={a.key}
+                href={a.href}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-warning-text/5"
+              >
+                <AlertTriangle className="h-4 w-4 shrink-0 text-warning-text" />
+                <span className="min-w-0 flex-1 font-medium text-warning-text">{a.text}</span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-warning-text/70" />
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-success-text" />
+          {t.allClear}
+        </div>
+      )}
+
+      <FinancialsTabs
+        ariaLabel={t.title}
+        panels={[
+          { key: "summary", label: t.tabSummary, icon: <Wallet className="h-4 w-4" />, content: summaryPanel },
+          { key: "collections", label: t.tabCollections, icon: <PiggyBank className="h-4 w-4" />, content: collectionsPanel },
+          { key: "sales", label: t.tabSales, icon: <FileText className="h-4 w-4" />, content: salesPanel },
+          { key: "costs", label: t.tabCosts, icon: <HandCoins className="h-4 w-4" />, content: costsPanel },
+        ]}
+      />
     </div>
   );
 }

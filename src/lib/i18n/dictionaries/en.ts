@@ -1144,6 +1144,11 @@ export const en = {
     alertEstimates: "{n} estimate awaiting a reply",
     alertEstimatesMany: "{n} estimates awaiting a reply",
     allClear: "All clear — nothing needs attention",
+    // In-page section tabs
+    tabSummary: "Summary",
+    tabCollections: "Collections",
+    tabSales: "Sales",
+    tabCosts: "Costs",
   },
   reports: {
     title: "Pay Report",
