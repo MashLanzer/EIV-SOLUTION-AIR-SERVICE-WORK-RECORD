@@ -1,8 +1,20 @@
-import { CalendarArrowDown, CalendarDays, TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  CalendarArrowDown,
+  CalendarClock,
+  CalendarDays,
+  Clock,
+  MapPin,
+  Navigation,
+  TriangleAlert,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
+import { formatTimeRange } from "@/lib/format";
 import { WorkerJobCard, type WorkerJobView } from "@/components/schedule/WorkerJobCard";
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import {
@@ -127,6 +139,33 @@ export default async function WorkerSchedulePage({
     }
   }
 
+  // Selected-day completion progress (how many of the day's visits are done).
+  const doneCount = selectedJobs.filter((j) => j.status === "DONE").length;
+
+  // The single nearest still-actionable visit across the fetched window, so the
+  // worker sees where they're headed next no matter which day they're viewing.
+  const nextVisit =
+    rows
+      .filter((r) => r.status !== "DONE" && r.day >= todayKey)
+      .sort(
+        (a, b) =>
+          a.day.localeCompare(b.day) ||
+          (a.startTime ?? "99:99").localeCompare(b.startTime ?? "99:99")
+      )[0] ?? null;
+  const nextVisitAddress = nextVisit
+    ? nextVisit.projectAddress || nextVisit.customerAddress
+    : null;
+  const nextVisitDateLabel = nextVisit
+    ? nextVisit.day === todayKey
+      ? t.today
+      : new Intl.DateTimeFormat(intlLocale, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          timeZone: "UTC",
+        }).format(new Date(`${nextVisit.day}T00:00:00.000Z`))
+    : null;
+
   const prevMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth - 1, 1));
   const nextMonthKey = dayKey(utcDay(selected.getUTCFullYear(), selectedMonth + 1, 1));
 
@@ -152,25 +191,70 @@ export default async function WorkerSchedulePage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-            {t.title}
-          </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t.workerSubtitle}
-          </p>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          {/* Download endpoint (route handler), not a page - a hard <a> nav
-              lets the browser handle the .ics download; Link would break it. */}
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/records/schedule/ics">
-            <CalendarArrowDown className="h-4 w-4" />
-            <span className="hidden sm:inline">{t.addToCalendar}</span>
-          </a>
-        </Button>
-      </div>
+      <PageHeader
+        title={t.title}
+        description={t.workerSubtitle}
+        action={
+          <Button asChild variant="outline" size="sm">
+            {/* Download endpoint (route handler), not a page - a hard <a> nav
+                lets the browser handle the .ics download; Link would break it. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/records/schedule/ics">
+              <CalendarArrowDown className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">{t.addToCalendar}</span>
+            </a>
+          </Button>
+        }
+      />
+
+      {nextVisit && (
+        <Card className="border-accent/30 bg-accent-soft">
+          <CardContent className="flex flex-col gap-2 p-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-accent-text">
+              <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+              {t.nextVisit}
+            </div>
+            <div className="flex items-baseline gap-2 text-sm font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
+              <span>{nextVisitDateLabel}</span>
+              <span className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400">
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                {formatTimeRange(nextVisit.startTime, nextVisit.endTime, use24, t.allDay)}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-neutral-900 dark:text-neutral-100">
+                {nextVisit.title || t.untitled}
+              </p>
+              {nextVisit.customerName && (
+                <p className="flex items-center gap-1 truncate text-sm text-neutral-600 dark:text-neutral-300">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
+                  {nextVisit.customerName}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/records/schedule?date=${nextVisit.day}`}>
+                  {t.viewDay}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              </Button>
+              {nextVisitAddress && (
+                <Button asChild size="sm" variant="ghost">
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextVisitAddress)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
+                    {t.directions}
+                  </a>
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <ScheduleMonthCalendar
         monthLabel={monthLabel}
@@ -204,9 +288,18 @@ export default async function WorkerSchedulePage({
       )}
 
       <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold capitalize text-neutral-900 dark:text-neutral-100">
-          {selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
-        </h2>
+        <div className="flex items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold capitalize text-neutral-900 dark:text-neutral-100">
+            {selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
+          </h2>
+          {selectedJobs.length > 0 && (
+            <span className="shrink-0 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
+              {t.dayProgress
+                .replace("{done}", String(doneCount))
+                .replace("{total}", String(selectedJobs.length))}
+            </span>
+          )}
+        </div>
         {selectedJobs.length === 0 ? (
           <Card>
             <CardContent className="p-0">

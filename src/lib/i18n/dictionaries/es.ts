@@ -1420,6 +1420,9 @@ export const es: Dictionary = {
     morningDismiss: "Entendido",
     // Worker view
     workerSubtitle: "Tus próximas visitas. Abre una para iniciar su registro.",
+    nextVisit: "Próxima visita",
+    viewDay: "Ver día",
+    dayProgress: "{done} de {total} hechas",
     directions: "Cómo llegar",
     startRecord: "Iniciar registro",
     noUpcoming: "No hay trabajos próximos",

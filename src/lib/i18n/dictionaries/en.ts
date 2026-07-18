@@ -1426,6 +1426,9 @@ export const en = {
     morningDismiss: "Got it",
     // Worker view
     workerSubtitle: "Your upcoming visits. Open one to start its record.",
+    nextVisit: "Next visit",
+    viewDay: "View day",
+    dayProgress: "{done} of {total} done",
     directions: "Directions",
     startRecord: "Start record",
     noUpcoming: "No upcoming jobs",
