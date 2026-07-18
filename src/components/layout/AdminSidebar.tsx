@@ -61,11 +61,13 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
 function appTabItems(n: Dictionary["nav"]): TabItem[] {
   return [
   { href: "/admin", label: n.dashboard, shortLabel: n.home, icon: LayoutDashboard, exact: true },
-  { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false, alsoActiveFor: ["/admin/teams"] },
-  // Schedule takes the old Photos slot; Photos takes the old Records slot;
-  // Records leaves the bar and is reached from the dashboard / center menu.
+  // Projects is the entry to the whole "structure" cluster, so it stays lit on
+  // its sibling sub-nav pages (Teams / Workers / Customers / Photos).
+  { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false, alsoActiveFor: ["/admin/teams", "/admin/workers", "/admin/customers", "/admin/photos"] },
   { href: "/admin/schedule", label: n.schedule, shortLabel: n.schedule, icon: CalendarDays, exact: false },
-  { href: "/admin/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
+  // Financials is the entry to the "money" cluster; Photos now lives under the
+  // Projects sub-nav instead of holding a tab of its own.
+  { href: "/admin/financials", label: n.financials, shortLabel: n.financials, icon: Wallet, exact: false, alsoActiveFor: ["/admin/estimates", "/admin/invoices", "/admin/payments", "/admin/reports"] },
   ];
 }
 

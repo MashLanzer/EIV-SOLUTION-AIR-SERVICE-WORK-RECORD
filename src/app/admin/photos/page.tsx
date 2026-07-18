@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
 import { PhotoFilters, type PhotoRange } from "@/components/photos/PhotoFilters";
 import { PhotoMapButton } from "@/components/photos/PhotoMapButton";
@@ -180,6 +181,7 @@ export default async function AdminPhotosPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="structure" />
       <PageHeader
         title={t.title}
         action={
