@@ -277,6 +277,15 @@ export default async function FinancialsPage({
   const goalClamped = Math.max(0, Math.min(100, goalPct));
   const goalRemaining = fin.goal.target != null ? Math.max(0, fin.goal.target - fin.revenue) : 0;
 
+  // Collections health: how much of what's owed is already overdue, and how
+  // much is due to land in the next 30 days.
+  const overdueAmount = fin.collections.overdue.amount;
+  const pctOverdue = fin.outstanding > 0 ? (overdueAmount / fin.outstanding) * 100 : 0;
+  const expected30 = fin.collections.next7.amount + fin.collections.next30.amount;
+
+  // Estimate funnel stages (created → sent → accepted → invoiced).
+  const funnelSent = fin.estimateStats.total - fin.estimateStats.draft;
+
   // ---- Tab panels ------------------------------------------------------
 
   const summaryPanel = (
@@ -407,6 +416,15 @@ export default async function FinancialsPage({
 
   const collectionsPanel = (
     <>
+      {/* Collections health — a snapshot of what's owed and how at-risk it is. */}
+      {fin.outstanding > 0 && (
+        <MetricCard label={t.collectionsHealthTitle} cols="grid-cols-3">
+          <Metric value={moneyShort(fin.outstanding)} label={t.outstandingLabel} />
+          <Metric value={`${pctOverdue.toFixed(0)}%`} label={t.pctOverdueLabel} />
+          <Metric value={moneyShort(expected30)} label={t.expected30Label} />
+        </MetricCard>
+      )}
+
       {/* Collections forecast — expected cash from unpaid invoices by due date. */}
       <Section title={t.collectionsTitle} desc={t.collectionsDesc}>
         <Card>
@@ -604,6 +622,25 @@ export default async function FinancialsPage({
           </Card>
         )}
       </Section>
+
+      {/* Estimate funnel — created → sent → accepted → invoiced (counts). */}
+      {fin.estimateStats.total > 0 && (
+        <Section title={t.funnelTitle} desc={t.funnelDesc}>
+          <Card>
+            <CardContent className="p-4">
+              <BarList
+                data={[
+                  { label: t.funnelCreated, value: fin.estimateStats.total },
+                  { label: t.funnelSent, value: funnelSent },
+                  { label: t.funnelAccepted, value: fin.estimateStats.accepted },
+                  { label: t.funnelInvoiced, value: fin.estimateStats.converted },
+                ]}
+                labelWidth="7rem"
+              />
+            </CardContent>
+          </Card>
+        </Section>
+      )}
 
       {/* Estimates pipeline. */}
       <Section

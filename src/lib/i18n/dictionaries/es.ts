@@ -1111,6 +1111,11 @@ export const es: Dictionary = {
     colNext7: "Próx. 7 días",
     colNext30: "Próx. 30 días",
     colLater: "Después",
+    // Salud de cobros
+    collectionsHealthTitle: "Salud de cobros",
+    pctOverdueLabel: "Vencido",
+    expected30Label: "Vence en 30 días",
+    outstandingLabel: "Pendiente",
     // Conversión de estimados
     conversionTitle: "Conversión de estimados",
     conversionDesc: "Cómo van los estimados emitidos este período.",
@@ -1127,11 +1132,14 @@ export const es: Dictionary = {
     avgDeal: "Ticket promedio",
     daysToClose: "Días para cerrar",
     invoicedShort: "Facturados",
-    salesFunnelTitle: "Valor de estimados",
-    salesWon: "Ganado",
-    salesLost: "Perdido",
-    salesOpen: "Abierto",
     realizedRevenue: "{value} ya facturado",
+    // Embudo de estimados
+    funnelTitle: "Embudo de estimados",
+    funnelDesc: "Del estimado a la factura este período.",
+    funnelCreated: "Creados",
+    funnelSent: "Enviados",
+    funnelAccepted: "Aceptados",
+    funnelInvoiced: "Facturados",
     // Métricas de costo
     costMetricsTitle: "Eficiencia de costo",
     laborRatio: "Mano de obra / ingresos",

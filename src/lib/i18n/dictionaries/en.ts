@@ -1117,6 +1117,11 @@ export const en = {
     colNext7: "Next 7 days",
     colNext30: "Next 30 days",
     colLater: "Later",
+    // Collections health
+    collectionsHealthTitle: "Collections health",
+    pctOverdueLabel: "Overdue",
+    expected30Label: "Due in 30 days",
+    outstandingLabel: "Outstanding",
     // Estimate conversion
     conversionTitle: "Estimate conversion",
     conversionDesc: "How quotes raised this period are landing.",
@@ -1133,11 +1138,14 @@ export const en = {
     avgDeal: "Avg. deal",
     daysToClose: "Days to close",
     invoicedShort: "Invoiced",
-    salesFunnelTitle: "Quote value",
-    salesWon: "Won",
-    salesLost: "Lost",
-    salesOpen: "Open",
     realizedRevenue: "{value} already invoiced",
+    // Estimate funnel
+    funnelTitle: "Estimate funnel",
+    funnelDesc: "From quote to invoice this period.",
+    funnelCreated: "Created",
+    funnelSent: "Sent",
+    funnelAccepted: "Accepted",
+    funnelInvoiced: "Invoiced",
     // Cost metrics
     costMetricsTitle: "Cost efficiency",
     laborRatio: "Labor / revenue",
