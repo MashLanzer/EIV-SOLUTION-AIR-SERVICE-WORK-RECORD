@@ -1453,6 +1453,8 @@ export const es: Dictionary = {
     memberCountMany: "{n} miembros",
     projectCountOne: "{n} proyecto",
     projectCountMany: "{n} proyectos",
+    activeProjects: "Proyectos activos",
+    unassigned: "Sin equipo",
     // New page
     newTeamTitle: "Nuevo equipo",
     newTeamDesc:

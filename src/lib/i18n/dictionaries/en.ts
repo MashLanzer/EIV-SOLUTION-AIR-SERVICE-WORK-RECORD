@@ -1459,6 +1459,8 @@ export const en = {
     memberCountMany: "{n} members",
     projectCountOne: "{n} project",
     projectCountMany: "{n} projects",
+    activeProjects: "Active projects",
+    unassigned: "Not on a team",
     // New page
     newTeamTitle: "New team",
     newTeamDesc:

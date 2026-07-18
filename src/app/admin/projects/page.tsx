@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { NewProjectButton } from "@/components/projects/NewProjectButton";
 import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
@@ -224,14 +225,11 @@ export default async function AdminProjectsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div className="min-w-0">
-          <SectionTabs family="structure" />
-        </div>
-        <div className="shrink-0">
-          <NewProjectButton teams={teams} customers={customers} />
-        </div>
-      </div>
+      <SectionTabs family="structure" />
+      <PageHeader
+        title={dict.nav.projects}
+        action={<NewProjectButton teams={teams} customers={customers} />}
+      />
 
       {/* Search (name/address) + team filter as a GET form, matching the
           Customers/Workers filter pattern. */}
