@@ -159,7 +159,7 @@ export default async function AdminCustomersPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionTabs family="money" />
+      <SectionTabs family="structure" />
       <PageHeader
         title={t.title}
         action={

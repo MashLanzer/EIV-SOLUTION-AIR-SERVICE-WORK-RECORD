@@ -29,14 +29,12 @@ const FAMILIES: Record<
     { href: "/admin/invoices", label: (d) => d.nav.invoices },
     { href: "/admin/payments", label: (d) => d.nav.payments },
     { href: "/admin/reports", label: (d) => d.nav.payReport },
-    { href: "/admin/customers", label: (d) => d.nav.customers },
   ],
   structure: [
     { href: "/admin/projects", label: (d) => d.nav.projects },
     { href: "/admin/teams", label: (d) => d.teams.tabTeams },
     { href: "/admin/workers", label: (d) => d.nav.workers },
-    { href: "/admin/checklists", label: (d) => d.nav.checklistTemplates },
-    { href: "/admin/roles", label: (d) => d.nav.roles },
+    { href: "/admin/customers", label: (d) => d.nav.customers },
   ],
 };
 

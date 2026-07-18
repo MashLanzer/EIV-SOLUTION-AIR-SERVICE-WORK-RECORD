@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { SectionTabs } from "@/components/layout/SectionTabs";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { EditRoleSheet, type RolePosition } from "@/components/roles/EditRoleSheet";
 import { NewRoleButton } from "@/components/roles/NewRoleButton";
@@ -76,7 +75,6 @@ export default async function AdminRolesPage({
   return (
     <div className="flex flex-col gap-4">
       {saved && <SuccessToast message={t.saveRole} aboveMobileNav />}
-      <SectionTabs family="structure" />
       <PageHeader title={t.title} description={t.subtitle} action={<NewRoleButton />} />
       {section(t.officeRoles, t.officeHint, office)}
       {section(t.fieldRoles, t.fieldHint, field)}

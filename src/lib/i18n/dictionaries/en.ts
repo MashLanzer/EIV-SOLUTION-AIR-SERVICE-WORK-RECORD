@@ -1781,7 +1781,6 @@ export const en = {
   },
   settings: {
     title: "Settings",
-    workspace: "Workspace",
     resetToast: "All history was reset",
     company: {
       section: "Company",

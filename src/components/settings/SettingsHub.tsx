@@ -23,6 +23,7 @@ import {
   Hash,
   History,
   Inbox,
+  ListChecks,
   Lock,
   MapPin,
   Palette,
@@ -228,6 +229,7 @@ export function SettingsHub({
               <SettingsSection>
                 <SettingsRow icon={Tag} label={s.workRecords.workTypes} sublabel={s.workRecords.workTypesHint} href="/admin/settings/work-types" />
                 <SettingsRow icon={Wrench} label={s.skillsCatalog.title} sublabel={s.skillsCatalog.rowHint} href="/admin/settings/skills" />
+                <SettingsRow icon={ListChecks} label={t.checklists.title} sublabel={t.checklists.subtitle} href="/admin/checklists" />
               </SettingsSection>
             </>
           )}
