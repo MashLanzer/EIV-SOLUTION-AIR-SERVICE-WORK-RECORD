@@ -12,18 +12,21 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { StatTile } from "@/components/ui/stat-tile";
 import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { RecordCard } from "@/components/records/RecordCard";
+import { ResumeDraftCard } from "@/components/records/ResumeDraftCard";
 import { MorningBriefDialog } from "@/components/schedule/MorningBriefDialog";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 import { addUtcDays, dayKey, getScheduledJobs, startOfUtcDay } from "@/lib/schedule";
+import { workMinutes } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import type { RecordStatus } from "@prisma/client";
 
@@ -32,14 +35,22 @@ const WORKER_STATUSES: RecordStatus[] = ["SUBMITTED", "APPROVED", "NEEDS_CHANGES
 export default async function RecordsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; saved?: string; page?: string; status?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    saved?: string;
+    page?: string;
+    status?: string;
+    sort?: string;
+  }>;
 }) {
   const session = await requireAuth();
-  const { q, saved, page: rawPage, status: rawStatus } = await searchParams;
+  const { q, saved, page: rawPage, status: rawStatus, sort: rawSort } = await searchParams;
   const query = q?.trim() || undefined;
   const status = WORKER_STATUSES.includes(rawStatus as RecordStatus)
     ? (rawStatus as RecordStatus)
     : undefined;
+  // Oldest-first is opt-in; newest-first stays the default view.
+  const sort = rawSort === "oldest" ? "oldest" : "newest";
   const page = parsePage(rawPage);
 
   const where = {
@@ -79,39 +90,57 @@ export default async function RecordsPage({
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
 
-  const [total, records, monthTotal, approvedThisMonth, needsChanges, statusCounts] =
-    await Promise.all([
-      prisma.workRecord.count({ where }),
-      prisma.workRecord.findMany({
-        where,
-        // Keep signature/photo payloads out of the list query
-        select: {
-          id: true,
-          jobNumber: true,
-          date: true,
-          customerName: true,
-          typeOfWork: true,
-          status: true,
-          reviewNote: true,
-          arrivalTime: true,
-          departureTime: true,
-          _count: { select: { photos: true } },
-        },
-        orderBy: { date: "desc" },
-        ...paginationArgs(page),
-      }),
-      prisma.workRecord.count({ where: { ...mine, date: { gte: monthStart } } }),
-      prisma.workRecord.count({
-        where: { ...mine, status: "APPROVED", date: { gte: monthStart } },
-      }),
-      prisma.workRecord.count({ where: { ...mine, status: "NEEDS_CHANGES" } }),
-      prisma.workRecord.groupBy({
-        by: ["status"],
-        where: whereNoStatus,
-        _count: { _all: true },
-      }),
-    ]);
+  const [
+    total,
+    records,
+    monthTotal,
+    approvedThisMonth,
+    needsChanges,
+    statusCounts,
+    monthTimes,
+  ] = await Promise.all([
+    prisma.workRecord.count({ where }),
+    prisma.workRecord.findMany({
+      where,
+      // Keep signature/photo payloads out of the list query
+      select: {
+        id: true,
+        jobNumber: true,
+        date: true,
+        customerName: true,
+        typeOfWork: true,
+        status: true,
+        reviewNote: true,
+        arrivalTime: true,
+        departureTime: true,
+        _count: { select: { photos: true } },
+      },
+      orderBy: { date: sort === "oldest" ? "asc" : "desc" },
+      ...paginationArgs(page),
+    }),
+    prisma.workRecord.count({ where: { ...mine, date: { gte: monthStart } } }),
+    prisma.workRecord.count({
+      where: { ...mine, status: "APPROVED", date: { gte: monthStart } },
+    }),
+    prisma.workRecord.count({ where: { ...mine, status: "NEEDS_CHANGES" } }),
+    prisma.workRecord.groupBy({
+      by: ["status"],
+      where: whereNoStatus,
+      _count: { _all: true },
+    }),
+    // Just the times for this month's records, to total the hours on site.
+    prisma.workRecord.findMany({
+      where: { ...mine, date: { gte: monthStart } },
+      select: { arrivalTime: true, departureTime: true },
+    }),
+  ]);
   const pages = pageCount(total);
+  // Hours logged this calendar month, rounded to whole hours for the sub-line.
+  const monthMinutes = monthTimes.reduce(
+    (sum, r) => sum + workMinutes(r.arrivalTime, r.departureTime),
+    0
+  );
+  const monthHours = Math.round(monthMinutes / 60);
   const countByStatus = new Map<RecordStatus, number>(
     statusCounts.map((s) => [s.status, s._count._all])
   );
@@ -150,9 +179,23 @@ export default async function RecordsPage({
     const p = new URLSearchParams();
     if (query) p.set("q", query);
     if (next) p.set("status", next);
+    if (sort === "oldest") p.set("sort", sort);
     const qs = p.toString();
     return qs ? `/records?${qs}` : "/records";
   }
+  // Sort toggle keeps the active search + status filter; resets to page 1.
+  function sortHref(next: "newest" | "oldest") {
+    const p = new URLSearchParams();
+    if (query) p.set("q", query);
+    if (status) p.set("status", status);
+    if (next === "oldest") p.set("sort", next);
+    const qs = p.toString();
+    return qs ? `/records?${qs}` : "/records";
+  }
+  const sortChips: { label: string; value: "newest" | "oldest" }[] = [
+    { label: t.sortNewest, value: "newest" },
+    { label: t.sortOldest, value: "oldest" },
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -168,40 +211,59 @@ export default async function RecordsPage({
         </>
       )}
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.myRecords}</h1>
-        <Button asChild className="hidden sm:inline-flex">
-          <Link href="/records/new">
-            <Plus className="h-4 w-4" />
-            {t.newRecord}
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title={t.myRecords}
+        action={
+          <Button asChild className="hidden sm:inline-flex">
+            <Link href="/records/new">
+              <Plus className="h-4 w-4" />
+              {t.newRecord}
+            </Link>
+          </Button>
+        }
+      />
+
+      {showSummary && <ResumeDraftCard draftKey={`new-record:${session.user.id}`} />}
 
       {showSummary && (
         <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
-          <StatTile icon={ClipboardList} value={monthTotal} label={t.thisMonth} />
-          <StatTile icon={CheckCircle2} value={approvedThisMonth} label={t.approved} tone="success" />
+          <StatTile
+            icon={ClipboardList}
+            value={monthTotal}
+            label={t.thisMonth}
+            sub={monthHours > 0 ? t.hoursOnSite.replace("{h}", String(monthHours)) : undefined}
+          />
+          <StatTile
+            icon={CheckCircle2}
+            value={approvedThisMonth}
+            label={t.approved}
+            tone="success"
+            href="/records?status=APPROVED"
+          />
           <StatTile
             icon={AlertTriangle}
             value={needsChanges}
             label={t.toFix}
             tone={needsChanges > 0 ? "warning" : "default"}
+            href={needsChanges > 0 ? "/records?status=NEEDS_CHANGES" : undefined}
           />
         </div>
       )}
 
       {showSummary && needsChanges > 0 && (
-        <Alert variant="warning">
-          {(needsChanges === 1 ? t.needsBannerOne : t.needsBannerMany).replace(
-            "{n}",
-            String(needsChanges)
-          )}
-        </Alert>
+        <Link href="/records?status=NEEDS_CHANGES" className="block">
+          <Alert variant="warning" className="transition-opacity hover:opacity-90">
+            {(needsChanges === 1 ? t.needsBannerOne : t.needsBannerMany).replace(
+              "{n}",
+              String(needsChanges)
+            )}
+          </Alert>
+        </Link>
       )}
 
       <form method="get" className="relative">
         {status && <input type="hidden" name="status" value={status} />}
+        {sort === "oldest" && <input type="hidden" name="sort" value={sort} />}
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
         <Input
           type="search"
@@ -224,6 +286,21 @@ export default async function RecordsPage({
           );
         })}
       </div>
+
+      {records.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">{t.sortLabel}</span>
+          {sortChips.map((chip) => (
+            <FilterChip
+              key={chip.value}
+              href={sortHref(chip.value)}
+              active={sort === chip.value}
+            >
+              {chip.label}
+            </FilterChip>
+          ))}
+        </div>
+      )}
 
       {records.length === 0 ? (
         query || status ? (
@@ -267,7 +344,7 @@ export default async function RecordsPage({
             page={page}
             pageCount={pages}
             basePath="/records"
-            params={{ q: query, status }}
+            params={{ q: query, status, sort: sort === "oldest" ? sort : undefined }}
           />
         </>
       )}

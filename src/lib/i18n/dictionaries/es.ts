@@ -223,6 +223,15 @@ export const es: Dictionary = {
     noRecordsYetDesc: "Los registros que envíes aparecerán aquí.",
     needsBannerOne: "1 registro necesita cambios. Corrígelo y reenvíalo abajo.",
     needsBannerMany: "{n} registros necesitan cambios. Corrígelos y reenvíalos abajo.",
+    // Resume-draft banner (home)
+    resumeDraftTitle: "Continúa tu borrador",
+    resumeDraftDesc: "Tienes un registro de trabajo sin guardar.",
+    resume: "Continuar",
+    // This-month hours sub-line + sort control
+    hoursOnSite: "{h}h en obra",
+    sortLabel: "Orden",
+    sortNewest: "Recientes",
+    sortOldest: "Antiguos",
     // Field labels + detail sections (shared by the card, detail and form).
     jobNumber: "Job #",
     date: "Fecha",

@@ -28,14 +28,22 @@ export function formatTimeRange(
   return allDay;
 }
 
+// Minutes between two "HH:MM" times on the same day. Returns 0 when either is
+// missing/unparseable or the span is non-positive (overnight/typo) — the safe
+// value for summing across many records.
+export function workMinutes(arrival: string, departure: string): number {
+  if (!arrival || !departure) return 0;
+  const [ah, am] = arrival.split(":").map(Number);
+  const [dh, dm] = departure.split(":").map(Number);
+  if ([ah, am, dh, dm].some((n) => Number.isNaN(n))) return 0;
+  const mins = dh * 60 + dm - (ah * 60 + am);
+  return mins > 0 ? mins : 0;
+}
+
 // "6h 30m" between two "HH:MM" times on the same day. Returns null when either
 // is missing/unparseable or the span is non-positive (overnight/typo).
 export function workDuration(arrival: string, departure: string): string | null {
-  if (!arrival || !departure) return null;
-  const [ah, am] = arrival.split(":").map(Number);
-  const [dh, dm] = departure.split(":").map(Number);
-  if ([ah, am, dh, dm].some((n) => Number.isNaN(n))) return null;
-  const mins = dh * 60 + dm - (ah * 60 + am);
+  const mins = workMinutes(arrival, departure);
   if (mins <= 0) return null;
   const h = Math.floor(mins / 60);
   const m = mins % 60;

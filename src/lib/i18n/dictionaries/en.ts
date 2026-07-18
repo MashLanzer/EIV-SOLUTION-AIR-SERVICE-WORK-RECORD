@@ -223,6 +223,15 @@ export const en = {
     noRecordsYetDesc: "Work records you submit will show up here.",
     needsBannerOne: "1 record needs changes. Fix and resubmit it below.",
     needsBannerMany: "{n} records need changes. Fix and resubmit them below.",
+    // Resume-draft banner (home)
+    resumeDraftTitle: "Continue your draft",
+    resumeDraftDesc: "You have an unsaved work record.",
+    resume: "Resume",
+    // This-month hours sub-line + sort control
+    hoursOnSite: "{h}h on site",
+    sortLabel: "Sort",
+    sortNewest: "Newest",
+    sortOldest: "Oldest",
     // Field labels + detail sections (shared by the card, detail and form).
     jobNumber: "Job #",
     date: "Date",

@@ -44,7 +44,7 @@ import {
   type SignaturePadHandle,
 } from "@/components/forms/SignaturePad";
 import { TypeOfWorkField } from "@/components/forms/TypeOfWorkField";
-import { clearDraft, getDraft, setDraft } from "@/lib/draftStore";
+import { clearDraft, draftHasContent, getDraft, setDraft } from "@/lib/draftStore";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n/LocaleProvider";
 import type { WorkTypeGroup } from "@/lib/workTypes";
@@ -189,25 +189,6 @@ function durationLabel(a: string, d: string): string | null {
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return h > 0 ? `${h}h${m ? ` ${m}m` : ""}` : `${m}m`;
-}
-
-// A draft is worth restoring only if the worker actually entered something
-// beyond the auto-filled date.
-function draftHasContent(d: Partial<WorkRecordFormValues>): boolean {
-  return Boolean(
-    d.jobNumber ||
-      d.leadInstallerName ||
-      d.helperName ||
-      d.customerName ||
-      d.customerAddress ||
-      d.typeOfWork ||
-      d.workPerformedNotes ||
-      d.leadInstallerPay ||
-      d.helperPay ||
-      d.customerSignature ||
-      d.installerSignature ||
-      (d.photos && d.photos.length > 0)
-  );
 }
 
 export function WorkRecordForm({

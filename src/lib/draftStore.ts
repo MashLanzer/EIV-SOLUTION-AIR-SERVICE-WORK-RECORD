@@ -58,3 +58,42 @@ export async function clearDraft(key: string): Promise<void> {
     // best-effort
   }
 }
+
+// The content-bearing fields of a new-record draft. Every key is optional and
+// loosely typed so both the form's value object and a raw draft blob read back
+// from IndexedDB satisfy it without an index signature.
+type DraftLike = {
+  jobNumber?: unknown;
+  leadInstallerName?: unknown;
+  helperName?: unknown;
+  customerName?: unknown;
+  customerAddress?: unknown;
+  typeOfWork?: unknown;
+  workPerformedNotes?: unknown;
+  leadInstallerPay?: unknown;
+  helperPay?: unknown;
+  customerSignature?: unknown;
+  installerSignature?: unknown;
+  photos?: unknown;
+};
+
+// A saved draft is "empty" until the user has typed something worth keeping.
+// Shared by the form (to offer "Resume draft") and the My Records banner (to
+// only surface a resume prompt when there's real content).
+export function draftHasContent(d: DraftLike | null | undefined): boolean {
+  if (!d) return false;
+  return Boolean(
+    d.jobNumber ||
+      d.leadInstallerName ||
+      d.helperName ||
+      d.customerName ||
+      d.customerAddress ||
+      d.typeOfWork ||
+      d.workPerformedNotes ||
+      d.leadInstallerPay ||
+      d.helperPay ||
+      d.customerSignature ||
+      d.installerSignature ||
+      (Array.isArray(d.photos) && d.photos.length > 0)
+  );
+}
