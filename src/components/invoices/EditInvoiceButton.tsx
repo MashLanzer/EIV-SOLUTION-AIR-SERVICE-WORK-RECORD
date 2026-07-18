@@ -29,7 +29,7 @@ export function EditInvoiceButton(props: InvoiceFormProps) {
         title={t.editInvoice}
         closeLabel={tc.close}
       >
-        <InvoiceForm {...props} />
+        <InvoiceForm {...props} fullWidth />
       </BottomSheet>
     </>
   );

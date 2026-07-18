@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useMemo, useState, type ReactNode } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
@@ -19,6 +19,27 @@ import {
 import { computeTotals } from "@/lib/invoices";
 import { useBeforeUnloadGuard } from "@/hooks/useBeforeUnloadGuard";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
+
+// A grouped section: a bordered Card on pages; a plain stacked block inside a
+// bottom sheet (fullWidth), so the sheet matches the card-less project/worker/
+// team forms instead of nesting a card inside the sheet.
+function FormBox({
+  fullWidth,
+  gap,
+  children,
+}: {
+  fullWidth: boolean;
+  gap: string;
+  children: ReactNode;
+}) {
+  if (fullWidth) return <div className={cn("flex flex-col", gap)}>{children}</div>;
+  return (
+    <Card>
+      <CardContent className={cn("flex flex-col p-4", gap)}>{children}</CardContent>
+    </Card>
+  );
+}
 
 interface Row {
   key: string;
@@ -60,11 +81,14 @@ export function InvoiceForm({
   customers,
   currency,
   defaultValues,
+  fullWidth = false,
 }: {
   invoiceId?: string;
   customers: InvoiceCustomerOption[];
   currency: string;
   defaultValues: InvoiceFormValues;
+  // Flatten the cards + stretch the submit for use inside a bottom sheet.
+  fullWidth?: boolean;
 }) {
   const t = useT().invoices;
   const action = invoiceId
@@ -139,8 +163,7 @@ export function InvoiceForm({
       <input type="hidden" name="items" value={itemsJson} />
       <input type="hidden" name="customerId" value={customerId} />
 
-      <Card>
-        <CardContent className="flex flex-col gap-4 p-4">
+      <FormBox fullWidth={fullWidth} gap="gap-4">
           {customers.length > 0 && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="customerPick">{t.customer}</Label>
@@ -209,12 +232,10 @@ export function InvoiceForm({
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </FormBox>
 
       {/* Line items */}
-      <Card>
-        <CardContent className="flex flex-col gap-3 p-4">
+      <FormBox fullWidth={fullWidth} gap="gap-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               {t.lineItems}
@@ -309,8 +330,7 @@ export function InvoiceForm({
               <span className="tabular-nums">{money(totals.total)}</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </FormBox>
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="notes">{t.notes}</Label>
@@ -325,8 +345,8 @@ export function InvoiceForm({
 
       {state?.error && <Alert variant="error">{state.error}</Alert>}
 
-      <div>
-        <Button type="submit" disabled={pending}>
+      <div className={cn(fullWidth && "flex flex-col")}>
+        <Button type="submit" disabled={pending} className={cn(fullWidth && "w-full")}>
           <Save className="h-4 w-4" />
           {pending ? t.saving : t.save}
         </Button>

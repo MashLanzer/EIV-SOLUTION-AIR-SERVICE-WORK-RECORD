@@ -29,7 +29,7 @@ export function EditEstimateButton(props: EstimateFormProps) {
         title={t.editEstimate}
         closeLabel={tc.close}
       >
-        <EstimateForm {...props} />
+        <EstimateForm {...props} fullWidth />
       </BottomSheet>
     </>
   );

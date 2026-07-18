@@ -185,6 +185,7 @@ export function AppMenuSheet({
               customers={createData.customers}
               currency={createData.currency}
               defaultValues={docDefaults(createData.defaultTaxRate)}
+              fullWidth
             />
           </FormSheet>
           <FormSheet
@@ -197,6 +198,7 @@ export function AppMenuSheet({
               customers={createData.customers}
               currency={createData.currency}
               defaultValues={docDefaults(createData.defaultTaxRate)}
+              fullWidth
             />
           </FormSheet>
         </>
