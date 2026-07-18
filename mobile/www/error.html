@@ -70,26 +70,40 @@
     <script>
       var SITE = "https://eiv-solution-air-service-work-recor.vercel.app";
       var diag = document.getElementById("diag");
+      var probing = false;
+      var retryTimer = null;
 
+      // Return to the app root, not /login: if the session cookie is still
+      // valid the worker resumes where they were instead of being forced to
+      // sign in again mid-shift (the app redirects to /login only if needed).
       function retry() {
-        window.location.href = SITE + "/login";
+        window.location.href = SITE + "/";
       }
 
       // Probe the site and show the REAL failure reason, so a screenshot of
       // this screen tells us exactly what went wrong on this device.
       function probe() {
+        if (probing) return;
+        probing = true;
+        if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
         var started = Date.now();
-        fetch(SITE + "/login", { cache: "no-store" })
+        // Probe the root with a short timeout so a hung socket doesn't stall
+        // recovery. AbortController is available in the Android WebView.
+        var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+        var killer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : null;
+        fetch(SITE + "/", { cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
           .then(function (res) {
+            if (killer) clearTimeout(killer);
+            probing = false;
             var ms = Date.now() - started;
             diag.textContent =
               "Servidor respondió: HTTP " + res.status + " en " + ms + "ms";
-            if (res.ok) {
-              // Site is reachable now — go back to it automatically.
-              setTimeout(retry, 1500);
-            }
+            // Any HTTP response means the server is reachable — go back to it.
+            retry();
           })
           .catch(function (err) {
+            if (killer) clearTimeout(killer);
+            probing = false;
             var ms = Date.now() - started;
             diag.textContent =
               "Fallo de red tras " + ms + "ms:\n" +
@@ -97,10 +111,18 @@
               (err && err.message ? err.message : String(err)) +
               "\n\nUserAgent:\n" + navigator.userAgent +
               "\n\nOnline: " + navigator.onLine;
-            // Keep probing; recover as soon as the network does.
-            setTimeout(probe, 5000);
+            // Keep probing on a timer; recover as soon as the network does.
+            retryTimer = setTimeout(probe, 5000);
           });
       }
+
+      // Recover instantly when the OS reports the network is back or the app
+      // returns to the foreground, instead of waiting for the next timer tick.
+      window.addEventListener("online", probe);
+      document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) probe();
+      });
+
       probe();
     </script>
   </body>
