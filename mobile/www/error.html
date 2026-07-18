@@ -80,25 +80,27 @@
         window.location.href = SITE + "/";
       }
 
-      // Probe the site and show the REAL failure reason, so a screenshot of
-      // this screen tells us exactly what went wrong on this device.
+      // Is the site reachable? This page is served from the app's local origin,
+      // so a normal (CORS) fetch to the remote site is ALWAYS blocked and throws
+      // "Failed to fetch" even when the server is perfectly up — a false alarm
+      // that used to leave this screen stuck. `mode: "no-cors"` fixes that: it
+      // resolves (opaque) whenever the server actually answers, and only rejects
+      // on a real network failure. So a resolve means "reachable → reload the
+      // app"; a reject means "still offline → keep retrying".
       function probe() {
         if (probing) return;
         probing = true;
         if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
         var started = Date.now();
-        // Probe the root with a short timeout so a hung socket doesn't stall
-        // recovery. AbortController is available in the Android WebView.
+        // Short timeout so a hung socket doesn't stall recovery.
         var ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
         var killer = ctrl ? setTimeout(function () { ctrl.abort(); }, 8000) : null;
-        fetch(SITE + "/", { cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
-          .then(function (res) {
+        fetch(SITE + "/", { mode: "no-cors", cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
+          .then(function () {
             if (killer) clearTimeout(killer);
             probing = false;
-            var ms = Date.now() - started;
-            diag.textContent =
-              "Servidor respondió: HTTP " + res.status + " en " + ms + "ms";
-            // Any HTTP response means the server is reachable — go back to it.
+            diag.textContent = "Conexión restablecida. Reabriendo…";
+            // Server answered — go back to the app (top-level nav, no CORS).
             retry();
           })
           .catch(function (err) {
