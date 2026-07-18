@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ChevronRight, Lock, type LucideIcon } from "lucide-react";
+import { Lock, type LucideIcon } from "lucide-react";
 
 import { BottomSheet } from "@/components/layout/BottomSheet";
 import { BottomSheet as FormSheet } from "@/components/ui/bottom-sheet";
@@ -17,15 +17,6 @@ export interface CreateItem {
   label: string;
   icon: LucideIcon;
   // Position can't use this action: shown greyed + locked, not interactive.
-  locked?: boolean;
-}
-
-export interface MoreItem {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  badge?: number;
-  // Position can't use this destination: shown greyed + locked, not a link.
   locked?: boolean;
 }
 
@@ -49,23 +40,21 @@ function createKind(href: string): "project" | "team" | "worker" | null {
   return null;
 }
 
-// The single sheet opened by the center button in AppTabBar:
-//   Create  — the role's "new X" actions (primary, so it leads).
-//   More    — secondary navigation (admin only; workers have none).
-// The create actions open their form in a bottom sheet in place (rather than
-// navigating to a /new page); on success the action redirects to the new
-// record, closing the sheet.
+// The single sheet opened by the center button in AppTabBar: the role's
+// "new X" create actions. Secondary navigation now lives in the segmented
+// sub-nav at the top of each family's pages, so the FAB stays focused on
+// creation. The create actions open their form in a bottom sheet in place
+// (rather than navigating to a /new page); on success the action redirects to
+// the new record, closing the sheet.
 export function AppMenuSheet({
   open,
   onClose,
   createItems,
-  moreItems,
   createData,
 }: {
   open: boolean;
   onClose: () => void;
   createItems: CreateItem[];
-  moreItems: MoreItem[];
   createData?: CreateData | null;
 }) {
   const t = useT();
@@ -132,56 +121,6 @@ export function AppMenuSheet({
             );
           })}
         </ul>
-
-        {moreItems.length > 0 && (
-          <>
-            <div className="mx-4 border-t border-neutral-100 dark:border-neutral-800" />
-            <p className="px-4 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {n.more}
-            </p>
-            <ul className="flex flex-col px-2 pb-2">
-              {moreItems.map((item) => {
-                const Icon = item.icon;
-                if (item.locked) {
-                  return (
-                    <li key={item.href}>
-                      <div
-                        aria-disabled="true"
-                        className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-neutral-400 dark:text-neutral-500"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800">
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <span className="flex-1">{item.label}</span>
-                        <Lock className="h-4 w-4 shrink-0" />
-                      </div>
-                    </li>
-                  );
-                }
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={onClose}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-neutral-900 dark:text-neutral-100 active:bg-neutral-100 dark:active:bg-neutral-800"
-                    >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
-                        <Icon className="h-5 w-5" />
-                      </span>
-                      <span className="flex-1">{item.label}</span>
-                      {item.badge ? (
-                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-white tabular-nums">
-                          {item.badge > 99 ? "99+" : item.badge}
-                        </span>
-                      ) : null}
-                      <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </>
-        )}
 
         {/* Clearance so the floating tab bar (which rides above the sheet while
             open, to keep the × close button visible) doesn't cover this row. */}

@@ -19,6 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { StatTile } from "@/components/ui/stat-tile";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -88,6 +89,7 @@ export default async function FinancialsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="money" />
       <PageHeader
         title={t.title}
         action={

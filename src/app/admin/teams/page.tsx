@@ -3,7 +3,7 @@ import { ChevronRight, FolderKanban, Users2 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ProjectsTeamsTabs } from "@/components/projects/ProjectsTeamsTabs";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { NewTeamButton } from "@/components/teams/NewTeamButton";
 import { TeamAvatar } from "@/components/teams/TeamColorDot";
 import { prisma } from "@/lib/prisma";
@@ -48,7 +48,9 @@ export default async function AdminTeamsPage() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <ProjectsTeamsTabs />
+        <div className="min-w-0 flex-1">
+          <SectionTabs family="structure" />
+        </div>
         <NewTeamButton users={users} projects={allProjects} />
       </div>
 

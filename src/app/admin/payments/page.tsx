@@ -4,6 +4,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { refreshConnectStatusAction, startConnectOnboardingAction } from "@/actions/paymentsConnect";
 import { getPaymentStatus } from "@/lib/payments";
 import { requireFeature } from "@/lib/features";
@@ -30,6 +31,7 @@ export default async function PaymentsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="money" />
       <PageHeader title="Online payments" />
 
       {error === "unconfigured" && (

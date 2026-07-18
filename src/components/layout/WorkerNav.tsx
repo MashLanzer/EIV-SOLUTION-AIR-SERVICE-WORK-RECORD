@@ -8,7 +8,7 @@ import { ActivityBell } from "@/components/activity/ActivityBell";
 import { AppTabBar } from "@/components/layout/AppTabBar";
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { SearchCommand } from "@/components/search/SearchCommand";
-import type { CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
+import type { CreateItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, type TabItem } from "@/components/layout/BottomTabBar";
 import { Logo } from "@/components/layout/Logo";
 import { useT } from "@/components/i18n/LocaleProvider";
@@ -33,10 +33,6 @@ function appTabItems(n: Dictionary["nav"]): TabItem[] {
     { href: "/records/photos", label: n.photos, shortLabel: n.photos, icon: Images, exact: false },
   ];
 }
-
-// Workers reach everything else from the four tabs; the "More" sheet is just
-// their account header (→ Settings) and Sign out.
-const MORE_ITEMS: MoreItem[] = [];
 
 // A record is "focused work" - creating or editing one already has its own
 // fixed Save/Cancel bar (WorkRecordForm), so the persistent tab bar steps
@@ -95,7 +91,6 @@ export function WorkerNav({
           items={appTabs}
           pathname={pathname}
           createItems={createItems}
-          moreItems={MORE_ITEMS}
         />
       )}
     </>

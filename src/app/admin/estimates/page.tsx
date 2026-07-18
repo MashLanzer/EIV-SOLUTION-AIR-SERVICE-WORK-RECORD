@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { StatTile } from "@/components/ui/stat-tile";
 import {
   Table,
@@ -151,6 +152,7 @@ export default async function AdminEstimatesPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="money" />
       <PageHeader
         title={t.title}
         action={

@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilterActions, FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { PayReportTable } from "@/components/reports/PayReportTable";
 import { buildPayReport, defaultPayReportRange, parsePayReportParams } from "@/lib/payReport";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -52,6 +53,7 @@ export default async function AdminReportsPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="money" />
       <PageHeader
         title={t.title}
         action={

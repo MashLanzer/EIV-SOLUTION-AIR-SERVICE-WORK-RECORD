@@ -1776,6 +1776,7 @@ export const es: Dictionary = {
   },
   settings: {
     title: "Ajustes",
+    workspace: "Espacio de trabajo",
     resetToast: "Se restableció todo el historial",
     company: {
       section: "Empresa",

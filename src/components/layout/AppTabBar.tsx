@@ -8,7 +8,6 @@ import {
   AppMenuSheet,
   type CreateData,
   type CreateItem,
-  type MoreItem,
 } from "@/components/layout/AppMenuSheet";
 import { isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import { useT } from "@/components/i18n/LocaleProvider";
@@ -29,7 +28,6 @@ export function AppTabBar({
   items,
   pathname,
   createItems,
-  moreItems,
   createData,
 }: {
   // The real destination tabs (3 or 4), split into balanced left/right groups
@@ -37,7 +35,6 @@ export function AppTabBar({
   items: TabItem[];
   pathname: string;
   createItems: CreateItem[];
-  moreItems: MoreItem[];
   createData?: CreateData | null;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -106,7 +103,6 @@ export function AppTabBar({
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         createItems={createItems}
-        moreItems={moreItems}
         createData={createData}
       />
     </>

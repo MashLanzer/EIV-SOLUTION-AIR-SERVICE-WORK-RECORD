@@ -8,7 +8,6 @@ import {
   ClipboardList,
   ClipboardCheck,
   CreditCard,
-  ListChecks,
   Users,
   Users2,
   Contact,
@@ -16,7 +15,6 @@ import {
   FileText,
   FolderKanban,
   FolderPlus,
-  History,
   Images,
   Lock,
   MessageSquareHeart,
@@ -28,7 +26,7 @@ import {
 
 import { ActivityBell } from "@/components/activity/ActivityBell";
 import { AppTabBar } from "@/components/layout/AppTabBar";
-import type { CreateData, CreateItem, MoreItem } from "@/components/layout/AppMenuSheet";
+import type { CreateData, CreateItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { Logo } from "@/components/layout/Logo";
@@ -76,28 +74,6 @@ function createItems(n: Dictionary["nav"]): CreateItem[] {
   { href: "/admin/projects/new", label: n.newProject, icon: FolderPlus },
   { href: "/admin/workers/new", label: n.newWorker, icon: UserPlus },
   { href: "/admin/teams/new", label: n.newTeam, icon: Users2 },
-  ];
-}
-
-// Everything that doesn't fit in the four native tabs, shown in the "More"
-// section of the menu sheet. Records is now a tab; Settings is reached from
-// the sheet's account header.
-function moreItems(n: Dictionary["nav"]): MoreItem[] {
-  return [
-  { href: "/admin/review", label: n.reviewQueue, icon: ClipboardCheck },
-  // Records is no longer a native tab, so it lives here (and on the dashboard).
-  { href: "/admin/records", label: n.records, icon: ClipboardList },
-  { href: "/admin/feedback", label: n.feedback, icon: MessageSquareHeart },
-  { href: "/admin/customers", label: n.customers, icon: Contact },
-  { href: "/admin/estimates", label: n.estimates, icon: FileText },
-  { href: "/admin/invoices", label: n.invoices, icon: Receipt },
-  { href: "/admin/financials", label: n.financials, icon: Wallet },
-  { href: "/admin/payments", label: n.payments, icon: CreditCard },
-  { href: "/admin/reports", label: n.payReport, icon: BarChart3 },
-  { href: "/admin/workers", label: n.workers, icon: Users },
-  { href: "/admin/checklists", label: n.checklistTemplates, icon: ListChecks },
-  { href: "/admin/roles", label: n.roles, icon: ShieldCheck },
-  { href: "/admin/audit", label: n.audit, icon: History },
   ];
 }
 
@@ -246,7 +222,6 @@ export function AdminSidebar({
         items={appTabs}
         pathname={pathname}
         createItems={prep(createItems(t.nav))}
-        moreItems={prep(moreItems(t.nav))}
         createData={createData}
       />
     </>

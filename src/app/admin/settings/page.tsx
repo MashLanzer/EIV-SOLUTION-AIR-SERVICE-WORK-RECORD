@@ -1,4 +1,4 @@
-import { Info, ShieldCheck } from "lucide-react";
+import { History, Info, ShieldCheck } from "lucide-react";
 
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { PageHeader } from "@/components/ui/page-header";
@@ -19,8 +19,9 @@ const APP_VERSION = "AeroTrack 1.0";
 // here once (best-effort — a DB hiccup or a not-yet-migrated column falls back
 // to safe defaults so the hub never shows an error screen).
 export default async function AdminSettingsPage() {
-  const { session } = await requireOfficeAccess();
+  const { session, permissions } = await requireOfficeAccess();
   const isAdmin = session.user.role === "ADMIN";
+  const canAudit = permissions.includes("settings.manage");
   const t = await getT();
   const s = t.settings;
 
@@ -145,6 +146,12 @@ export default async function AdminSettingsPage() {
       <PageHeader title={s.title} />
 
       <SettingsHub isAdmin={isAdmin} data={data} />
+
+      {canAudit && (
+        <SettingsSection title={s.workspace}>
+          <SettingsRow icon={History} label={t.nav.audit} href="/admin/audit" />
+        </SettingsSection>
+      )}
 
       <SettingsSection title={s.about.section}>
         <SettingsRow icon={ShieldCheck} label={accessLabel} sublabel={s.about.accessLevel} />

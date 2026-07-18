@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { SortHeader } from "@/components/ui/sort-header";
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { NewCustomerButton } from "@/components/customers/NewCustomerButton";
 import { CustomerCards } from "@/components/customers/CustomerCards";
 import { parseSort } from "@/lib/sort";
@@ -158,6 +159,7 @@ export default async function AdminCustomersPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="money" />
       <PageHeader
         title={t.title}
         action={

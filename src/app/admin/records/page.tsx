@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { Pagination } from "@/components/ui/pagination";
-import { SegmentedNav } from "@/components/ui/segmented-nav";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { RecordBulkBar } from "@/components/records/RecordBulkBar";
 import { RecordsFilterBar } from "@/components/records/RecordsFilterBar";
 import { RecordsTable } from "@/components/records/RecordsTable";
@@ -153,13 +153,7 @@ export default async function AdminRecordsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <SegmentedNav
-        ariaLabel={dict.nav.dashboard}
-        items={[
-          { label: dict.nav.dashboard, href: "/admin", active: false },
-          { label: dict.nav.records, href: "/admin/records", active: true },
-        ]}
-      />
+      <SectionTabs family="records" />
       <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">{t.allRecords}</h1>
       {rawParams.saved && <SuccessToast message={dict.records.recordSaved} aboveMobileNav />}
 

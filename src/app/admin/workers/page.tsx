@@ -7,6 +7,7 @@ import { FilterChip } from "@/components/ui/filter-chip";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { NewWorkerButton } from "@/components/workers/NewWorkerButton";
 import { WorkerList, type WorkerPeek } from "@/components/workers/WorkerList";
 import { prisma } from "@/lib/prisma";
@@ -134,6 +135,7 @@ export default async function AdminWorkersPage({
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="structure" />
       <PageHeader title={t.team} action={<NewWorkerButton teams={teams} positions={positions} />} />
 
       {/* Team summary - only when not filtering, so the numbers reflect the

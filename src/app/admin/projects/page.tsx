@@ -19,7 +19,7 @@ import { Select } from "@/components/ui/select";
 import { NewProjectButton } from "@/components/projects/NewProjectButton";
 import { ProjectStatusMenu } from "@/components/projects/ProjectStatusMenu";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
-import { ProjectsTeamsTabs } from "@/components/projects/ProjectsTeamsTabs";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { TeamChip } from "@/components/teams/TeamColorDot";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -225,7 +225,9 @@ export default async function AdminProjectsPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <ProjectsTeamsTabs />
+        <div className="min-w-0 flex-1">
+          <SectionTabs family="structure" />
+        </div>
         <NewProjectButton teams={teams} customers={customers} />
       </div>
 

@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { TemplateManager, type TemplateData } from "@/components/checklists/TemplateManager";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
@@ -25,6 +26,7 @@ export default async function ChecklistTemplatesPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="structure" />
       <PageHeader
         title={t.title}
         description={t.subtitle}

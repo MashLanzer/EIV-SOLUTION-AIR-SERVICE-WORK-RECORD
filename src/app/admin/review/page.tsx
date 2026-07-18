@@ -1,5 +1,6 @@
 import { ReviewQueue, type QueueRecord } from "@/components/records/ReviewQueue";
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
@@ -79,6 +80,7 @@ export default async function ReviewQueuePage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="records" />
       <PageHeader title={t.title} description={t.desc} />
       <ReviewQueue submitted={submittedQueue} returned={returnedQueue} />
     </div>
