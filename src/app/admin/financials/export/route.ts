@@ -50,6 +50,44 @@ export async function GET(request: Request) {
   row("Margin %", fin.margin.toFixed(1));
   row("Tax collected", fin.tax.toFixed(2));
   row("Outstanding (A/R)", fin.outstanding.toFixed(2));
+  row("Avg. days to pay", fin.avgDaysToPay ?? "");
+  row("Revenue goal (period)", fin.goal.target != null ? fin.goal.target.toFixed(2) : "");
+  row("Goal reached %", fin.goal.pct != null ? fin.goal.pct.toFixed(1) : "");
+  row("");
+
+  row("Previous period", "Amount", "Change %");
+  const pct = (cur: number, prev: number) =>
+    prev !== 0 ? (((cur - prev) / Math.abs(prev)) * 100).toFixed(1) : "";
+  row("Revenue (paid)", fin.previous.revenue.toFixed(2), pct(fin.revenue, fin.previous.revenue));
+  row("Labor cost", fin.previous.labor.toFixed(2), pct(fin.labor, fin.previous.labor));
+  row("Gross profit", fin.previous.grossProfit.toFixed(2), pct(fin.grossProfit, fin.previous.grossProfit));
+  row("");
+
+  row("Expense breakdown", "Amount");
+  row("Lead installer pay", fin.expenses.leadPay.toFixed(2));
+  row("Helper pay", fin.expenses.helperPay.toFixed(2));
+  row("Total labor", fin.expenses.total.toFixed(2));
+  row("");
+
+  row("Labor by work type", "Jobs", "Amount");
+  for (const l of fin.laborByType) {
+    row(l.type, l.count, l.amount.toFixed(2));
+  }
+  row("");
+
+  row("Collections forecast", "Invoices", "Total");
+  row("Overdue", fin.collections.overdue.count, fin.collections.overdue.amount.toFixed(2));
+  row("Next 7 days", fin.collections.next7.count, fin.collections.next7.amount.toFixed(2));
+  row("Next 30 days", fin.collections.next30.count, fin.collections.next30.amount.toFixed(2));
+  row("Later", fin.collections.later.count, fin.collections.later.amount.toFixed(2));
+  row("");
+
+  row("Estimate conversion", "Count", "Amount");
+  row("Accepted / won", fin.estimateStats.accepted, fin.estimateStats.wonAmount.toFixed(2));
+  row("Declined / lost", fin.estimateStats.declined, fin.estimateStats.lostAmount.toFixed(2));
+  row("Pending", fin.estimateStats.pending);
+  row("Draft", fin.estimateStats.draft);
+  row("Win rate %", fin.estimateStats.winRate.toFixed(1));
   row("");
 
   row("Accounts receivable aging", "Invoices", "Total");
@@ -76,6 +114,12 @@ export async function GET(request: Request) {
 
   row("Top customers (paid this period)", "Revenue");
   for (const c of fin.topCustomers) {
+    row(c.name, c.total.toFixed(2));
+  }
+  row("");
+
+  row("Who owes you (open balance)", "Total");
+  for (const c of fin.topDebtors) {
     row(c.name, c.total.toFixed(2));
   }
 

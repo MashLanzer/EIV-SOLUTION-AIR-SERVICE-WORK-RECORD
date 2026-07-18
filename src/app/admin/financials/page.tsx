@@ -5,6 +5,9 @@ import {
   ArrowRight,
   ArrowUpRight,
   BarChart3,
+  CalendarClock,
+  CheckCircle2,
+  Clock,
   Contact,
   CreditCard,
   FilePlus2,
@@ -17,6 +20,7 @@ import {
   Receipt,
   ReceiptText,
   Sheet,
+  Target,
   TrendingUp,
   Wallet,
 } from "lucide-react";
@@ -214,6 +218,43 @@ export default async function FinancialsPage({
   }));
   const hasTrend = fin.trend.some((p) => p.value > 0);
   const agingActive = fin.aging.filter((b) => b.count > 0);
+  const daysLabel = (n: number) => (n === 1 ? t.daysValueOne : t.daysValue).replace("{n}", String(n));
+
+  // Actionable alerts, built from figures already loaded.
+  const severe = fin.aging.find((b) => b.key === "d61plus");
+  const alerts: { key: string; text: string; href: string }[] = [];
+  if (severe && severe.count > 0) {
+    alerts.push({
+      key: "overdue",
+      text: (severe.count === 1 ? t.alertOverdue : t.alertOverdueMany).replace("{n}", String(severe.count)),
+      href: "/admin/invoices?status=overdue",
+    });
+  }
+  if (pipeline.invoicesDraft.count > 0) {
+    alerts.push({
+      key: "drafts",
+      text: (pipeline.invoicesDraft.count === 1 ? t.alertDrafts : t.alertDraftsMany).replace(
+        "{n}",
+        String(pipeline.invoicesDraft.count)
+      ),
+      href: "/admin/invoices?status=DRAFT",
+    });
+  }
+  if (pipeline.estimatesPending.count > 0) {
+    alerts.push({
+      key: "estimates",
+      text: (pipeline.estimatesPending.count === 1 ? t.alertEstimates : t.alertEstimatesMany).replace(
+        "{n}",
+        String(pipeline.estimatesPending.count)
+      ),
+      href: "/admin/estimates?status=SENT",
+    });
+  }
+
+  // Goal thermometer (period-scaled target).
+  const goalPct = fin.goal.pct ?? 0;
+  const goalClamped = Math.max(0, Math.min(100, goalPct));
+  const goalRemaining = fin.goal.target != null ? Math.max(0, fin.goal.target - fin.revenue) : 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -239,6 +280,77 @@ export default async function FinancialsPage({
         ))}
       </div>
 
+      {/* Action alerts — the few things worth doing something about. */}
+      {alerts.length > 0 ? (
+        <Card className="bg-warning-soft">
+          <CardContent className="flex flex-col divide-y divide-warning-text/15 p-0">
+            {alerts.map((a) => (
+              <Link
+                key={a.key}
+                href={a.href}
+                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-warning-text/5"
+              >
+                <AlertTriangle className="h-4 w-4 shrink-0 text-warning-text" />
+                <span className="min-w-0 flex-1 font-medium text-warning-text">{a.text}</span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-warning-text/70" />
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-success-text" />
+          {t.allClear}
+        </div>
+      )}
+
+      {/* Revenue goal thermometer. */}
+      {fin.goal.target != null ? (
+        <Card>
+          <CardContent className="flex flex-col gap-2 p-4">
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                {t.goalTitle}
+              </span>
+              <span className="ml-auto text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                {money(fin.revenue)}{" "}
+                <span className="font-normal text-neutral-400 dark:text-neutral-500">
+                  {t.goalOf.replace("{value}", money(fin.goal.target))}
+                </span>
+              </span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  goalPct >= 100 ? "bg-success-text" : "bg-neutral-900 dark:bg-neutral-100"
+                )}
+                style={{ width: `${goalClamped}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
+                {goalPct.toFixed(0)}%
+              </span>
+              <span className="text-neutral-400 dark:text-neutral-500">
+                {goalPct >= 100 ? t.goalReached : t.goalRemaining.replace("{value}", money(goalRemaining))}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Link
+          href="/admin/settings/company"
+          className="flex items-center gap-2 rounded-xl border border-dashed border-neutral-300 bg-white px-4 py-2.5 text-sm text-neutral-500 transition-colors hover:border-neutral-400 hover:text-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-400 dark:hover:text-neutral-100"
+        >
+          <Target className="h-4 w-4 shrink-0" />
+          <span className="min-w-0 flex-1">{t.noGoal}</span>
+          <span className="shrink-0 font-medium">{t.setGoal}</span>
+          <ArrowRight className="h-4 w-4 shrink-0" />
+        </Link>
+      )}
+
       {/* Period P&L — each figure drills into where the money lives. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <StatTile icon={Wallet} value={money(fin.revenue)} label={t.revenue} tone="success" href="/admin/invoices?status=PAID" />
@@ -263,6 +375,11 @@ export default async function FinancialsPage({
           label={t.outstanding}
           tone={fin.outstanding > 0 ? "warning" : "default"}
           href="/admin/invoices?status=SENT"
+        />
+        <StatTile
+          icon={Clock}
+          value={fin.avgDaysToPay != null ? daysLabel(fin.avgDaysToPay) : t.noDaysToPay}
+          label={t.avgDaysToPay}
         />
       </div>
 
@@ -341,6 +458,99 @@ export default async function FinancialsPage({
             )}
           </CardContent>
         </Card>
+      </section>
+
+      {/* Labor cost by work type. */}
+      {fin.laborByType.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.laborByTypeTitle}
+            </h2>
+            <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.laborByTypeDesc}</p>
+          </div>
+          <Card>
+            <CardContent className="p-4">
+              <BarList
+                data={fin.laborByType.map((l) => ({ label: l.type, value: l.amount }))}
+                formatValue={money}
+                labelWidth="9rem"
+              />
+            </CardContent>
+          </Card>
+        </section>
+      )}
+
+      {/* Collections forecast — expected cash from unpaid invoices by due date. */}
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {t.collectionsTitle}
+          </h2>
+          <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.collectionsDesc}</p>
+        </div>
+        <Card>
+          <CardContent className="grid grid-cols-2 divide-x divide-y divide-neutral-100 p-0 dark:divide-neutral-800 sm:grid-cols-4 sm:divide-y-0">
+            <PipelineTile label={t.colOverdue} href="/admin/invoices?status=overdue" cell={fin.collections.overdue} money={money} countLabel={docCount} tone="warning" />
+            <PipelineTile label={t.colNext7} href="/admin/invoices?status=SENT" cell={fin.collections.next7} money={money} countLabel={docCount} />
+            <PipelineTile label={t.colNext30} href="/admin/invoices?status=SENT" cell={fin.collections.next30} money={money} countLabel={docCount} />
+            <PipelineTile label={t.colLater} href="/admin/invoices?status=SENT" cell={fin.collections.later} money={money} countLabel={docCount} />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Estimate conversion — how quotes raised this period are landing. */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.conversionTitle}
+            </h2>
+            <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.conversionDesc}</p>
+          </div>
+          <Link
+            href="/admin/estimates"
+            className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            {dict.nav.estimates}
+          </Link>
+        </div>
+        {fin.estimateStats.total === 0 ? (
+          <Card>
+            <CardContent className="p-0">
+              <EmptyState icon={FileText} title={t.noEstimates} />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="flex flex-col gap-4 p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex shrink-0 flex-col items-center">
+                  <span className="text-3xl font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
+                    {fin.estimateStats.winRate.toFixed(0)}%
+                  </span>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{t.winRate}</span>
+                </div>
+                <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-neutral-500 dark:text-neutral-400">{t.wonLabel}</span>
+                    <span className="font-semibold tabular-nums text-success-text">{money(fin.estimateStats.wonAmount)}</span>
+                  </span>
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-neutral-500 dark:text-neutral-400">{t.lostLabel}</span>
+                    <span className="font-semibold tabular-nums text-neutral-500 dark:text-neutral-400">{money(fin.estimateStats.lostAmount)}</span>
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge variant="secondary">{t.estAccepted}: {fin.estimateStats.accepted}</Badge>
+                <Badge variant="secondary">{t.estDeclined}: {fin.estimateStats.declined}</Badge>
+                <Badge variant="secondary">{t.estPending}: {fin.estimateStats.pending}</Badge>
+                <Badge variant="secondary">{t.estDraft}: {fin.estimateStats.draft}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </section>
 
       {/* Quick actions — create + jump to every money section. */}
@@ -514,6 +724,32 @@ export default async function FinancialsPage({
             ) : (
               <BarList
                 data={fin.topCustomers.map((c) => ({ label: c.name, value: c.total }))}
+                formatValue={money}
+                labelWidth="8rem"
+              />
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Who owes you — top debtors by open balance. */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {t.topDebtors}
+            </h2>
+            <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{t.topDebtorsDesc}</p>
+          </div>
+          <CalendarClock className="h-4 w-4 text-neutral-300 dark:text-neutral-600" />
+        </div>
+        <Card>
+          <CardContent className="p-4">
+            {fin.topDebtors.length === 0 ? (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.noDebtors}</p>
+            ) : (
+              <BarList
+                data={fin.topDebtors.map((c) => ({ label: c.name, value: c.total }))}
                 formatValue={money}
                 labelWidth="8rem"
               />

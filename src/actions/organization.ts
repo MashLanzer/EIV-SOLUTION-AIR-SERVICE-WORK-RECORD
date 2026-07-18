@@ -109,6 +109,7 @@ export type CompanyField =
   | "helperPay"
   | "currency"
   | "taxRate"
+  | "monthlyGoal"
   | "overloadThreshold"
   | "jobNumberPrefix"
   | "pdfFooter"
@@ -147,6 +148,18 @@ export async function updateCompanyFieldAction(
         return { error: "Enter a tax rate between 0 and 100." };
       }
       data = { defaultTaxRate: n };
+    }
+  } else if (field === "monthlyGoal") {
+    // Monthly paid-revenue target for the Financials goal thermometer. Blank
+    // clears it; otherwise a non-negative amount.
+    if (!raw) {
+      data = { monthlyRevenueGoal: null };
+    } else {
+      const n = Number(raw.replace(/[^0-9.]/g, ""));
+      if (!Number.isFinite(n) || n < 0) {
+        return { error: "Enter a valid amount (0 or more)." };
+      }
+      data = { monthlyRevenueGoal: n || null };
     }
   } else if (field === "overloadThreshold") {
     // How many jobs in a day flags a worker as overloaded on the calendar.

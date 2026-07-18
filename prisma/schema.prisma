@@ -73,6 +73,9 @@ model Organization {
   // a value is unset.
   defaultLeadPay   Decimal? @db.Decimal(10, 2)
   defaultHelperPay Decimal? @db.Decimal(10, 2)
+  // Monthly paid-revenue target shown as a goal thermometer on Financials.
+  // Null = no goal set.
+  monthlyRevenueGoal Decimal? @db.Decimal(12, 2)
   // Currency symbol shown before money amounts (defaults to "$").
   currencySymbol   String   @default("$")
   // Platform-level on/off switch, toggled only from the super-admin console.

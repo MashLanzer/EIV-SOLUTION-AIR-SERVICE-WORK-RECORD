@@ -1,4 +1,4 @@
-import { Building2, Coins, FileText, MapPin, Percent, Phone } from "lucide-react";
+import { Building2, Coins, FileText, MapPin, Percent, Phone, Target } from "lucide-react";
 
 import { PageHeader } from "@/components/ui/page-header";
 import { SettingsSection } from "@/components/settings/SettingsList";
@@ -24,6 +24,7 @@ export default async function CompanySettingsPage() {
       licenseNumber: true,
       currencySymbol: true,
       defaultTaxRate: true,
+      monthlyRevenueGoal: true,
       logoUrl: true,
     },
   });
@@ -78,6 +79,14 @@ export default async function CompanySettingsPage() {
           placeholder="0"
           action={updateCompanyFieldAction.bind(null, "taxRate")}
           helpWhenEditing={s.taxRateHelp}
+        />
+        <InlineEditRow
+          icon={Target}
+          label={s.monthlyGoal}
+          value={org?.monthlyRevenueGoal != null ? String(Number(org.monthlyRevenueGoal)) : ""}
+          placeholder="0"
+          action={updateCompanyFieldAction.bind(null, "monthlyGoal")}
+          helpWhenEditing={s.monthlyGoalHelp}
         />
       </SettingsSection>
     </div>
