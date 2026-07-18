@@ -47,11 +47,13 @@ export default async function AdminTeamsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="min-w-0">
           <SectionTabs family="structure" />
         </div>
-        <NewTeamButton users={users} projects={allProjects} />
+        <div className="shrink-0">
+          <NewTeamButton users={users} projects={allProjects} />
+        </div>
       </div>
 
       {teams.length === 0 ? (

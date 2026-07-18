@@ -18,7 +18,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { BarList } from "@/components/charts/BarList";
 import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
 import { DashboardQuickActions } from "@/components/admin/DashboardQuickActions";
-import { SegmentedNav } from "@/components/ui/segmented-nav";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -339,13 +338,6 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <SegmentedNav
-        ariaLabel={dict.nav.dashboard}
-        items={[
-          { label: dict.nav.dashboard, href: "/admin", active: true },
-          { label: dict.nav.records, href: "/admin/records", active: false },
-        ]}
-      />
       <div className="animate-fade-up" style={{ animationDelay: "0ms" }}>
         <DashboardGreeting
           name={session.user.name}
