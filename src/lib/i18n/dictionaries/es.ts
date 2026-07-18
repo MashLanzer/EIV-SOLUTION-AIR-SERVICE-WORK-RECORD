@@ -291,6 +291,10 @@ export const es: Dictionary = {
     draftPrompt: "Tienes un borrador sin enviar de antes. ¿Retomarlo?",
     resumeDraft: "Retomar borrador",
     discard: "Descartar",
+    draftSaved: "Borrador guardado",
+    // Quick actions in the form
+    now: "Ahora",
+    totalPay: "Pago total",
     // Error summary
     fixBeforeSubmit: "Corrige lo siguiente antes de enviar:",
     // Field labels

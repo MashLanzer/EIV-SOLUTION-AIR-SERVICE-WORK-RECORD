@@ -45,6 +45,7 @@ import {
 } from "@/components/forms/SignaturePad";
 import { TypeOfWorkField } from "@/components/forms/TypeOfWorkField";
 import { clearDraft, draftHasContent, getDraft, setDraft } from "@/lib/draftStore";
+import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/i18n/LocaleProvider";
 import type { WorkTypeGroup } from "@/lib/workTypes";
@@ -166,6 +167,12 @@ function todayIsoDate() {
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
   return now.toISOString().slice(0, 10);
+}
+
+// The current local time as "HH:MM", for the arrival/departure "Now" buttons.
+function nowTime(): string {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 }
 
 // Minutes since midnight for an "HH:MM" string, or null if unparseable.
@@ -297,6 +304,11 @@ export function WorkRecordForm({
     STEPS.map(() => false)
   );
   const [duration, setDuration] = useState<string | null>(null);
+  // Live "Total pay" readout (lead + helper) on the Payment step.
+  const [payTotal, setPayTotal] = useState(0);
+  // Set once the autosaved draft has persisted, to reassure the worker their
+  // entry is safe (new-record flow only — gated on draftKey).
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
 
   const fieldError = (name: string) => state?.fieldErrors?.[name]?.[0];
   const invalid = (name: string) => (fieldError(name) ? true : undefined);
@@ -361,6 +373,31 @@ export function WorkRecordForm({
     setTimeError(am != null && dm != null && dm <= am ? t.departureAfterArrivalError : undefined);
   }, [t.departureAfterArrivalError]);
 
+  // Sum the two pay fields for the live "Total pay" readout.
+  const updatePayTotal = useCallback(() => {
+    const read = (id: string) =>
+      Number.parseFloat((document.getElementById(id) as HTMLInputElement | null)?.value ?? "") || 0;
+    setPayTotal(read("leadInstallerPay") + read("helperPay"));
+  }, []);
+
+  // Fill a time field with the current local time (the "Now" buttons) and
+  // refresh everything that depends on it. Setting .value doesn't fire onChange
+  // on an uncontrolled input, so nudge the derived readouts by hand.
+  const setTimeNow = useCallback(
+    (id: string) => {
+      const el = document.getElementById(id) as HTMLInputElement | null;
+      if (!el) return;
+      el.value = nowTime();
+      updateDuration();
+      recompute();
+      scheduleSave();
+    },
+    // recompute/scheduleSave are stable enough for this handler; updateDuration
+    // carries the only reactive dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [updateDuration]
+  );
+
   // True when both times are set and departure isn't after arrival — used to
   // block Next/Submit without relying on native validation of hidden steps.
   const timesOutOfOrder = useCallback(() => {
@@ -402,6 +439,7 @@ export function WorkRecordForm({
   useEffect(() => {
     const id = requestAnimationFrame(() => {
       updateDuration();
+      updatePayTotal();
       recompute();
     });
     return () => cancelAnimationFrame(id);
@@ -433,7 +471,10 @@ export function WorkRecordForm({
         .getAll("photos")
         .filter((v): v is string => typeof v === "string" && v.length > 0),
     };
-    if (draftHasContent(snap)) setDraft(draftKey, snap);
+    if (draftHasContent(snap)) {
+      setDraft(draftKey, snap);
+      setDraftSavedAt(Date.now());
+    }
   }, [draftKey]);
 
   function scheduleSave() {
@@ -460,6 +501,7 @@ export function WorkRecordForm({
     if (guardUnsaved) setDirty(true);
     scheduleSave();
     recompute();
+    updatePayTotal();
   }
   function handleFormPointerUp() {
     scheduleSave();
@@ -705,6 +747,13 @@ export function WorkRecordForm({
           </span>
         </div>
       </div>
+
+      {draftKey && draftSavedAt !== null && !pendingDraft && (
+        <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+          <Check className="h-3.5 w-3.5" aria-hidden="true" />
+          {t.draftSaved}
+        </p>
+      )}
 
       <form
         key={formKey}
@@ -980,16 +1029,27 @@ export function WorkRecordForm({
           <FormSection icon={Clock} title={t.stepTime}>
             <div className="flex flex-col gap-2">
               <Label htmlFor="arrivalTime" required>{t.arrivalTime}</Label>
-              <Input
-                id="arrivalTime"
-                name="arrivalTime"
-                type="time"
-                required
-                defaultValue={values?.arrivalTime}
-                onChange={updateDuration}
-                aria-invalid={invalid("arrivalTime")}
-                aria-describedby={describedBy("arrivalTime")}
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="arrivalTime"
+                  name="arrivalTime"
+                  type="time"
+                  required
+                  className="flex-1"
+                  defaultValue={values?.arrivalTime}
+                  onChange={updateDuration}
+                  aria-invalid={invalid("arrivalTime")}
+                  aria-describedby={describedBy("arrivalTime")}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTimeNow("arrivalTime")}
+                >
+                  {t.now}
+                </Button>
+              </div>
               <FieldError
                 id="arrivalTime-error"
                 message={fieldError("arrivalTime")}
@@ -997,16 +1057,27 @@ export function WorkRecordForm({
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="departureTime" required>{t.departureTime}</Label>
-              <Input
-                id="departureTime"
-                name="departureTime"
-                type="time"
-                required
-                defaultValue={values?.departureTime}
-                onChange={updateDuration}
-                aria-invalid={invalid("departureTime") || (timeError ? true : undefined)}
-                aria-describedby={describedBy("departureTime")}
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  id="departureTime"
+                  name="departureTime"
+                  type="time"
+                  required
+                  className="flex-1"
+                  defaultValue={values?.departureTime}
+                  onChange={updateDuration}
+                  aria-invalid={invalid("departureTime") || (timeError ? true : undefined)}
+                  aria-describedby={describedBy("departureTime")}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTimeNow("departureTime")}
+                >
+                  {t.now}
+                </Button>
+              </div>
               <FieldError
                 id="departureTime-error"
                 message={fieldError("departureTime") ?? timeError}
@@ -1088,6 +1159,15 @@ export function WorkRecordForm({
               />
               <FieldError id="helperPay-error" message={fieldError("helperPay")} />
             </div>
+            {payTotal > 0 && (
+              <div className="flex items-center gap-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-300 sm:col-span-2">
+                <DollarSign className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" aria-hidden="true" />
+                <span>
+                  {t.totalPay}:{" "}
+                  <span className="font-semibold tabular-nums">{formatMoney(payTotal, currency)}</span>
+                </span>
+              </div>
+            )}
           </FormSection>
         </div>
 

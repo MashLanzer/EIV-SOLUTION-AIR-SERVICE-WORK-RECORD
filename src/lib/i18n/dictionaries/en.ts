@@ -291,6 +291,10 @@ export const en = {
     draftPrompt: "You have an unsaved draft from earlier. Resume it?",
     resumeDraft: "Resume draft",
     discard: "Discard",
+    draftSaved: "Draft saved",
+    // Quick actions in the form
+    now: "Now",
+    totalPay: "Total pay",
     // Error summary
     fixBeforeSubmit: "Please fix the following before submitting:",
     // Field labels

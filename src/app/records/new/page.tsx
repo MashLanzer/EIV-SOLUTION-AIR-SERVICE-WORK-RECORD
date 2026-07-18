@@ -1,4 +1,5 @@
 import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
+import { PageHeader } from "@/components/ui/page-header";
 import { createRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
 import { suggestNextJobNumber } from "@/lib/jobNumber";
@@ -92,9 +93,11 @@ export default async function NewRecordPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-        {t.newRecordTitle}
-      </h1>
+      <PageHeader
+        title={t.newRecordTitle}
+        backHref={linkedJobId ? "/records/schedule" : undefined}
+        backLabel={linkedJobId ? t.backToSchedule : undefined}
+      />
       <WorkRecordForm
         action={createRecordAction}
         storedSignature={session.user.storedSignature}
