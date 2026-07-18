@@ -1,9 +1,10 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, ClipboardList } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
+import { ReviewTimeline } from "@/components/records/ReviewTimeline";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { updateRecordAction } from "@/actions/records";
 import { prisma } from "@/lib/prisma";
@@ -24,7 +25,13 @@ export default async function EditRecordPage({
 
   const record = await prisma.workRecord.findFirst({
     where: { id, organizationId: requireOrgId(session) },
-    include: { photos: { orderBy: { position: "asc" } } },
+    include: {
+      photos: { orderBy: { position: "asc" } },
+      reviewEvents: {
+        orderBy: { createdAt: "desc" },
+        select: { id: true, action: true, note: true, actorName: true, createdAt: true },
+      },
+    },
   });
   if (!record) notFound();
 
@@ -74,33 +81,15 @@ export default async function EditRecordPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <Link
-          href={`/records/${record.id}`}
-          className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t.common.back}
-        </Link>
-        <div className="mt-2 flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
-            <ClipboardList className="h-5 w-5" />
-          </span>
-          <div className="min-w-0">
-            <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-              {t.form.editPrefix}
-              {t.records.jobNumber}
-              {record.jobNumber}
-            </h1>
-            <div className="flex items-center gap-2">
-              <p className="truncate text-sm text-neutral-500 dark:text-neutral-400">
-                {record.customerName}
-              </p>
-              <StatusBadge status={record.status} />
-            </div>
-          </div>
-        </div>
-        <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
+      <div className="flex flex-col gap-1">
+        <PageHeader
+          backHref={`/records/${record.id}`}
+          backLabel={t.common.back}
+          title={`${t.form.editPrefix}${t.records.jobNumber}${record.jobNumber}`}
+          description={record.customerName}
+          action={<StatusBadge status={record.status} />}
+        />
+        <p className="text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
           {t.form.jobDate} {editDateFmt.format(record.date)} · {t.form.updated}{" "}
           {editDateFmt.format(record.updatedAt)}
         </p>
@@ -110,6 +99,13 @@ export default async function EditRecordPage({
           <span className="font-medium">{t.form.requestedChanges}</span>{" "}
           {record.reviewNote}
         </Alert>
+      )}
+      {record.reviewEvents.length > 0 && (
+        <Card>
+          <CardContent className="p-4">
+            <ReviewTimeline events={record.reviewEvents} />
+          </CardContent>
+        </Card>
       )}
       <WorkRecordForm
         action={boundAction}
