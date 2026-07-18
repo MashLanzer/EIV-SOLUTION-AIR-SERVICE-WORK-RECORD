@@ -116,7 +116,8 @@ export default async function AdminWorkersPage({
   const admins = visible.filter((u) => u.role === "ADMIN").map(toPeek);
   const supervisors = visible.filter((u) => u.role === "SUPERVISOR").map(toPeek);
   const fieldWorkers = visible.filter((u) => u.role === "WORKER").map(toPeek);
-  const t = (await getT()).workers;
+  const dict = await getT();
+  const t = dict.workers;
 
   // Preserve query + skill when switching status chips.
   const statusHref = (s?: "active" | "inactive") => {
@@ -136,7 +137,7 @@ export default async function AdminWorkersPage({
   return (
     <div className="flex flex-col gap-4">
       <SectionTabs family="structure" />
-      <PageHeader title={t.team} action={<NewWorkerButton teams={teams} positions={positions} />} />
+      <PageHeader title={dict.nav.workers} action={<NewWorkerButton teams={teams} positions={positions} />} />
 
       {/* Team summary - only when not filtering, so the numbers reflect the
           whole roster rather than the filtered subset. */}
