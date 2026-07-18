@@ -60,7 +60,7 @@ export default async function AdminRolesPage({
           <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {title}
           </h2>
-          <p className="text-xs text-neutral-400 dark:text-neutral-500">{hint}</p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">{hint}</p>
         </div>
         <Card>
           <CardContent className="flex flex-col divide-y divide-neutral-200 dark:divide-neutral-800 p-0">

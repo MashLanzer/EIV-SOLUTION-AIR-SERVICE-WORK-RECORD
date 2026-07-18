@@ -63,7 +63,7 @@ export function ShareCustomerPortalButton({
   return (
     <div className="flex w-full flex-col gap-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
       <div className="flex items-center gap-2">
-        <Link2 className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+        <Link2 className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
         <Input readOnly value={url} className="h-9 flex-1 text-xs" aria-label={t.copyLink} />
         <Button type="button" variant="outline" size="sm" onClick={copy}>
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}

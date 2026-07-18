@@ -90,7 +90,7 @@ function Row({
           </p>
         )}
       </div>
-      <time className="shrink-0 pt-0.5 text-xs tabular-nums text-neutral-400 dark:text-neutral-500">
+      <time className="shrink-0 pt-0.5 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
         {timeFmt.format(n.at)}
       </time>
     </div>

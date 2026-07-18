@@ -319,7 +319,18 @@ export default async function SchedulePage({
     to = addUtcDays(gridDays[gridDays.length - 1], 1);
   }
 
-  const [jobs, workers, teams, customers, projects, skillRows, skillSuggestions] = await Promise.all([
+  const [
+    jobs,
+    workers,
+    teams,
+    customers,
+    projects,
+    skillRows,
+    skillSuggestions,
+    backlogProjects,
+    timeOffInRange,
+    upcomingTimeOff,
+  ] = await Promise.all([
     getScheduledJobs({ session, organizationId, from, to, assignedToId: worker }),
     prisma.user.findMany({
       where: { organizationId, active: true },
@@ -347,6 +358,54 @@ export default async function SchedulePage({
       orderBy: { name: "asc" },
     }),
     getSkillSuggestions(organizationId),
+    // "Needs scheduling" backlog (month view only): active projects with no
+    // upcoming, non-canceled visit on the books. Empty on other views.
+    view === "month"
+      ? prisma.project.findMany({
+          where: {
+            organizationId,
+            status: "ACTIVE",
+            scheduledJobs: {
+              none: {
+                scheduledFor: { gte: startOfUtcDay(new Date()) },
+                status: { not: "CANCELED" },
+              },
+            },
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 6,
+          select: { id: true, name: true, customer: { select: { name: true } } },
+        })
+      : Promise.resolve([] as { id: string; name: string; customer: { name: string } | null }[]),
+    // Worker time off overlapping the fetched range (to paint "off" on the
+    // calendar). Only APPROVED entries block a day.
+    prisma.timeOff.findMany({
+      where: {
+        organizationId,
+        status: "APPROVED",
+        startDate: { lt: to },
+        endDate: { gte: from },
+      },
+      select: { userId: true, startDate: true, endDate: true },
+    }),
+    // Upcoming/pending time off for the manage sheet: pending first, then by
+    // start date.
+    prisma.timeOff.findMany({
+      where: {
+        organizationId,
+        OR: [{ status: "PENDING" }, { endDate: { gte: startOfUtcDay(new Date()) } }],
+      },
+      orderBy: [{ status: "asc" }, { startDate: "asc" }],
+      take: 40,
+      select: {
+        id: true,
+        reason: true,
+        status: true,
+        startDate: true,
+        endDate: true,
+        user: { select: { name: true } },
+      },
+    }),
   ]);
   // Each worker's effective overload threshold: their personal override when
   // set, otherwise the org default. A single lookup used by every view.
@@ -435,63 +494,6 @@ export default async function SchedulePage({
   // The create form opens on the selected day (so "Schedule for this day"
   // lands there); for a plain week visit with no selection it falls to today.
   const formDefaultDate = selectedKey;
-
-  // "Needs scheduling" backlog (month view only): active projects with no
-  // upcoming, non-canceled visit on the books. Each links straight into the
-  // new-job sheet pre-pointed at that project. Capped so it stays a nudge, not
-  // a second list.
-  const backlogProjects =
-    view === "month"
-      ? await prisma.project.findMany({
-          where: {
-            organizationId,
-            status: "ACTIVE",
-            scheduledJobs: {
-              none: {
-                scheduledFor: { gte: startOfUtcDay(new Date()) },
-                status: { not: "CANCELED" },
-              },
-            },
-          },
-          orderBy: { updatedAt: "desc" },
-          take: 6,
-          select: { id: true, name: true, customer: { select: { name: true } } },
-        })
-      : [];
-
-  // Worker time off. Two reads: the entries overlapping the fetched range (to
-  // paint "off" on the calendar) and the upcoming list (for the manage sheet).
-  const [timeOffInRange, upcomingTimeOff] = await Promise.all([
-    // Only APPROVED time off paints someone "off" on the calendar; pending
-    // requests don't block anything until an office user approves them.
-    prisma.timeOff.findMany({
-      where: {
-        organizationId,
-        status: "APPROVED",
-        startDate: { lt: to },
-        endDate: { gte: from },
-      },
-      select: { userId: true, startDate: true, endDate: true },
-    }),
-    // The manage sheet shows pending requests (to act on) plus upcoming
-    // approved/denied entries. Pending first, then by start date.
-    prisma.timeOff.findMany({
-      where: {
-        organizationId,
-        OR: [{ status: "PENDING" }, { endDate: { gte: startOfUtcDay(new Date()) } }],
-      },
-      orderBy: [{ status: "asc" }, { startDate: "asc" }],
-      take: 40,
-      select: {
-        id: true,
-        reason: true,
-        status: true,
-        startDate: true,
-        endDate: true,
-        user: { select: { name: true } },
-      },
-    }),
-  ]);
 
   // dateKey -> set of worker ids off that day, across the visible range.
   const offByDay = new Map<string, Set<string>>();
@@ -1221,7 +1223,7 @@ function TeamView({
                     key={dayKey(d)}
                     className="flex flex-col items-center gap-0.5 py-2 text-[11px] tabular-nums"
                   >
-                    <span className="uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                    <span className="uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                       {weekdayFmt.format(d)}
                     </span>
                     <span
@@ -1258,7 +1260,7 @@ function TeamView({
                         className={cn(
                           "flex items-center justify-center py-2.5",
                           isOff
-                            ? "text-[10px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
+                            ? "text-[10px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400"
                             : "text-neutral-200 dark:text-neutral-700"
                         )}
                         title={isOff ? t.offLabel : undefined}
@@ -1360,7 +1362,7 @@ function WeekView({
         </Card>
       ) : (
         <>
-          <p className="flex items-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-500">
+          <p className="flex items-center gap-1.5 text-xs text-neutral-500 dark:text-neutral-400">
             <GripVertical className="h-3.5 w-3.5" />
             {t.dragToReschedule}
           </p>
@@ -1429,7 +1431,7 @@ function DaySection({
         <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold capitalize text-neutral-900 dark:text-neutral-100">{heading}</h2>
           {jobs.length > 0 && (
-            <span className="text-xs tabular-nums text-neutral-400 dark:text-neutral-500">{count(jobs.length)}</span>
+            <span className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">{count(jobs.length)}</span>
           )}
         </div>
       )}

@@ -48,7 +48,7 @@ export function Tabs({ tabs, className }: { tabs: TabPanel[]; className?: string
                     "rounded-full px-1.5 text-xs tabular-nums",
                     isActive
                       ? "bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300"
-                      : "text-neutral-400 dark:text-neutral-500"
+                      : "text-neutral-500 dark:text-neutral-400"
                   )}
                 >
                   {tab.count}

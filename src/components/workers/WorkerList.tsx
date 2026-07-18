@@ -12,6 +12,7 @@ import {
   Wrench,
 } from "lucide-react";
 
+import { Avatar } from "@/components/ui/avatar";
 import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -168,7 +169,7 @@ export function WorkerList({
                       {w.lastActive ? ` · ${t.lastActivePrefix.replace("{date}", fmt(w.lastActive))}` : ""}
                     </div>
                   </div>
-                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                 </div>
               </button>
             ))}
@@ -181,12 +182,12 @@ export function WorkerList({
         {peek && (
           <div className="flex flex-col gap-4">
             <div className="flex items-start gap-3">
-              {peek.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={peek.avatarUrl} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
-              ) : (
-                <AvatarInitials name={peek.name || peek.email} className="h-12 w-12 shrink-0" />
-              )}
+              <Avatar
+                name={peek.name || peek.email}
+                avatarUrl={peek.avatarUrl}
+                size={48}
+                className="h-12 w-12 shrink-0 text-base"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={peek.role === "ADMIN" ? "default" : "secondary"}>{roleLabel(peek.role)}</Badge>
@@ -210,23 +211,23 @@ export function WorkerList({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/50">
-                <ClipboardList className="h-5 w-5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                <ClipboardList className="h-5 w-5 shrink-0 text-neutral-500 dark:text-neutral-400" />
                 <div>
                   <div className="text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
                     {peek.jobs}
                   </div>
-                  <div className="text-[11px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                  <div className="text-[11px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                     {t.recordsSubmitted}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/50">
-                <CalendarDays className="h-5 w-5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                <CalendarDays className="h-5 w-5 shrink-0 text-neutral-500 dark:text-neutral-400" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
                     {peek.lastActive ? fmt(peek.lastActive) : "—"}
                   </div>
-                  <div className="text-[11px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                  <div className="text-[11px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                     {t.colLastActive}
                   </div>
                 </div>

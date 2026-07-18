@@ -59,7 +59,7 @@ export function EstimateCards({ estimates }: { estimates: EstimatePeek[] }) {
                 </span>
               </div>
             </div>
-            <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+            <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
           </button>
         </Card>
       ))}
@@ -119,7 +119,7 @@ function Row({
   return (
     <div className="flex items-center justify-between gap-3 px-3 py-2.5">
       <span className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-        <span className="text-neutral-400 dark:text-neutral-500">{icon}</span>
+        <span className="text-neutral-500 dark:text-neutral-400">{icon}</span>
         {label}
       </span>
       <span

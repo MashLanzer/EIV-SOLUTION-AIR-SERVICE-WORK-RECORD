@@ -91,7 +91,8 @@ export default async function AdminCustomersPage({
   // shows how many it would land on (mirrors the records list chips).
   const searchScoped: Prisma.CustomerWhereInput = { organizationId, ...searchWhere };
 
-  const [total, customers, allCount, upcomingCount, noContactCount] = await Promise.all([
+  const [total, customers, allCount, upcomingCount, noContactCount, dict, locale] =
+    await Promise.all([
     prisma.customer.count({ where }),
     prisma.customer.findMany({
       where,
@@ -110,6 +111,8 @@ export default async function AdminCustomersPage({
     prisma.customer.count({
       where: { ...searchScoped, ...customerFilterWhere("nocontact", today) },
     }),
+    getT(),
+    getLocale(),
   ]);
   const pages = pageCount(total);
   const sortProps = {
@@ -118,9 +121,7 @@ export default async function AdminCustomersPage({
     basePath: "/admin/customers",
     params: { q: query, filter },
   };
-  const dict = await getT();
   const t = dict.customers;
-  const locale = await getLocale();
 
   // Serialized rows for the mobile peek-sheet cards (client component).
   const customerPeeks = customers.map((c) => ({
@@ -177,7 +178,7 @@ export default async function AdminCustomersPage({
 
       <form method="get" className="relative max-w-md">
         {filter && <input type="hidden" name="filter" value={filter} />}
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
         <Input
           type="search"
           name="q"

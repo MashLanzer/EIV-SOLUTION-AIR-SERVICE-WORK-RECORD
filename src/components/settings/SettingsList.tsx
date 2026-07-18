@@ -24,7 +24,7 @@ export function SettingsSection({
   return (
     <section className={cn("flex flex-col gap-2", className)}>
       {title && (
-        <h2 className="px-1 text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+        <h2 className="px-1 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {title}
         </h2>
       )}
@@ -92,7 +92,7 @@ function RowInner({
         </div>
       )}
       {hasChevron && (
-        <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+        <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
       )}
     </>
   );

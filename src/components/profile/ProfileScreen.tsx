@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { RecordStatus } from "@prisma/client";
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
-import { AvatarInitials } from "@/components/ui/avatar-initials";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
@@ -249,19 +249,12 @@ export function ProfileScreen({
               }}
             />
             <div className="relative">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarUrl}
-                  alt=""
-                  className="h-24 w-24 rounded-full object-cover ring-4 ring-white dark:ring-neutral-950"
-                />
-              ) : (
-                <AvatarInitials
-                  name={name || email}
-                  className="h-24 w-24 text-2xl ring-4 ring-white dark:ring-neutral-950"
-                />
-              )}
+              <Avatar
+                name={name || email}
+                avatarUrl={avatarUrl}
+                size={96}
+                className="h-24 w-24 text-2xl ring-4 ring-white dark:ring-neutral-950"
+              />
               <button
                 type="button"
                 disabled={avatarSaving}
@@ -282,7 +275,7 @@ export function ProfileScreen({
             {roleLabel}
           </span>
           {memberSinceLabel && (
-            <p className="mt-1.5 text-xs text-neutral-400 dark:text-neutral-500">
+            <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
               {memberSinceLabel}
             </p>
           )}
@@ -322,7 +315,7 @@ export function ProfileScreen({
                 <span className="text-base font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
                   {s.value}
                 </span>
-                <span className="text-center text-[10px] uppercase leading-tight tracking-wide text-neutral-400 dark:text-neutral-500">
+                <span className="text-center text-[10px] uppercase leading-tight tracking-wide text-neutral-500 dark:text-neutral-400">
                   {s.label}
                 </span>
               </div>
@@ -657,7 +650,7 @@ export function ProfileScreen({
               sublabel={storedSignature ? t.signatureSaved : t.signatureNotSet}
               onClick={() => setSheet("signature")}
               trailing={
-                <ChevronRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+                <ChevronRight className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               }
             />
             <SettingsRow
@@ -670,7 +663,7 @@ export function ProfileScreen({
               }
               onClick={() => setSheet("skills")}
               trailing={
-                <ChevronRight className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+                <ChevronRight className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               }
             />
           </SettingsSection>
@@ -997,11 +990,11 @@ function CompareCell({
         {pair.current}
         {suffix}
       </span>
-      <span className="text-[10px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+      <span className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         {label}
       </span>
       {delta === 0 ? (
-        <span className="text-[11px] text-neutral-400 dark:text-neutral-500" title={sameLabel}>
+        <span className="text-[11px] text-neutral-500 dark:text-neutral-400" title={sameLabel}>
           —
         </span>
       ) : (
@@ -1059,7 +1052,7 @@ function ActivityHeatmap({
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-end gap-1.5 text-[10px] text-neutral-400 dark:text-neutral-500">
+      <div className="flex items-center justify-end gap-1.5 text-[10px] text-neutral-500 dark:text-neutral-400">
         <span>{lessLabel}</span>
         <span className="h-3 w-3 rounded-[3px] bg-neutral-100 dark:bg-neutral-800" />
         <span className="h-3 w-3 rounded-[3px] bg-primary/30" />
@@ -1125,7 +1118,7 @@ function WeeklyTrend({
           );
         })}
       </div>
-      <span className="self-end text-[10px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+      <span className="self-end text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         {thisWeekLabel}
       </span>
     </div>

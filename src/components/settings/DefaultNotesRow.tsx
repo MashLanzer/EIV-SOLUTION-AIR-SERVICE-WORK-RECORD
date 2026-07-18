@@ -42,7 +42,7 @@ export function DefaultNotesRow({ value }: { value: string }) {
           <FileText className="h-4.5 w-4.5" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {w.defaultNotes}
           </span>
           <span className="whitespace-pre-wrap break-words text-sm text-neutral-900 dark:text-neutral-100">
@@ -67,7 +67,7 @@ export function DefaultNotesRow({ value }: { value: string }) {
       <form onSubmit={submit} className="flex flex-col gap-2">
         <label
           htmlFor="default-work-notes"
-          className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
+          className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400"
         >
           {w.defaultNotes}
         </label>

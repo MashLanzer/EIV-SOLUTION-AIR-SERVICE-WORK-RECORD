@@ -91,7 +91,7 @@ export function WeekBoard({
       {/* Reassign strip: drop a job on a worker to reassign it. */}
       {hasAny && workers.length > 0 && (
         <div className="rounded-xl border border-dashed border-neutral-200 dark:border-neutral-800 p-3">
-          <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+          <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             <UserRound className="h-3.5 w-3.5" />
             {t.reassignHint}
           </div>
@@ -172,7 +172,7 @@ export function WeekBoard({
                   </span>
                 )}
                 {dayJobs.length > 0 && (
-                  <span className="text-xs tabular-nums text-neutral-400 dark:text-neutral-500">
+                  <span className="text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
                     {dayJobs.length}
                   </span>
                 )}

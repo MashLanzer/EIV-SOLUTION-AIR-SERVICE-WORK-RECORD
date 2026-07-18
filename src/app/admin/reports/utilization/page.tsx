@@ -235,7 +235,7 @@ export default async function UtilizationReportPage({
                       "truncate text-[10px]",
                       isCurrent
                         ? "font-semibold text-neutral-700 dark:text-neutral-200"
-                        : "text-neutral-400 dark:text-neutral-500"
+                        : "text-neutral-500 dark:text-neutral-400"
                     )}
                   >
                     {trendFmt.format(p.from)}

@@ -354,7 +354,7 @@ export default async function AdminCustomerPage({
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                 </Link>
               </Card>
             ))}
@@ -444,11 +444,11 @@ export default async function AdminCustomerPage({
                       <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
                         {formatDate(record.date, locale)} · {record.typeOfWork}
                       </div>
-                      <div className="text-xs text-neutral-400 dark:text-neutral-500">
+                      <div className="text-xs text-neutral-500 dark:text-neutral-400">
                         {record.submittedBy?.name ?? "—"}
                       </div>
                     </div>
-                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                    <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                   </Link>
                 </Card>
               ))}

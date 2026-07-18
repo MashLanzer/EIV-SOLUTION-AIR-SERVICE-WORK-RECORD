@@ -11,7 +11,7 @@ export function DataField({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+      <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         {label}
       </span>
       <span className="text-sm text-neutral-900 dark:text-neutral-100">{value || "—"}</span>

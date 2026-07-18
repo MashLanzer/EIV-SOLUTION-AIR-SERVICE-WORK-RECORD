@@ -72,7 +72,7 @@ export default async function AdminRecordsPage({
     dir: "desc",
   });
 
-  const [total, records, workers, statusCounts, payTotals, currency] = await Promise.all([
+  const [total, records, workers, statusCounts, payTotals, currency, dict] = await Promise.all([
     prisma.workRecord.count({ where }),
     prisma.workRecord.findMany({
       where,
@@ -111,6 +111,7 @@ export default async function AdminRecordsPage({
       _sum: { leadInstallerPay: true, helperPay: true },
     }),
     getCurrencySymbol(organizationId),
+    getT(),
   ]);
   const totalPay =
     Number(payTotals._sum.leadInstallerPay ?? 0) + Number(payTotals._sum.helperPay ?? 0);
@@ -128,7 +129,6 @@ export default async function AdminRecordsPage({
     filters.status,
   ].filter(Boolean).length;
 
-  const dict = await getT();
   const t = dict.adminRecords;
 
   // Quick status chips: one tap to filter by review state, keeping any other
@@ -196,7 +196,7 @@ export default async function AdminRecordsPage({
               {(total === 1 ? t.recordCountOne : t.recordCountMany).replace("{n}", String(total))}
             </span>
             {total > 0 && (
-              <span className="flex items-center gap-1 normal-case text-neutral-400 dark:text-neutral-500">
+              <span className="flex items-center gap-1 normal-case text-neutral-500 dark:text-neutral-400">
                 <span aria-hidden>·</span>
                 {t.totalPay}{" "}
                 <span className="font-semibold tabular-nums text-neutral-700 dark:text-neutral-200">

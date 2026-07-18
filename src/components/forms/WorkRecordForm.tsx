@@ -858,7 +858,7 @@ export function WorkRecordForm({
               <Label htmlFor="helperName" required={requireHelper}>
                 {t.helper}
                 {!requireHelper && (
-                  <span className="font-normal text-neutral-400 dark:text-neutral-500"> ({tc.optional})</span>
+                  <span className="font-normal text-neutral-500 dark:text-neutral-400"> ({tc.optional})</span>
                 )}
               </Label>
               {officeMode ? (
@@ -892,7 +892,7 @@ export function WorkRecordForm({
               <div className="flex flex-col gap-2 sm:col-span-2">
                 <Label htmlFor="projectId">
                   {t.project}{" "}
-                  <span className="font-normal text-neutral-400 dark:text-neutral-500">
+                  <span className="font-normal text-neutral-500 dark:text-neutral-400">
                     ({tc.optional})
                   </span>
                 </Label>
@@ -1033,7 +1033,7 @@ export function WorkRecordForm({
             </div>
             {duration && (
               <div className="flex items-center gap-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-300 sm:col-span-2">
-                <Clock className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                <Clock className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                 <span>
                   {t.timeOnSite} <span className="font-semibold tabular-nums">{duration}</span>
                 </span>
@@ -1093,7 +1093,7 @@ export function WorkRecordForm({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="helperPay">{t.helperPay} ({currency}) <span className="font-normal text-neutral-400 dark:text-neutral-500">({tc.optional})</span></Label>
+              <Label htmlFor="helperPay">{t.helperPay} ({currency}) <span className="font-normal text-neutral-500 dark:text-neutral-400">({tc.optional})</span></Label>
               <Input
                 id="helperPay"
                 name="helperPay"

@@ -52,11 +52,11 @@ export function ScheduleDayWeather({
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
           <span className="text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-            {conv(day.highF)}° <span className="text-neutral-400 dark:text-neutral-500">/ {conv(day.lowF)}°{unit}</span>
+            {conv(day.highF)}° <span className="text-neutral-500 dark:text-neutral-400">/ {conv(day.lowF)}°{unit}</span>
           </span>
           <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{day.label}</span>
         </div>
-        <span className="flex items-center gap-1 truncate text-xs text-neutral-400 dark:text-neutral-500">
+        <span className="flex items-center gap-1 truncate text-xs text-neutral-500 dark:text-neutral-400">
           <MapPin className="h-3 w-3 shrink-0" />
           {placeLabel}
         </span>

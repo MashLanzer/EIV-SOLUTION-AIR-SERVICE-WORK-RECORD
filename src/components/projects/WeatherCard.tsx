@@ -85,7 +85,7 @@ export function WeatherCard({ weather }: { weather: Weather }) {
                 <Icon className="h-5 w-5 text-neutral-600 dark:text-neutral-300" strokeWidth={1.75} />
                 <span className="text-xs tabular-nums text-neutral-900 dark:text-neutral-100">
                   {t(day.highF)}°
-                  <span className="text-neutral-400 dark:text-neutral-500"> {t(day.lowF)}°</span>
+                  <span className="text-neutral-500 dark:text-neutral-400"> {t(day.lowF)}°</span>
                 </span>
               </div>
             );
@@ -93,7 +93,7 @@ export function WeatherCard({ weather }: { weather: Weather }) {
         </div>
       )}
 
-      <p className="text-[10px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+      <p className="text-[10px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         Weather · Open-Meteo
       </p>
     </div>

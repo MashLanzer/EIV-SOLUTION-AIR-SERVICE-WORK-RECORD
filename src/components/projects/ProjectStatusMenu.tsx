@@ -73,7 +73,7 @@ export function ProjectStatusMenu({
         className="inline-flex items-center gap-1 rounded-full transition-opacity hover:opacity-80 disabled:opacity-50"
       >
         <ProjectStatusBadge status={optimistic} />
-        <ChevronDown className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
+        <ChevronDown className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
       </button>
       {open && (
         <div

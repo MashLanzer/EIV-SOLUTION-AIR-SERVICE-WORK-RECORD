@@ -83,7 +83,7 @@ export async function RecordDetail({
         </div>
         {hours && (
           <div className="flex items-center gap-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 px-3 py-2 text-sm text-neutral-600 dark:text-neutral-300">
-            <Clock className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+            <Clock className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
             <span>
               {t.timeOnSite}{" "}
               <span className="font-semibold tabular-nums">{hours}</span>

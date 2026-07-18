@@ -58,7 +58,7 @@ export default async function AdminInvoicesPage({
   // "overdue" is a derived pseudo-status (not stored) so it gets its own flag.
   const overdueFilter = rawStatus === "overdue";
 
-  const [rows, currency] = await Promise.all([
+  const [rows, currency, dict, locale] = await Promise.all([
     prisma.invoice.findMany({
       where: { organizationId },
       orderBy: [{ issueDate: "desc" }, { number: "desc" }],
@@ -76,6 +76,8 @@ export default async function AdminInvoicesPage({
       },
     }),
     getCurrencySymbol(organizationId),
+    getT(),
+    getLocale(),
   ]);
 
   const now = new Date();
@@ -111,9 +113,7 @@ export default async function AdminInvoicesPage({
   for (const s of INVOICE_STATUSES) countByStatus.set(s, 0);
   for (const i of invoices) countByStatus.set(i.status, (countByStatus.get(i.status) ?? 0) + 1);
 
-  const dict = await getT();
   const t = dict.invoices;
-  const locale = await getLocale();
   const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
     day: "numeric",
@@ -217,7 +217,7 @@ export default async function AdminInvoicesPage({
       )}
 
       <form method="get" className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
         <Input
           type="search"
           name="q"
@@ -276,7 +276,7 @@ export default async function AdminInvoicesPage({
                 String(filtered.length)
               )}
             </h2>
-            <span className="text-xs text-neutral-400 dark:text-neutral-500">
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
               {t.filteredValue}{" "}
               <span className="font-semibold tabular-nums text-neutral-700 dark:text-neutral-200">
                 {money(filteredValue)}

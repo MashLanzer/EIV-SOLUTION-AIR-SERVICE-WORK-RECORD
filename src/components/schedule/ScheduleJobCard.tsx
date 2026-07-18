@@ -232,7 +232,7 @@ export function ScheduleJobCard({
               {job.assignedToName}
             </>
           ) : (
-            <span className="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
+            <span className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
               <Users2 className="h-3.5 w-3.5 shrink-0" />
               {t.unassigned}
             </span>

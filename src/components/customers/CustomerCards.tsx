@@ -56,12 +56,12 @@ export function CustomerCards({ customers }: { customers: CustomerPeek[] }) {
                 <span className="min-w-0 truncate">{c.address}</span>
               </div>
               {c.lastVisitLabel && (
-                <div className="mt-0.5 text-xs tabular-nums text-neutral-400 dark:text-neutral-500">
+                <div className="mt-0.5 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
                   {t.colLastVisit}: {c.lastVisitLabel}
                 </div>
               )}
             </div>
-            <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+            <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
           </button>
         </Card>
       ))}
@@ -92,7 +92,7 @@ export function CustomerCards({ customers }: { customers: CustomerPeek[] }) {
                     href={`tel:${peek.phone}`}
                     className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700 transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-200"
                   >
-                    <Phone className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                    <Phone className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                     {peek.phone}
                   </a>
                 )}
@@ -101,7 +101,7 @@ export function CustomerCards({ customers }: { customers: CustomerPeek[] }) {
                     href={`mailto:${peek.email}`}
                     className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-700 transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-200"
                   >
-                    <Mail className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                    <Mail className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                     <span className="min-w-0 truncate">{peek.email}</span>
                   </a>
                 )}
@@ -111,23 +111,23 @@ export function CustomerCards({ customers }: { customers: CustomerPeek[] }) {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/50">
-                <ClipboardList className="h-5 w-5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                <ClipboardList className="h-5 w-5 shrink-0 text-neutral-500 dark:text-neutral-400" />
                 <div>
                   <div className="text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
                     {peek.jobCount}
                   </div>
-                  <div className="text-[11px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                  <div className="text-[11px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                     {t.colJobs}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/50">
-                <CalendarDays className="h-5 w-5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                <CalendarDays className="h-5 w-5 shrink-0 text-neutral-500 dark:text-neutral-400" />
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
                     {peek.lastVisitLabel ?? "—"}
                   </div>
-                  <div className="text-[11px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                  <div className="text-[11px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                     {t.colLastVisit}
                   </div>
                 </div>

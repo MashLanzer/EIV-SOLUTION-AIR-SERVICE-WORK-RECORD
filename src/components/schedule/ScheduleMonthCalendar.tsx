@@ -84,7 +84,7 @@ export function ScheduleMonthCalendar({
         {weekdayLabels.map((w, i) => (
           <div
             key={i}
-            className="pb-1 text-center text-[11px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
+            className="pb-1 text-center text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400"
           >
             {w}
           </div>

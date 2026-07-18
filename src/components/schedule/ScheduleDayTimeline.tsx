@@ -118,7 +118,7 @@ export function ScheduleDayTimeline({
           {hours.map((h) => (
             <span
               key={h}
-              className="absolute right-2 -translate-y-1/2 text-[11px] tabular-nums text-neutral-400 dark:text-neutral-500"
+              className="absolute right-2 -translate-y-1/2 text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400"
               style={{ top: (h - startHour) * HOUR_PX }}
             >
               {hourLabel(h)}

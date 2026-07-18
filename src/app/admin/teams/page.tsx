@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
+import { Avatar } from "@/components/ui/avatar";
 import { SectionTabs } from "@/components/layout/SectionTabs";
 import { NewTeamButton } from "@/components/teams/NewTeamButton";
 import { TeamAvatar } from "@/components/teams/TeamColorDot";
@@ -17,18 +18,13 @@ import { getT } from "@/lib/i18n/server";
 const MAX_FACES = 4;
 
 function MemberFace({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
-  const initial = name.trim().charAt(0).toUpperCase() || "?";
-  return avatarUrl ? (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={avatarUrl}
-      alt=""
-      className="h-7 w-7 rounded-full object-cover ring-2 ring-white dark:ring-neutral-900"
+  return (
+    <Avatar
+      name={name}
+      avatarUrl={avatarUrl}
+      size={28}
+      className="h-7 w-7 text-[11px] ring-2 ring-white dark:ring-neutral-900"
     />
-  ) : (
-    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-100 text-[11px] font-semibold text-neutral-600 ring-2 ring-white dark:bg-neutral-800 dark:text-neutral-200 dark:ring-neutral-900">
-      {initial}
-    </span>
   );
 }
 
@@ -36,7 +32,7 @@ export default async function AdminTeamsPage() {
   const session = await requirePermission("teams.manage");
   const organizationId = requireOrgId(session);
 
-  const [teams, activeByTeam, memberGroups, users, allProjects] = await Promise.all([
+  const [teams, activeByTeam, memberGroups, users, allProjects, dict] = await Promise.all([
     prisma.team.findMany({
       where: { organizationId },
       orderBy: { name: "asc" },
@@ -72,6 +68,7 @@ export default async function AdminTeamsPage() {
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
+    getT(),
   ]);
 
   const activeCount = new Map<string, number>(
@@ -85,7 +82,7 @@ export default async function AdminTeamsPage() {
     (u) => u.active && u.role === "WORKER" && !memberIds.has(u.id)
   ).length;
 
-  const tr = (await getT()).teams;
+  const tr = dict.teams;
 
   return (
     <div className="flex flex-col gap-4">
@@ -159,7 +156,7 @@ export default async function AdminTeamsPage() {
                         )}
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                   </div>
 
                   {/* Member faces: a quick read of who's on the crew. */}

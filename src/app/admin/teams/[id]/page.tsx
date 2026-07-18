@@ -48,7 +48,7 @@ function StatTile({
 }) {
   return (
     <div className="flex flex-col items-center gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 p-3 text-center">
-      <Icon className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+      <Icon className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
       <div className="text-lg font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
         {value}
       </div>
@@ -140,7 +140,7 @@ export default async function AdminTeamPage({
               <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
                 {team.name}
               </h1>
-              <p className="text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
                 {t.created.replace("{date}", teamDateFmt.format(team.createdAt))}
               </p>
             </div>
@@ -275,7 +275,7 @@ export default async function AdminTeamPage({
                         </span>
                         <ProjectStatusBadge status={p.status} />
                       </span>
-                      <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                      <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                     </Link>
                   ))}
                 </CardContent>

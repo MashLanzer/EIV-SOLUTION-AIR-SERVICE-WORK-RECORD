@@ -103,7 +103,7 @@ export function TeamForm({
         <div className="flex flex-col gap-2">
           <Label>
             {t.members}{" "}
-            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+            <span className="font-normal text-neutral-500 dark:text-neutral-400">
               ({tc.optional})
             </span>
           </Label>
@@ -117,7 +117,7 @@ export function TeamForm({
         <div className="flex flex-col gap-2">
           <Label>
             {t.projectsLabel}{" "}
-            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+            <span className="font-normal text-neutral-500 dark:text-neutral-400">
               ({tc.optional})
             </span>
           </Label>

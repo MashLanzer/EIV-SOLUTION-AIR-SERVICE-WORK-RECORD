@@ -75,7 +75,7 @@ export default async function AdminEditRecordPage({
             </div>
           </div>
         </div>
-        <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500 tabular-nums">
+        <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400 tabular-nums">
           Job date {editDateFmt.format(record.date)} · Updated{" "}
           {editDateFmt.format(record.updatedAt)}
         </p>

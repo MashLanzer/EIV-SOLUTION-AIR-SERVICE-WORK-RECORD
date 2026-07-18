@@ -75,7 +75,7 @@ export async function ReviewTimeline({ events }: { events: ReviewTimelineEvent[]
                   <span className="text-xs text-neutral-500 dark:text-neutral-400">
                     {t.reviewBy.replace("{name}", e.actorName)}
                   </span>
-                  <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
                     · {fmt.format(e.createdAt)}
                   </span>
                 </div>

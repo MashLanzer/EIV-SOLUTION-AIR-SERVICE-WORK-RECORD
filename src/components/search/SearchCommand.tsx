@@ -199,9 +199,9 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
         <div className="flex max-h-[85vh] w-full max-w-xl animate-fade-up flex-col overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-2xl">
           <form onSubmit={onSubmit} className="flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 px-3">
             {pending ? (
-              <Loader2 className="h-5 w-5 shrink-0 animate-spin text-neutral-400 dark:text-neutral-500" />
+              <Loader2 className="h-5 w-5 shrink-0 animate-spin text-neutral-500 dark:text-neutral-400" />
             ) : (
-              <Search className="h-5 w-5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+              <Search className="h-5 w-5 shrink-0 text-neutral-500 dark:text-neutral-400" />
             )}
             <input
               ref={inputRef}
@@ -217,7 +217,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
               type="button"
               onClick={onClose}
               aria-label={t.closeAria}
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-400 dark:text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800"
             >
               <X className="h-4 w-4" />
             </button>
@@ -243,7 +243,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
               )
             ) : groups.length === 0 && !pending ? (
               <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-                <SearchX className="h-6 w-6 text-neutral-400 dark:text-neutral-500" />
+                <SearchX className="h-6 w-6 text-neutral-500 dark:text-neutral-400" />
                 <p className="text-sm text-neutral-500 dark:text-neutral-400">
                   {t.noResults.replace("{q}", trimmed)}
                 </p>
@@ -415,7 +415,7 @@ function RecentsView({
 function Hint({ text }: { text: string }) {
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-      <Search className="h-6 w-6 text-neutral-400 dark:text-neutral-500" />
+      <Search className="h-6 w-6 text-neutral-500 dark:text-neutral-400" />
       <p className="text-sm text-neutral-500 dark:text-neutral-400">{text}</p>
     </div>
   );

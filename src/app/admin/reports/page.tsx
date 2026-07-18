@@ -85,7 +85,7 @@ export default async function AdminReportsPage({
                 {t.totalToPay}
               </div>
               {report.grand.jobs > 0 && (
-                <div className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
+                <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
                   {t.avgPerJob}: {moneyString(report.grand.total / report.grand.jobs)}
                 </div>
               )}

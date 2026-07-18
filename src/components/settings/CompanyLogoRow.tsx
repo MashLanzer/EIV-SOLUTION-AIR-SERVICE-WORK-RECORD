@@ -48,7 +48,7 @@ export function CompanyLogoRow({ url }: { url: string | null }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={url} alt={c.logo} className="h-full w-full object-contain" />
           ) : (
-            <ImageIcon className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
+            <ImageIcon className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
           )}
         </span>
         <div className="flex min-w-0 flex-1 flex-col">

@@ -72,7 +72,7 @@ export function InlineEditRow({
           <Icon className="h-4.5 w-4.5" />
         </span>
         <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+          <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {label}
           </span>
           <span className="truncate text-sm text-neutral-900 dark:text-neutral-100">
@@ -97,7 +97,7 @@ export function InlineEditRow({
       <form onSubmit={submit} className="flex flex-col gap-2">
         <label
           htmlFor={`edit-${label}`}
-          className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500"
+          className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400"
         >
           {label}
         </label>

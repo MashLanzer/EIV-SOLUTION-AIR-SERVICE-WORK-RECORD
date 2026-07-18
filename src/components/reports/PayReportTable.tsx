@@ -89,7 +89,7 @@ export function PayReportTable({
     <>
       {rows.length > 4 && (
         <div className="relative border-b border-neutral-100 p-3 dark:border-neutral-800">
-          <Search className="pointer-events-none absolute left-6 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
+          <Search className="pointer-events-none absolute left-6 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
           <Input
             type="search"
             value={query}
@@ -127,7 +127,7 @@ export function PayReportTable({
                     <TableCell className="font-medium text-neutral-900 dark:text-neutral-100">
                       <span className="flex items-center gap-2">
                         {row.name}
-                        <ArrowRight className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
+                        <ArrowRight className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
                       </span>
                     </TableCell>
                     <TableCell className="tabular-nums">{row.jobs}</TableCell>
@@ -169,7 +169,7 @@ export function PayReportTable({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 truncate font-semibold text-neutral-900 dark:text-neutral-100">
                       {row.name}
-                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-neutral-500 dark:text-neutral-400" />
                     </div>
                     <div className="mt-0.5 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
                       {(row.jobs === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(row.jobs))} ·{" "}
@@ -248,7 +248,7 @@ export function PayReportTable({
                       <span className="shrink-0 text-sm font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
                         {money(line.pay)}
                       </span>
-                      <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                      <ArrowRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                     </Link>
                   </li>
                 ))}
@@ -273,7 +273,7 @@ function SummaryTile({ label, value, strong }: { label: string; value: string; s
       >
         {value}
       </div>
-      <div className="mt-0.5 text-[11px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+      <div className="mt-0.5 text-[11px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         {label}
       </div>
     </div>

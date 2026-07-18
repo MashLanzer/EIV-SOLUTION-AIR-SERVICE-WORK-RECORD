@@ -127,7 +127,7 @@ export default async function AdminFeedbackPage({
           {byWorker.length > 0 && (
             <section className="flex flex-col gap-2">
               <div className="px-1">
-                <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                <h2 className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                   {t.byWorkerTitle}
                 </h2>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.byWorkerDesc}</p>
@@ -154,7 +154,7 @@ export default async function AdminFeedbackPage({
                     <span className="w-8 shrink-0 text-right text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
                       {w.average.toFixed(1)}
                     </span>
-                    <span className="w-6 shrink-0 text-right text-xs tabular-nums text-neutral-400 dark:text-neutral-500">
+                    <span className="w-6 shrink-0 text-right text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
                       {w.count}
                     </span>
                   </div>

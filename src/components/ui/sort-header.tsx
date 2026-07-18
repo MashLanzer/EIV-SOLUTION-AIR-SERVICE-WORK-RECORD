@@ -47,7 +47,7 @@ export function SortHeader({
     >
       {label}
       <Icon
-        className={cn("h-3.5 w-3.5", active ? "text-primary" : "text-neutral-400 dark:text-neutral-500")}
+        className={cn("h-3.5 w-3.5", active ? "text-primary" : "text-neutral-500 dark:text-neutral-400")}
       />
     </Link>
   );

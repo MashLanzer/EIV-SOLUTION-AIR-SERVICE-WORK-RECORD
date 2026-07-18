@@ -157,7 +157,7 @@ export default async function EstimateDetailPage({
                     href={`/admin/customers/${estimate.customer.id}`}
                     className="inline-flex items-center gap-1.5 hover:text-primary"
                   >
-                    <User className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                    <User className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                     {estimate.customerName}
                   </Link>
                 ) : (

@@ -265,7 +265,7 @@ export function PhotoFeed({
           </>
         ) : (
           <>
-            <span className="text-xs text-neutral-400 dark:text-neutral-500" />
+            <span className="text-xs text-neutral-500 dark:text-neutral-400" />
             <Button type="button" variant="outline" size="sm" onClick={() => setSelectMode(true)}>
               <CheckCircle2 className="h-4 w-4" />
               {t.select}
@@ -283,7 +283,7 @@ export function PhotoFeed({
             <section key={group.label + startIndex} className="flex flex-col gap-2">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                 {group.label}
-                <span className="ml-1.5 font-normal tabular-nums text-neutral-400 dark:text-neutral-500">
+                <span className="ml-1.5 font-normal tabular-nums text-neutral-500 dark:text-neutral-400">
                   {group.items.length}
                 </span>
               </h2>

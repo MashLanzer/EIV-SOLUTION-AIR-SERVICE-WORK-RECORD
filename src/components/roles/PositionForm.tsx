@@ -180,7 +180,7 @@ export function PositionForm({
           return (
             <div key={group} className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                   {label(GROUP_LABELS[group])}
                   <span className="tabular-nums text-neutral-300 dark:text-neutral-600">
                     {selected}/{keys.length}

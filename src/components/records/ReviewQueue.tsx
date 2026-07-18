@@ -241,7 +241,7 @@ export function ReviewQueue({
           <section key={group.bucket} className="flex flex-col gap-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               {bucketLabel[group.bucket]}
-              <span className="ml-1.5 font-normal tabular-nums text-neutral-400 dark:text-neutral-500">
+              <span className="ml-1.5 font-normal tabular-nums text-neutral-500 dark:text-neutral-400">
                 {group.items.length}
               </span>
             </p>
@@ -266,7 +266,7 @@ export function ReviewQueue({
         <section className="flex flex-col gap-2 pt-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {t.returnedTitle}
-            <span className="ml-1.5 font-normal tabular-nums text-neutral-400 dark:text-neutral-500">
+            <span className="ml-1.5 font-normal tabular-nums text-neutral-500 dark:text-neutral-400">
               {returned.length}
             </span>
           </p>
@@ -406,13 +406,13 @@ export function ReviewQueue({
 
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                <dt className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                   {tr.customer}
                 </dt>
                 <dd className="text-neutral-900 dark:text-neutral-100">{peek.customerName}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                <dt className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                   {tr.typeOfWork}
                 </dt>
                 <dd className="text-neutral-900 dark:text-neutral-100">{peek.typeOfWork}</dd>
@@ -518,7 +518,7 @@ function QueueCard({
             </span>
             <Badge variant={tone}>{waitLabel}</Badge>
             {(r.photoCount ?? 0) > 0 && (!r.thumbs || r.thumbs.length === 0) && (
-              <span className="flex items-center gap-1 text-xs text-neutral-400 dark:text-neutral-500">
+              <span className="flex items-center gap-1 text-xs text-neutral-500 dark:text-neutral-400">
                 <ImageIcon className="h-3 w-3" />
                 {r.photoCount}
               </span>

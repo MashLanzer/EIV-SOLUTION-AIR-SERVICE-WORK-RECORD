@@ -464,7 +464,7 @@ export default async function AdminProjectPage({
                   href={`/admin/customers/${project.customer.id}`}
                   className="flex items-center gap-1.5 font-medium text-neutral-900 dark:text-neutral-100 hover:text-primary"
                 >
-                  <User className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                  <User className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                   {project.customer.name}
                 </Link>
                 {project.customer.phone && (
@@ -487,7 +487,7 @@ export default async function AdminProjectPage({
                 )}
               </>
             ) : (
-              <span className="flex items-center gap-1.5 text-neutral-400 dark:text-neutral-500">
+              <span className="flex items-center gap-1.5 text-neutral-500 dark:text-neutral-400">
                 <User className="h-4 w-4 shrink-0" />
                 {t.noCustomerAssigned}
               </span>

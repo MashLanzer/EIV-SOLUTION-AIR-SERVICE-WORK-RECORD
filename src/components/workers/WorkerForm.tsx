@@ -73,7 +73,7 @@ export function WorkerForm({
                   <opt.icon className="h-4 w-4" />
                   {opt.label}
                 </span>
-                <span className="text-xs font-normal text-neutral-400 dark:text-neutral-500">
+                <span className="text-xs font-normal text-neutral-500 dark:text-neutral-400">
                   {opt.hint}
                 </span>
               </button>
@@ -86,7 +86,7 @@ export function WorkerForm({
         <div className="flex flex-col gap-2">
           <Label htmlFor="positionId">
             {t.position}{" "}
-            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+            <span className="font-normal text-neutral-500 dark:text-neutral-400">
               ({tc.optional})
             </span>
           </Label>
@@ -106,7 +106,7 @@ export function WorkerForm({
         <div className="flex flex-col gap-2">
           <Label>
             {t.teams}{" "}
-            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+            <span className="font-normal text-neutral-500 dark:text-neutral-400">
               ({tc.optional})
             </span>
           </Label>

@@ -53,7 +53,7 @@ export function TemplateManager({ templates }: { templates: TemplateData[] }) {
       <div className="flex items-center gap-2">
         {templates.length > 3 && (
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
             <Input
               type="search"
               value={query}

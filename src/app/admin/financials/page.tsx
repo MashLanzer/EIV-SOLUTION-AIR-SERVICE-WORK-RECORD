@@ -81,7 +81,7 @@ function PipelineTile({
       >
         {money(cell.amount)}
       </span>
-      <span className="text-[11px] tabular-nums text-neutral-400 dark:text-neutral-500">
+      <span className="text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400">
         {countLabel(cell.count)}
       </span>
     </Link>
@@ -127,7 +127,7 @@ function CompareCell({
           className={cn(
             "inline-flex items-center gap-1 text-xs font-medium tabular-nums",
             good == null
-              ? "text-neutral-400 dark:text-neutral-500"
+              ? "text-neutral-500 dark:text-neutral-400"
               : good
                 ? "text-success-text"
                 : "text-warning-text"
@@ -135,10 +135,10 @@ function CompareCell({
         >
           <Arrow className="h-3.5 w-3.5" />
           {flat ? "0%" : `${up ? "+" : ""}${pct.toFixed(0)}%`}
-          <span className="text-neutral-400 dark:text-neutral-500">{vsLabel(money(previous))}</span>
+          <span className="text-neutral-500 dark:text-neutral-400">{vsLabel(money(previous))}</span>
         </span>
       ) : (
-        <span className="text-xs text-neutral-400 dark:text-neutral-500">{noPrevLabel}</span>
+        <span className="text-xs text-neutral-500 dark:text-neutral-400">{noPrevLabel}</span>
       )}
     </div>
   );
@@ -163,7 +163,7 @@ function Section({
           <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {title}
           </h2>
-          {desc && <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">{desc}</p>}
+          {desc && <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{desc}</p>}
         </div>
         {action}
       </div>
@@ -295,13 +295,13 @@ export default async function FinancialsPage({
         <Card>
           <CardContent className="flex flex-col gap-2 p-4">
             <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-neutral-400 dark:text-neutral-500" />
+              <Target className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
               <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
                 {t.goalTitle}
               </span>
               <span className="ml-auto text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
                 {money(fin.revenue)}{" "}
-                <span className="font-normal text-neutral-400 dark:text-neutral-500">
+                <span className="font-normal text-neutral-500 dark:text-neutral-400">
                   {t.goalOf.replace("{value}", money(fin.goal.target))}
                 </span>
               </span>
@@ -319,7 +319,7 @@ export default async function FinancialsPage({
               <span className="font-medium tabular-nums text-neutral-500 dark:text-neutral-400">
                 {goalPct.toFixed(0)}%
               </span>
-              <span className="text-neutral-400 dark:text-neutral-500">
+              <span className="text-neutral-500 dark:text-neutral-400">
                 {goalPct >= 100 ? t.goalReached : t.goalRemaining.replace("{value}", money(goalRemaining))}
               </span>
             </div>
@@ -497,7 +497,7 @@ export default async function FinancialsPage({
                         <span className="shrink-0 text-sm font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
                           {money(inv.total)}
                         </span>
-                        <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                        <ArrowRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                       </Link>
                     </li>
                   ))}

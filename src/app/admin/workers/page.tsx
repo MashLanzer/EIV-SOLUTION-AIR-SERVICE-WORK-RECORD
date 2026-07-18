@@ -45,7 +45,7 @@ export default async function AdminWorkersPage({
     ...(skill ? { skills: { some: { name: { equals: skill, mode: "insensitive" } } } } : {}),
   };
 
-  const [users, recordStats, skillNames, teams, positions] = await Promise.all([
+  const [users, recordStats, skillNames, teams, positions, dict] = await Promise.all([
     prisma.user.findMany({
       where,
       orderBy: { name: "asc" },
@@ -74,6 +74,7 @@ export default async function AdminWorkersPage({
     }),
     // Company positions, so a puesto can be assigned right on the create sheet.
     getAssignablePositions(organizationId),
+    getT(),
   ]);
 
   // Preserve the text query when switching skill chips.
@@ -116,7 +117,6 @@ export default async function AdminWorkersPage({
   const admins = visible.filter((u) => u.role === "ADMIN").map(toPeek);
   const supervisors = visible.filter((u) => u.role === "SUPERVISOR").map(toPeek);
   const fieldWorkers = visible.filter((u) => u.role === "WORKER").map(toPeek);
-  const dict = await getT();
   const t = dict.workers;
 
   // Preserve query + skill when switching status chips.
@@ -150,7 +150,7 @@ export default async function AdminWorkersPage({
       )}
 
       <form method="get" className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
         <Input
           type="search"
           name="q"

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CalendarDays, ClipboardList, Mail, Trash2, Wrench } from "lucide-react";
 
-import { AvatarInitials } from "@/components/ui/avatar-initials";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,16 +66,12 @@ export default async function WorkerDetailPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        {worker.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={worker.avatarUrl}
-            alt=""
-            className="h-12 w-12 shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <AvatarInitials name={worker.name || worker.email} className="h-12 w-12 shrink-0" />
-        )}
+        <Avatar
+          name={worker.name || worker.email}
+          avatarUrl={worker.avatarUrl}
+          size={48}
+          className="h-12 w-12 shrink-0 text-base"
+        />
         <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">

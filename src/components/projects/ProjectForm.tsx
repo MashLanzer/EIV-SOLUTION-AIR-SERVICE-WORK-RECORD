@@ -117,7 +117,7 @@ export function ProjectForm({
         <div className="flex flex-col gap-2">
           <Label htmlFor="customerId">
             {t.customer}{" "}
-            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+            <span className="font-normal text-neutral-500 dark:text-neutral-400">
               ({tc.optional})
             </span>
           </Label>
@@ -151,7 +151,7 @@ export function ProjectForm({
         <div className="flex flex-col gap-2">
           <Label htmlFor="teamId">
             {t.team}{" "}
-            <span className="font-normal text-neutral-400 dark:text-neutral-500">
+            <span className="font-normal text-neutral-500 dark:text-neutral-400">
               ({tc.optional})
             </span>
           </Label>

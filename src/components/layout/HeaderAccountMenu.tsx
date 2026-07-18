@@ -5,17 +5,10 @@ import Link from "next/link";
 import { ChevronDown, LogOut, Settings, ShieldCheck, User as UserIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 
+import { Avatar } from "@/components/ui/avatar";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { cn } from "@/lib/utils";
-
-function initialsOf(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  const letters =
-    (parts[0][0] ?? "") + (parts.length > 1 ? (parts[parts.length - 1][0] ?? "") : "");
-  return letters.toUpperCase();
-}
 
 // The account menu that replaces the old header Settings button: an avatar +
 // chevron that drops a small menu with Profile, Settings and Sign out. Sign out
@@ -70,25 +63,15 @@ export function HeaderAccountMenu({
         aria-label={t.menuAria}
         className="flex items-center gap-1 rounded-full py-0.5 pl-0.5 pr-1.5 transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-800 active:scale-95"
       >
-        {avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={avatarUrl}
-            alt=""
-            aria-hidden="true"
-            className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-neutral-200 dark:ring-neutral-700"
-          />
-        ) : (
-          <span
-            aria-hidden="true"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-200 ring-1 ring-neutral-200 dark:ring-neutral-700"
-          >
-            {initialsOf(name)}
-          </span>
-        )}
+        <Avatar
+          name={name}
+          avatarUrl={avatarUrl}
+          size={32}
+          className="h-8 w-8 text-xs ring-1 ring-neutral-200 dark:ring-neutral-700"
+        />
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-neutral-400 dark:text-neutral-500 transition-transform duration-200",
+            "h-4 w-4 text-neutral-500 dark:text-neutral-400 transition-transform duration-200",
             open && "rotate-180"
           )}
         />

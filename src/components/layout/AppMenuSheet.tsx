@@ -100,7 +100,7 @@ export function AppMenuSheet({
                 <li key={item.href}>
                   <div
                     aria-disabled="true"
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-neutral-400 dark:text-neutral-500"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-neutral-500 dark:text-neutral-400"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800">
                       <Icon className="h-5 w-5" />

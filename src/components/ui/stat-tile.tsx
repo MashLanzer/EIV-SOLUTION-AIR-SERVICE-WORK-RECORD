@@ -53,7 +53,7 @@ export function StatTile({
             <Icon className="h-4 w-4" />
           </span>
           {href ? (
-            <ArrowRight className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
+            <ArrowRight className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
           ) : null}
         </div>
       ) : null}
@@ -69,7 +69,7 @@ export function StatTile({
         </div>
         <div className={cn("text-xs text-neutral-500 dark:text-neutral-400", textFlow)}>{label}</div>
         {sub ? (
-          <div className={cn("text-[11px] tabular-nums text-neutral-400 dark:text-neutral-500", textFlow)}>
+          <div className={cn("text-[11px] tabular-nums text-neutral-500 dark:text-neutral-400", textFlow)}>
             {sub}
           </div>
         ) : null}

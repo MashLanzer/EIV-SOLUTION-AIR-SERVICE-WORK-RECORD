@@ -59,7 +59,7 @@ export function MemberChecklist({
         <div key={group.role} className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2 px-0.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
             {label[group.role]}
-            <span className="tabular-nums text-neutral-400 dark:text-neutral-500">
+            <span className="tabular-nums text-neutral-500 dark:text-neutral-400">
               {group.people.length}
             </span>
           </div>

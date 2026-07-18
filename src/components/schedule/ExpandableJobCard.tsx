@@ -88,7 +88,7 @@ export function ExpandableJobCard({
         >
           {job.title || t.untitled}
         </span>
-        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+        <ChevronDown className="ml-auto h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
       </div>
       <div className="mt-1 flex items-center justify-between gap-2">
         <span className="truncate text-xs text-neutral-500 dark:text-neutral-400">

@@ -61,7 +61,7 @@ export function EditRoleSheet({ position }: { position: RolePosition }) {
             {members} · {perms}
           </div>
         </div>
-        <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+        <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
       </button>
 
       <BottomSheet open={open} onClose={() => setOpen(false)} title={t.editRole} closeLabel={tc.close}>

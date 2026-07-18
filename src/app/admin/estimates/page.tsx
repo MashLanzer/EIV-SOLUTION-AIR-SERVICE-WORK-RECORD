@@ -45,7 +45,7 @@ export default async function AdminEstimatesPage({
   // "expired" is a derived pseudo-status (not stored) so it gets its own flag.
   const expiredFilter = rawStatus === "expired";
 
-  const [rows, currency] = await Promise.all([
+  const [rows, currency, dict, locale] = await Promise.all([
     prisma.estimate.findMany({
       where: { organizationId },
       orderBy: [{ issueDate: "desc" }, { number: "desc" }],
@@ -62,6 +62,8 @@ export default async function AdminEstimatesPage({
       },
     }),
     getCurrencySymbol(organizationId),
+    getT(),
+    getLocale(),
   ]);
 
   const now = new Date();
@@ -89,9 +91,7 @@ export default async function AdminEstimatesPage({
   for (const e of estimates) countByStatus.set(e.status, (countByStatus.get(e.status) ?? 0) + 1);
   const expiredCount = estimates.filter((e) => e.expired).length;
 
-  const dict = await getT();
   const t = dict.estimates;
-  const locale = await getLocale();
   const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
     day: "numeric",
@@ -181,7 +181,7 @@ export default async function AdminEstimatesPage({
       )}
 
       <form method="get" className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
         <Input
           type="search"
           name="q"
@@ -240,7 +240,7 @@ export default async function AdminEstimatesPage({
                 String(filtered.length)
               )}
             </h2>
-            <span className="text-xs text-neutral-400 dark:text-neutral-500">
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">
               {t.filteredValue}{" "}
               <span className="font-semibold tabular-nums text-neutral-700 dark:text-neutral-200">
                 {money(filteredValue)}

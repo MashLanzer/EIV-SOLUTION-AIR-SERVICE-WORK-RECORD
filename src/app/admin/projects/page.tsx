@@ -138,7 +138,7 @@ function ProjectCard({ project, t }: { project: ProjectRow; t: Dictionary["proje
             <ClipboardList className="h-3.5 w-3.5" />
             {(project._count.records === 1 ? t.jobCountOne : t.jobCountMany).replace("{n}", String(project._count.records))}
           </span>
-          <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+          <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
         </div>
       </Link>
     </Card>
@@ -159,7 +159,7 @@ export default async function AdminProjectsPage({
   const rawTeam = Array.isArray(rawParams.team) ? rawParams.team[0] : rawParams.team;
   const teamFilter = rawTeam?.trim() || undefined;
 
-  const [teams, customers, projects] = await Promise.all([
+  const [teams, customers, projects, dict] = await Promise.all([
     prisma.team.findMany({
       where: { organizationId },
       select: { id: true, name: true },
@@ -196,6 +196,7 @@ export default async function AdminProjectsPage({
         checklists: { select: { items: { select: { done: true } } } },
       },
     }),
+    getT(),
   ]);
 
   const pins = projects
@@ -215,7 +216,6 @@ export default async function AdminProjectsPage({
 
   const isFiltered = Boolean(query || teamFilter);
   const hasProjects = projects.length > 0;
-  const dict = await getT();
   const t = dict.projects;
   const projectStatusLabel: Record<ProjectStatus, string> = {
     ACTIVE: t.statusActive,
@@ -235,7 +235,7 @@ export default async function AdminProjectsPage({
           Customers/Workers filter pattern. */}
       <form method="get" className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 dark:text-neutral-500" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
           <Input
             type="search"
             name="q"

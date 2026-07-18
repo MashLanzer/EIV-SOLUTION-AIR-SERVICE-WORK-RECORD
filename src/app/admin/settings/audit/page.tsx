@@ -73,7 +73,7 @@ export default async function RoleAuditPage() {
                         .replace("{from}", roleLabel(e.fromRole))
                         .replace("{to}", roleLabel(e.toRole))}
                     </p>
-                    <p className="mt-0.5 text-xs text-neutral-400 dark:text-neutral-500">
+                    <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
                       {fmt.format(e.createdAt)}
                     </p>
                   </div>
