@@ -668,6 +668,12 @@ export const en = {
     tabSystem: "System",
     tabActivity: "Activity",
     byActor: "by {name}",
+    // Activity-tab type filter chips
+    filterAllTypes: "All",
+    filterRecords: "Records",
+    filterPhotos: "Photos",
+    filterProjects: "Projects",
+    filterPeople: "People",
     emptyTitle: "Nothing here yet",
     emptyDesc: "New notifications will show up here as things happen.",
     // Localized title per notification type (the stored detail line stays as-is).

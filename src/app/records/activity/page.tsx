@@ -7,10 +7,10 @@ export const dynamic = "force-dynamic";
 export default async function WorkerActivityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; type?: string }>;
 }) {
   const session = await requireAuth();
-  const { tab } = await searchParams;
+  const { tab, type } = await searchParams;
 
   return (
     <NotificationsScreen
@@ -19,6 +19,7 @@ export default async function WorkerActivityPage({
       isAdmin={false}
       basePath="/records/activity"
       tab={tab}
+      activityType={type}
     />
   );
 }

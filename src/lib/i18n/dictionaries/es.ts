@@ -670,6 +670,12 @@ export const es: Dictionary = {
     tabSystem: "Sistema",
     tabActivity: "Actividad",
     byActor: "por {name}",
+    // Activity-tab type filter chips
+    filterAllTypes: "Todos",
+    filterRecords: "Registros",
+    filterPhotos: "Fotos",
+    filterProjects: "Proyectos",
+    filterPeople: "Personas",
     emptyTitle: "Nada por aquí todavía",
     emptyDesc: "Las nuevas notificaciones aparecerán aquí a medida que ocurran las cosas.",
     // Título localizado por tipo de notificación (la línea de detalle se conserva).

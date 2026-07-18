@@ -3,11 +3,13 @@ import type { NotificationCategory } from "@prisma/client";
 import { Activity, Bell } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterChip } from "@/components/ui/filter-chip";
+import { PageHeader } from "@/components/ui/page-header";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { MarkActivitySeen } from "@/components/activity/MarkActivitySeen";
 import { MarkNotificationsRead } from "@/components/notifications/MarkNotificationsRead";
 import { NotificationList } from "@/components/notifications/NotificationList";
-import { getActivityFeed } from "@/lib/activity";
+import { getActivityFeed, type ActivityType } from "@/lib/activity";
 import {
   getNotificationFeed,
   getUnreadByCategory,
@@ -38,12 +40,15 @@ export async function NotificationsScreen({
   isAdmin,
   basePath,
   tab,
+  activityType,
 }: {
   userId: string;
   organizationId: string;
   isAdmin: boolean;
   basePath: string;
   tab: string | undefined;
+  // Optional type filter for the Activity tab (records | photos | ...).
+  activityType?: string;
 }) {
   const t = (await getT()).activity;
   const tabs = tabsFor(isAdmin);
@@ -66,17 +71,7 @@ export async function NotificationsScreen({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300">
-          <Bell className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-            {t.notificationsTitle}
-          </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.notificationsSubtitle}</p>
-        </div>
-      </div>
+      <PageHeader title={t.notificationsTitle} description={t.notificationsSubtitle} />
 
       {/* Tabs — segmented control (matches the profile screen for visual
           consistency across the app). */}
@@ -111,7 +106,14 @@ export async function NotificationsScreen({
       </nav>
 
       {active === "activity" ? (
-        <ActivityTab organizationId={organizationId} userId={userId} isAdmin={isAdmin} t={t} />
+        <ActivityTab
+          organizationId={organizationId}
+          userId={userId}
+          isAdmin={isAdmin}
+          basePath={basePath}
+          activityType={activityType}
+          t={t}
+        />
       ) : (
         <PersistedTab userId={userId} category={CATEGORY[active]} t={t} />
       )}
@@ -141,25 +143,71 @@ async function PersistedTab({
   );
 }
 
+// Type-filter groups for the Activity tab, mapping each chip to its event
+// types. Only groups that actually have events show a chip.
+const ACTIVITY_GROUPS: Record<string, ActivityType[]> = {
+  records: ["record_submitted", "record_approved", "record_returned"],
+  photos: ["photo_added", "comment_added"],
+  projects: ["project_created"],
+  people: ["worker_added", "customer_added", "team_added"],
+};
+const ACTIVITY_GROUP_KEYS = Object.keys(ACTIVITY_GROUPS);
+
 async function ActivityTab({
   organizationId,
   userId,
   isAdmin,
+  basePath,
+  activityType,
   t,
 }: {
   organizationId: string;
   userId: string;
   isAdmin: boolean;
+  basePath: string;
+  activityType?: string;
   t: Awaited<ReturnType<typeof getT>>["activity"];
 }) {
   const events = await getActivityFeed({ organizationId, userId, isAdmin });
+  const active = ACTIVITY_GROUP_KEYS.includes(activityType ?? "") ? activityType! : null;
+
+  const groupLabel: Record<string, string> = {
+    records: t.filterRecords,
+    photos: t.filterPhotos,
+    projects: t.filterProjects,
+    people: t.filterPeople,
+  };
+  // Which groups have any events — drives the chip row (hidden when there's
+  // nothing to filter, i.e. 0–1 group present).
+  const groupCounts = ACTIVITY_GROUP_KEYS.map((key) => ({
+    key,
+    label: groupLabel[key],
+    count: events.filter((e) => ACTIVITY_GROUPS[key].includes(e.type)).length,
+  })).filter((g) => g.count > 0);
+
+  const shown = active ? events.filter((e) => ACTIVITY_GROUPS[active].includes(e.type)) : events;
+  const chipHref = (key: string | null) =>
+    key ? `${basePath}?tab=activity&type=${key}` : `${basePath}?tab=activity`;
+
   return (
     <>
       <MarkActivitySeen />
-      {events.length === 0 ? (
+      {groupCounts.length > 1 && (
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <FilterChip href={chipHref(null)} active={active === null}>
+            {t.filterAllTypes}
+          </FilterChip>
+          {groupCounts.map((g) => (
+            <FilterChip key={g.key} href={chipHref(g.key)} active={active === g.key} count={g.count}>
+              {g.label}
+            </FilterChip>
+          ))}
+        </div>
+      )}
+      {shown.length === 0 ? (
         <EmptyState icon={Activity} title={t.nothingYet} description={isAdmin ? t.adminNothingDesc : t.nothingYetDesc} />
       ) : (
-        <ActivityFeed events={events} />
+        <ActivityFeed events={shown} />
       )}
     </>
   );

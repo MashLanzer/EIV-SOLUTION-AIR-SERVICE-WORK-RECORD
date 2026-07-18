@@ -7,10 +7,10 @@ export const dynamic = "force-dynamic";
 export default async function AdminActivityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; type?: string }>;
 }) {
   const { session } = await requireOfficeAccess();
-  const { tab } = await searchParams;
+  const { tab, type } = await searchParams;
 
   return (
     <NotificationsScreen
@@ -19,6 +19,7 @@ export default async function AdminActivityPage({
       isAdmin
       basePath="/admin/activity"
       tab={tab}
+      activityType={type}
     />
   );
 }
