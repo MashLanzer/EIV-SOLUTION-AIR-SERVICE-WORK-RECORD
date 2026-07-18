@@ -265,6 +265,14 @@ export const en = {
     tapEditPrefix: "Tap ",
     tapEditSuffix: " to fix and resubmit.",
     fixAndResubmit: "Fix & resubmit",
+    // Record detail extras
+    backToRecords: "Records",
+    callCustomer: "Call",
+    emailCustomer: "Email",
+    customerFeedbackTitle: "Customer feedback",
+    officeReply: "Office reply",
+    approvedLockedTitle: "Approved.",
+    approvedLockedDesc: "This record is closed and can no longer be edited.",
   },
   form: {
     // Page titles / headers

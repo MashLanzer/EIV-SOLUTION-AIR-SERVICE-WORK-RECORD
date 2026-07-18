@@ -265,6 +265,14 @@ export const es: Dictionary = {
     tapEditPrefix: "Toca ",
     tapEditSuffix: " para corregir y reenviar.",
     fixAndResubmit: "Corregir y reenviar",
+    // Record detail extras
+    backToRecords: "Registros",
+    callCustomer: "Llamar",
+    emailCustomer: "Correo",
+    customerFeedbackTitle: "Opinión del cliente",
+    officeReply: "Respuesta de la oficina",
+    approvedLockedTitle: "Aprobado.",
+    approvedLockedDesc: "Este registro está cerrado y ya no se puede editar.",
   },
   form: {
     // Page titles / headers

@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download } from "lucide-react";
+import { ChevronLeft, Download } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export default async function RecordDetailPage({
     where: { id, organizationId: requireOrgId(session) },
     include: {
       photos: { orderBy: { position: "asc" } },
+      customer: { select: { phone: true, email: true } },
       reviewEvents: {
         orderBy: { createdAt: "desc" },
         select: { id: true, action: true, note: true, actorName: true, createdAt: true },
@@ -114,6 +116,14 @@ export default async function RecordDetailPage({
     <div className="flex flex-col gap-4">
       {saved && <SuccessToast message={t.records.recordSaved} />}
 
+      <Link
+        href="/records"
+        className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
+      >
+        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        {t.records.backToRecords}
+      </Link>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
@@ -134,6 +144,13 @@ export default async function RecordDetailPage({
           </Button>
         </div>
       </div>
+
+      {record.status === "APPROVED" && (
+        <Alert variant="success">
+          <span className="font-medium">{t.records.approvedLockedTitle}</span>{" "}
+          {t.records.approvedLockedDesc}
+        </Alert>
+      )}
 
       {record.status === "NEEDS_CHANGES" && (
         <div className="flex flex-col gap-3">

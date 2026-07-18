@@ -2,32 +2,14 @@
 
 import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, MessageSquare, Star } from "lucide-react";
+import { ArrowRight, MessageSquare } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { StarRating } from "@/components/ui/star-rating";
 import { Textarea } from "@/components/ui/textarea";
 import { respondToFeedbackAction, type FeedbackResponseState } from "@/actions/feedback";
 import { useT } from "@/components/i18n/LocaleProvider";
-import { cn } from "@/lib/utils";
 import type { FeedbackItem } from "@/lib/feedback";
-
-function Stars({ rating }: { rating: number }) {
-  return (
-    <span className="flex items-center gap-0.5" aria-label={`${rating}/5`}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Star
-          key={n}
-          className={cn(
-            "h-4 w-4",
-            n <= rating
-              ? "fill-amber-400 text-amber-400"
-              : "text-neutral-300 dark:text-neutral-600"
-          )}
-        />
-      ))}
-    </span>
-  );
-}
 
 export function FeedbackList({
   items,
@@ -79,7 +61,7 @@ function FeedbackCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <Stars rating={item.rating} />
+            <StarRating rating={item.rating} />
             <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
               {item.customerName}
             </span>
