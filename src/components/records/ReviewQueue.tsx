@@ -480,7 +480,7 @@ function QueueCard({
 
   return (
     <Card className={cn("animate-fade-up", selected && "ring-2 ring-primary")}>
-      <CardContent className="flex items-start gap-3 p-4">
+      <CardContent className="flex items-start gap-3 p-3">
         <label className="mt-0.5 flex cursor-pointer items-center">
           <input
             type="checkbox"
@@ -496,7 +496,7 @@ function QueueCard({
             {r.thumbs.slice(0, 3).map((src, i) => (
               <span
                 key={i}
-                className="relative h-12 w-12 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800"
+                className="relative h-10 w-10 overflow-hidden rounded-md border border-neutral-200 dark:border-neutral-800"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={src} alt="" className="h-full w-full object-cover" />
@@ -529,7 +529,7 @@ function QueueCard({
             {r.submittedByName ? ` · ${t.submittedBy.replace("{name}", r.submittedByName)}` : ""}
           </p>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <ApproveRecordButton recordId={r.id} />
             <ReturnRecordButton recordId={r.id} />
             <Button type="button" variant="ghost" size="sm" onClick={onPeek}>

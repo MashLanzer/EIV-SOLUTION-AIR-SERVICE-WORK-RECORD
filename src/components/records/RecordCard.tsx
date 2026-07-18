@@ -47,7 +47,7 @@ export function RecordCard({
   return (
     <Link href={href} className="block">
       <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
-        <CardContent className="flex flex-col gap-3 p-4">
+        <CardContent className="flex flex-col gap-2.5 p-3">
           <div className="flex items-center justify-between gap-2">
             <span className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
               {t.jobNumber}
@@ -55,7 +55,7 @@ export function RecordCard({
             </span>
             <StatusBadge status={record.status} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             <DataField label={t.date} value={formatDate(record.date, locale)} />
             <DataField label={t.typeOfWork} value={record.typeOfWork} />
             <DataField label={t.customer} value={record.customerName} />
