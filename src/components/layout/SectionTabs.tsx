@@ -22,6 +22,7 @@ const FAMILIES: Record<
     { href: "/admin", label: (d) => d.nav.dashboard },
     { href: "/admin/records", label: (d) => d.nav.records },
     { href: "/admin/review", label: (d) => d.nav.reviewQueue },
+    { href: "/admin/feedback", label: (d) => d.nav.feedback },
   ],
   money: [
     { href: "/admin/financials", label: (d) => d.nav.financials },
