@@ -1077,6 +1077,14 @@ export const en = {
     noCustomers: "No paid revenue this period",
     exportCsv: "Export CSV",
     viewInvoices: "View invoices",
+    // Dashboard sections
+    quickActions: "Quick actions",
+    manage: "Manage",
+    pipelineInvoices: "Invoices",
+    pipelineEstimates: "Estimates",
+    awaiting: "Awaiting",
+    countOne: "{n} doc",
+    countMany: "{n} docs",
   },
   reports: {
     title: "Pay Report",

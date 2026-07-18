@@ -42,6 +42,85 @@ export function financialRange(period: FinancialPeriod, now: Date = new Date()):
 const inRange = (d: Date | null, start: Date, end: Date): boolean =>
   d != null && d >= start && d < end;
 
+// A point-in-time view of open money: unpaid/undelivered documents grouped so
+// the owner can act (send drafts, chase overdue, invoice accepted quotes).
+export interface PipelineCell {
+  count: number;
+  amount: number;
+}
+export interface MoneyPipeline {
+  invoicesDraft: PipelineCell;
+  invoicesAwaiting: PipelineCell;
+  invoicesOverdue: PipelineCell;
+  estimatesDraft: PipelineCell;
+  estimatesPending: PipelineCell;
+  estimatesAccepted: PipelineCell;
+  estimatesExpired: PipelineCell;
+}
+
+export async function getMoneyPipeline(
+  organizationId: string,
+  now: Date = new Date()
+): Promise<MoneyPipeline> {
+  const [openInvoices, openEstimates] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { organizationId, status: { in: ["DRAFT", "SENT"] } },
+      select: {
+        status: true,
+        dueDate: true,
+        taxRate: true,
+        lineItems: { select: { quantity: true, unitPrice: true } },
+      },
+    }),
+    prisma.estimate.findMany({
+      where: { organizationId, status: { in: ["DRAFT", "SENT", "ACCEPTED"] } },
+      select: {
+        status: true,
+        expiryDate: true,
+        taxRate: true,
+        lineItems: { select: { quantity: true, unitPrice: true } },
+      },
+    }),
+  ]);
+
+  const cell = (): PipelineCell => ({ count: 0, amount: 0 });
+  const p: MoneyPipeline = {
+    invoicesDraft: cell(),
+    invoicesAwaiting: cell(),
+    invoicesOverdue: cell(),
+    estimatesDraft: cell(),
+    estimatesPending: cell(),
+    estimatesAccepted: cell(),
+    estimatesExpired: cell(),
+  };
+  const amount = (li: { quantity: unknown; unitPrice: unknown }[], taxRate: unknown) =>
+    computeTotals(
+      li.map((l) => ({ quantity: Number(l.quantity), unitPrice: Number(l.unitPrice) })),
+      Number(taxRate)
+    ).total;
+  const add = (c: PipelineCell, total: number) => {
+    c.count += 1;
+    c.amount += total;
+  };
+
+  for (const inv of openInvoices) {
+    const total = amount(inv.lineItems, inv.taxRate);
+    if (inv.status === "DRAFT") add(p.invoicesDraft, total);
+    else if (inv.dueDate && inv.dueDate.getTime() < now.getTime()) add(p.invoicesOverdue, total);
+    else add(p.invoicesAwaiting, total);
+  }
+  for (const est of openEstimates) {
+    const total = amount(est.lineItems, est.taxRate);
+    if (est.status === "DRAFT") add(p.estimatesDraft, total);
+    else if (est.status === "ACCEPTED") add(p.estimatesAccepted, total);
+    else if (est.expiryDate && est.expiryDate.getTime() < now.getTime()) add(p.estimatesExpired, total);
+    else add(p.estimatesPending, total);
+  }
+
+  for (const k of Object.keys(p) as (keyof MoneyPipeline)[]) p[k].amount = round(p[k].amount);
+  return p;
+}
+
 export interface AgingInvoice {
   id: string;
   number: number;

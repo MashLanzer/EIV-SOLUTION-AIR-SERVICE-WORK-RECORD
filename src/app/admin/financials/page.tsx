@@ -2,10 +2,17 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowRight,
+  BarChart3,
+  Contact,
+  CreditCard,
+  FilePlus2,
+  FileText,
   HandCoins,
   Landmark,
   Percent,
   PiggyBank,
+  Receipt,
+  ReceiptText,
   Sheet,
   TrendingUp,
   Wallet,
@@ -26,13 +33,72 @@ import { getCurrencySymbol } from "@/lib/currency";
 import {
   FINANCIAL_PERIODS,
   getFinancials,
+  getMoneyPipeline,
   normalizeFinancialPeriod,
   type FinancialPeriod,
+  type PipelineCell,
 } from "@/lib/financials";
 import { requireFeature } from "@/lib/features";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
+import { cn } from "@/lib/utils";
+
+// A clickable pipeline cell: a label, its total amount and a doc count that
+// deep-links to the matching filtered list. Muted when empty.
+function PipelineTile({
+  label,
+  href,
+  cell,
+  money,
+  countLabel,
+  tone = "default",
+}: {
+  label: string;
+  href: string;
+  cell: PipelineCell;
+  money: (n: number) => string;
+  countLabel: (n: number) => string;
+  tone?: "default" | "warning";
+}) {
+  const empty = cell.count === 0;
+  return (
+    <Link
+      href={href}
+      className="group flex min-w-0 flex-col gap-0.5 p-4 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/60"
+    >
+      <span className="truncate text-xs font-medium text-neutral-500 dark:text-neutral-400">{label}</span>
+      <span
+        className={cn(
+          "truncate text-lg font-semibold tabular-nums",
+          empty
+            ? "text-neutral-400 dark:text-neutral-600"
+            : tone === "warning"
+              ? "text-warning-text"
+              : "text-neutral-900 dark:text-neutral-100"
+        )}
+      >
+        {money(cell.amount)}
+      </span>
+      <span className="text-[11px] tabular-nums text-neutral-400 dark:text-neutral-500">
+        {countLabel(cell.count)}
+      </span>
+    </Link>
+  );
+}
+
+// One tap-target in the quick-actions grid.
+function ActionTile({ icon: Icon, label, href }: { icon: typeof Receipt; label: string; href: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex flex-col items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-1 py-3 text-center text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+    >
+      <Icon className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
+      <span className="text-[11px] font-medium leading-tight">{label}</span>
+    </Link>
+  );
+}
 
 export const dynamic = "force-dynamic";
 
@@ -46,14 +112,16 @@ export default async function FinancialsPage({
   await requireFeature(organizationId, "invoicing");
 
   const period = normalizeFinancialPeriod((await searchParams).period);
-  const [fin, currency, dict, locale] = await Promise.all([
+  const [fin, pipeline, currency, dict, locale] = await Promise.all([
     getFinancials(organizationId, period),
+    getMoneyPipeline(organizationId),
     getCurrencySymbol(organizationId),
     getT(),
     getLocale(),
   ]);
   const t = dict.financials;
   const money = (n: number) => `${currency}${n.toFixed(2)}`;
+  const docCount = (n: number) => (n === 1 ? t.countOne : t.countMany).replace("{n}", String(n));
   const moneyShort = (n: number) => `${currency}${Math.round(n).toLocaleString(locale === "es" ? "es-ES" : "en-US")}`;
 
   const monthFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
@@ -111,15 +179,16 @@ export default async function FinancialsPage({
         ))}
       </div>
 
-      {/* Period P&L */}
+      {/* Period P&L — each figure drills into where the money lives. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatTile icon={Wallet} value={money(fin.revenue)} label={t.revenue} tone="success" />
-        <StatTile icon={HandCoins} value={money(fin.labor)} label={t.labor} />
+        <StatTile icon={Wallet} value={money(fin.revenue)} label={t.revenue} tone="success" href="/admin/invoices?status=PAID" />
+        <StatTile icon={HandCoins} value={money(fin.labor)} label={t.labor} href="/admin/reports" />
         <StatTile
           icon={TrendingUp}
           value={money(fin.grossProfit)}
           label={t.grossProfit}
           tone={fin.grossProfit >= 0 ? "success" : "warning"}
+          href="/admin/reports"
         />
         <StatTile
           icon={Percent}
@@ -127,14 +196,76 @@ export default async function FinancialsPage({
           label={t.margin}
           tone={fin.margin >= 0 ? "default" : "warning"}
         />
-        <StatTile icon={Landmark} value={money(fin.tax)} label={t.tax} />
+        <StatTile icon={Landmark} value={money(fin.tax)} label={t.tax} href="/admin/invoices?status=PAID" />
         <StatTile
           icon={PiggyBank}
           value={money(fin.outstanding)}
           label={t.outstanding}
           tone={fin.outstanding > 0 ? "warning" : "default"}
+          href="/admin/invoices?status=SENT"
         />
       </div>
+
+      {/* Quick actions — create + jump to every money section. */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          {t.quickActions}
+        </h2>
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
+          <ActionTile icon={ReceiptText} label={dict.nav.newInvoice} href="/admin/invoices/new" />
+          <ActionTile icon={FilePlus2} label={dict.nav.newEstimate} href="/admin/estimates/new" />
+          <ActionTile icon={Receipt} label={dict.nav.invoices} href="/admin/invoices" />
+          <ActionTile icon={FileText} label={dict.nav.estimates} href="/admin/estimates" />
+          <ActionTile icon={Contact} label={dict.nav.customers} href="/admin/customers" />
+          <ActionTile icon={BarChart3} label={dict.nav.payReport} href="/admin/reports" />
+          <ActionTile icon={CreditCard} label={dict.settings.paymentsRow} href="/admin/payments" />
+        </div>
+      </section>
+
+      {/* Invoices pipeline — open money grouped so it's actionable. */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {t.pipelineInvoices}
+          </h2>
+          <Link
+            href="/admin/invoices"
+            className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            {t.viewInvoices}
+          </Link>
+        </div>
+        <Card>
+          <CardContent className="grid grid-cols-3 divide-x divide-neutral-100 p-0 dark:divide-neutral-800">
+            <PipelineTile label={dict.invoices.statusDraft} href="/admin/invoices?status=DRAFT" cell={pipeline.invoicesDraft} money={money} countLabel={docCount} />
+            <PipelineTile label={t.awaiting} href="/admin/invoices?status=SENT" cell={pipeline.invoicesAwaiting} money={money} countLabel={docCount} />
+            <PipelineTile label={dict.invoices.chipOverdue} href="/admin/invoices?status=overdue" cell={pipeline.invoicesOverdue} money={money} countLabel={docCount} tone="warning" />
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Estimates pipeline. */}
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {t.pipelineEstimates}
+          </h2>
+          <Link
+            href="/admin/estimates"
+            className="text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            {dict.nav.estimates}
+          </Link>
+        </div>
+        <Card>
+          <CardContent className="grid grid-cols-2 divide-x divide-y divide-neutral-100 p-0 dark:divide-neutral-800 sm:grid-cols-4 sm:divide-y-0">
+            <PipelineTile label={dict.estimates.statusDraft} href="/admin/estimates?status=DRAFT" cell={pipeline.estimatesDraft} money={money} countLabel={docCount} />
+            <PipelineTile label={dict.estimates.pending} href="/admin/estimates?status=SENT" cell={pipeline.estimatesPending} money={money} countLabel={docCount} />
+            <PipelineTile label={dict.estimates.statusAccepted} href="/admin/estimates?status=ACCEPTED" cell={pipeline.estimatesAccepted} money={money} countLabel={docCount} />
+            <PipelineTile label={dict.estimates.chipExpired} href="/admin/estimates?status=expired" cell={pipeline.estimatesExpired} money={money} countLabel={docCount} tone="warning" />
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Revenue trend */}
       {hasTrend ? (

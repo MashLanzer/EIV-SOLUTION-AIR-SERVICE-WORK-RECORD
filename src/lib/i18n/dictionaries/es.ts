@@ -1071,6 +1071,14 @@ export const es: Dictionary = {
     noCustomers: "Sin ingresos cobrados en este período",
     exportCsv: "Exportar CSV",
     viewInvoices: "Ver facturas",
+    // Secciones del dashboard
+    quickActions: "Acciones rápidas",
+    manage: "Administrar",
+    pipelineInvoices: "Facturas",
+    pipelineEstimates: "Estimados",
+    awaiting: "Por cobrar",
+    countOne: "{n} doc",
+    countMany: "{n} docs",
   },
   reports: {
     title: "Reporte de pago",
