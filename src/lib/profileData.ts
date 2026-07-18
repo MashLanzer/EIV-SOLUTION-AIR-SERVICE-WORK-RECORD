@@ -108,18 +108,22 @@ export async function getProfileData(userId: string, organizationId: string) {
   // helper pay where they're the helper. Org-scoped (names aren't unique across
   // companies). Only counts APPROVED records, matching the pay report.
   const name = userData?.name ?? "";
+  // Approved pay covering this month AND last month, in one query, so we can
+  // show a month-over-month delta on the figure the worker cares about most.
+  const prevPayMonthStart = utcDay(today.getUTCFullYear(), today.getUTCMonth() - 1, 1);
   const payRecords = name
     ? await prisma.workRecord.findMany({
         where: {
           organizationId,
           status: "APPROVED",
-          date: { gte: monthStart },
+          date: { gte: prevPayMonthStart },
           OR: [
             { leadInstallerName: { equals: name, mode: "insensitive" } },
             { helperName: { equals: name, mode: "insensitive" } },
           ],
         },
         select: {
+          date: true,
           leadInstallerName: true,
           helperName: true,
           leadInstallerPay: true,
@@ -129,13 +133,18 @@ export async function getProfileData(userId: string, organizationId: string) {
     : [];
   const lowerName = name.toLowerCase();
   let payThisMonth = 0;
+  let payPrevMonth = 0;
   for (const r of payRecords) {
-    if (r.leadInstallerName.toLowerCase() === lowerName) payThisMonth += Number(r.leadInstallerPay);
+    let amount = 0;
+    if (r.leadInstallerName.toLowerCase() === lowerName) amount += Number(r.leadInstallerPay);
     if (r.helperName && r.helperName.toLowerCase() === lowerName) {
-      payThisMonth += Number(r.helperPay ?? 0);
+      amount += Number(r.helperPay ?? 0);
     }
+    if (r.date >= monthStart) payThisMonth += amount;
+    else payPrevMonth += amount;
   }
   payThisMonth = Math.round(payThisMonth * 100) / 100;
+  payPrevMonth = Math.round(payPrevMonth * 100) / 100;
 
   const totalRecords = statusCounts.reduce((acc, s) => acc + s._count, 0);
   const approvedRecords = statusCounts.find((s) => s.status === "APPROVED")?._count ?? 0;
@@ -221,6 +230,7 @@ export async function getProfileData(userId: string, organizationId: string) {
     records: { current: curMonth.count, previous: prevMonth.count },
     hours: { current: curMonth.hours, previous: prevMonth.hours },
     approvalRate: { current: curMonth.approvalRate, previous: prevMonth.approvalRate },
+    pay: { current: payThisMonth, previous: payPrevMonth },
   };
   const timeOff = timeOffRows.map((t) => ({
     id: t.id,

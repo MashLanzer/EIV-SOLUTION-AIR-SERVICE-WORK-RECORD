@@ -59,6 +59,7 @@ export const en = {
     approvalRate: "Approval rate",
     hoursThisMonth: "Hours this month",
     payThisMonth: "Approved pay this month",
+    payVsLast: "vs last month",
     trendLabel: "Records submitted, last 6 weeks",
     thisWeek: "This week",
     teams: "Teams",
@@ -109,6 +110,7 @@ export const en = {
     activityMapDesc: "Records submitted over the last 12 weeks.",
     activityLess: "Less",
     activityMore: "More",
+    activeDays: "{n} active days",
     // Time off
     timeOffTitle: "Time off",
     timeOffDesc: "Your upcoming days off and pending requests.",

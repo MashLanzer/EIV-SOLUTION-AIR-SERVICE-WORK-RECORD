@@ -59,6 +59,7 @@ export const es: Dictionary = {
     approvalRate: "Tasa de aprobación",
     hoursThisMonth: "Horas del mes",
     payThisMonth: "Pago aprobado del mes",
+    payVsLast: "vs. el mes pasado",
     trendLabel: "Registros enviados, últimas 6 semanas",
     thisWeek: "Esta semana",
     teams: "Equipos",
@@ -109,6 +110,7 @@ export const es: Dictionary = {
     activityMapDesc: "Registros enviados en las últimas 12 semanas.",
     activityLess: "Menos",
     activityMore: "Más",
+    activeDays: "{n} días activos",
     // Días libres
     timeOffTitle: "Días libres",
     timeOffDesc: "Tus próximos días libres y solicitudes pendientes.",

@@ -70,6 +70,7 @@ interface MonthCompare {
   records: MetricPair;
   hours: MetricPair;
   approvalRate: MetricPair;
+  pay: MetricPair;
 }
 interface ActivityDay {
   date: string; // YYYY-MM-DD
@@ -382,6 +383,12 @@ export function ProfileScreen({
                   lessLabel={t.activityLess}
                   moreLabel={t.activityMore}
                 />
+                <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+                  {t.activeDays.replace(
+                    "{n}",
+                    String(activityDays.filter((d) => d.count > 0).length)
+                  )}
+                </p>
               </div>
             </SettingsSection>
           )}
@@ -525,6 +532,21 @@ export function ProfileScreen({
                     <div className="text-sm text-neutral-500 dark:text-neutral-400">
                       {t.payThisMonth}
                     </div>
+                    {(() => {
+                      const delta = monthCompare.pay.current - monthCompare.pay.previous;
+                      if (Math.abs(delta) < 0.005) return null;
+                      return (
+                        <div
+                          className={cn(
+                            "mt-0.5 text-xs font-medium tabular-nums",
+                            delta > 0 ? "text-success-text" : "text-destructive-text"
+                          )}
+                        >
+                          {delta > 0 ? "▲" : "▼"} {currency}
+                          {Math.abs(delta).toFixed(2)} {t.payVsLast}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="flex gap-2">
