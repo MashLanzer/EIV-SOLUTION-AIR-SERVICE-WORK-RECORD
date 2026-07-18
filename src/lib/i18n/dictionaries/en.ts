@@ -1785,6 +1785,8 @@ export const en = {
   },
   settings: {
     title: "Settings",
+    paymentsRow: "Online payments",
+    paymentsHint: "Connect Stripe so customers can pay invoices online",
     resetToast: "All history was reset",
     company: {
       section: "Company",

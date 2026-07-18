@@ -7,7 +7,6 @@ import {
   CalendarDays,
   ClipboardList,
   ClipboardCheck,
-  CreditCard,
   Users,
   Users2,
   Contact,
@@ -49,7 +48,6 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
   { href: "/admin/estimates", label: n.estimates, shortLabel: n.estimates, icon: FileText, exact: false },
   { href: "/admin/invoices", label: n.invoices, shortLabel: n.invoices, icon: Receipt, exact: false },
   { href: "/admin/financials", label: n.financials, shortLabel: n.financials, icon: Wallet, exact: false },
-  { href: "/admin/payments", label: n.payments, shortLabel: n.payments, icon: CreditCard, exact: false },
   { href: "/admin/reports", label: n.payReport, shortLabel: n.pay, icon: BarChart3, exact: false },
   { href: "/admin/workers", label: n.workers, shortLabel: n.workers, icon: Users, exact: false },
   { href: "/admin/roles", label: n.roles, shortLabel: n.roles, icon: ShieldCheck, exact: false },
@@ -58,16 +56,34 @@ function navItems(n: Dictionary["nav"]): TabItem[] {
 
 // Native app bar (APK): four real destination tabs. Everything else (create
 // actions, secondary nav, settings, sign out) lives in the center menu sheet.
-function appTabItems(n: Dictionary["nav"]): TabItem[] {
+function appTabItems(n: Dictionary["nav"], invoicingOn: boolean): TabItem[] {
+  // The money slot: Financials (billing analytics) as the entry to the money
+  // cluster when the invoicing module is on. When it's off, Financials/Estimates/
+  // Invoices are all gated away, so fall back to Pay Report (never gated) — that
+  // keeps the bar at four tabs instead of collapsing to three.
+  const moneyTab: TabItem = invoicingOn
+    ? {
+        href: "/admin/financials",
+        label: n.financials,
+        shortLabel: n.financials,
+        icon: Wallet,
+        exact: false,
+        alsoActiveFor: ["/admin/estimates", "/admin/invoices", "/admin/reports"],
+      }
+    : {
+        href: "/admin/reports",
+        label: n.payReport,
+        shortLabel: n.pay,
+        icon: BarChart3,
+        exact: false,
+      };
   return [
   { href: "/admin", label: n.dashboard, shortLabel: n.home, icon: LayoutDashboard, exact: true },
   // Projects is the entry to the whole "structure" cluster, so it stays lit on
   // its sibling sub-nav pages (Teams / Workers / Customers / Photos).
   { href: "/admin/projects", label: n.projects, shortLabel: n.projects, icon: FolderKanban, exact: false, alsoActiveFor: ["/admin/teams", "/admin/workers", "/admin/customers", "/admin/photos"] },
   { href: "/admin/schedule", label: n.schedule, shortLabel: n.schedule, icon: CalendarDays, exact: false },
-  // Financials is the entry to the "money" cluster; Photos now lives under the
-  // Projects sub-nav instead of holding a tab of its own.
-  { href: "/admin/financials", label: n.financials, shortLabel: n.financials, icon: Wallet, exact: false, alsoActiveFor: ["/admin/estimates", "/admin/invoices", "/admin/payments", "/admin/reports"] },
+  moneyTab,
   ];
 }
 
@@ -178,7 +194,7 @@ export function AdminSidebar({
   );
   // Records is no longer a native tab, so the review badge rides the Dashboard
   // tab (where the review queue lives) in the APK bar.
-  const appTabs = prep(appTabItems(t.nav)).map((item) =>
+  const appTabs = prep(appTabItems(t.nav, features ? features.invoicing : true)).map((item) =>
     item.href === "/admin" && !item.locked ? { ...item, badge: pendingReviewCount } : item
   );
 

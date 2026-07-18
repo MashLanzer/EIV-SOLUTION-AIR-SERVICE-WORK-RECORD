@@ -1,4 +1,4 @@
-import { Info, ShieldCheck } from "lucide-react";
+import { CreditCard, Info, ShieldCheck } from "lucide-react";
 
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { PageHeader } from "@/components/ui/page-header";
@@ -6,6 +6,7 @@ import { SettingsRow, SettingsSection } from "@/components/settings/SettingsList
 import { SettingsHub, type SettingsHubData } from "@/components/settings/SettingsHub";
 import { requireOfficeAccess } from "@/lib/authz";
 import { requireOrgId } from "@/lib/orgScope";
+import { getOrgFeatures } from "@/lib/features";
 import { prisma } from "@/lib/prisma";
 import { stripeEnabled } from "@/lib/stripe";
 import { PLANS, planLabel, planMaxUsers } from "@/lib/plans";
@@ -19,10 +20,22 @@ const APP_VERSION = "AeroTrack 1.0";
 // here once (best-effort — a DB hiccup or a not-yet-migrated column falls back
 // to safe defaults so the hub never shows an error screen).
 export default async function AdminSettingsPage() {
-  const { session } = await requireOfficeAccess();
+  const { session, permissions } = await requireOfficeAccess();
   const isAdmin = session.user.role === "ADMIN";
   const t = await getT();
   const s = t.settings;
+
+  // Online payments (Stripe Connect) is now reached from Settings. Shown only to
+  // callers who can manage it and when the invoicing module is on (the page
+  // itself 404s otherwise).
+  let canPayments = false;
+  if (permissions.includes("payments.manage")) {
+    try {
+      canPayments = (await getOrgFeatures(requireOrgId(session))).invoicing;
+    } catch {
+      canPayments = false;
+    }
+  }
 
   const role = session.user.role;
   const accessLabel =
@@ -145,6 +158,17 @@ export default async function AdminSettingsPage() {
       <PageHeader title={s.title} />
 
       <SettingsHub isAdmin={isAdmin} data={data} />
+
+      {canPayments && (
+        <SettingsSection>
+          <SettingsRow
+            icon={CreditCard}
+            label={s.paymentsRow}
+            sublabel={s.paymentsHint}
+            href="/admin/payments"
+          />
+        </SettingsSection>
+      )}
 
       <SettingsSection title={s.about.section}>
         <SettingsRow icon={ShieldCheck} label={accessLabel} sublabel={s.about.accessLevel} />

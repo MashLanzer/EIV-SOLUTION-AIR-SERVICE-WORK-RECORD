@@ -4,12 +4,12 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { SectionTabs } from "@/components/layout/SectionTabs";
 import { refreshConnectStatusAction, startConnectOnboardingAction } from "@/actions/paymentsConnect";
 import { getPaymentStatus } from "@/lib/payments";
 import { requireFeature } from "@/lib/features";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
+import { getT } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -28,11 +28,15 @@ export default async function PaymentsPage({
 
   const status = await getPaymentStatus(organizationId);
   const ready = status.connected && status.chargesEnabled;
+  const settingsLabel = (await getT()).settings.title;
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionTabs family="money" />
-      <PageHeader title="Online payments" />
+      <PageHeader
+        title="Online payments"
+        backHref="/admin/settings"
+        backLabel={settingsLabel}
+      />
 
       {error === "unconfigured" && (
         <Alert variant="warning">Online payments aren&apos;t available yet. Please contact us.</Alert>

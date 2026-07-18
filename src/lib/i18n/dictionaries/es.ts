@@ -1780,6 +1780,8 @@ export const es: Dictionary = {
   },
   settings: {
     title: "Ajustes",
+    paymentsRow: "Pagos en línea",
+    paymentsHint: "Conecta Stripe para que los clientes paguen facturas en línea",
     resetToast: "Se restableció todo el historial",
     company: {
       section: "Empresa",
