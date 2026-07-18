@@ -10,6 +10,8 @@ import { ProjectForm } from "@/components/projects/ProjectForm";
 import { TeamForm } from "@/components/teams/TeamForm";
 import type { MemberOption } from "@/components/teams/MemberChecklist";
 import { WorkerForm } from "@/components/workers/WorkerForm";
+import { EstimateForm } from "@/components/estimates/EstimateForm";
+import { InvoiceForm } from "@/components/invoices/InvoiceForm";
 import { useT } from "@/components/i18n/LocaleProvider";
 
 export interface CreateItem {
@@ -24,19 +26,27 @@ export interface CreateItem {
 // can't create (supervisors), which also get an empty createItems list.
 export interface CreateData {
   teams: { id: string; name: string }[];
-  customers: { id: string; name: string }[];
+  // Customers carry their address so the estimate/invoice forms can autofill it.
+  customers: { id: string; name: string; address: string }[];
   // Team members carry their access level so the picker can group them.
   users: MemberOption[];
   projects: { id: string; name: string }[];
   positions: { id: string; name: string }[];
+  // Seeds for the estimate/invoice forms (currency symbol + org default tax).
+  currency: string;
+  defaultTaxRate: string;
 }
+
+type CreateKind = "project" | "team" | "worker" | "estimate" | "invoice";
 
 // Which known create route each item maps to, so the item opens that form in a
 // sheet instead of navigating to the /new page.
-function createKind(href: string): "project" | "team" | "worker" | null {
+function createKind(href: string): CreateKind | null {
   if (href === "/admin/projects/new") return "project";
   if (href === "/admin/teams/new") return "team";
   if (href === "/admin/workers/new") return "worker";
+  if (href === "/admin/estimates/new") return "estimate";
+  if (href === "/admin/invoices/new") return "invoice";
   return null;
 }
 
@@ -59,7 +69,18 @@ export function AppMenuSheet({
 }) {
   const t = useT();
   const n = t.nav;
-  const [create, setCreate] = useState<"project" | "team" | "worker" | null>(null);
+  const [create, setCreate] = useState<CreateKind | null>(null);
+  // Sensible starting values for the estimate/invoice forms opened in place.
+  const docDefaults = (taxRate: string) => ({
+    customerId: "",
+    customerName: "",
+    customerAddress: "",
+    issueDate: new Date().toISOString().slice(0, 10),
+    dueDate: "",
+    taxRate,
+    notes: "",
+    items: [] as { description: string; quantity: string; unitPrice: string }[],
+  });
 
   const rowClass =
     "flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-neutral-900 dark:text-neutral-100 active:bg-neutral-100 dark:active:bg-neutral-800";
@@ -153,6 +174,30 @@ export function AppMenuSheet({
             closeLabel={t.common.close}
           >
             <TeamForm users={createData.users} projects={createData.projects} />
+          </FormSheet>
+          <FormSheet
+            open={create === "estimate"}
+            onClose={() => setCreate(null)}
+            title={t.estimates.newEstimate}
+            closeLabel={t.common.close}
+          >
+            <EstimateForm
+              customers={createData.customers}
+              currency={createData.currency}
+              defaultValues={docDefaults(createData.defaultTaxRate)}
+            />
+          </FormSheet>
+          <FormSheet
+            open={create === "invoice"}
+            onClose={() => setCreate(null)}
+            title={t.invoices.newInvoice}
+            closeLabel={t.common.close}
+          >
+            <InvoiceForm
+              customers={createData.customers}
+              currency={createData.currency}
+              defaultValues={docDefaults(createData.defaultTaxRate)}
+            />
           </FormSheet>
         </>
       )}

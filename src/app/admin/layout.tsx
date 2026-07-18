@@ -14,6 +14,7 @@ import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
 import { getActiveSupportSessionForOrg } from "@/lib/support";
 import { getOrgFeatures } from "@/lib/features";
 import { getAssignablePositions } from "@/lib/positions";
+import { getCurrencySymbol } from "@/lib/currency";
 import { requireOfficeAccess } from "@/lib/authz";
 
 export default async function AdminLayout({
@@ -38,9 +39,13 @@ export default async function AdminLayout({
     : await getActiveSupportSessionForOrg(organizationId);
   // Load the small id/name lists that seed the "create" sheets only for callers
   // who can actually create something (any of the manage-* capabilities).
-  const canCreate = ["projects.manage", "teams.manage", "workers.manage"].some((p) =>
-    permissions.includes(p)
-  );
+  const canCreate = [
+    "projects.manage",
+    "teams.manage",
+    "workers.manage",
+    "estimates.manage",
+    "invoices.manage",
+  ].some((p) => permissions.includes(p));
   // Badge on the Records tab: how many records are waiting for review. Plus the
   // newest activity timestamp driving the header bell's unread dot.
   const [pendingReviewCount, latestActivityAt, unreadNotifications, features, announcement, use24, createData] =
@@ -63,7 +68,7 @@ export default async function AdminLayout({
             prisma.customer.findMany({
               where: { organizationId },
               orderBy: { name: "asc" },
-              select: { id: true, name: true },
+              select: { id: true, name: true, address: true },
             }),
             prisma.user.findMany({
               where: { organizationId },
@@ -76,12 +81,20 @@ export default async function AdminLayout({
               select: { id: true, name: true },
             }),
             getAssignablePositions(organizationId),
-          ]).then(([teams, customers, users, projects, positions]) => ({
+            getCurrencySymbol(organizationId),
+            prisma.organization.findUnique({
+              where: { id: organizationId },
+              select: { defaultTaxRate: true },
+            }),
+          ]).then(([teams, customers, users, projects, positions, currency, org]) => ({
             teams,
-            customers,
+            // Coerce address null → "" so the estimate/invoice forms get strings.
+            customers: customers.map((c) => ({ id: c.id, name: c.name, address: c.address ?? "" })),
             users,
             projects,
             positions,
+            currency,
+            defaultTaxRate: org?.defaultTaxRate != null ? String(Number(org.defaultTaxRate)) : "0",
           }))
         : Promise.resolve(null),
     ]);
