@@ -163,13 +163,24 @@ function ActionTile({ icon: Icon, label, href }: { icon: typeof Receipt; label: 
 // KPI helpers — the same grouped-card look as the dashboard overview: a small
 // label over a row of centred metrics, divided by hairlines. Monochrome for
 // consistency across the two screens.
-function KpiCard({ label, cols, children }: { label: string; cols: string; children: React.ReactNode }) {
+function KpiCard({
+  label,
+  cols,
+  clickable,
+  children,
+}: {
+  label: string;
+  cols: string;
+  clickable?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-      <div className="mb-3">
+      <div className="mb-3 flex items-center justify-between">
         <span className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
           {label}
         </span>
+        {clickable && <ArrowRight className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />}
       </div>
       <div className={cn("grid divide-x divide-neutral-100 dark:divide-neutral-800", cols)}>{children}</div>
     </div>
@@ -388,7 +399,7 @@ export default async function FinancialsPage({
 
       {/* Period P&L — grouped metric cards, matching the dashboard overview. */}
       <div className="flex flex-col gap-3">
-        <KpiCard label={t.kpiResult} cols="grid-cols-3">
+        <KpiCard label={t.kpiResult} cols="grid-cols-3" clickable>
           <MetricLink value={moneyShort(fin.revenue)} label={t.revenue} href="/admin/invoices?status=PAID" />
           <MetricLink value={moneyShort(fin.labor)} label={t.labor} href="/admin/reports" />
           <MetricLink value={moneyShort(fin.grossProfit)} label={t.grossProfit} href="/admin/reports" />
@@ -400,7 +411,7 @@ export default async function FinancialsPage({
             label={t.avgDaysToPay}
           />
         </KpiCard>
-        <KpiCard label={t.kpiBalances} cols="grid-cols-2">
+        <KpiCard label={t.kpiBalances} cols="grid-cols-2" clickable>
           <MetricLink value={moneyShort(fin.tax)} label={t.tax} href="/admin/invoices?status=PAID" />
           <MetricLink value={moneyShort(fin.outstanding)} label={t.outstanding} href="/admin/invoices?status=SENT" />
         </KpiCard>
