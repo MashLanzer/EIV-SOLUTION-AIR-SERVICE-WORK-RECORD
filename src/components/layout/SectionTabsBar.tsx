@@ -30,7 +30,13 @@ export function SectionTabsBar({
         className="inline-flex gap-1 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-900 p-1"
       >
         {items.map((it) => {
-          const active = pathname === it.href || pathname.startsWith(`${it.href}/`);
+          // "/admin" (the dashboard) is a prefix of every admin route, so it
+          // only lights up on an exact match; the rest use prefix matching so
+          // detail pages keep their section active.
+          const active =
+            it.href === "/admin"
+              ? pathname === it.href
+              : pathname === it.href || pathname.startsWith(`${it.href}/`);
           return (
             <Link
               key={it.href}

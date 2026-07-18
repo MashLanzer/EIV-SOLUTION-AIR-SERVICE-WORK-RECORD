@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { BarList } from "@/components/charts/BarList";
 import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
 import { DashboardQuickActions } from "@/components/admin/DashboardQuickActions";
+import { SectionTabs } from "@/components/layout/SectionTabs";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -338,6 +339,7 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-col gap-4">
+      <SectionTabs family="overview" />
       <div className="animate-fade-up" style={{ animationDelay: "0ms" }}>
         <DashboardGreeting
           name={session.user.name}
