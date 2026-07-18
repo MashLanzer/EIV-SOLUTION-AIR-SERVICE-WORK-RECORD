@@ -6,23 +6,21 @@ import {
   ChevronRight,
   Clock3,
   CheckCircle2,
-  TrendingUp,
-  DollarSign,
-  Wrench,
   FolderKanban,
   Image as ImageIcon,
 } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { BarList } from "@/components/charts/BarList";
+import { MetricCard, Metric, MetricLink } from "@/components/ui/metric-card";
 import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
 import { DashboardQuickActions } from "@/components/admin/DashboardQuickActions";
+import { DashboardTrends } from "@/components/admin/DashboardTrends";
 import { SectionTabs } from "@/components/layout/SectionTabs";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { buildPayReport, parsePayReportParams } from "@/lib/payReport";
+import { defaultPayReportRange } from "@/lib/payReport";
 import { computeTotals } from "@/lib/invoices";
 import { prisma } from "@/lib/prisma";
 import { getAssignablePositions } from "@/lib/positions";
@@ -54,13 +52,6 @@ function startOfMonth() {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 }
 
-// A trailing window instead of "all time" keeps the type-of-work groupBy
-// from scanning the entire table forever as the record count grows.
-function monthsAgo(months: number) {
-  const now = new Date();
-  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - months, 1));
-}
-
 function formatDate(date: Date, locale: string) {
   return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
@@ -88,44 +79,17 @@ function timeAgo(date: Date, justNow: string) {
 // the caller (currency is a configurable symbol, not a locale currency code).
 const moneyNumber = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 
-// Grouped overview card + its cluster label, plus the metric figures inside.
-const GROUP_CARD =
-  "group rounded-xl border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700";
-const GROUP_LABEL =
-  "text-[11px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500";
-
-function Metric({ value, label }: { value: number | string; label: string }) {
-  return (
-    <div className="flex min-w-0 flex-col items-center px-2 text-center">
-      <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-        {value}
-      </div>
-      <div className="mt-1 text-xs leading-tight text-neutral-500 dark:text-neutral-400">{label}</div>
-    </div>
-  );
-}
-
-function MetricLink({ value, label, href }: { value: number | string; label: string; href: string }) {
-  return (
-    <Link
-      href={href}
-      className="flex min-w-0 flex-col items-center px-2 text-center transition-opacity hover:opacity-70"
-    >
-      <div className="text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-        {value}
-      </div>
-      <div className="mt-1 text-xs leading-tight text-neutral-500 dark:text-neutral-400">{label}</div>
-    </Link>
-  );
-}
-
 export default async function AdminDashboardPage() {
   const { session } = await requireOfficeAccess();
   const organizationId = requireOrgId(session);
   const thisWeekMonday = startOfWeek();
-  const windowStart = new Date(thisWeekMonday.getTime() - (WEEKS_BACK - 1) * 7 * DAY_MS);
-  const payParams = parsePayReportParams({});
+  const isAdmin = session.user.role === "ADMIN";
+  // Pay owed this month feeds a headline tile; the full per-worker report is
+  // deferred to the (collapsed) trends section, so only the total is fetched.
+  const payRange = defaultPayReportRange();
 
+  // A single parallel batch: every figure the first paint needs, plus the
+  // create-sheet seeds (admins only) and i18n - no second sequential round-trip.
   const [
     totalRecords,
     recordsThisWeek,
@@ -134,9 +98,7 @@ export default async function AdminDashboardPage() {
     pendingReview,
     pendingQueue,
     recentRecords,
-    weeklyRecords,
-    typeGroups,
-    payReport,
+    payThisMonth,
     activeProjects,
     photoCount,
     teamCount,
@@ -148,6 +110,9 @@ export default async function AdminDashboardPage() {
     returnedCount,
     sentInvoices,
     use24,
+    dict,
+    locale,
+    quickCreateData,
   ] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId } }),
     prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
@@ -181,16 +146,16 @@ export default async function AdminDashboardPage() {
         submittedBy: { select: { name: true } },
       },
     }),
-    prisma.workRecord.findMany({
-      where: { organizationId, date: { gte: windowStart } },
-      select: { date: true },
+    // Just the sum owed this month (approved records) for the money tile - a
+    // cheap aggregate instead of the full grouped pay report.
+    prisma.workRecord.aggregate({
+      where: {
+        organizationId,
+        status: "APPROVED",
+        date: { gte: new Date(payRange.dateFrom), lte: new Date(payRange.dateTo) },
+      },
+      _sum: { leadInstallerPay: true, helperPay: true },
     }),
-    prisma.workRecord.groupBy({
-      by: ["typeOfWork"],
-      where: { organizationId, date: { gte: monthsAgo(TYPE_WINDOW_MONTHS) } },
-      _count: { _all: true },
-    }),
-    buildPayReport(payParams, organizationId),
     prisma.project.count({ where: { organizationId, status: { not: "COMPLETED" } } }),
     prisma.photo.count({ where: { organizationId } }),
     prisma.team.count({ where: { organizationId } }),
@@ -199,7 +164,7 @@ export default async function AdminDashboardPage() {
       where: { organizationId },
       orderBy: { takenAt: "desc" },
       take: 12,
-      select: { id: true, url: true, project: { select: { id: true } } },
+      select: { id: true, url: true, project: { select: { id: true, name: true } } },
     }),
     // The most recently touched active projects, with checklist progress.
     prisma.project.findMany({
@@ -259,49 +224,48 @@ export default async function AdminDashboardPage() {
       select: { taxRate: true, lineItems: { select: { quantity: true, unitPrice: true } } },
     }),
     getUse24Hour(organizationId),
+    getT(),
+    getLocale(),
+    // Seed lists for the quick-action create sheets. Only admins see them, so
+    // non-admins skip the queries entirely.
+    isAdmin
+      ? Promise.all([
+          prisma.team.findMany({
+            where: { organizationId },
+            orderBy: { name: "asc" },
+            select: { id: true, name: true },
+          }),
+          prisma.customer.findMany({
+            where: { organizationId },
+            orderBy: { name: "asc" },
+            select: { id: true, name: true },
+          }),
+          prisma.user.findMany({
+            where: { organizationId },
+            orderBy: { name: "asc" },
+            select: { id: true, name: true, email: true, role: true },
+          }),
+          prisma.project.findMany({
+            where: { organizationId, status: { not: "COMPLETED" } },
+            orderBy: { name: "asc" },
+            select: { id: true, name: true },
+          }),
+          getAssignablePositions(organizationId),
+        ]).then(([teams, customers, users, projects, positions]) => ({
+          teams,
+          customers,
+          users,
+          projects,
+          positions,
+        }))
+      : Promise.resolve(null),
   ]);
 
-  // One unified metrics grid: a headline "Total Records" hero, then the
-  // remaining stats + the clickable workspace shortcuts as uniform tiles.
-  const dict = await getT();
   const t = dict.dashboard;
-  const locale = await getLocale();
   const fmtMoney = (n: number) => `${currencySymbol}${moneyNumber.format(n)}`;
-  const isAdmin = session.user.role === "ADMIN";
 
-  // Seed lists for the dashboard quick-action create sheets (Project / Worker /
-  // Team). Only fetched for admins, who are the ones shown the quick actions.
-  const quickCreateData = isAdmin
-    ? await Promise.all([
-        prisma.team.findMany({
-          where: { organizationId },
-          orderBy: { name: "asc" },
-          select: { id: true, name: true },
-        }),
-        prisma.customer.findMany({
-          where: { organizationId },
-          orderBy: { name: "asc" },
-          select: { id: true, name: true },
-        }),
-        prisma.user.findMany({
-          where: { organizationId },
-          orderBy: { name: "asc" },
-          select: { id: true, name: true, email: true, role: true },
-        }),
-        prisma.project.findMany({
-          where: { organizationId, status: { not: "COMPLETED" } },
-          orderBy: { name: "asc" },
-          select: { id: true, name: true },
-        }),
-        getAssignablePositions(organizationId),
-      ]).then(([teams, customers, users, projects, positions]) => ({
-        teams,
-        customers,
-        users,
-        projects,
-        positions,
-      }))
-    : null;
+  const payThisMonthTotal =
+    Number(payThisMonth._sum.leadInstallerPay ?? 0) + Number(payThisMonth._sum.helperPay ?? 0);
 
   const outstandingTotal = sentInvoices.reduce(
     (sum, inv) =>
@@ -315,27 +279,6 @@ export default async function AdminDashboardPage() {
       ).total,
     0
   );
-
-  // Bucket records into WEEKS_BACK weekly columns ending this week.
-  const weekBuckets: { label: string; value: number }[] = Array.from(
-    { length: WEEKS_BACK },
-    (_, i) => {
-      const start = new Date(windowStart.getTime() + i * 7 * DAY_MS);
-      return { label: formatDate(start, locale), value: 0 };
-    }
-  );
-  for (const r of weeklyRecords) {
-    const idx = Math.floor((r.date.getTime() - windowStart.getTime()) / (7 * DAY_MS));
-    if (idx >= 0 && idx < weekBuckets.length) weekBuckets[idx].value += 1;
-  }
-
-  const typeData = typeGroups
-    .map((g) => ({ label: g.typeOfWork, value: g._count._all }))
-    .sort((a, b) => b.value - a.value);
-
-  const payData = payReport.rows
-    .slice(0, 6)
-    .map((row) => ({ label: row.name, value: Math.round(row.total) }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -359,41 +302,24 @@ export default async function AdminDashboardPage() {
             boxes instead of ten. */}
         <div className="flex flex-col gap-3">
           {isAdmin && (
-            <Link href="/admin/reports" className={GROUP_CARD}>
-              <div className="mb-3 flex items-center justify-between">
-                <span className={GROUP_LABEL}>{t.groupMoney}</span>
-                <ArrowRight className="h-3.5 w-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
-              </div>
-              <div className="grid grid-cols-2 divide-x divide-neutral-100 dark:divide-neutral-800">
-                <Metric value={fmtMoney(payReport.grand.total)} label={t.toPayThisMonth} />
-                <Metric value={fmtMoney(outstandingTotal)} label={t.tileOutstanding} />
-              </div>
-            </Link>
+            <MetricCard label={t.groupMoney} href="/admin/reports" cols="grid-cols-2">
+              <Metric value={fmtMoney(payThisMonthTotal)} label={t.toPayThisMonth} />
+              <Metric value={fmtMoney(outstandingTotal)} label={t.tileOutstanding} />
+            </MetricCard>
           )}
 
-          <Link href="/admin/records" className={GROUP_CARD}>
-            <div className="mb-3 flex items-center justify-between">
-              <span className={GROUP_LABEL}>{t.groupRecords}</span>
-              <ArrowRight className="h-3.5 w-3.5 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
-            </div>
-            <div className="grid grid-cols-3 divide-x divide-neutral-100 dark:divide-neutral-800">
-              <Metric value={recordsThisWeek} label={t.tileThisWeek} />
-              <Metric value={recordsThisMonth} label={t.tileThisMonth} />
-              <Metric value={totalRecords} label={t.shortTotal} />
-            </div>
-          </Link>
+          <MetricCard label={t.groupRecords} href="/admin/records" cols="grid-cols-3">
+            <Metric value={recordsThisWeek} label={t.tileThisWeek} />
+            <Metric value={recordsThisMonth} label={t.tileThisMonth} />
+            <Metric value={totalRecords} label={t.shortTotal} />
+          </MetricCard>
 
-          <div className={cn(GROUP_CARD, "cursor-default")}>
-            <div className="mb-3">
-              <span className={GROUP_LABEL}>{t.groupCompany}</span>
-            </div>
-            <div className="grid grid-cols-4 divide-x divide-neutral-100 dark:divide-neutral-800">
-              <MetricLink value={activeWorkers} label={t.shortWorkers} href="/admin/workers" />
-              <MetricLink value={activeProjects} label={t.shortProjects} href="/admin/projects" />
-              <MetricLink value={photoCount} label={t.tilePhotos} href="/admin/photos" />
-              <MetricLink value={teamCount} label={t.tileTeams} href="/admin/teams" />
-            </div>
-          </div>
+          <MetricCard label={t.groupCompany} cols="grid-cols-4">
+            <MetricLink value={activeWorkers} label={t.shortWorkers} href="/admin/workers" />
+            <MetricLink value={activeProjects} label={t.shortProjects} href="/admin/projects" />
+            <MetricLink value={photoCount} label={t.tilePhotos} href="/admin/photos" />
+            <MetricLink value={teamCount} label={t.tileTeams} href="/admin/teams" />
+          </MetricCard>
         </div>
       </section>
 
@@ -460,7 +386,7 @@ export default async function AdminDashboardPage() {
                     {t.review}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500 sm:hidden" />
+                  <ArrowRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400 sm:hidden" />
                 </Link>
                 );
               })}
@@ -522,7 +448,7 @@ export default async function AdminDashboardPage() {
                         {job.customer?.name ? ` · ${job.customer.name}` : ""}
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                   </Link>
                 );
               })}
@@ -561,7 +487,7 @@ export default async function AdminDashboardPage() {
                 >
                   <Link
                     href={`/admin/projects/${p.id}`}
-                    className="flex items-center gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+                    className="flex items-center gap-3 rounded-xl p-4 transition-colors hover:bg-neutral-50 active:bg-neutral-100 dark:hover:bg-neutral-800 dark:active:bg-neutral-800/60"
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
                       <FolderKanban className="h-5 w-5" />
@@ -595,7 +521,7 @@ export default async function AdminDashboardPage() {
                         </span>
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
                   </Link>
                 </Card>
               );
@@ -632,7 +558,7 @@ export default async function AdminDashboardPage() {
                         {formatTime(record.arrivalTime, use24)}
                       </div>
                     </div>
-                    <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform group-hover:translate-x-0.5 dark:text-neutral-500" />
+                    <ArrowRight className="h-4 w-4 shrink-0 text-neutral-500 transition-transform group-hover:translate-x-0.5 dark:text-neutral-400" />
                   </Link>
                 ))}
             </CardContent>
@@ -663,7 +589,11 @@ export default async function AdminDashboardPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo.url}
-                  alt={t.recentPhotoAlt}
+                  alt={t.recentPhotoAltNamed.replace("{project}", photo.project.name)}
+                  width={96}
+                  height={96}
+                  loading="lazy"
+                  decoding="async"
                   className="h-24 w-24 rounded-lg border border-neutral-200 object-cover transition-opacity hover:opacity-90 dark:border-neutral-800"
                 />
               </Link>
@@ -672,50 +602,11 @@ export default async function AdminDashboardPage() {
         </section>
       )}
 
-      <section className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: "160ms" }}>
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          {t.trends}
-        </h2>
-        {/* All the charts live behind one disclosure, so trends add no height
-            to the dashboard until opened. */}
-        <details className="group">
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-1 py-1 text-sm font-medium text-neutral-500 transition-colors hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100 [&::-webkit-details-marker]:hidden">
-            <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
-            {t.moreCharts}
-          </summary>
-          <div className="mt-3 flex flex-col gap-4">
-            <Card>
-              <CardHeader className="flex-row items-center gap-2 space-y-0">
-                <TrendingUp className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                <CardTitle>{t.recordsPerWeek.replace("{n}", String(WEEKS_BACK))}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <BarList data={weekBuckets} emptyLabel={t.noRecordsPeriod} labelWidth="4rem" />
-              </CardContent>
-            </Card>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Card>
-                <CardHeader className="flex-row items-center gap-2 space-y-0">
-                  <DollarSign className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                  <CardTitle>{t.topPay}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <BarList data={payData} formatValue={fmtMoney} emptyLabel={t.noPayMonth} />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex-row items-center gap-2 space-y-0">
-                  <Wrench className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-                  <CardTitle>{t.workByType.replace("{n}", String(TYPE_WINDOW_MONTHS))}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <BarList data={typeData} emptyLabel={t.noRecordsYet} />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </details>
-      </section>
+      <DashboardTrends
+        currency={currencySymbol}
+        weeksBack={WEEKS_BACK}
+        typeMonths={TYPE_WINDOW_MONTHS}
+      />
     </div>
   );
 }

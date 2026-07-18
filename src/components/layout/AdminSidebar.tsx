@@ -97,9 +97,19 @@ function createItems(n: Dictionary["nav"]): CreateItem[] {
   ];
 }
 
-function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
+function NavLinks({
+  items,
+  pathname,
+  ariaLabel,
+  pendingLabel,
+}: {
+  items: TabItem[];
+  pathname: string;
+  ariaLabel: string;
+  pendingLabel: string;
+}) {
   return (
-    <nav className="flex flex-col gap-1">
+    <nav aria-label={ariaLabel} className="flex flex-col gap-1">
       {items.map((item) => {
         const Icon = item.icon;
         // Locked: shown greyed with a lock on the right, not a link.
@@ -110,9 +120,9 @@ function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
               aria-disabled="true"
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-neutral-400 dark:text-neutral-600"
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4" aria-hidden="true" />
               <span className="flex-1">{item.label}</span>
-              <Lock className="h-3.5 w-3.5 shrink-0" />
+              <Lock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             </div>
           );
         }
@@ -121,6 +131,7 @@ function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
               "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               isActive
@@ -128,11 +139,14 @@ function NavLinks({ items, pathname }: { items: TabItem[]; pathname: string }) {
                 : "text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-neutral-100"
             )}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-4 w-4" aria-hidden="true" />
             <span className="flex-1">{item.label}</span>
             {item.badge ? (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-semibold text-white">
-                {item.badge > 99 ? "99+" : item.badge}
+                <span aria-hidden="true">{item.badge > 99 ? "99+" : item.badge}</span>
+                <span className="sr-only">
+                  {item.badge} {pendingLabel}
+                </span>
               </span>
             ) : null}
           </Link>
@@ -206,7 +220,12 @@ export function AdminSidebar({
           <Logo />
         </div>
         <div className="flex-1 overflow-y-auto p-3">
-          <NavLinks items={items} pathname={pathname} />
+          <NavLinks
+            items={items}
+            pathname={pathname}
+            ariaLabel={t.nav.primary}
+            pendingLabel={t.nav.pendingReviewLabel}
+          />
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-neutral-200 dark:border-neutral-800 p-3">
           <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{name}</span>

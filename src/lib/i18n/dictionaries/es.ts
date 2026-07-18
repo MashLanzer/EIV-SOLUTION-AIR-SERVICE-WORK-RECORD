@@ -1421,6 +1421,7 @@ export const es: Dictionary = {
     viewAll: "Ver todo",
     recentPhotos: "Fotos recientes",
     recentPhotoAlt: "Foto reciente del jobsite",
+    recentPhotoAltNamed: "Foto del jobsite — {project}",
     recentActivity: "Actividad reciente",
     recentRecords: "Registros recientes",
     noRecordsYet: "Aún no hay registros",
@@ -1797,6 +1798,8 @@ export const es: Dictionary = {
     more: "Más",
     menu: "Menú",
     sections: "Secciones",
+    primary: "Navegación principal",
+    pendingReviewLabel: "registros pendientes de revisión",
   },
   roles: {
     title: "Roles y permisos",

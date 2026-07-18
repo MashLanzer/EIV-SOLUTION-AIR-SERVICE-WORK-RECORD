@@ -50,7 +50,7 @@ export function BottomTabBar({
 
   return (
     <nav
-      aria-label={n.sections}
+      aria-label={n.primary}
       className="fixed inset-x-0 bottom-0 z-20 flex border-t border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-lg shadow-[0_-1px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_16px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)] sm:hidden native:hidden"
     >
       {items.map((item) => {
@@ -89,7 +89,10 @@ export function BottomTabBar({
               />
               {item.badge ? (
                 <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-white">
-                  {item.badge > 99 ? "99+" : item.badge}
+                  <span aria-hidden="true">{item.badge > 99 ? "99+" : item.badge}</span>
+                  <span className="sr-only">
+                    {item.badge} {n.pendingReviewLabel}
+                  </span>
                 </span>
               ) : null}
             </span>

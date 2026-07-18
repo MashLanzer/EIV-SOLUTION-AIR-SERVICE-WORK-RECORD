@@ -1427,6 +1427,7 @@ export const en = {
     viewAll: "View all",
     recentPhotos: "Recent photos",
     recentPhotoAlt: "Recent jobsite photo",
+    recentPhotoAltNamed: "Jobsite photo — {project}",
     recentActivity: "Recent Activity",
     recentRecords: "Recent Records",
     noRecordsYet: "No records yet",
@@ -1802,6 +1803,8 @@ export const en = {
     more: "More",
     menu: "Menu",
     sections: "Sections",
+    primary: "Main navigation",
+    pendingReviewLabel: "records pending review",
   },
   roles: {
     title: "Roles & permissions",

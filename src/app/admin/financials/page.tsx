@@ -27,6 +27,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SectionTabs } from "@/components/layout/SectionTabs";
 import { FinancialsTabs } from "@/components/financials/FinancialsTabs";
 import { FinancialsQuickActions } from "@/components/financials/FinancialsQuickActions";
+import { MetricCard, Metric, MetricLink } from "@/components/ui/metric-card";
 import { prisma } from "@/lib/prisma";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -140,58 +141,6 @@ function CompareCell({
         <span className="text-xs text-neutral-400 dark:text-neutral-500">{noPrevLabel}</span>
       )}
     </div>
-  );
-}
-
-// KPI helpers — the same grouped-card look as the dashboard overview: a small
-// label over a row of centred metrics, divided by hairlines. Monochrome for
-// consistency across the two screens.
-function KpiCard({
-  label,
-  cols,
-  clickable,
-  children,
-}: {
-  label: string;
-  cols: string;
-  clickable?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-          {label}
-        </span>
-        {clickable && <ArrowRight className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />}
-      </div>
-      <div className={cn("grid divide-x divide-neutral-100 dark:divide-neutral-800", cols)}>{children}</div>
-    </div>
-  );
-}
-
-function Metric({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="flex min-w-0 flex-col items-center px-2 text-center">
-      <div className="max-w-full truncate text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-        {value}
-      </div>
-      <div className="mt-1 text-xs leading-tight text-neutral-500 dark:text-neutral-400">{label}</div>
-    </div>
-  );
-}
-
-function MetricLink({ value, label, href }: { value: string; label: string; href: string }) {
-  return (
-    <Link
-      href={href}
-      className="flex min-w-0 flex-col items-center px-2 text-center transition-opacity hover:opacity-70"
-    >
-      <div className="max-w-full truncate text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
-        {value}
-      </div>
-      <div className="mt-1 text-xs leading-tight text-neutral-500 dark:text-neutral-400">{label}</div>
-    </Link>
   );
 }
 
@@ -390,22 +339,22 @@ export default async function FinancialsPage({
 
       {/* Period P&L — grouped metric cards, matching the dashboard overview. */}
       <div className="flex flex-col gap-3">
-        <KpiCard label={t.kpiResult} cols="grid-cols-3" clickable>
+        <MetricCard label={t.kpiResult} cols="grid-cols-3" clickable>
           <MetricLink value={moneyShort(fin.revenue)} label={t.revenue} href="/admin/invoices?status=PAID" />
           <MetricLink value={moneyShort(fin.labor)} label={t.labor} href="/admin/reports" />
           <MetricLink value={moneyShort(fin.grossProfit)} label={t.grossProfit} href="/admin/reports" />
-        </KpiCard>
-        <KpiCard label={t.kpiRatios} cols="grid-cols-2">
+        </MetricCard>
+        <MetricCard label={t.kpiRatios} cols="grid-cols-2">
           <Metric value={`${fin.margin.toFixed(0)}%`} label={t.margin} />
           <Metric
             value={fin.avgDaysToPay != null ? daysLabel(fin.avgDaysToPay) : t.noDaysToPay}
             label={t.avgDaysToPay}
           />
-        </KpiCard>
-        <KpiCard label={t.kpiBalances} cols="grid-cols-2" clickable>
+        </MetricCard>
+        <MetricCard label={t.kpiBalances} cols="grid-cols-2" clickable>
           <MetricLink value={moneyShort(fin.tax)} label={t.tax} href="/admin/invoices?status=PAID" />
           <MetricLink value={moneyShort(fin.outstanding)} label={t.outstanding} href="/admin/invoices?status=SENT" />
-        </KpiCard>
+        </MetricCard>
       </div>
 
       {/* This period vs previous — is the business trending up or down? */}
