@@ -4,18 +4,12 @@ import {
   ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
-  BarChart3,
   CalendarClock,
   CheckCircle2,
-  Contact,
-  CreditCard,
-  FilePlus2,
   FileText,
   HandCoins,
   Minus,
   PiggyBank,
-  Receipt,
-  ReceiptText,
   Sheet,
   Target,
   TrendingUp,
@@ -32,6 +26,8 @@ import { FilterChip } from "@/components/ui/filter-chip";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionTabs } from "@/components/layout/SectionTabs";
 import { FinancialsTabs } from "@/components/financials/FinancialsTabs";
+import { FinancialsQuickActions } from "@/components/financials/FinancialsQuickActions";
+import { prisma } from "@/lib/prisma";
 import { formatInvoiceNumber } from "@/lib/invoices";
 import { getCurrencySymbol } from "@/lib/currency";
 import {
@@ -147,19 +143,6 @@ function CompareCell({
   );
 }
 
-// One tap-target in the quick-actions grid.
-function ActionTile({ icon: Icon, label, href }: { icon: typeof Receipt; label: string; href: string }) {
-  return (
-    <Link
-      href={href}
-      className="flex flex-col items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-1 py-3 text-center text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
-    >
-      <Icon className="h-5 w-5 text-neutral-500 dark:text-neutral-400" />
-      <span className="text-[11px] font-medium leading-tight">{label}</span>
-    </Link>
-  );
-}
-
 // KPI helpers — the same grouped-card look as the dashboard overview: a small
 // label over a row of centred metrics, divided by hairlines. Monochrome for
 // consistency across the two screens.
@@ -252,13 +235,25 @@ export default async function FinancialsPage({
   await requireFeature(organizationId, "invoicing");
 
   const period = normalizeFinancialPeriod((await searchParams).period);
-  const [fin, pipeline, currency, dict, locale] = await Promise.all([
+  const [fin, pipeline, currency, dict, locale, customerRows, orgDefaults] = await Promise.all([
     getFinancials(organizationId, period),
     getMoneyPipeline(organizationId),
     getCurrencySymbol(organizationId),
     getT(),
     getLocale(),
+    // Seeds for the New invoice / New estimate sheets opened from Quick access.
+    prisma.customer.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, address: true },
+    }),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { defaultTaxRate: true },
+    }),
   ]);
+  const quickCustomers = customerRows.map((c) => ({ id: c.id, name: c.name, address: c.address ?? "" }));
+  const quickTaxRate = orgDefaults?.defaultTaxRate != null ? String(Number(orgDefaults.defaultTaxRate)) : "0";
   const t = dict.financials;
   const money = (n: number) => `${currency}${n.toFixed(2)}`;
   const docCount = (n: number) => (n === 1 ? t.countOne : t.countMany).replace("{n}", String(n));
@@ -337,17 +332,13 @@ export default async function FinancialsPage({
 
   const summaryPanel = (
     <>
-      {/* Quick access — create + jump to every money section. */}
+      {/* Quick access — create (in a sheet) + jump to the doc lists. */}
       <Section title={t.quickActions}>
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-          <ActionTile icon={ReceiptText} label={dict.nav.newInvoice} href="/admin/invoices/new" />
-          <ActionTile icon={FilePlus2} label={dict.nav.newEstimate} href="/admin/estimates/new" />
-          <ActionTile icon={Receipt} label={dict.nav.invoices} href="/admin/invoices" />
-          <ActionTile icon={FileText} label={dict.nav.estimates} href="/admin/estimates" />
-          <ActionTile icon={Contact} label={dict.nav.customers} href="/admin/customers" />
-          <ActionTile icon={BarChart3} label={dict.nav.payReport} href="/admin/reports" />
-          <ActionTile icon={CreditCard} label={dict.settings.paymentsRow} href="/admin/payments" />
-        </div>
+        <FinancialsQuickActions
+          customers={quickCustomers}
+          currency={currency}
+          defaultTaxRate={quickTaxRate}
+        />
       </Section>
 
       {/* Revenue goal thermometer. */}
