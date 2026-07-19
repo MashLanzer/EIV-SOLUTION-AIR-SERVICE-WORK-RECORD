@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { JobStatusTimeline } from "@/components/schedule/JobStatusTimeline";
+import { JobStatusTimeline, type TimelineEvent } from "@/components/schedule/JobStatusTimeline";
 import { ScheduleStatusBadge } from "@/components/schedule/ScheduleStatusBadge";
 import {
   ScheduleJobForm,
@@ -72,7 +72,7 @@ export interface ScheduleJobView {
   projectName: string | null;
   workRecordId: string | null;
   workRecordJobNumber: string | null;
-  statusHistory: { status: ScheduledJobStatus; actorName: string; time: string }[];
+  statusHistory: TimelineEvent[];
 }
 
 export function ScheduleJobCard({

@@ -1,16 +1,19 @@
 "use client";
 
+import { useMemo } from "react";
 import type { ScheduledJobStatus } from "@prisma/client";
 import { CalendarClock, CheckCircle2, CircleDot, PlayCircle, Truck, XCircle } from "lucide-react";
 
-import { useT } from "@/components/i18n/LocaleProvider";
+import { useLocale, useT } from "@/components/i18n/LocaleProvider";
 
 export type TimelineEvent = {
   status: ScheduledJobStatus;
   actorName: string;
-  // Pre-formatted by the caller (server or client) so this component stays
-  // locale-agnostic.
-  time: string;
+  // The absolute instant of the status change, as epoch milliseconds. Formatting
+  // is deliberately done here in the client so each timestamp renders in the
+  // viewer's *device* time zone — the real local time on the phone — instead of
+  // the server's zone (UTC), which was showing every event hours off.
+  at: number;
 };
 
 const ICONS: Record<ScheduledJobStatus, typeof Truck> = {
@@ -27,6 +30,20 @@ const ICONS: Record<ScheduledJobStatus, typeof Truck> = {
 // "scheduled → on the way → working → done" story with who moved it and when.
 export function JobStatusTimeline({ events }: { events: TimelineEvent[] }) {
   const t = useT().schedule;
+  const locale = useLocale();
+  // No `timeZone` option → Intl uses the browser's own zone, i.e. the real
+  // wall-clock time on the device viewing (and, in practice, the one that
+  // uploaded) the event.
+  const timeFmt = useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+    [locale]
+  );
   const label: Record<ScheduledJobStatus, string> = {
     SCHEDULED: t.statusScheduled,
     STARTED: t.statusStarted,
@@ -59,7 +76,15 @@ export function JobStatusTimeline({ events }: { events: TimelineEvent[] }) {
                 <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                   {label[e.status]}
                 </span>
-                <span className="text-xs tabular-nums text-neutral-400">{e.time}</span>
+                {/* suppressHydrationWarning: the server pre-renders this in UTC
+                    but the client re-formats it in the device zone; the text
+                    differing between the two is expected, not a bug. */}
+                <span
+                  className="text-xs tabular-nums text-neutral-400"
+                  suppressHydrationWarning
+                >
+                  {timeFmt.format(e.at)}
+                </span>
               </div>
               <span className="text-xs text-neutral-500 dark:text-neutral-400">{e.actorName}</span>
             </div>

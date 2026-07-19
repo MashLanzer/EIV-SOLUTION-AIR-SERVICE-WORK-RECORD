@@ -82,12 +82,6 @@ export default async function CustomerPortalPage({
     year: "numeric",
     timeZone: "UTC",
   });
-  const eventFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
   const liveJobs = customer.scheduledJobs;
 
   const allPhotos = customer.records.flatMap((r) => r.photos);
@@ -159,7 +153,8 @@ export default async function CustomerPortalPage({
                       events={job.statusEvents.map((e) => ({
                         status: e.status,
                         actorName: e.actorName,
-                        time: eventFmt.format(e.createdAt),
+                        // Raw instant; the timeline renders it in the viewer's zone.
+                        at: e.createdAt.getTime(),
                       }))}
                     />
                   )}
