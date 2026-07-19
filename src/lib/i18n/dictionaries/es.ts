@@ -433,6 +433,8 @@ export const es: Dictionary = {
     filterAll: "Todos",
     directions: "Cómo llegar",
     startRecordHere: "Iniciar un registro aquí",
+    viewProject: "Ver proyecto completo",
+    openProjectAria: "Abrir {name}",
     // Admin list
     newProject: "Nuevo proyecto",
     searchPlaceholder: "Buscar por nombre, dirección o cliente",

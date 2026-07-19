@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
+  CalendarClock,
   CalendarDays,
   ClipboardList,
+  Clock,
   FilePlus2,
   MapPin,
   Navigation,
@@ -16,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DataField } from "@/components/ui/data-field";
 import { EmptyState } from "@/components/ui/empty-state";
+import { StatTile } from "@/components/ui/stat-tile";
 import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
 import { ProjectSummarySheet } from "@/components/projects/ProjectSummarySheet";
@@ -27,8 +30,10 @@ import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { prisma } from "@/lib/prisma";
 import { getWeather } from "@/lib/weather";
+import { formatTimeRange } from "@/lib/format";
 import { requireOrgId } from "@/lib/orgScope";
 import { canAccessProject } from "@/lib/projectAccess";
+import { dayKey, startOfUtcDay } from "@/lib/schedule";
 import { requireAuth } from "@/lib/session";
 import { getT, getLocale } from "@/lib/i18n/server";
 
@@ -70,6 +75,7 @@ export default async function WorkerProjectPage({
     include: {
       team: { select: { name: true } },
       customer: { select: { name: true } },
+      _count: { select: { photos: true } },
     },
   });
   if (!project) notFound();
@@ -79,7 +85,7 @@ export default async function WorkerProjectPage({
     ? await getWeather(project.latitude as number, project.longitude as number)
     : null;
 
-  const [records, photoRows, checklists, statusCounts] = await Promise.all([
+  const [records, photoRows, checklists, statusCounts, nextJob, org] = await Promise.all([
     prisma.workRecord.findMany({
       where: { organizationId, projectId: id },
       orderBy: { date: "desc" },
@@ -128,7 +134,30 @@ export default async function WorkerProjectPage({
       where: { organizationId, projectId: id },
       _count: { _all: true },
     }),
+    // The next scheduled visit to this jobsite, so the project links to the
+    // calendar (workers see where this project is headed next).
+    prisma.scheduledJob.findFirst({
+      where: {
+        organizationId,
+        projectId: id,
+        status: { not: "CANCELED" },
+        scheduledFor: { gte: startOfUtcDay(new Date()) },
+      },
+      orderBy: [{ scheduledFor: "asc" }, { startTime: "asc" }],
+      select: {
+        scheduledFor: true,
+        startTime: true,
+        endTime: true,
+        title: true,
+        assignedTo: { select: { name: true } },
+      },
+    }),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { timeFormat: true },
+    }),
   ]);
+  const use24 = org?.timeFormat === "24";
 
   // Records-by-status for the summary sheet.
   const statusCount = (s: string) =>
@@ -240,6 +269,51 @@ export default async function WorkerProjectPage({
           </div>
         </CardContent>
       </Card>
+
+      {/* At-a-glance KPIs for this jobsite. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile center label={tp.workRecords} value={String(summaryStatus.total)} />
+        <StatTile center label={tr.approved} value={String(summaryStatus.approved)} tone="success" />
+        <StatTile
+          center
+          label={tp.checklist}
+          value={summaryChecklist ? `${summaryChecklist.pct}%` : "—"}
+          sub={summaryChecklist ? `${summaryChecklist.done}/${summaryChecklist.total}` : undefined}
+        />
+        <StatTile center label={tp.tabPhotos} value={String(project._count.photos)} />
+      </div>
+
+      {/* Next scheduled visit to this jobsite — links straight into the day. */}
+      {nextJob && (
+        <Card className="border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900/40">
+          <CardContent className="flex flex-col gap-2 p-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+              {tp.nextVisit}
+            </div>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm font-medium tabular-nums text-neutral-900 dark:text-neutral-100">
+              <span>{formatDate(nextJob.scheduledFor, locale)}</span>
+              <span className="flex items-center gap-1 text-neutral-500 dark:text-neutral-400">
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                {formatTimeRange(nextJob.startTime, nextJob.endTime, use24, dict.schedule.allDay)}
+              </span>
+            </div>
+            {(nextJob.title || nextJob.assignedTo?.name) && (
+              <p className="truncate text-sm text-neutral-600 dark:text-neutral-300">
+                {[nextJob.title, nextJob.assignedTo?.name].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            <div className="pt-0.5">
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/records/schedule?date=${dayKey(nextJob.scheduledFor)}&day=1`}>
+                  {dict.schedule.viewDay}
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick actions: navigate to the jobsite, or start a record already
           tagged to this project. */}

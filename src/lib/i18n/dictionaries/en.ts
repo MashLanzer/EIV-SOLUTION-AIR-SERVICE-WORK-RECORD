@@ -432,6 +432,8 @@ export const en = {
     filterAll: "All",
     directions: "Directions",
     startRecordHere: "Start a record here",
+    viewProject: "View full project",
+    openProjectAria: "Open {name}",
     // Admin list
     newProject: "New Project",
     searchPlaceholder: "Search by name, address, or customer",

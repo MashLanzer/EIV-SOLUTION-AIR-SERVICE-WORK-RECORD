@@ -1,14 +1,5 @@
 import Link from "next/link";
-import {
-  ChevronRight,
-  ClipboardList,
-  Contact,
-  FolderKanban,
-  Image as ImageIcon,
-  MapPin,
-  Search,
-  SearchX,
-} from "lucide-react";
+import { FolderKanban, Search, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,125 +7,17 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
-import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
-import { TeamChip } from "@/components/teams/TeamColorDot";
+import { WorkerProjectList, type WorkerProjectData } from "@/components/projects/WorkerProjectList";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { requireAuth } from "@/lib/session";
 import { getT } from "@/lib/i18n/server";
-import type { Dictionary } from "@/lib/i18n";
 import type { Prisma, ProjectStatus } from "@prisma/client";
 
 type StatusFilter = "active" | "completed" | "all";
 const STATUS_FILTERS: StatusFilter[] = ["active", "completed", "all"];
-
-type ProjectRow = {
-  id: string;
-  name: string;
-  address: string | null;
-  status: ProjectStatus;
-  customer: { name: string } | null;
-  team: { id: string; name: string; color: string | null } | null;
-  _count: { records: number; photos: number };
-  checklists: { items: { done: boolean }[] }[];
-};
-
-function checklistProgress(checklists: ProjectRow["checklists"]) {
-  let total = 0;
-  let done = 0;
-  for (const c of checklists) {
-    for (const item of c.items) {
-      total++;
-      if (item.done) done++;
-    }
-  }
-  return { total, done, pct: total === 0 ? 0 : Math.round((done / total) * 100) };
-}
-
-// A worker project card — the admin ProjectCard anatomy (icon tile, address,
-// customer, checklist progress, photo/record counts) minus the admin-only status
-// menu, so both sides of the app read the same. Whole card taps into the detail.
-function ProjectCard({ project, t }: { project: ProjectRow; t: Dictionary["projects"] }) {
-  const progress = checklistProgress(project.checklists);
-  return (
-    <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
-      <Link
-        href={`/records/projects/${project.id}`}
-        className="flex flex-col gap-3 rounded-xl p-4 transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
-      >
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-            <FolderKanban className="h-5 w-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <span className="min-w-0 truncate font-semibold text-neutral-900 dark:text-neutral-100">
-                {project.name}
-              </span>
-              <ProjectStatusBadge status={project.status} />
-            </div>
-            <div className="mt-0.5 flex items-start gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-              {project.address ? (
-                <>
-                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <span className="min-w-0">{project.address}</span>
-                </>
-              ) : (
-                <span className="text-neutral-400 dark:text-neutral-600">{t.noAddress}</span>
-              )}
-            </div>
-            {project.customer && (
-              <div className="mt-0.5 flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-                <Contact className="h-3.5 w-3.5 shrink-0" />
-                <span className="min-w-0 truncate">{project.customer.name}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {progress.total > 0 && (
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
-              <span>{t.checklist}</span>
-              <span className="tabular-nums">
-                {progress.done}/{progress.total} · {progress.pct}%
-              </span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
-              <div
-                className="h-full rounded-full bg-neutral-800 transition-all dark:bg-neutral-200"
-                style={{ width: `${progress.pct}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 border-t border-neutral-100 pt-3 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
-          {project.team && (
-            <TeamChip name={project.team.name} color={project.team.color} seed={project.team.id} />
-          )}
-          <span className="flex items-center gap-1.5">
-            <ImageIcon className="h-3.5 w-3.5" />
-            {(project._count.photos === 1 ? t.photoCountOne : t.photoCountMany).replace(
-              "{n}",
-              String(project._count.photos)
-            )}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ClipboardList className="h-3.5 w-3.5" />
-            {(project._count.records === 1 ? t.jobCountOne : t.jobCountMany).replace(
-              "{n}",
-              String(project._count.records)
-            )}
-          </span>
-          <ChevronRight className="ml-auto h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
-        </div>
-      </Link>
-    </Card>
-  );
-}
 
 export default async function WorkerProjectsPage({
   searchParams,
@@ -221,6 +104,29 @@ export default async function WorkerProjectsPage({
       href: `/records/projects/${p.id}`,
     }));
 
+  const projectData: WorkerProjectData[] = projects.map((p) => {
+    let done = 0;
+    let total = 0;
+    for (const c of p.checklists) {
+      for (const item of c.items) {
+        total++;
+        if (item.done) done++;
+      }
+    }
+    return {
+      id: p.id,
+      name: p.name,
+      address: p.address,
+      status: p.status,
+      customerName: p.customer?.name ?? null,
+      team: p.team,
+      records: p._count.records,
+      photos: p._count.photos,
+      checklistDone: done,
+      checklistTotal: total,
+    };
+  });
+
   const hasTeam = isAdmin || (teamIds?.length ?? 0) > 0;
   const filtering = Boolean(query) || status !== "active";
   const t = (await getT()).projects;
@@ -295,11 +201,7 @@ export default async function WorkerProjectsPage({
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {projects.map((p) => (
-            <ProjectCard key={p.id} project={p} t={t} />
-          ))}
-        </div>
+        <WorkerProjectList projects={projectData} />
       )}
     </div>
   );
