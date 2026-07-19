@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { Mail, MapPin, Phone } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,6 +28,7 @@ export default async function EditRecordPage({
     where: { id, organizationId: requireOrgId(session) },
     include: {
       photos: { orderBy: { position: "asc" } },
+      customer: { select: { phone: true, email: true } },
       reviewEvents: {
         orderBy: { createdAt: "desc" },
         select: { id: true, action: true, note: true, actorName: true, createdAt: true },
@@ -78,6 +80,13 @@ export default async function EditRecordPage({
     locale === "es" ? "es-ES" : "en-US",
     { month: "short", day: "numeric", year: "numeric" }
   );
+  // Quick ways to reach the customer while fixing the record (open a new tab /
+  // the dialer — they don't unload the form, so unsaved edits are safe).
+  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    record.customerAddress
+  )}`;
+  const phone = record.customer?.phone?.trim();
+  const email = record.customer?.email?.trim();
 
   return (
     <div className="flex flex-col gap-4">
@@ -93,6 +102,37 @@ export default async function EditRecordPage({
           {t.form.jobDate} {editDateFmt.format(record.date)} · {t.form.updated}{" "}
           {editDateFmt.format(record.updatedAt)}
         </p>
+      </div>
+
+      {/* Reach the customer while fixing the record — directions, call, email. */}
+      <div className="flex flex-wrap gap-2">
+        <a
+          href={mapsHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+        >
+          <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+          {t.records.directions}
+        </a>
+        {phone && (
+          <a
+            href={`tel:${phone}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+          >
+            <Phone className="h-3.5 w-3.5" aria-hidden="true" />
+            {t.records.callCustomer}
+          </a>
+        )}
+        {email && (
+          <a
+            href={`mailto:${email}`}
+            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+          >
+            <Mail className="h-3.5 w-3.5" aria-hidden="true" />
+            {t.records.emailCustomer}
+          </a>
+        )}
       </div>
       {record.status === "NEEDS_CHANGES" && record.reviewNote && (
         <Alert variant="warning">
