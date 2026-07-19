@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { formatTimeRange } from "@/lib/format";
 import { WorkerJobCard, type WorkerJobView } from "@/components/schedule/WorkerJobCard";
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
+import { SheetButton } from "@/components/schedule/SheetButton";
 import {
   ScheduleMonthCalendar,
   type CalendarDay,
@@ -156,6 +157,8 @@ export default async function WorkerSchedulePage({
 
   // Selected-day completion progress (how many of the day's visits are done).
   const doneCount = selectedJobs.filter((j) => j.status === "DONE").length;
+  // Only worth a timeline when something is actually timed that day.
+  const hasTimeline = selectedJobs.some((j) => j.status !== "CANCELED" && j.startTime);
 
   // The single nearest still-actionable visit across the fetched window, so the
   // worker sees where they're headed next no matter which day they're viewing.
@@ -205,7 +208,7 @@ export default async function WorkerSchedulePage({
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t.title}
         description={t.workerSubtitle}
@@ -223,9 +226,9 @@ export default async function WorkerSchedulePage({
       />
 
       {nextVisit && (
-        <Card className="border-accent/30 bg-accent-soft">
+        <Card className="border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900/40">
           <CardContent className="flex flex-col gap-2 p-3">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-accent-text">
+            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
               <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
               {t.nextVisit}
             </div>
@@ -293,13 +296,19 @@ export default async function WorkerSchedulePage({
         </div>
       )}
 
-      {selectedJobs.length > 0 && (
-        <ScheduleDayTimeline
-          jobs={selectedJobs}
-          conflictIds={conflictIds}
-          conflictLabel={t.conflictBadge}
-          use24={use24}
-        />
+      {/* The tall clock timeline tucks into a sheet so the day leads with the
+          actual job cards instead of a screen-tall clock (mirrors admin). */}
+      {hasTimeline && (
+        <div className="flex flex-wrap items-stretch gap-2">
+          <SheetButton label={t.timeline} icon={<Clock className="h-4 w-4" />} title={t.timeline}>
+            <ScheduleDayTimeline
+              jobs={selectedJobs}
+              conflictIds={conflictIds}
+              conflictLabel={t.conflictBadge}
+              use24={use24}
+            />
+          </SheetButton>
+        </div>
       )}
 
       <section className="flex flex-col gap-2">
