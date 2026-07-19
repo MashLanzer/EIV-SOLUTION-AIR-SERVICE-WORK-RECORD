@@ -281,6 +281,10 @@ export const es: Dictionary = {
     directions: "Cómo llegar",
     customerRatingLabel: "Calificación del cliente",
     openRecordAria: "Abrir registro {n}",
+    // Record detail — related links + same-customer sheet
+    sameCustomerCta: "Otros registros de este cliente",
+    sameCustomerTitle: "Registros de {name}",
+    inProjectLabel: "Proyecto",
   },
   form: {
     // Page titles / headers

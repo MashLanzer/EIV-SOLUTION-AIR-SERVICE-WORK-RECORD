@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Download } from "lucide-react";
+import { ChevronLeft, Download, FolderKanban } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { RecordDetail } from "@/components/records/RecordDetail";
 import { ReviewTimeline } from "@/components/records/ReviewTimeline";
+import { SameCustomerRecordsSheet } from "@/components/records/SameCustomerRecordsSheet";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { WorkerRecordEditSheet } from "@/components/records/WorkerRecordEditSheet";
 import { updateRecordAction } from "@/actions/records";
@@ -35,6 +36,7 @@ export default async function RecordDetailPage({
     include: {
       photos: { orderBy: { position: "asc" } },
       customer: { select: { phone: true, email: true } },
+      project: { select: { id: true, name: true } },
       reviewEvents: {
         orderBy: { createdAt: "desc" },
         select: { id: true, action: true, note: true, actorName: true, createdAt: true },
@@ -45,6 +47,26 @@ export default async function RecordDetailPage({
   if (session.user.role !== "ADMIN" && record.submittedById !== session.user.id) {
     notFound();
   }
+
+  // The same author's other visits to this customer, for the "other records for
+  // this customer" sheet — keyed by customerId when the record is linked to a
+  // saved customer, else by the denormalized name. Skipped when the author is
+  // gone (submittedById cleared on worker delete).
+  const sameCustomerRecords = record.submittedById
+    ? await prisma.workRecord.findMany({
+        where: {
+          organizationId: requireOrgId(session),
+          submittedById: record.submittedById,
+          id: { not: record.id },
+          ...(record.customerId
+            ? { customerId: record.customerId }
+            : { customerName: record.customerName }),
+        },
+        select: { id: true, jobNumber: true, date: true, typeOfWork: true, status: true },
+        orderBy: { date: "desc" },
+        take: 20,
+      })
+    : [];
 
   const canEdit = record.status !== "APPROVED";
   const currency = await getCurrencySymbol(requireOrgId(session));
@@ -165,6 +187,27 @@ export default async function RecordDetailPage({
           {canEdit && editFormProps && (
             <WorkerRecordEditSheet variant="resubmit" title={editTitle} formProps={editFormProps} />
           )}
+        </div>
+      )}
+
+      {/* Related links: jump to the tagged project and to the worker's other
+          records for this customer, so the detail isn't a dead end. */}
+      {(record.project || sameCustomerRecords.length > 0) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {record.project && (
+            <Link
+              href={`/records/projects/${record.project.id}`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+            >
+              <FolderKanban className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="text-neutral-500 dark:text-neutral-400">{t.records.inProjectLabel}:</span>
+              <span className="max-w-[12rem] truncate">{record.project.name}</span>
+            </Link>
+          )}
+          <SameCustomerRecordsSheet
+            customerName={record.customerName}
+            records={sameCustomerRecords}
+          />
         </div>
       )}
 

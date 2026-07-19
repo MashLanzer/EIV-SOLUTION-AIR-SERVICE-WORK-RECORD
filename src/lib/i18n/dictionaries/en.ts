@@ -281,6 +281,10 @@ export const en = {
     directions: "Directions",
     customerRatingLabel: "Customer rating",
     openRecordAria: "Open record {n}",
+    // Record detail — related links + same-customer sheet
+    sameCustomerCta: "Other records for this customer",
+    sameCustomerTitle: "Records for {name}",
+    inProjectLabel: "Project",
   },
   form: {
     // Page titles / headers
