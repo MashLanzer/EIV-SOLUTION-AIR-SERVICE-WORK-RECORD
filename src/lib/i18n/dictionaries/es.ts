@@ -215,6 +215,12 @@ export const es: Dictionary = {
     toFix: "Por corregir",
     pending: "Pendientes",
     all: "Todos",
+    // Chips de rango de fecha + fila de resultados filtrados
+    rangeWeek: "Esta semana",
+    rangeAll: "Todo",
+    earned: "Ganado",
+    recordCountOne: "{n} registro",
+    recordCountMany: "{n} registros",
     recordSaved: "Registro guardado",
     searchPlaceholder: "Buscar por job # o cliente",
     searchAria: "Buscar mis registros",

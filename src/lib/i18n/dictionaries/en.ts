@@ -215,6 +215,12 @@ export const en = {
     toFix: "To fix",
     pending: "Pending",
     all: "All",
+    // Date range chips + filtered results eyebrow
+    rangeWeek: "This week",
+    rangeAll: "All",
+    earned: "Earned",
+    recordCountOne: "{n} record",
+    recordCountMany: "{n} records",
     recordSaved: "Record saved",
     searchPlaceholder: "Search by job # or customer",
     searchAria: "Search my records",

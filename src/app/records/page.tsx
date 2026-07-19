@@ -27,9 +27,12 @@ import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
 import { addUtcDays, dayKey, getScheduledJobs, startOfUtcDay } from "@/lib/schedule";
-import { workMinutes } from "@/lib/format";
+import { formatMoney, workMinutes } from "@/lib/format";
+import { getCurrencySymbol } from "@/lib/currency";
 import { getT } from "@/lib/i18n/server";
 import type { RecordStatus } from "@prisma/client";
+
+type DateRange = "week" | "month" | "all";
 
 const WORKER_STATUSES: RecordStatus[] = ["SUBMITTED", "APPROVED", "NEEDS_CHANGES"];
 
@@ -42,22 +45,47 @@ export default async function RecordsPage({
     page?: string;
     status?: string;
     sort?: string;
+    range?: string;
   }>;
 }) {
   const session = await requireAuth();
-  const { q, saved, page: rawPage, status: rawStatus, sort: rawSort } = await searchParams;
+  const {
+    q,
+    saved,
+    page: rawPage,
+    status: rawStatus,
+    sort: rawSort,
+    range: rawRange,
+  } = await searchParams;
   const query = q?.trim() || undefined;
   const status = WORKER_STATUSES.includes(rawStatus as RecordStatus)
     ? (rawStatus as RecordStatus)
     : undefined;
   // Oldest-first is opt-in; newest-first stays the default view.
   const sort = rawSort === "oldest" ? "oldest" : "newest";
+  // Date range filter (worker-friendly equivalent of the admin date filters).
+  const range: DateRange = rawRange === "week" || rawRange === "month" ? rawRange : "all";
   const page = parsePage(rawPage);
+
+  // Local-midnight cutoffs for the range chips: Monday for the week, day 1 for
+  // the month. Reused below to bound both the list and the earnings total.
+  const now = new Date();
+  const weekStart = new Date(now);
+  // getDay(): 0=Sun..6=Sat; shift back to Monday.
+  weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  weekStart.setHours(0, 0, 0, 0);
+  const rangeMonthStart = new Date(now);
+  rangeMonthStart.setDate(1);
+  rangeMonthStart.setHours(0, 0, 0, 0);
+  const rangeCutoff =
+    range === "week" ? weekStart : range === "month" ? rangeMonthStart : undefined;
+  const rangeFilter = rangeCutoff ? { date: { gte: rangeCutoff } } : {};
 
   const where = {
     organizationId: requireOrgId(session),
     submittedById: session.user.id,
     ...(status ? { status } : {}),
+    ...rangeFilter,
     ...(query
       ? {
           OR: [
@@ -78,6 +106,7 @@ export default async function RecordsPage({
   // filter itself, so each chip shows how many it would land on.
   const whereNoStatus = {
     ...mine,
+    ...rangeFilter,
     ...(query
       ? {
           OR: [
@@ -104,6 +133,8 @@ export default async function RecordsPage({
     monthTimes,
     prevMonthTotal,
     prevApproved,
+    payAgg,
+    currency,
   ] = await Promise.all([
     prisma.workRecord.count({ where }),
     prisma.workRecord.findMany({
@@ -149,8 +180,13 @@ export default async function RecordsPage({
     prisma.workRecord.count({
       where: { ...mine, status: "APPROVED", date: { gte: lastMonthStart, lt: monthStart } },
     }),
+    // Earnings for the current filtered view — the worker is the lead installer
+    // on the records they submit, so leadInstallerPay is their pay.
+    prisma.workRecord.aggregate({ where, _sum: { leadInstallerPay: true } }),
+    getCurrencySymbol(requireOrgId(session)),
   ]);
   const pages = pageCount(total);
+  const earnedTotal = Number(payAgg._sum.leadInstallerPay ?? 0);
   // Hours logged this calendar month, rounded to whole hours for the sub-line.
   const monthMinutes = monthTimes.reduce(
     (sum, r) => sum + workMinutes(r.arrivalTime, r.departureTime),
@@ -162,7 +198,9 @@ export default async function RecordsPage({
   );
   const allCount = statusCounts.reduce((sum, s) => sum + s._count._all, 0);
   // The summary is a "home" thing - hide it while searching or filtering.
-  const showSummary = !query && !status;
+  const showSummary = !query && !status && range === "all";
+  // Any active filter (search, status, or date range) puts us in "results" mode.
+  const filtering = Boolean(query) || Boolean(status) || range !== "all";
 
   // Today's scheduled visits feed the once-a-day morning brief dialog.
   const todayStart = startOfUtcDay(new Date());
@@ -196,6 +234,7 @@ export default async function RecordsPage({
     if (query) p.set("q", query);
     if (next) p.set("status", next);
     if (sort === "oldest") p.set("sort", sort);
+    if (range !== "all") p.set("range", range);
     const qs = p.toString();
     return qs ? `/records?${qs}` : "/records";
   }
@@ -205,12 +244,28 @@ export default async function RecordsPage({
     if (query) p.set("q", query);
     if (status) p.set("status", status);
     if (next === "oldest") p.set("sort", next);
+    if (range !== "all") p.set("range", range);
+    const qs = p.toString();
+    return qs ? `/records?${qs}` : "/records";
+  }
+  // Date range toggle keeps the active search + status + sort; resets to page 1.
+  function rangeHref(next: DateRange) {
+    const p = new URLSearchParams();
+    if (query) p.set("q", query);
+    if (status) p.set("status", status);
+    if (sort === "oldest") p.set("sort", sort);
+    if (next !== "all") p.set("range", next);
     const qs = p.toString();
     return qs ? `/records?${qs}` : "/records";
   }
   const sortChips: { label: string; value: "newest" | "oldest" }[] = [
     { label: t.sortNewest, value: "newest" },
     { label: t.sortOldest, value: "oldest" },
+  ];
+  const rangeChips: { label: string; value: DateRange }[] = [
+    { label: t.rangeWeek, value: "week" },
+    { label: t.thisMonth, value: "month" },
+    { label: t.rangeAll, value: "all" },
   ];
 
   return (
@@ -282,6 +337,7 @@ export default async function RecordsPage({
       <form method="get" className="relative">
         {status && <input type="hidden" name="status" value={status} />}
         {sort === "oldest" && <input type="hidden" name="sort" value={sort} />}
+        {range !== "all" && <input type="hidden" name="range" value={range} />}
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
         <Input
           type="search"
@@ -305,6 +361,14 @@ export default async function RecordsPage({
         })}
       </div>
 
+      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {rangeChips.map((chip) => (
+          <FilterChip key={chip.value} href={rangeHref(chip.value)} active={range === chip.value}>
+            {chip.label}
+          </FilterChip>
+        ))}
+      </div>
+
       {records.length > 0 && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-neutral-500 dark:text-neutral-400">{t.sortLabel}</span>
@@ -321,7 +385,7 @@ export default async function RecordsPage({
       )}
 
       {records.length === 0 ? (
-        query || status ? (
+        filtering ? (
           <EmptyState
             icon={SearchX}
             title={t.noMatches}
@@ -349,6 +413,15 @@ export default async function RecordsPage({
         )
       ) : (
         <>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {(total === 1 ? t.recordCountOne : t.recordCountMany).replace("{n}", String(total))}
+            {earnedTotal > 0 && (
+              <span className="normal-case text-neutral-400 dark:text-neutral-500">
+                {" · "}
+                {t.earned} {formatMoney(earnedTotal, currency)}
+              </span>
+            )}
+          </h2>
           <WorkerRecordList
             records={records.map((record) => ({
               ...record,
@@ -359,7 +432,12 @@ export default async function RecordsPage({
             page={page}
             pageCount={pages}
             basePath="/records"
-            params={{ q: query, status, sort: sort === "oldest" ? sort : undefined }}
+            params={{
+              q: query,
+              status,
+              sort: sort === "oldest" ? sort : undefined,
+              range: range !== "all" ? range : undefined,
+            }}
           />
         </>
       )}
