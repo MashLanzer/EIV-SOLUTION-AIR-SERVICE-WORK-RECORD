@@ -455,6 +455,7 @@ export const en = {
     // Detail
     projectSaved: "Project saved",
     workRecords: "Work records",
+    recordsCount: "{n} records",
     approved: "Approved",
     pending: "Pending",
     needsChanges: "Needs changes",

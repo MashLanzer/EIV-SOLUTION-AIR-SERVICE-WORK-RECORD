@@ -456,6 +456,7 @@ export const es: Dictionary = {
     // Detail
     projectSaved: "Proyecto guardado",
     workRecords: "Registros de trabajo",
+    recordsCount: "{n} registros",
     approved: "Aprobados",
     pending: "Pendientes",
     needsChanges: "Necesitan cambios",

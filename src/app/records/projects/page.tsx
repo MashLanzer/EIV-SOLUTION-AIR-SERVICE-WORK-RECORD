@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, FolderKanban, MapPin, Search, SearchX } from "lucide-react";
+import { ArrowRight, ClipboardList, FolderKanban, MapPin, Search, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,6 +71,7 @@ export default async function WorkerProjectsPage({
       address: true,
       status: true,
       customer: { select: { name: true } },
+      _count: { select: { records: true } },
     },
   });
 
@@ -174,6 +175,12 @@ export default async function WorkerProjectsPage({
                   }
                 />
               </div>
+              <span className="flex w-fit items-center gap-1.5 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+                <ClipboardList className="h-3 w-3" aria-hidden="true" />
+                <span className="tabular-nums">
+                  {t.recordsCount.replace("{n}", String(p._count.records))}
+                </span>
+              </span>
             </MobileCardRow>
           ))}
         </MobileCardList>

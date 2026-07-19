@@ -8,6 +8,7 @@ import {
   FilePlus2,
   MapPin,
   Navigation,
+  User,
   Users2,
 } from "lucide-react";
 
@@ -17,6 +18,7 @@ import { DataField } from "@/components/ui/data-field";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MobileCardList, MobileCardRow } from "@/components/ui/responsive-table";
 import { ProjectChecklists } from "@/components/projects/ProjectChecklists";
+import { ProjectSummarySheet } from "@/components/projects/ProjectSummarySheet";
 import { ProjectPhotos } from "@/components/projects/ProjectPhotos";
 import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { WeatherCard } from "@/components/projects/WeatherCard";
@@ -65,7 +67,10 @@ export default async function WorkerProjectPage({
 
   const project = await prisma.project.findFirst({
     where: { id, organizationId },
-    include: { team: { select: { name: true } } },
+    include: {
+      team: { select: { name: true } },
+      customer: { select: { name: true } },
+    },
   });
   if (!project) notFound();
 
@@ -74,7 +79,7 @@ export default async function WorkerProjectPage({
     ? await getWeather(project.latitude as number, project.longitude as number)
     : null;
 
-  const [records, photoRows, checklists] = await Promise.all([
+  const [records, photoRows, checklists, statusCounts] = await Promise.all([
     prisma.workRecord.findMany({
       where: { organizationId, projectId: id },
       orderBy: { date: "desc" },
@@ -116,7 +121,43 @@ export default async function WorkerProjectPage({
         },
       },
     }),
+    // Full record-status breakdown for the project summary sheet (independent of
+    // the 50-row list above, so the counts are exact).
+    prisma.workRecord.groupBy({
+      by: ["status"],
+      where: { organizationId, projectId: id },
+      _count: { _all: true },
+    }),
   ]);
+
+  // Records-by-status for the summary sheet.
+  const statusCount = (s: string) =>
+    statusCounts.find((c) => c.status === s)?._count._all ?? 0;
+  const summaryStatus = {
+    approved: statusCount("APPROVED"),
+    pending: statusCount("SUBMITTED"),
+    needsChanges: statusCount("NEEDS_CHANGES"),
+    total: statusCounts.reduce((sum, c) => sum + c._count._all, 0),
+  };
+  // Checklist completion across every list on the project.
+  const checklistItems = checklists.flatMap((c) => c.items);
+  const checklistDone = checklistItems.filter((i) => i.done).length;
+  const summaryChecklist =
+    checklistItems.length > 0
+      ? {
+          done: checklistDone,
+          total: checklistItems.length,
+          pct: Math.round((checklistDone / checklistItems.length) * 100),
+        }
+      : null;
+  // The project's most recent records, each a shortcut into that record.
+  const summaryRecent = records.slice(0, 5).map((r) => ({
+    id: r.id,
+    jobNumber: r.jobNumber,
+    dateLabel: formatDate(r.date, locale),
+    typeOfWork: r.typeOfWork,
+    status: r.status,
+  }));
 
   const photos = photoRows.map((p) => ({
     id: p.id,
@@ -174,6 +215,12 @@ export default async function WorkerProjectPage({
             <ProjectStatusBadge status={project.status} />
           </div>
           <div className="mt-2 flex flex-col gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
+            {project.customer && (
+              <span className="flex items-center gap-1.5">
+                <User className="h-4 w-4 shrink-0" />
+                {project.customer.name}
+              </span>
+            )}
             {project.address && (
               <span className="flex items-center gap-1.5">
                 <MapPin className="h-4 w-4 shrink-0" />
@@ -216,6 +263,16 @@ export default async function WorkerProjectPage({
           </Link>
         </Button>
       </div>
+
+      {/* At-a-glance summary: records by status, checklist progress, and recent
+          records (each a shortcut into the record) — the admin project sheet. */}
+      <ProjectSummarySheet
+        status={summaryStatus}
+        checklist={summaryChecklist}
+        createdLabel={tp.created.replace("{date}", formatSince(project.createdAt, locale))}
+        recent={summaryRecent}
+        recordHrefBase="/records/"
+      />
 
       {hasMap && (
         <>
