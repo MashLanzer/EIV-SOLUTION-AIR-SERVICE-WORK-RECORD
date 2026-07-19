@@ -320,9 +320,9 @@ export default async function WorkerProjectPage({
 
       {/* Quick actions: navigate to the jobsite, or start a record already
           tagged to this project. */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-2">
         {project.address && (
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="flex-1">
             <a
               href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(project.address)}`}
               target="_blank"
@@ -333,7 +333,7 @@ export default async function WorkerProjectPage({
             </a>
           </Button>
         )}
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="flex-1">
           <Link href={`/records/new?projectId=${project.id}`}>
             <FilePlus2 className="h-4 w-4" aria-hidden="true" />
             {tp.startRecordHere}
@@ -358,12 +358,13 @@ export default async function WorkerProjectPage({
       {/* The heavy sections — map, checklists, photos and work records — tuck
           into sheets so the project leads with its summary instead of a long
           scroll down the page (mirrors the schedule day view). */}
-      <div className="flex flex-wrap items-stretch gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {hasMap && (
           <SheetButton
             label={dict.schedule.mapTitle}
-            icon={<MapPin className="h-4 w-4" />}
+            icon={<MapPin className="h-4 w-4 shrink-0" />}
             title={dict.schedule.mapTitle}
+            className="w-full justify-center"
           >
             <div className="flex flex-col gap-3">
               <GeoPhotoMap projectPins={projectPins} photoPins={photoPins} showAllOption={false} />
@@ -377,8 +378,9 @@ export default async function WorkerProjectPage({
               ? `${tp.tabChecklists} · ${checklistDone}/${checklistItems.length}`
               : tp.tabChecklists
           }
-          icon={<ListChecks className="h-4 w-4" />}
+          icon={<ListChecks className="h-4 w-4 shrink-0" />}
           title={tp.tabChecklists}
+          className="w-full justify-center"
         >
           <ProjectChecklists
             projectId={project.id}
@@ -389,8 +391,9 @@ export default async function WorkerProjectPage({
         </SheetButton>
         <SheetButton
           label={`${tp.tabPhotos} · ${photos.length}`}
-          icon={<ImageIcon className="h-4 w-4" />}
+          icon={<ImageIcon className="h-4 w-4 shrink-0" />}
           title={tp.tabPhotos}
+          className="w-full justify-center"
         >
           <ProjectPhotos
             projectId={project.id}
@@ -402,8 +405,9 @@ export default async function WorkerProjectPage({
         </SheetButton>
         <SheetButton
           label={`${tp.workRecords} · ${records.length}`}
-          icon={<ClipboardList className="h-4 w-4" />}
+          icon={<ClipboardList className="h-4 w-4 shrink-0" />}
           title={tp.workRecords}
+          className="w-full justify-center"
         >
           {records.length === 0 ? (
             <EmptyState
