@@ -112,6 +112,9 @@ export const en = {
     activityLess: "Less",
     activityMore: "More",
     activeDays: "{n} active days",
+    // Insights sheet (weekly trend + activity heatmap)
+    insights: "Activity & trends",
+    insightsDesc: "Weekly trend and 12-week heatmap",
     // Time off
     timeOffTitle: "Time off",
     timeOffDesc: "Your upcoming days off and pending requests.",

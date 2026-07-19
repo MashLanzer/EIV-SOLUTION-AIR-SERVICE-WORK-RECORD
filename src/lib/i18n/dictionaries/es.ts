@@ -112,6 +112,9 @@ export const es: Dictionary = {
     activityLess: "Menos",
     activityMore: "Más",
     activeDays: "{n} días activos",
+    // Sheet de análisis (tendencia semanal + mapa de actividad)
+    insights: "Actividad y tendencias",
+    insightsDesc: "Tendencia semanal y mapa de 12 semanas",
     // Días libres
     timeOffTitle: "Días libres",
     timeOffDesc: "Tus próximos días libres y solicitudes pendientes.",

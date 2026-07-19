@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, ArrowRight, Award, CalendarClock, CalendarOff, Camera, CheckCircle2, ChevronRight, Circle, Clock, DollarSign, ListTodo, Mail, MapPin, PenLine, Percent, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, Wrench, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, Award, BarChart3, CalendarClock, CalendarOff, Camera, CheckCircle2, ChevronRight, Circle, DollarSign, ListTodo, Mail, MapPin, PenLine, Phone, Plus, Sparkles, ShieldCheck, Trash2, User as UserIcon, Wrench, X } from "lucide-react";
 import Link from "next/link";
 import type { RecordStatus } from "@prisma/client";
 
@@ -169,16 +169,16 @@ export function ProfileScreen({
   const [avatarError, setAvatarError] = useState<string | null>(null);
   // Signature and skills live in bottom sheets, opened from Account rows; the
   // time-off request form opens in one too.
-  const [sheet, setSheet] = useState<null | "signature" | "skills" | "timeoff">(null);
+  const [sheet, setSheet] = useState<null | "signature" | "skills" | "timeoff" | "insights">(null);
 
   // Which tabs to show. Workers get a rich Summary; the Activity tab only
   // appears when there's something in it; Account is always present. When only
   // one tab qualifies we drop the tab bar entirely (nothing to switch to).
   // Which rich Summary cards have data (workers submit records; admins don't).
   const hasActivityMap = activityDays.some((d) => d.count > 0);
-  const hasMonthCompare =
-    !isAdmin &&
-    (monthCompare.records.current > 0 || monthCompare.records.previous > 0);
+  // The insights sheet (weekly trend + heatmap) is only worth surfacing when
+  // there's something to show in it.
+  const hasInsights = !isAdmin && (hasActivityMap || metrics.weekly.some((n) => n > 0));
   // Always show Summary now that the time-off request lives there and is
   // available to everyone.
   const hasSummary = true;
@@ -368,21 +368,46 @@ export function ProfileScreen({
 
       {/* ---------------- SUMMARY ---------------- */}
       {tab === "summary" && hasSummary && (
-        <div className="flex flex-col gap-5">
-          {/* This month vs last (workers) */}
-          {hasMonthCompare && (
+        <div className="flex flex-col gap-3">
+          {/* This month — approved pay, the month-over-month numbers, and a
+              tap-through to the activity/trend charts, grouped in one card so a
+              worker's key figures read at a glance (workers only). */}
+          {!isAdmin && (
             <SettingsSection title={t.monthVsLast}>
+              {/* Approved pay this month — the figure a worker cares about most. */}
+              <div className="flex items-center gap-3 px-4 py-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
+                  <DollarSign className="h-5 w-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                    {currency}
+                    {payThisMonth.toFixed(2)}
+                  </div>
+                  <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {t.payThisMonth}
+                  </div>
+                </div>
+                {(() => {
+                  const delta = monthCompare.pay.current - monthCompare.pay.previous;
+                  if (Math.abs(delta) < 0.005) return null;
+                  return (
+                    <span
+                      className={cn(
+                        "shrink-0 text-xs font-medium tabular-nums",
+                        delta > 0 ? "text-success-text" : "text-destructive-text"
+                      )}
+                    >
+                      {delta > 0 ? "▲" : "▼"} {currency}
+                      {Math.abs(delta).toFixed(2)}
+                    </span>
+                  );
+                })()}
+              </div>
+              {/* Records / hours / approval, each vs last month. */}
               <div className="grid grid-cols-3 divide-x divide-neutral-200 dark:divide-neutral-800">
-                <CompareCell
-                  label={t.cmpRecords}
-                  pair={monthCompare.records}
-                  sameLabel={t.samAsLast}
-                />
-                <CompareCell
-                  label={t.cmpHours}
-                  pair={monthCompare.hours}
-                  sameLabel={t.samAsLast}
-                />
+                <CompareCell label={t.cmpRecords} pair={monthCompare.records} sameLabel={t.samAsLast} />
+                <CompareCell label={t.cmpHours} pair={monthCompare.hours} sameLabel={t.samAsLast} />
                 <CompareCell
                   label={t.cmpApproval}
                   pair={monthCompare.approvalRate}
@@ -390,25 +415,19 @@ export function ProfileScreen({
                   sameLabel={t.samAsLast}
                 />
               </div>
-            </SettingsSection>
-          )}
-
-          {/* 12-week activity heatmap (workers) */}
-          {hasActivityMap && (
-            <SettingsSection title={t.activityMapTitle} description={t.activityMapDesc}>
-              <div className="p-4">
-                <ActivityHeatmap
-                  days={activityDays}
-                  lessLabel={t.activityLess}
-                  moreLabel={t.activityMore}
+              {/* The weekly-trend + 12-week heatmap charts live in a sheet, so
+                  they don't stretch the page. */}
+              {hasInsights && (
+                <SettingsRow
+                  icon={BarChart3}
+                  label={t.insights}
+                  sublabel={t.insightsDesc}
+                  onClick={() => setSheet("insights")}
+                  trailing={
+                    <ChevronRight className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                  }
                 />
-                <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
-                  {t.activeDays.replace(
-                    "{n}",
-                    String(activityDays.filter((d) => d.count > 0).length)
-                  )}
-                </p>
-              </div>
+              )}
             </SettingsSection>
           )}
 
@@ -531,49 +550,6 @@ export function ProfileScreen({
                 {t.viewSchedule}
                 <ArrowRight className="h-4 w-4" />
               </Link>
-            </SettingsSection>
-          )}
-
-          {/* Stats - workers only; admins don't submit records. */}
-          {!isAdmin && (
-            <SettingsSection title={t.statistics} description={t.statsDesc}>
-              <div className="flex flex-col gap-2 px-4 pb-4 pt-4">
-                {/* Approved pay this month - the figure a worker cares about
-                    most, so it leads the stats. */}
-                <div className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-accent-soft/40 p-4 dark:border-neutral-800">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent">
-                    <DollarSign className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="text-2xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-                      {currency}{payThisMonth.toFixed(2)}
-                    </div>
-                    <div className="text-sm text-neutral-500 dark:text-neutral-400">
-                      {t.payThisMonth}
-                    </div>
-                    {(() => {
-                      const delta = monthCompare.pay.current - monthCompare.pay.previous;
-                      if (Math.abs(delta) < 0.005) return null;
-                      return (
-                        <div
-                          className={cn(
-                            "mt-0.5 text-xs font-medium tabular-nums",
-                            delta > 0 ? "text-success-text" : "text-destructive-text"
-                          )}
-                        >
-                          {delta > 0 ? "▲" : "▼"} {currency}
-                          {Math.abs(delta).toFixed(2)} {t.payVsLast}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <StatCard icon={Percent} label={t.approvalRate} value={`${metrics.approvalRate}%`} />
-                  <StatCard icon={Clock} label={t.hoursThisMonth} value={String(metrics.hoursThisMonth)} />
-                </div>
-                <WeeklyTrend weekly={metrics.weekly} label={t.trendLabel} thisWeekLabel={t.thisWeek} />
-              </div>
             </SettingsSection>
           )}
 
@@ -871,6 +847,46 @@ export function ProfileScreen({
           onDone={() => setSheet(null)}
         />
       </BottomSheet>
+
+      {/* Insights sheet — the weekly-trend sparkline + 12-week activity heatmap,
+          moved off the page so Summary stays short. */}
+      <BottomSheet
+        open={sheet === "insights"}
+        onClose={() => setSheet(null)}
+        title={t.insights}
+        closeLabel={tc.close}
+      >
+        <div className="flex flex-col gap-4">
+          <WeeklyTrend
+            weekly={metrics.weekly}
+            label={t.trendLabel}
+            thisWeekLabel={t.thisWeek}
+          />
+          {hasActivityMap && (
+            <div className="flex flex-col gap-2">
+              <div>
+                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                  {t.activityMapTitle}
+                </p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {t.activityMapDesc}
+                </p>
+              </div>
+              <ActivityHeatmap
+                days={activityDays}
+                lessLabel={t.activityLess}
+                moreLabel={t.activityMore}
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                {t.activeDays.replace(
+                  "{n}",
+                  String(activityDays.filter((d) => d.count > 0).length)
+                )}
+              </p>
+            </div>
+          )}
+        </div>
+      </BottomSheet>
     </div>
   );
 }
@@ -1108,29 +1124,6 @@ function ActivityHeatmap({
         <span className="h-3 w-3 rounded-[3px] bg-primary" />
         <span>{moreLabel}</span>
       </div>
-    </div>
-  );
-}
-
-// A neutral stat tile used inside the Statistics section (approval rate, hours).
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof ListTodo;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-950">
-      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-        <Icon className="h-4 w-4" />
-      </span>
-      <span className="text-lg font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
-        {value}
-      </span>
-      <span className="text-center text-xs text-neutral-500 dark:text-neutral-400">{label}</span>
     </div>
   );
 }
