@@ -697,6 +697,8 @@ export const en = {
     filterPhotos: "Photos",
     filterProjects: "Projects",
     filterPeople: "People",
+    filterSchedule: "Schedule",
+    filterSystem: "System",
     emptyTitle: "Nothing here yet",
     emptyDesc: "New notifications will show up here as things happen.",
     // Localized title per notification type (the stored detail line stays as-is).

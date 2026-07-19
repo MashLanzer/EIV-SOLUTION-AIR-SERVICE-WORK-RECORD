@@ -699,6 +699,8 @@ export const es: Dictionary = {
     filterPhotos: "Fotos",
     filterProjects: "Proyectos",
     filterPeople: "Personas",
+    filterSchedule: "Agenda",
+    filterSystem: "Sistema",
     emptyTitle: "Nada por aquí todavía",
     emptyDesc: "Las nuevas notificaciones aparecerán aquí a medida que ocurran las cosas.",
     // Título localizado por tipo de notificación (la línea de detalle se conserva).

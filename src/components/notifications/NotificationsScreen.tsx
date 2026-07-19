@@ -115,29 +115,85 @@ export async function NotificationsScreen({
           t={t}
         />
       ) : (
-        <PersistedTab userId={userId} category={CATEGORY[active]} t={t} />
+        <PersistedTab
+          userId={userId}
+          category={CATEGORY[active]}
+          basePath={basePath}
+          activeTab={active}
+          notifType={activityType}
+          t={t}
+        />
       )}
     </div>
   );
 }
 
+// Type-filter groups for a persisted-notifications tab, mapping each chip to its
+// notification types. Only groups with events show a chip (like the Activity tab).
+const NOTIF_GROUPS: Record<string, string[]> = {
+  records: ["record_submitted", "record_resubmitted", "record_approved", "record_returned"],
+  schedule: ["job_scheduled", "job_reassigned", "job_rescheduled", "job_reminder", "job_series", "time_off_added"],
+  photos: ["photo_comment"],
+  system: ["system"],
+};
+const NOTIF_GROUP_KEYS = Object.keys(NOTIF_GROUPS);
+
 async function PersistedTab({
   userId,
   category,
+  basePath,
+  activeTab,
+  notifType,
   t,
 }: {
   userId: string;
   category: NotificationCategory;
+  basePath: string;
+  activeTab: string;
+  notifType?: string;
   t: Awaited<ReturnType<typeof getT>>["activity"];
 }) {
   const items = await getNotificationFeed(userId, { category });
+  const active = NOTIF_GROUP_KEYS.includes(notifType ?? "") ? notifType! : null;
+
+  const groupLabel: Record<string, string> = {
+    records: t.filterRecords,
+    schedule: t.filterSchedule,
+    photos: t.filterPhotos,
+    system: t.filterSystem,
+  };
+  // Which groups have any events — drives the chip row (hidden when there's
+  // nothing to filter, i.e. 0–1 group present).
+  const groupCounts = NOTIF_GROUP_KEYS.map((key) => ({
+    key,
+    label: groupLabel[key],
+    count: items.filter((n) => NOTIF_GROUPS[key].includes(n.type)).length,
+  })).filter((g) => g.count > 0);
+
+  const shown = active ? items.filter((n) => NOTIF_GROUPS[active].includes(n.type)) : items;
+  const chipHref = (key: string | null) =>
+    key ? `${basePath}?tab=${activeTab}&type=${key}` : `${basePath}?tab=${activeTab}`;
+
   return (
     <>
+      {/* Opening the tab marks the whole category read regardless of filter. */}
       <MarkNotificationsRead category={category} />
-      {items.length === 0 ? (
+      {groupCounts.length > 1 && (
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <FilterChip href={chipHref(null)} active={active === null}>
+            {t.filterAllTypes}
+          </FilterChip>
+          {groupCounts.map((g) => (
+            <FilterChip key={g.key} href={chipHref(g.key)} active={active === g.key} count={g.count}>
+              {g.label}
+            </FilterChip>
+          ))}
+        </div>
+      )}
+      {shown.length === 0 ? (
         <EmptyState icon={Bell} title={t.emptyTitle} description={t.emptyDesc} />
       ) : (
-        <NotificationList items={items} />
+        <NotificationList items={shown} />
       )}
     </>
   );
