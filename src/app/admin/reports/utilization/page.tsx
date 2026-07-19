@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { PageHeader } from "@/components/ui/page-header";
+import { DeltaBadge } from "@/components/ui/delta-badge";
 import {
   Table,
   TableBody,
@@ -80,7 +81,12 @@ export default async function UtilizationReportPage({
   const period: UtilPeriod = sp.period === "month" ? "month" : "week";
   const group: UtilGroup = sp.group === "team" ? "team" : "person";
   const selected = parseDate(sp.date);
-  const report = await getUtilization(organizationId, selected, { period, group });
+  // Also pull the previous equal-length period, to show period-over-period
+  // deltas on the grand-total row.
+  const [report, prevReport] = await Promise.all([
+    getUtilization(organizationId, selected, { period, group }),
+    getUtilization(organizationId, shiftPeriod(selected, period, -1), { period, group }),
+  ]);
 
   const t = (await getT()).reports;
   const locale = await getLocale();
@@ -285,13 +291,28 @@ export default async function UtilizationReportPage({
                     {h(report.totals.plannedHours)}
                   </TableCell>
                   <TableCell className="text-right font-semibold tabular-nums">
-                    {h(report.totals.loggedHours)}
+                    <div className="flex flex-col items-end gap-0.5">
+                      {h(report.totals.loggedHours)}
+                      <DeltaBadge
+                        current={report.totals.loggedHours}
+                        previous={prevReport.totals.loggedHours}
+                        format={h}
+                      />
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <UtilCell
-                      pct={usedPct(report.totals.plannedHours, report.totals.loggedHours)}
-                      strong
-                    />
+                    {(() => {
+                      const cur = usedPct(report.totals.plannedHours, report.totals.loggedHours);
+                      const prev = usedPct(prevReport.totals.plannedHours, prevReport.totals.loggedHours);
+                      return (
+                        <div className="flex flex-col items-end gap-0.5">
+                          <UtilCell pct={cur} strong />
+                          {cur != null && prev != null && (
+                            <DeltaBadge current={cur} previous={prev} format={(n) => `${n}%`} />
+                          )}
+                        </div>
+                      );
+                    })()}
                   </TableCell>
                 </TableRow>
               </TableBody>

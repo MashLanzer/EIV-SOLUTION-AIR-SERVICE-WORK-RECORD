@@ -17,6 +17,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { SuccessToast } from "@/components/ui/success-toast";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { StatTile } from "@/components/ui/stat-tile";
+import { DeltaBadge } from "@/components/ui/delta-badge";
 import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { WorkerRecordList } from "@/components/records/WorkerRecordList";
 import { ResumeDraftCard } from "@/components/records/ResumeDraftCard";
@@ -89,6 +90,9 @@ export default async function RecordsPage({
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
+  // Same calendar month a year? no — the previous month, for the trend deltas.
+  const lastMonthStart = new Date(monthStart);
+  lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
 
   const [
     total,
@@ -98,6 +102,8 @@ export default async function RecordsPage({
     needsChanges,
     statusCounts,
     monthTimes,
+    prevMonthTotal,
+    prevApproved,
   ] = await Promise.all([
     prisma.workRecord.count({ where }),
     prisma.workRecord.findMany({
@@ -135,6 +141,13 @@ export default async function RecordsPage({
     prisma.workRecord.findMany({
       where: { ...mine, date: { gte: monthStart } },
       select: { arrivalTime: true, departureTime: true },
+    }),
+    // Last month's counts, for the trend deltas on the tiles.
+    prisma.workRecord.count({
+      where: { ...mine, date: { gte: lastMonthStart, lt: monthStart } },
+    }),
+    prisma.workRecord.count({
+      where: { ...mine, status: "APPROVED", date: { gte: lastMonthStart, lt: monthStart } },
     }),
   ]);
   const pages = pageCount(total);
@@ -235,6 +248,7 @@ export default async function RecordsPage({
             value={monthTotal}
             label={t.thisMonth}
             sub={monthHours > 0 ? t.hoursOnSite.replace("{h}", String(monthHours)) : undefined}
+            delta={<DeltaBadge current={monthTotal} previous={prevMonthTotal} />}
           />
           <StatTile
             icon={CheckCircle2}
@@ -242,6 +256,7 @@ export default async function RecordsPage({
             label={t.approved}
             tone="success"
             href="/records?status=APPROVED"
+            delta={<DeltaBadge current={approvedThisMonth} previous={prevApproved} />}
           />
           <StatTile
             icon={AlertTriangle}

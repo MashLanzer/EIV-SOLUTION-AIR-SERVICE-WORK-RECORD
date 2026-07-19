@@ -53,14 +53,24 @@ export function MetricCard({
 }
 
 // A single centred figure with its caption. Monochrome for cross-screen
-// consistency; wrap in MetricLink when the figure should deep-link.
-export function Metric({ value, label }: { value: number | string; label: string }) {
+// consistency; wrap in MetricLink when the figure should deep-link. An optional
+// `delta` (e.g. <DeltaBadge/>) shows a period-over-period trend under the label.
+export function Metric({
+  value,
+  label,
+  delta,
+}: {
+  value: number | string;
+  label: string;
+  delta?: React.ReactNode;
+}) {
   return (
     <div className="flex min-w-0 flex-col items-center px-2 text-center">
       <div className="max-w-full truncate text-2xl font-semibold tabular-nums tracking-tight text-neutral-900 dark:text-neutral-100">
         {value}
       </div>
       <div className="mt-1 text-xs leading-tight text-neutral-500 dark:text-neutral-400">{label}</div>
+      {delta ? <div className="mt-1 flex justify-center">{delta}</div> : null}
     </div>
   );
 }

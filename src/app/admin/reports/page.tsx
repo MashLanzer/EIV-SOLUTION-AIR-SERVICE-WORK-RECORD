@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FilterActions, FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
+import { DeltaBadge } from "@/components/ui/delta-badge";
 import { SectionTabs } from "@/components/layout/SectionTabs";
 import { PayReportTable } from "@/components/reports/PayReportTable";
 import { buildPayReport, defaultPayReportRange, parsePayReportParams } from "@/lib/payReport";
@@ -27,15 +28,35 @@ function formatDate(iso: string, locale: string) {
   }).format(new Date(iso));
 }
 
+// The equal-length window immediately before [dateFrom, dateTo] (inclusive),
+// for a period-over-period comparison of the payout total.
+function previousEqualRange(dateFrom: string, dateTo: string) {
+  const dayMs = 86_400_000;
+  const from = new Date(`${dateFrom}T00:00:00.000Z`);
+  const to = new Date(`${dateTo}T00:00:00.000Z`);
+  const spanDays = Math.round((to.getTime() - from.getTime()) / dayMs);
+  const prevTo = new Date(from.getTime() - dayMs);
+  const prevFrom = new Date(prevTo.getTime() - spanDays * dayMs);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  return { dateFrom: iso(prevFrom), dateTo: iso(prevTo) };
+}
+
 export default async function AdminReportsPage({
   searchParams,
 }: {
   searchParams: Promise<{ dateFrom?: string; dateTo?: string }>;
 }) {
   const session = await requirePermission("reports.view");
+  const organizationId = requireOrgId(session);
   const { dateFrom, dateTo } = parsePayReportParams(await searchParams);
-  const report = await buildPayReport({ dateFrom, dateTo }, requireOrgId(session));
-  const currency = await getCurrencySymbol(requireOrgId(session));
+  // The equal-length window immediately before the selected range, to show a
+  // period-over-period delta on the payout total.
+  const prevRange = previousEqualRange(dateFrom, dateTo);
+  const [report, prevReport, currency] = await Promise.all([
+    buildPayReport({ dateFrom, dateTo }, organizationId),
+    buildPayReport(prevRange, organizationId),
+    getCurrencySymbol(organizationId),
+  ]);
   const def = defaultPayReportRange();
   const isCustomRange = dateFrom !== def.dateFrom || dateTo !== def.dateTo;
 
@@ -81,8 +102,13 @@ export default async function AdminReportsPage({
               <div className="truncate text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
                 {money(report.grand.total)}
               </div>
-              <div className="text-sm text-neutral-500 dark:text-neutral-400">
+              <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
                 {t.totalToPay}
+                <DeltaBadge
+                  current={report.grand.total}
+                  previous={prevReport.grand.total}
+                  format={moneyString}
+                />
               </div>
               {report.grand.jobs > 0 && (
                 <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">

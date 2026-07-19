@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +24,7 @@ export function StatTile({
   value,
   label,
   sub,
+  delta,
   href,
   tone = "default",
   center = false,
@@ -31,6 +33,8 @@ export function StatTile({
   value: string | number;
   label: string;
   sub?: string;
+  // A period-over-period indicator (e.g. <DeltaBadge/>) shown under the label.
+  delta?: ReactNode;
   href?: string;
   tone?: StatTileTone;
   // Center the content and let the text wrap instead of truncating — for tiles
@@ -73,6 +77,7 @@ export function StatTile({
             {sub}
           </div>
         ) : null}
+        {delta ? <div className={cn("mt-0.5", center && "flex justify-center")}>{delta}</div> : null}
       </div>
     </CardContent>
   );

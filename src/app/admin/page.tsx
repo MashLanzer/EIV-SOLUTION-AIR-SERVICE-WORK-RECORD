@@ -13,6 +13,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MetricCard, Metric, MetricLink } from "@/components/ui/metric-card";
+import { DeltaBadge } from "@/components/ui/delta-badge";
 import { DashboardGreeting } from "@/components/admin/DashboardGreeting";
 import { DashboardQuickActions } from "@/components/admin/DashboardQuickActions";
 import { DashboardTrends } from "@/components/admin/DashboardTrends";
@@ -87,6 +88,13 @@ export default async function AdminDashboardPage() {
   // Pay owed this month feeds a headline tile; the full per-worker report is
   // deferred to the (collapsed) trends section, so only the total is fetched.
   const payRange = defaultPayReportRange();
+  // Previous-period bounds, for the trend deltas on the headline metrics.
+  const thisMonthStart = startOfMonth();
+  const prevMonthStart = new Date(
+    Date.UTC(thisMonthStart.getUTCFullYear(), thisMonthStart.getUTCMonth() - 1, 1)
+  );
+  const prevWeekMonday = new Date(thisWeekMonday);
+  prevWeekMonday.setUTCDate(prevWeekMonday.getUTCDate() - 7);
 
   // A single parallel batch: every figure the first paint needs, plus the
   // create-sheet seeds (admins only) and i18n - no second sequential round-trip.
@@ -113,6 +121,9 @@ export default async function AdminDashboardPage() {
     dict,
     locale,
     quickCreateData,
+    prevWeekRecords,
+    prevMonthRecords,
+    prevMonthPay,
   ] = await Promise.all([
     prisma.workRecord.count({ where: { organizationId } }),
     prisma.workRecord.count({ where: { organizationId, date: { gte: thisWeekMonday } } }),
@@ -259,6 +270,21 @@ export default async function AdminDashboardPage() {
           positions,
         }))
       : Promise.resolve(null),
+    // Previous-period figures, for the headline-metric trend deltas.
+    prisma.workRecord.count({
+      where: { organizationId, date: { gte: prevWeekMonday, lt: thisWeekMonday } },
+    }),
+    prisma.workRecord.count({
+      where: { organizationId, date: { gte: prevMonthStart, lt: thisMonthStart } },
+    }),
+    prisma.workRecord.aggregate({
+      where: {
+        organizationId,
+        status: "APPROVED",
+        date: { gte: prevMonthStart, lt: thisMonthStart },
+      },
+      _sum: { leadInstallerPay: true, helperPay: true },
+    }),
   ]);
 
   const t = dict.dashboard;
@@ -266,6 +292,8 @@ export default async function AdminDashboardPage() {
 
   const payThisMonthTotal =
     Number(payThisMonth._sum.leadInstallerPay ?? 0) + Number(payThisMonth._sum.helperPay ?? 0);
+  const prevMonthPayTotal =
+    Number(prevMonthPay._sum.leadInstallerPay ?? 0) + Number(prevMonthPay._sum.helperPay ?? 0);
 
   const outstandingTotal = sentInvoices.reduce(
     (sum, inv) =>
@@ -303,14 +331,32 @@ export default async function AdminDashboardPage() {
         <div className="flex flex-col gap-3">
           {isAdmin && (
             <MetricCard label={t.groupMoney} href="/admin/reports" cols="grid-cols-2">
-              <Metric value={fmtMoney(payThisMonthTotal)} label={t.toPayThisMonth} />
+              <Metric
+                value={fmtMoney(payThisMonthTotal)}
+                label={t.toPayThisMonth}
+                delta={
+                  <DeltaBadge
+                    current={payThisMonthTotal}
+                    previous={prevMonthPayTotal}
+                    format={fmtMoney}
+                  />
+                }
+              />
               <Metric value={fmtMoney(outstandingTotal)} label={t.tileOutstanding} />
             </MetricCard>
           )}
 
           <MetricCard label={t.groupRecords} href="/admin/records" cols="grid-cols-3">
-            <Metric value={recordsThisWeek} label={t.tileThisWeek} />
-            <Metric value={recordsThisMonth} label={t.tileThisMonth} />
+            <Metric
+              value={recordsThisWeek}
+              label={t.tileThisWeek}
+              delta={<DeltaBadge current={recordsThisWeek} previous={prevWeekRecords} />}
+            />
+            <Metric
+              value={recordsThisMonth}
+              label={t.tileThisMonth}
+              delta={<DeltaBadge current={recordsThisMonth} previous={prevMonthRecords} />}
+            />
             <Metric value={totalRecords} label={t.shortTotal} />
           </MetricCard>
 

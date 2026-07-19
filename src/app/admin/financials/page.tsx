@@ -1,14 +1,11 @@
 import Link from "next/link";
 import {
   AlertTriangle,
-  ArrowDownRight,
   ArrowRight,
-  ArrowUpRight,
   CalendarClock,
   CheckCircle2,
   FileText,
   HandCoins,
-  Minus,
   PiggyBank,
   Sheet,
   Target,
@@ -113,7 +110,6 @@ function CompareCell({
   const pct = hasPrev ? (delta / Math.abs(previous)) * 100 : 0;
   const flat = Math.abs(pct) < 0.5;
   const up = delta > 0;
-  const Arrow = flat ? Minus : up ? ArrowUpRight : ArrowDownRight;
   // A rise is "good" for revenue/profit, "bad" for a cost line — and vice-versa.
   const good = flat ? null : up === goodWhenUp;
   return (
@@ -130,10 +126,10 @@ function CompareCell({
               ? "text-neutral-500 dark:text-neutral-400"
               : good
                 ? "text-success-text"
-                : "text-warning-text"
+                : "text-destructive-text"
           )}
         >
-          <Arrow className="h-3.5 w-3.5" />
+          <span aria-hidden="true">{flat ? "—" : up ? "▲" : "▼"}</span>
           {flat ? "0%" : `${up ? "+" : ""}${pct.toFixed(0)}%`}
           <span className="text-neutral-500 dark:text-neutral-400">{vsLabel(money(previous))}</span>
         </span>

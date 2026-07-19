@@ -4,6 +4,7 @@ import { Building2, ClipboardList, Eye, LifeBuoy, Receipt, TrendingUp, Users } f
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
+import { DeltaBadge } from "@/components/ui/delta-badge";
 import { AnnouncementControls } from "@/components/super/AnnouncementControls";
 import { endSupportSessionAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
@@ -47,8 +48,18 @@ export default async function SuperOverviewPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile icon={TrendingUp} value={`+${o.newOrgs}`} label="New companies (30d)" />
-        <StatTile icon={TrendingUp} value={`+${o.newRecords}`} label="New records (30d)" />
+        <StatTile
+          icon={TrendingUp}
+          value={`+${o.newOrgs}`}
+          label="New companies (30d)"
+          delta={<DeltaBadge current={o.newOrgs} previous={o.prevNewOrgs} />}
+        />
+        <StatTile
+          icon={TrendingUp}
+          value={`+${o.newRecords}`}
+          label="New records (30d)"
+          delta={<DeltaBadge current={o.newRecords} previous={o.prevNewRecords} />}
+        />
         <StatTile icon={Receipt} value={String(o.paidInvoices)} label="Paid invoices" />
       </div>
 

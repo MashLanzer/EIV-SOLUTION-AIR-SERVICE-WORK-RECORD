@@ -10,19 +10,43 @@ import { computeTotals } from "@/lib/invoices";
 export async function getPlatformOverview() {
   const since = new Date();
   since.setUTCDate(since.getUTCDate() - 30);
+  // The 30 days before that, so the "new in 30d" tiles can show a trend.
+  const prevSince = new Date();
+  prevSince.setUTCDate(prevSince.getUTCDate() - 60);
 
-  const [organizations, users, records, invoices, paidInvoices, newOrgs, newRecords] =
-    await Promise.all([
-      prisma.organization.count(),
-      prisma.user.count(),
-      prisma.workRecord.count(),
-      prisma.invoice.count(),
-      prisma.invoice.count({ where: { status: "PAID" } }),
-      prisma.organization.count({ where: { createdAt: { gte: since } } }),
-      prisma.workRecord.count({ where: { createdAt: { gte: since } } }),
-    ]);
+  const [
+    organizations,
+    users,
+    records,
+    invoices,
+    paidInvoices,
+    newOrgs,
+    newRecords,
+    prevNewOrgs,
+    prevNewRecords,
+  ] = await Promise.all([
+    prisma.organization.count(),
+    prisma.user.count(),
+    prisma.workRecord.count(),
+    prisma.invoice.count(),
+    prisma.invoice.count({ where: { status: "PAID" } }),
+    prisma.organization.count({ where: { createdAt: { gte: since } } }),
+    prisma.workRecord.count({ where: { createdAt: { gte: since } } }),
+    prisma.organization.count({ where: { createdAt: { gte: prevSince, lt: since } } }),
+    prisma.workRecord.count({ where: { createdAt: { gte: prevSince, lt: since } } }),
+  ]);
 
-  return { organizations, users, records, invoices, paidInvoices, newOrgs, newRecords };
+  return {
+    organizations,
+    users,
+    records,
+    invoices,
+    paidInvoices,
+    newOrgs,
+    newRecords,
+    prevNewOrgs,
+    prevNewRecords,
+  };
 }
 
 export type OrgSummary = {
