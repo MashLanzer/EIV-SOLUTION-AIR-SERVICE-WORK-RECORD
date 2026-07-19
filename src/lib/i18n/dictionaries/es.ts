@@ -1647,6 +1647,13 @@ export const es: Dictionary = {
     projectCountMany: "{n} proyectos",
     activeProjects: "Proyectos activos",
     unassigned: "Sin equipo",
+    // Vista de equipos para el trabajador (solo lectura)
+    myTeams: "Mis equipos",
+    teammates: "Compañeros",
+    notOnAnyTeam: "Aún no estás en un equipo",
+    notOnAnyTeamDesc:
+      "Cuando un administrador te agregue a un equipo, aparecerá aquí con tus compañeros y proyectos.",
+    you: "Tú",
     // New page
     newTeamTitle: "Nuevo equipo",
     newTeamDesc:

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
 import { WorkerProjectList, type WorkerProjectData } from "@/components/projects/WorkerProjectList";
+import { WorkerProjectsTabs } from "@/components/projects/WorkerProjectsTabs";
 import { prisma } from "@/lib/prisma";
 import { requireOrgId } from "@/lib/orgScope";
 import { getWorkerTeamIds } from "@/lib/projectAccess";
@@ -146,6 +147,7 @@ export default async function WorkerProjectsPage({
 
   return (
     <div className="flex flex-col gap-3">
+      <WorkerProjectsTabs />
       <PageHeader title={t.title} />
 
       <form method="get" className="relative">

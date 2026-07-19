@@ -1653,6 +1653,13 @@ export const en = {
     projectCountMany: "{n} projects",
     activeProjects: "Active projects",
     unassigned: "Not on a team",
+    // Worker-facing teams view (read-only)
+    myTeams: "My teams",
+    teammates: "Teammates",
+    notOnAnyTeam: "You're not on a team yet",
+    notOnAnyTeamDesc:
+      "When an admin adds you to a crew, it shows up here with your teammates and projects.",
+    you: "You",
     // New page
     newTeamTitle: "New team",
     newTeamDesc:
