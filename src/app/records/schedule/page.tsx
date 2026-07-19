@@ -19,6 +19,7 @@ import { formatTimeRange } from "@/lib/format";
 import { WorkerJobCard, type WorkerJobView } from "@/components/schedule/WorkerJobCard";
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { SheetButton } from "@/components/schedule/SheetButton";
+import { DaySheet } from "@/components/schedule/DaySheet";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
 import type { MapPin as MapPinData } from "@/components/projects/ProjectsMap";
 import { orderByRoute } from "@/lib/route";
@@ -338,7 +339,7 @@ export default async function WorkerSchedulePage({
         monthLabel={monthLabel}
         weekdayLabels={weekdayLabels}
         days={calendarDays}
-        dayHref={(key) => `/records/schedule?date=${key}`}
+        dayHref={(key) => `/records/schedule?date=${key}&day=1`}
         prevHref={`/records/schedule?date=${prevMonthKey}`}
         nextHref={`/records/schedule?date=${nextMonthKey}`}
         todayHref="/records/schedule"
@@ -347,104 +348,99 @@ export default async function WorkerSchedulePage({
         todayLabel={t.today}
       />
 
-      {selectedJobs.length >= overloadThreshold && (
-        <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/70 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-2.5 text-amber-800 dark:text-amber-200">
-          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-          <p className="text-sm">
-            {t.overloadWarningYou.replace("{n}", String(selectedJobs.length))}
-          </p>
-        </div>
-      )}
-
-      {/* Secondary day info — timeline, map and driving route — tucks into
-          sheets so the day leads with the actual job cards instead of stacking
-          a screen-tall clock, map and route down the page (mirrors admin). */}
-      {(hasTimeline || dayGeo.pins.length > 0 || dayGeo.route) && (
-        <div className="flex flex-wrap items-stretch gap-2">
-          {dayGeo.pins.length > 0 && (
-            <SheetButton
-              label={`${t.mapTitle} · ${dayGeo.pins.length}`}
-              icon={<MapPin className="h-4 w-4" />}
-              title={t.mapTitle}
-            >
-              <ProjectsMapCard pins={dayGeo.pins} />
-            </SheetButton>
-          )}
-          {hasTimeline && (
-            <SheetButton label={t.timeline} icon={<Clock className="h-4 w-4" />} title={t.timeline}>
-              <ScheduleDayTimeline
-                jobs={selectedJobs}
-                conflictIds={conflictIds}
-                conflictLabel={t.conflictBadge}
-                use24={use24}
-              />
-            </SheetButton>
-          )}
-          {dayGeo.route && (
-            <SheetButton
-              label={`${t.routeTitle} · ${dayGeo.route.stops.length}`}
-              icon={<Route className="h-4 w-4" />}
-              title={t.routeTitle}
-            >
-              <div className="flex flex-col gap-3">
-                <Button asChild variant="outline" className="w-full">
-                  <a href={dayGeo.route.mapsUrl} target="_blank" rel="noopener noreferrer">
-                    <Navigation className="h-4 w-4" />
-                    {t.routeOpen}
-                  </a>
-                </Button>
-                <ol className="flex flex-col gap-2.5">
-                  {dayGeo.route.stops.map((s, i) => (
-                    <li key={s.id} className="flex items-center gap-2.5 text-sm">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold tabular-nums text-white dark:bg-neutral-100 dark:text-neutral-900">
-                        {i + 1}
-                      </span>
-                      <span className="min-w-0 truncate text-neutral-900 dark:text-neutral-100">
-                        {s.title}
-                        <span className="text-neutral-500 dark:text-neutral-400"> · {s.place}</span>
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </SheetButton>
-          )}
-        </div>
-      )}
-
-      <section className="flex flex-col gap-2">
-        <div className="flex items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold capitalize text-neutral-900 dark:text-neutral-100">
-            {selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
-          </h2>
+      {/* Tapping a day opens its jobs in a bottom sheet (over the calendar) so
+          the page stays compact. Open state rides on ?day=1. */}
+      <DaySheet
+        title={selectedKey === todayKey ? `${t.today} · ${selectedDayLabel}` : selectedDayLabel}
+      >
+        <div className="flex flex-col gap-3">
           {selectedJobs.length > 0 && (
-            <span className="shrink-0 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
-              {t.dayProgress
-                .replace("{done}", String(doneCount))
-                .replace("{total}", String(selectedJobs.length))}
-            </span>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                {t.dayProgress
+                  .replace("{done}", String(doneCount))
+                  .replace("{total}", String(selectedJobs.length))}
+              </span>
+            </div>
+          )}
+
+          {selectedJobs.length >= overloadThreshold && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/70 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-2.5 text-amber-800 dark:text-amber-200">
+              <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+              <p className="text-sm">
+                {t.overloadWarningYou.replace("{n}", String(selectedJobs.length))}
+              </p>
+            </div>
+          )}
+
+          {/* Secondary day info — timeline, map and driving route — as inner
+              sheets so the day sheet leads with the actual job cards. */}
+          {(hasTimeline || dayGeo.pins.length > 0 || dayGeo.route) && (
+            <div className="flex flex-wrap items-stretch gap-2">
+              {dayGeo.pins.length > 0 && (
+                <SheetButton
+                  label={`${t.mapTitle} · ${dayGeo.pins.length}`}
+                  icon={<MapPin className="h-4 w-4" />}
+                  title={t.mapTitle}
+                >
+                  <ProjectsMapCard pins={dayGeo.pins} />
+                </SheetButton>
+              )}
+              {hasTimeline && (
+                <SheetButton label={t.timeline} icon={<Clock className="h-4 w-4" />} title={t.timeline}>
+                  <ScheduleDayTimeline
+                    jobs={selectedJobs}
+                    conflictIds={conflictIds}
+                    conflictLabel={t.conflictBadge}
+                    use24={use24}
+                  />
+                </SheetButton>
+              )}
+              {dayGeo.route && (
+                <SheetButton
+                  label={`${t.routeTitle} · ${dayGeo.route.stops.length}`}
+                  icon={<Route className="h-4 w-4" />}
+                  title={t.routeTitle}
+                >
+                  <div className="flex flex-col gap-3">
+                    <Button asChild variant="outline" className="w-full">
+                      <a href={dayGeo.route.mapsUrl} target="_blank" rel="noopener noreferrer">
+                        <Navigation className="h-4 w-4" />
+                        {t.routeOpen}
+                      </a>
+                    </Button>
+                    <ol className="flex flex-col gap-2.5">
+                      {dayGeo.route.stops.map((s, i) => (
+                        <li key={s.id} className="flex items-center gap-2.5 text-sm">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold tabular-nums text-white dark:bg-neutral-100 dark:text-neutral-900">
+                            {i + 1}
+                          </span>
+                          <span className="min-w-0 truncate text-neutral-900 dark:text-neutral-100">
+                            {s.title}
+                            <span className="text-neutral-500 dark:text-neutral-400"> · {s.place}</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                </SheetButton>
+              )}
+            </div>
+          )}
+
+          {selectedJobs.length === 0 ? (
+            <EmptyState icon={CalendarDays} title={t.noJobsDay} description={t.noUpcomingDesc} />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {selectedJobs.map((job) => (
+                <div key={job.id} id={`job-${job.id}`} className="scroll-mt-20">
+                  <WorkerJobCard job={job} />
+                </div>
+              ))}
+            </div>
           )}
         </div>
-        {selectedJobs.length === 0 ? (
-          <Card>
-            <CardContent className="p-0">
-              <EmptyState
-                icon={CalendarDays}
-                title={t.noJobsDay}
-                description={t.noUpcomingDesc}
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {selectedJobs.map((job) => (
-              <div key={job.id} id={`job-${job.id}`} className="scroll-mt-20">
-                <WorkerJobCard job={job} />
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      </DaySheet>
     </div>
   );
 }
