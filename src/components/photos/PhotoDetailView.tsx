@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PhotoDeleteButton } from "@/components/photos/PhotoDeleteButton";
 import { PhotoDownloadButton } from "@/components/photos/PhotoDownloadButton";
 import { PhotoViewer } from "@/components/photos/PhotoViewer";
+import { cn } from "@/lib/utils";
 import { getT, getLocale } from "@/lib/i18n/server";
 import type { Dictionary } from "@/lib/i18n";
 import {
@@ -207,26 +208,46 @@ export async function PhotoDetailView({
             {photo.comments.length === 0 ? (
               <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.beFirst}</p>
             ) : (
-              <ul className="flex flex-col gap-4">
+              <ul className="flex flex-col gap-3">
                 {photo.comments.map((c) => {
                   const canRemove = isAdmin || c.authorId === currentUserId;
                   const name = c.author?.name ?? t.someone;
+                  // Chat layout: your own comments sit on the right (dark bubble),
+                  // everyone else's on the left (gray bubble).
+                  const isOwn = c.authorId != null && c.authorId === currentUserId;
                   return (
-                    <li key={c.id} className="flex items-start gap-3">
-                      <AvatarInitials name={name} className="h-8 w-8" />
-                      <div className="min-w-0 flex-1">
-                        <div className="rounded-2xl rounded-tl-sm bg-neutral-100 dark:bg-neutral-800 px-3 py-2">
-                          <div className="mb-0.5 flex items-center justify-between gap-2">
-                            <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                              {name}
-                            </span>
-                            <span className="shrink-0 text-xs text-neutral-500 dark:text-neutral-400">
+                    <li
+                      key={c.id}
+                      className={cn("flex items-start gap-2.5", isOwn && "flex-row-reverse")}
+                    >
+                      <AvatarInitials name={name} className="h-8 w-8 shrink-0" />
+                      <div className={cn("flex max-w-[80%] flex-col", isOwn ? "items-end" : "items-start")}>
+                        <div
+                          className={cn(
+                            "px-3 py-2",
+                            isOwn
+                              ? "rounded-2xl rounded-tr-sm bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+                              : "rounded-2xl rounded-tl-sm bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200"
+                          )}
+                        >
+                          <div className="mb-0.5 flex items-center gap-2">
+                            {!isOwn && (
+                              <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                                {name}
+                              </span>
+                            )}
+                            <span
+                              className={cn(
+                                "shrink-0 text-xs",
+                                isOwn
+                                  ? "text-white/60 dark:text-neutral-900/60"
+                                  : "text-neutral-500 dark:text-neutral-400"
+                              )}
+                            >
                               {timeAgo(c.createdAt, t, locale)}
                             </span>
                           </div>
-                          <p className="whitespace-pre-wrap break-words text-sm text-neutral-800 dark:text-neutral-200">
-                            {c.body}
-                          </p>
+                          <p className="whitespace-pre-wrap break-words text-sm">{c.body}</p>
                         </div>
                         {canRemove && (
                           <form action={deleteCommentAction.bind(null, c.id)} className="mt-1">
