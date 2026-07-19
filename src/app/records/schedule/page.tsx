@@ -82,6 +82,15 @@ export default async function WorkerSchedulePage({
     me?.scheduleOverloadThreshold ?? org?.scheduleOverloadThreshold ?? 4;
   const use24 = org?.timeFormat === "24";
 
+  // Status-history timestamps for the job details sheet, formatted server-side so
+  // the timeline component stays locale-agnostic (mirrors the admin schedule).
+  const eventTimeFmt = new Intl.DateTimeFormat(intlLocale, {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
   // Canceled visits are hidden - they're not something to act on.
   type Row = WorkerJobView & { day: string };
   const rows: Row[] = jobs
@@ -95,10 +104,16 @@ export default async function WorkerSchedulePage({
       status: j.status,
       customerName: j.customer?.name ?? null,
       customerAddress: j.customer?.address ?? null,
+      customerPhone: j.customer?.phone ?? null,
       projectId: j.projectId,
       projectName: j.project?.name ?? null,
       projectAddress: j.project?.address ?? null,
       workRecordId: j.workRecordId,
+      statusHistory: j.statusEvents.map((e) => ({
+        status: e.status,
+        actorName: e.actorName,
+        time: eventTimeFmt.format(e.createdAt),
+      })),
       day: dayKey(j.scheduledFor),
     }));
 

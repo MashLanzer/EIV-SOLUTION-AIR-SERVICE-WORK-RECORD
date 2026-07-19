@@ -146,7 +146,7 @@ export async function scheduleWhereForUser(
 const jobInclude = {
   assignedTo: { select: { id: true, name: true } },
   team: { select: { id: true, name: true, color: true } },
-  customer: { select: { id: true, name: true, address: true } },
+  customer: { select: { id: true, name: true, address: true, phone: true } },
   project: { select: { id: true, name: true, address: true } },
   workRecord: { select: { id: true, jobNumber: true, status: true } },
   statusEvents: {

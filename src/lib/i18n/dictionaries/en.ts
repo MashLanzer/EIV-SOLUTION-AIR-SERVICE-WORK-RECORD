@@ -1384,6 +1384,8 @@ export const en = {
     markDone: "Mark done",
     markCanceled: "Cancel job",
     statusHistory: "Status history",
+    details: "Details",
+    call: "Call",
     dragToReschedule: "Drag a job to another day to reschedule, or onto a worker to reassign.",
     reassignHint: "Drop on a worker to reassign",
     unassignChip: "Unassigned",
