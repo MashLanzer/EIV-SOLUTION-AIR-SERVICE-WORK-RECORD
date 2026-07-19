@@ -20,6 +20,7 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { DeltaBadge } from "@/components/ui/delta-badge";
 import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { WorkerRecordList } from "@/components/records/WorkerRecordList";
+import { WorkerEarningsCard } from "@/components/records/WorkerEarningsCard";
 import { ResumeDraftCard } from "@/components/records/ResumeDraftCard";
 import { MorningBriefDialog } from "@/components/schedule/MorningBriefDialog";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
@@ -29,7 +30,7 @@ import { requireAuth } from "@/lib/session";
 import { addUtcDays, dayKey, getScheduledJobs, startOfUtcDay } from "@/lib/schedule";
 import { formatMoney, workMinutes } from "@/lib/format";
 import { getCurrencySymbol } from "@/lib/currency";
-import { getT } from "@/lib/i18n/server";
+import { getLocale, getT } from "@/lib/i18n/server";
 import type { RecordStatus } from "@prisma/client";
 
 type DateRange = "week" | "month" | "all";
@@ -206,6 +207,42 @@ export default async function RecordsPage({
   // Any active filter (search, status, or date range) puts us in "results" mode.
   const filtering = Boolean(query) || Boolean(status) || range !== "all";
 
+  // Six-month earnings series (lead-installer pay) for the earnings card, shown
+  // only on the summary/home view. Bucketed in JS by calendar month.
+  const locale = await getLocale();
+  const earningsMonths: { label: string; amount: number }[] = [];
+  let earningsThisMonth = 0;
+  let earningsLastMonth = 0;
+  if (showSummary) {
+    const seriesStart = new Date(monthStart);
+    seriesStart.setMonth(seriesStart.getMonth() - 5);
+    const payRows = await prisma.workRecord.findMany({
+      where: { ...mine, date: { gte: seriesStart } },
+      select: { date: true, leadInstallerPay: true },
+    });
+    const buckets = new Map<string, number>();
+    const monthOrder: { key: string; label: string }[] = [];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(monthStart);
+      d.setMonth(d.getMonth() - (5 - i));
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      monthOrder.push({
+        key,
+        label: d.toLocaleDateString(locale === "es" ? "es-ES" : "en-US", { month: "short" }),
+      });
+      buckets.set(key, 0);
+    }
+    for (const r of payRows) {
+      const key = `${r.date.getFullYear()}-${r.date.getMonth()}`;
+      if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + Number(r.leadInstallerPay));
+    }
+    for (const m of monthOrder) {
+      earningsMonths.push({ label: m.label, amount: Math.round((buckets.get(m.key) ?? 0) * 100) / 100 });
+    }
+    earningsThisMonth = earningsMonths[5]?.amount ?? 0;
+    earningsLastMonth = earningsMonths[4]?.amount ?? 0;
+  }
+
   // Today's scheduled visits feed the once-a-day morning brief dialog.
   const todayStart = startOfUtcDay(new Date());
   const briefRaw = await getScheduledJobs({
@@ -325,6 +362,15 @@ export default async function RecordsPage({
             href={needsChanges > 0 ? "/records?status=NEEDS_CHANGES" : undefined}
           />
         </div>
+      )}
+
+      {showSummary && (
+        <WorkerEarningsCard
+          thisMonth={earningsThisMonth}
+          lastMonth={earningsLastMonth}
+          months={earningsMonths}
+          currency={currency}
+        />
       )}
 
       {showSummary && needsChanges > 0 && (

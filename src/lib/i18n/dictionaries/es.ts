@@ -269,6 +269,10 @@ export const es: Dictionary = {
     groupEarlier: "Anteriores",
     duplicate: "Duplicar",
     duplicatingFrom: "Duplicando de",
+    myEarnings: "Mis ganancias",
+    earnedThisMonthLabel: "Ganado este mes",
+    last6Months: "Últimos 6 meses",
+    earningsNote: "Basado en tu pago como instalador líder en los registros que enviaste.",
     tapToSee: "Toca para ver qué corregir y reenviar.",
     photosCount: "Fotos ({n})",
     // Record status badge labels
