@@ -196,7 +196,7 @@ export default async function WorkerProjectPage({
   const hasMap = projectPins.length > 0 || photoPins.length > 0;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <Link
         href="/records/projects"
         className="flex w-fit items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100"
