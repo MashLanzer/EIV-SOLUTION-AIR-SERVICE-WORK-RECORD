@@ -312,7 +312,7 @@ export default async function RecordsPage({
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <MorningBriefDialog
         jobs={briefJobs}
         dayKey={dayKey(todayStart)}
@@ -336,6 +336,41 @@ export default async function RecordsPage({
           </Button>
         }
       />
+
+      {/* Search sits at the very top so it's always the first control. */}
+      <form method="get" className="relative">
+        {status && <input type="hidden" name="status" value={status} />}
+        {sort === "oldest" && <input type="hidden" name="sort" value={sort} />}
+        {range !== "all" && <input type="hidden" name="range" value={range} />}
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
+        <Input
+          type="search"
+          name="q"
+          placeholder={t.searchPlaceholder}
+          defaultValue={query}
+          className="pl-9"
+          aria-label={t.searchAria}
+        />
+      </form>
+
+      {/* Status + date-range filters share one scrollable row to save height. */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {statusChips.map((chip) => {
+          const active = (chip.status ?? undefined) === (status ?? undefined);
+          const count = chip.status ? countByStatus.get(chip.status) ?? 0 : allCount;
+          return (
+            <FilterChip key={chip.label} href={chipHref(chip.status)} active={active} count={count}>
+              {chip.label}
+            </FilterChip>
+          );
+        })}
+        <span className="mx-0.5 h-5 w-px shrink-0 bg-neutral-200 dark:bg-neutral-800" aria-hidden="true" />
+        {rangeChips.map((chip) => (
+          <FilterChip key={chip.value} href={rangeHref(chip.value)} active={range === chip.value}>
+            {chip.label}
+          </FilterChip>
+        ))}
+      </div>
 
       {showSummary && <ResumeDraftCard draftKey={`new-record:${session.user.id}`} />}
 
@@ -385,41 +420,6 @@ export default async function RecordsPage({
           </Alert>
         </Link>
       )}
-
-      <form method="get" className="relative">
-        {status && <input type="hidden" name="status" value={status} />}
-        {sort === "oldest" && <input type="hidden" name="sort" value={sort} />}
-        {range !== "all" && <input type="hidden" name="range" value={range} />}
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
-        <Input
-          type="search"
-          name="q"
-          placeholder={t.searchPlaceholder}
-          defaultValue={query}
-          className="pl-9"
-          aria-label={t.searchAria}
-        />
-      </form>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {statusChips.map((chip) => {
-          const active = (chip.status ?? undefined) === (status ?? undefined);
-          const count = chip.status ? countByStatus.get(chip.status) ?? 0 : allCount;
-          return (
-            <FilterChip key={chip.label} href={chipHref(chip.status)} active={active} count={count}>
-              {chip.label}
-            </FilterChip>
-          );
-        })}
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {rangeChips.map((chip) => (
-          <FilterChip key={chip.value} href={rangeHref(chip.value)} active={range === chip.value}>
-            {chip.label}
-          </FilterChip>
-        ))}
-      </div>
 
       {records.length === 0 ? (
         filtering ? (
