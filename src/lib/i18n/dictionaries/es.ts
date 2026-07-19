@@ -1339,6 +1339,7 @@ export const es: Dictionary = {
     summaryJobs: "Trabajos del mes",
     summaryCompleted: "Completados",
     summaryBusiest: "Más ocupado",
+    summaryUpcoming: "Próximas",
     overloadWarning:
       "Atención: {n} trabajos para un mismo trabajador este día, igual o por encima de tu aviso de sobrecarga de {threshold}.",
     overloadWarningYou:
@@ -1386,6 +1387,8 @@ export const es: Dictionary = {
     statusCanceled: "Cancelado",
     filterAll: "Todos",
     filterByStatus: "Filtrar por estado",
+    searchVisits: "Buscar mis visitas",
+    searchVisitsAria: "Buscar mis visitas programadas",
     changeStatus: "Cambiar estado",
     conflictBadge: "Solapamiento",
     conflictTitle: "Este trabajador tiene otro trabajo que se solapa ese día",

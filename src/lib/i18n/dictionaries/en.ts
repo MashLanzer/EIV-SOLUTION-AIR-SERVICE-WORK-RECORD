@@ -1345,6 +1345,7 @@ export const en = {
     summaryJobs: "Jobs this month",
     summaryCompleted: "Completed",
     summaryBusiest: "Busiest",
+    summaryUpcoming: "Upcoming",
     overloadWarning:
       "Heads up: {n} jobs for one worker this day — at or above your overload alert of {threshold}.",
     overloadWarningYou:
@@ -1392,6 +1393,8 @@ export const en = {
     statusCanceled: "Canceled",
     filterAll: "All",
     filterByStatus: "Filter by status",
+    searchVisits: "Search my visits",
+    searchVisitsAria: "Search my scheduled visits",
     changeStatus: "Change status",
     conflictBadge: "Overlap",
     conflictTitle: "This worker has another overlapping job this day",

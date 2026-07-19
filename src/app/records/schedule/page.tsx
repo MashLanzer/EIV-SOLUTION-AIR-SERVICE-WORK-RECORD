@@ -8,13 +8,18 @@ import {
   MapPin,
   Navigation,
   Route,
+  Search,
   TriangleAlert,
 } from "lucide-react";
+import type { ScheduledJobStatus } from "@prisma/client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FilterChip } from "@/components/ui/filter-chip";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatTile } from "@/components/ui/stat-tile";
 import { formatTimeRange } from "@/lib/format";
 import { WorkerJobCard, type WorkerJobView } from "@/components/schedule/WorkerJobCard";
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
@@ -49,6 +54,28 @@ function parseDateParam(value: string | undefined): Date {
     if (!Number.isNaN(d.getTime())) return d;
   }
   return startOfUtcDay(new Date());
+}
+
+// Lifecycle statuses a worker can filter their calendar by (canceled visits are
+// hidden from workers entirely, so it's not a chip).
+const WORKER_JOB_STATUSES: ScheduledJobStatus[] = [
+  "SCHEDULED",
+  "STARTED",
+  "EN_ROUTE",
+  "IN_PROGRESS",
+  "DONE",
+];
+
+// A /records/schedule URL that carries the date + status + search so day taps,
+// month nav and the chips never drop the active filter.
+function schedHref(params: { date?: string; status?: string; q?: string; day?: boolean }): string {
+  const p = new URLSearchParams();
+  if (params.date) p.set("date", params.date);
+  if (params.status) p.set("status", params.status);
+  if (params.q) p.set("q", params.q);
+  if (params.day) p.set("day", "1");
+  const qs = p.toString();
+  return qs ? `/records/schedule?${qs}` : "/records/schedule";
 }
 
 type DayRoute = {
@@ -134,7 +161,7 @@ async function getWorkerDayGeo(
 export default async function WorkerSchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; status?: string; q?: string }>;
 }) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
@@ -142,7 +169,12 @@ export default async function WorkerSchedulePage({
   const locale = await getLocale();
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
 
-  const { date } = await searchParams;
+  const { date, status: statusParam, q: qParam } = await searchParams;
+  const statusFilter = WORKER_JOB_STATUSES.includes(statusParam as ScheduledJobStatus)
+    ? (statusParam as ScheduledJobStatus)
+    : undefined;
+  const query = qParam?.trim() || undefined;
+  const queryLc = query?.toLowerCase();
   const selected = parseDateParam(date);
   const selectedKey = dayKey(selected);
   const todayKey = dayKey(startOfUtcDay(new Date()));
@@ -205,14 +237,35 @@ export default async function WorkerSchedulePage({
       day: dayKey(j.scheduledFor),
     }));
 
+  // Apply the status chip + search once, so the month counts, the day sheet and
+  // the KPIs all work off the same filtered set.
+  const shownRows = rows.filter(
+    (r) =>
+      (!statusFilter || r.status === statusFilter) &&
+      (!queryLc ||
+        `${r.title ?? ""} ${r.customerName ?? ""} ${r.projectName ?? ""}`
+          .toLowerCase()
+          .includes(queryLc))
+  );
+
   const byDay = new Map<string, Row[]>();
-  for (const r of rows) {
+  for (const r of shownRows) {
     const list = byDay.get(r.day) ?? [];
     list.push(r);
     byDay.set(r.day, list);
   }
 
   const selectedMonth = selected.getUTCMonth();
+  // Month KPIs (from the filtered set, days that belong to the selected month):
+  // total visits, how many are done, and how many are still ahead.
+  const monthShown = gridDays
+    .filter((d) => d.getUTCMonth() === selectedMonth)
+    .flatMap((d) => byDay.get(dayKey(d)) ?? []);
+  const kpiTotal = monthShown.length;
+  const kpiDone = monthShown.filter((j) => j.status === "DONE").length;
+  const kpiDonePct = kpiTotal > 0 ? Math.round((kpiDone / kpiTotal) * 100) : 0;
+  const kpiUpcoming = kpiTotal - kpiDone;
+
   const calendarDays: CalendarDay[] = gridDays.map((d) => {
     const key = dayKey(d);
     const dayCount = (byDay.get(key) ?? []).length;
@@ -323,6 +376,64 @@ export default async function WorkerSchedulePage({
         }
       />
 
+      {/* Search my visits (title / customer / project), preserving the status
+          filter and the viewed month. */}
+      <form method="get" className="relative">
+        {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+        <input type="hidden" name="date" value={selectedKey} />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
+        <Input
+          type="search"
+          name="q"
+          placeholder={t.searchVisits}
+          defaultValue={query}
+          className="pl-9"
+          aria-label={t.searchVisitsAria}
+        />
+      </form>
+
+      {/* Status filter chips — narrow the calendar + day sheet to one status. */}
+      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {(
+          [
+            { value: undefined, label: t.filterAll },
+            ...WORKER_JOB_STATUSES.map((s) => ({
+              value: s,
+              label:
+                s === "SCHEDULED"
+                  ? t.statusScheduled
+                  : s === "STARTED"
+                    ? t.statusStarted
+                    : s === "EN_ROUTE"
+                      ? t.statusEnRoute
+                      : s === "IN_PROGRESS"
+                        ? t.statusInProgress
+                        : t.statusDone,
+            })),
+          ] as { value?: ScheduledJobStatus; label: string }[]
+        ).map((chip) => (
+          <FilterChip
+            key={chip.value ?? "all"}
+            href={schedHref({ date: selectedKey, status: chip.value, q: query })}
+            active={statusFilter === chip.value}
+          >
+            {chip.label}
+          </FilterChip>
+        ))}
+      </div>
+
+      {/* Month KPIs — this month's visits, completion, and how many are ahead. */}
+      <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
+        <StatTile center label={t.summaryJobs} value={String(kpiTotal)} />
+        <StatTile
+          center
+          label={t.summaryCompleted}
+          value={`${kpiDonePct}%`}
+          sub={`${kpiDone}/${kpiTotal}`}
+        />
+        <StatTile center label={t.summaryUpcoming} value={String(kpiUpcoming)} />
+      </div>
+
       {nextVisit && (
         <Card className="border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900/40">
           <CardContent className="flex flex-col gap-2 p-3">
@@ -376,10 +487,10 @@ export default async function WorkerSchedulePage({
         monthLabel={monthLabel}
         weekdayLabels={weekdayLabels}
         days={calendarDays}
-        dayHref={(key) => `/records/schedule?date=${key}&day=1`}
-        prevHref={`/records/schedule?date=${prevMonthKey}`}
-        nextHref={`/records/schedule?date=${nextMonthKey}`}
-        todayHref="/records/schedule"
+        dayHref={(key) => schedHref({ date: key, status: statusFilter, q: query, day: true })}
+        prevHref={schedHref({ date: prevMonthKey, status: statusFilter, q: query })}
+        nextHref={schedHref({ date: nextMonthKey, status: statusFilter, q: query })}
+        todayHref={schedHref({ status: statusFilter, q: query })}
         prevLabel={t.prevMonth}
         nextLabel={t.nextMonth}
         todayLabel={t.today}
