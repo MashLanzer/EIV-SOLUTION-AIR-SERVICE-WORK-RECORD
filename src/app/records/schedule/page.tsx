@@ -22,7 +22,9 @@ import { SheetButton } from "@/components/schedule/SheetButton";
 import { DaySheet } from "@/components/schedule/DaySheet";
 import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
 import type { MapPin as MapPinData } from "@/components/projects/ProjectsMap";
+import { ScheduleDayWeather } from "@/components/schedule/ScheduleDayWeather";
 import { orderByRoute } from "@/lib/route";
+import { getWeather, type WeatherDay } from "@/lib/weather";
 import {
   ScheduleMonthCalendar,
   type CalendarDay,
@@ -53,6 +55,36 @@ type DayRoute = {
   stops: { id: string; title: string; place: string; lat: number; lng: number }[];
   mapsUrl: string;
 };
+
+// Best-effort weather for the selected day: the first geocoded jobsite that day
+// with a forecast for that date. Returns null when nothing's located or the day
+// falls outside the short forecast window. Mirrors the admin day view.
+async function getWorkerDayWeather(
+  organizationId: string,
+  dayJobs: { status: string; projectId: string | null }[],
+  dayIso: string
+): Promise<{ day: WeatherDay; placeLabel: string } | null> {
+  const projectIds = [
+    ...new Set(
+      dayJobs
+        .filter((j) => j.status !== "CANCELED")
+        .map((j) => j.projectId)
+        .filter((id): id is string => !!id)
+    ),
+  ];
+  if (projectIds.length === 0) return null;
+
+  const project = await prisma.project.findFirst({
+    where: { organizationId, id: { in: projectIds }, latitude: { not: null }, longitude: { not: null } },
+    select: { name: true, latitude: true, longitude: true },
+  });
+  if (!project?.latitude || !project?.longitude) return null;
+
+  const weather = await getWeather(project.latitude, project.longitude);
+  const day = weather?.days.find((d) => d.date === dayIso);
+  if (!day) return null;
+  return { day, placeLabel: project.name };
+}
 
 // The selected day's geocoded jobsites, resolved once: map pins for every located
 // job and a suggested driving route (nearest-neighbour + a Google Maps link)
@@ -220,6 +252,11 @@ export default async function WorkerSchedulePage({
     selectedJobs.length > 0
       ? await getWorkerDayGeo(organizationId, selectedJobs)
       : { pins: [] as MapPinData[], route: null };
+  // Best-effort weather for the selected day at its first geocoded jobsite.
+  const dayWeather =
+    selectedJobs.length > 0
+      ? await getWorkerDayWeather(organizationId, selectedJobs, selectedKey)
+      : null;
 
   // The single nearest still-actionable visit across the fetched window, so the
   // worker sees where they're headed next no matter which day they're viewing.
@@ -362,6 +399,10 @@ export default async function WorkerSchedulePage({
                   .replace("{total}", String(selectedJobs.length))}
               </span>
             </div>
+          )}
+
+          {dayWeather && (
+            <ScheduleDayWeather day={dayWeather.day} placeLabel={dayWeather.placeLabel} />
           )}
 
           {selectedJobs.length >= overloadThreshold && (
