@@ -303,24 +303,43 @@ export function ProfileScreen({
           )}
         </div>
 
-        {/* Quick stats built into the hero (workers only). */}
+        {/* Quick stats built into the hero (workers only). The record counts
+            link to that filtered slice of My Records — the same numbers there
+            are already tappable; the approval-rate isn't a filter, so it stays
+            plain text. */}
         {!isAdmin && (
           <div className="grid grid-cols-4 divide-x divide-neutral-200 border-t border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
             {[
-              { value: String(stats.totalRecords), label: t.total },
-              { value: String(stats.approvedRecords), label: t.approved },
-              { value: String(stats.pendingRecords), label: t.pending },
-              { value: `${metrics.approvalRate}%`, label: t.approvalRate },
-            ].map((s) => (
-              <div key={s.label} className="flex flex-col items-center gap-0.5 px-1 py-3">
-                <span className="text-base font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
-                  {s.value}
-                </span>
-                <span className="text-center text-[10px] uppercase leading-tight tracking-wide text-neutral-500 dark:text-neutral-400">
-                  {s.label}
-                </span>
-              </div>
-            ))}
+              { value: String(stats.totalRecords), label: t.total, href: recordHrefBase },
+              { value: String(stats.approvedRecords), label: t.approved, href: `${recordHrefBase}?status=APPROVED` },
+              { value: String(stats.pendingRecords), label: t.pending, href: `${recordHrefBase}?status=SUBMITTED` },
+              { value: `${metrics.approvalRate}%`, label: t.approvalRate, href: undefined },
+            ].map((s) => {
+              const cellClass = "flex flex-col items-center gap-0.5 px-1 py-3";
+              const inner = (
+                <>
+                  <span className="text-base font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
+                    {s.value}
+                  </span>
+                  <span className="text-center text-[10px] uppercase leading-tight tracking-wide text-neutral-500 dark:text-neutral-400">
+                    {s.label}
+                  </span>
+                </>
+              );
+              return s.href ? (
+                <Link
+                  key={s.label}
+                  href={s.href}
+                  className={cn(cellClass, "transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900")}
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div key={s.label} className={cellClass}>
+                  {inner}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -637,6 +656,13 @@ export function ProfileScreen({
                   </Link>
                 ))}
               </div>
+              <Link
+                href={recordHrefBase}
+                className="flex items-center justify-center gap-1 border-t border-neutral-100 px-4 py-2.5 text-sm font-medium text-primary hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+              >
+                {t.viewAllRecords}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </SettingsSection>
           )}
         </div>

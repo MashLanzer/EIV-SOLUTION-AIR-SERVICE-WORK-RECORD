@@ -87,6 +87,7 @@ export const en = {
     myWeek: "My week",
     myWeekDesc: "Jobs assigned to you over the next 7 days.",
     viewSchedule: "View full schedule",
+    viewAllRecords: "View all records",
     // Needs attention (returned records)
     needsAttention: "Needs your attention",
     needsAttentionDesc: "Records sent back for changes.",

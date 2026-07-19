@@ -87,6 +87,7 @@ export const es: Dictionary = {
     myWeek: "Mi semana",
     myWeekDesc: "Trabajos asignados a ti en los próximos 7 días.",
     viewSchedule: "Ver agenda completa",
+    viewAllRecords: "Ver todos los registros",
     // Necesita tu atención (registros devueltos)
     needsAttention: "Necesita tu atención",
     needsAttentionDesc: "Registros devueltos para corregir.",
