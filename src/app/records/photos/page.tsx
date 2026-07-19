@@ -1,9 +1,10 @@
-import { FileDown, Images } from "lucide-react";
+import { CalendarClock, FileDown, Images, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { StatTile } from "@/components/ui/stat-tile";
 import { PhotoFeed } from "@/components/photos/PhotoFeed";
 import { PhotoFilters, type PhotoRange } from "@/components/photos/PhotoFilters";
 import { PhotoMapButton } from "@/components/photos/PhotoMapButton";
@@ -68,7 +69,21 @@ export default async function WorkerPhotosPage({
   };
   const photoWhere = { ...baseWhere, ...photoSourceWhere(activeSource) };
 
-  const [tags, projects, photoRows, totalPhotos, sourceCounts] = await Promise.all([
+  // KPI scope: all photos the worker can see (their team projects), independent
+  // of the active filters — the tiles double as one-tap shortcuts.
+  const kpiScope = { organizationId, ...projectScope };
+  const weekCutoff = photoRangeCutoff("7d");
+
+  const [
+    tags,
+    projects,
+    photoRows,
+    totalPhotos,
+    sourceCounts,
+    allPhotos,
+    minePhotos,
+    weekPhotos,
+  ] = await Promise.all([
     prisma.tag.findMany({
       where: {
         organizationId,
@@ -110,6 +125,11 @@ export default async function WorkerPhotosPage({
       prisma.photo.count({ where: { ...baseWhere, ...photoSourceWhere("checklist") } }),
       prisma.photo.count({ where: { ...baseWhere, ...photoSourceWhere("record") } }),
     ]).then(([project, checklist, record]) => ({ project, checklist, record })),
+    prisma.photo.count({ where: kpiScope }),
+    prisma.photo.count({ where: { ...kpiScope, takenById: session.user.id } }),
+    prisma.photo.count({
+      where: { ...kpiScope, ...(weekCutoff ? { takenAt: { gte: weekCutoff } } : {}) },
+    }),
   ]);
 
   const t = (await getT()).photos;
@@ -179,7 +199,7 @@ export default async function WorkerPhotosPage({
   const moreHref = `/records/photos?${moreParams}`;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader
         title={t.title}
         description={(totalPhotos === 1 ? t.countOne : t.countMany).replace(
@@ -197,6 +217,25 @@ export default async function WorkerPhotosPage({
           ) : undefined
         }
       />
+
+      {/* Glanceable KPIs that double as one-tap filters. */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        <StatTile center icon={Images} value={String(allPhotos)} label={t.title} href="/records/photos" />
+        <StatTile
+          center
+          icon={UserRound}
+          value={String(minePhotos)}
+          label={t.mine}
+          href="/records/photos?mine=1"
+        />
+        <StatTile
+          center
+          icon={CalendarClock}
+          value={String(weekPhotos)}
+          label={t.range7d}
+          href="/records/photos?range=7d"
+        />
+      </div>
 
       <PhotoFilters
         basePath="/records/photos"
