@@ -273,6 +273,8 @@ export const en = {
     earnedThisMonthLabel: "Earned this month",
     last6Months: "Last 6 months",
     earningsNote: "Based on your lead installer pay across the records you submitted.",
+    exportPdf: "Export PDF",
+    exportExcel: "Export Excel",
     tapToSee: "Tap to see what needs fixing and resubmit.",
     photosCount: "Photos ({n})",
     // Record status badge labels

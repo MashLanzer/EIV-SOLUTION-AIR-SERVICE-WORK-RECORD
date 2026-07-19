@@ -273,6 +273,8 @@ export const es: Dictionary = {
     earnedThisMonthLabel: "Ganado este mes",
     last6Months: "Últimos 6 meses",
     earningsNote: "Basado en tu pago como instalador líder en los registros que enviaste.",
+    exportPdf: "Exportar PDF",
+    exportExcel: "Exportar Excel",
     tapToSee: "Toca para ver qué corregir y reenviar.",
     photosCount: "Fotos ({n})",
     // Record status badge labels
