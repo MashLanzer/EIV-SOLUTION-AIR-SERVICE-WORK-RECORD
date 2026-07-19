@@ -369,21 +369,6 @@ export default async function RecordsPage({
         ))}
       </div>
 
-      {records.length > 0 && (
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-neutral-500 dark:text-neutral-400">{t.sortLabel}</span>
-          {sortChips.map((chip) => (
-            <FilterChip
-              key={chip.value}
-              href={sortHref(chip.value)}
-              active={sort === chip.value}
-            >
-              {chip.label}
-            </FilterChip>
-          ))}
-        </div>
-      )}
-
       {records.length === 0 ? (
         filtering ? (
           <EmptyState
@@ -413,15 +398,26 @@ export default async function RecordsPage({
         )
       ) : (
         <>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            {(total === 1 ? t.recordCountOne : t.recordCountMany).replace("{n}", String(total))}
-            {earnedTotal > 0 && (
-              <span className="normal-case text-neutral-400 dark:text-neutral-500">
-                {" · "}
-                {t.earned} {formatMoney(earnedTotal, currency)}
-              </span>
-            )}
-          </h2>
+          {/* Results eyebrow (count + earned) on the left, sort toggle on the
+              right — keeps sort accessible without a whole extra chip row. */}
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="min-w-0 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              {(total === 1 ? t.recordCountOne : t.recordCountMany).replace("{n}", String(total))}
+              {earnedTotal > 0 && (
+                <span className="normal-case text-neutral-400 dark:text-neutral-500">
+                  {" · "}
+                  {t.earned} {formatMoney(earnedTotal, currency)}
+                </span>
+              )}
+            </h2>
+            <div className="flex shrink-0 gap-1.5">
+              {sortChips.map((chip) => (
+                <FilterChip key={chip.value} href={sortHref(chip.value)} active={sort === chip.value}>
+                  {chip.label}
+                </FilterChip>
+              ))}
+            </div>
+          </div>
           <WorkerRecordList
             records={records.map((record) => ({
               ...record,
