@@ -18,7 +18,7 @@ import { getWorkerTeamIds } from "@/lib/projectAccess";
 import { getWorkTypeGroups } from "@/lib/workTypes";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireAuth } from "@/lib/session";
-import { getT } from "@/lib/i18n/server";
+import { getLocale, getT } from "@/lib/i18n/server";
 
 export default async function RecordDetailPage({
   params,
@@ -71,6 +71,13 @@ export default async function RecordDetailPage({
   const canEdit = record.status !== "APPROVED";
   const currency = await getCurrencySymbol(requireOrgId(session));
   const t = await getT();
+  const locale = await getLocale();
+  const summaryDate = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(record.date);
 
   // Data for the edit sheet's WorkRecordForm (only when editable). Workers only
   // pick from their teams' projects, keeping whatever project is already tagged.
@@ -146,26 +153,36 @@ export default async function RecordDetailPage({
         {t.records.backToRecords}
       </Link>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
-            {t.records.jobNumber}
-            {record.jobNumber}
-          </h1>
-          <StatusBadge status={record.status} />
-        </div>
-        <div className="flex flex-wrap gap-2 sm:justify-end">
-          {canEdit && editFormProps && (
-            <WorkerRecordEditSheet variant="edit" title={editTitle} formProps={editFormProps} />
-          )}
-          <Button asChild variant="outline" size="sm">
-            <a href={`/records/${record.id}/pdf`}>
-              <Download className="h-4 w-4" />
-              {t.records.downloadPdf}
-            </a>
-          </Button>
-        </div>
-      </div>
+      {/* Header card: identity + status, a quick summary line, and the worker's
+          actions under a divider — mirrors the admin review header so both sides
+          of the app read the same. */}
+      <Card className="animate-fade-up">
+        <CardContent className="flex flex-col gap-3 p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="text-xl font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                {t.records.jobNumber}
+                {record.jobNumber}
+              </h1>
+              <p className="mt-0.5 truncate text-sm text-neutral-500 dark:text-neutral-400">
+                {record.customerName} · {summaryDate} · {record.typeOfWork}
+              </p>
+            </div>
+            <StatusBadge status={record.status} />
+          </div>
+          <div className="flex flex-wrap gap-2 border-t border-neutral-200 pt-3 dark:border-neutral-800">
+            {canEdit && editFormProps && (
+              <WorkerRecordEditSheet variant="edit" title={editTitle} formProps={editFormProps} />
+            )}
+            <Button asChild variant="outline" size="sm">
+              <a href={`/records/${record.id}/pdf`}>
+                <Download className="h-4 w-4" />
+                {t.records.downloadPdf}
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {record.status === "APPROVED" && (
         <Alert variant="success">

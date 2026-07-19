@@ -1,11 +1,9 @@
 "use client";
 
 import type { WorkRecord } from "@prisma/client";
-import { ChevronRight, Clock, Image as ImageIcon } from "lucide-react";
+import { ChevronRight, ClipboardList, Clock, Image as ImageIcon } from "lucide-react";
 
-import { Alert } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
-import { DataField } from "@/components/ui/data-field";
+import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { useT, useLocale } from "@/components/i18n/LocaleProvider";
 import { workDuration } from "@/lib/format";
@@ -39,6 +37,10 @@ export type RecordCardData = Pick<
 // instead of navigating, so the worker can triage a record — read the reviewer's
 // note in full, see the customer's rating, jump to fix it — without losing their
 // place in the list. The peek carries the "open full record" shortcut.
+//
+// Layout mirrors the admin record card (leading icon tile, job number + status
+// on top, customer prominent, a "date · type" line, hours/photos pills) so the
+// two sides of the app read as one product.
 export function RecordCard({
   record,
   onOpen,
@@ -51,31 +53,32 @@ export function RecordCard({
   const hours = workDuration(record.arrivalTime, record.departureTime);
   const photoCount = record.photoCount ?? 0;
   return (
-    <Card className="transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
+    <Card className="overflow-hidden transition-colors hover:border-neutral-300 dark:hover:border-neutral-700">
       <button
         type="button"
         onClick={() => onOpen(record)}
         aria-label={t.openRecordAria.replace("{n}", record.jobNumber)}
-        className="block w-full text-left transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
+        className="flex w-full items-start gap-3 p-3 text-left transition-colors active:bg-neutral-50 dark:active:bg-neutral-800/60"
       >
-        <CardContent className="flex flex-col gap-2.5 p-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-100 text-neutral-900 dark:bg-neutral-800 dark:text-neutral-100">
+          <ClipboardList aria-hidden="true" className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <span className="font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
               {t.jobNumber}
               {record.jobNumber}
             </span>
-            <div className="flex items-center gap-1.5">
-              <StatusBadge status={record.status} />
-              <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
-            </div>
+            <StatusBadge status={record.status} />
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <DataField label={t.date} value={formatRecordDate(record.date, locale)} />
-            <DataField label={t.typeOfWork} value={record.typeOfWork} />
-            <DataField label={t.customer} value={record.customerName} />
+          <div className="mt-0.5 truncate text-sm text-neutral-900 dark:text-neutral-100">
+            {record.customerName}
+          </div>
+          <div className="mt-0.5 truncate text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
+            {formatRecordDate(record.date, locale)} · {record.typeOfWork}
           </div>
           {(hours || photoCount > 0) && (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               {hours && (
                 <span className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
                   <Clock aria-hidden="true" className="h-3 w-3" />
@@ -91,12 +94,13 @@ export function RecordCard({
             </div>
           )}
           {record.status === "NEEDS_CHANGES" && (
-            <Alert variant="warning">
+            <p className="mt-1 text-xs text-warning-text">
               <span className="font-medium">{t.changesRequested}</span>{" "}
               {record.reviewNote || t.tapToSee}
-            </Alert>
+            </p>
           )}
-        </CardContent>
+        </div>
+        <ChevronRight aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
       </button>
     </Card>
   );
