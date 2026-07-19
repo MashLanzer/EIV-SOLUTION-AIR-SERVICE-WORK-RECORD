@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Clock,
+  Copy,
   FolderKanban,
   Image as ImageIcon,
   MapPin,
@@ -233,6 +234,12 @@ export function WorkerRecordList({
                   </Link>
                 </Button>
               )}
+              <Button asChild variant="outline" className="w-full">
+                <Link href={`/records/new?from=${peek.id}`}>
+                  <Copy className="h-4 w-4" />
+                  {t.duplicate}
+                </Link>
+              </Button>
               <Button asChild className="w-full">
                 <Link href={`/records/${peek.id}`}>
                   {t.viewFullRecord}

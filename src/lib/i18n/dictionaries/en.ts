@@ -267,6 +267,8 @@ export const en = {
     groupThisWeek: "This week",
     groupThisMonth: "This month",
     groupEarlier: "Earlier",
+    duplicate: "Duplicate",
+    duplicatingFrom: "Duplicating from",
     tapToSee: "Tap to see what needs fixing and resubmit.",
     photosCount: "Photos ({n})",
     // Record status badge labels

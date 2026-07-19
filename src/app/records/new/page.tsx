@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, ChevronRight } from "lucide-react";
+import { CalendarClock, ChevronRight, Copy } from "lucide-react";
 
 import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
 import { PageHeader } from "@/components/ui/page-header";
@@ -16,7 +16,7 @@ import { getT } from "@/lib/i18n/server";
 export default async function NewRecordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ jobId?: string; projectId?: string }>;
+  searchParams: Promise<{ jobId?: string; projectId?: string; from?: string }>;
 }) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
@@ -52,12 +52,13 @@ export default async function NewRecordPage({
   ]);
   const suggestedJobNumber = await suggestNextJobNumber(organizationId);
   const workTypeGroups = await getWorkTypeGroups(organizationId);
-  const t = (await getT()).form;
+  const dict = await getT();
+  const t = dict.form;
 
   // Coming from a scheduled job ("Start record"): pre-fill the customer and
   // project from the plan so the crew doesn't retype them. Role-scoped so a
   // worker can only seed from a job that's theirs. A saved draft still wins.
-  const { jobId, projectId } = await searchParams;
+  const { jobId, projectId, from } = await searchParams;
   let jobPrefill: {
     customerName?: string;
     customerAddress?: string;
@@ -109,6 +110,52 @@ export default async function NewRecordPage({
     }
   }
 
+  // Coming from an existing record ("Duplicate"): seed the reusable fields
+  // (customer, type, crew, pay, notes, project) so a repeat job is a few taps.
+  // Date, job number, times, signatures and photos start fresh. Role-scoped so
+  // a worker can only duplicate their own record. A saved draft still wins.
+  let duplicatePrefill: Record<string, string | undefined> = {};
+  let duplicatedFrom: string | undefined;
+  if (from) {
+    const src = await prisma.workRecord.findFirst({
+      where: {
+        id: from,
+        organizationId,
+        ...(isAdmin ? {} : { submittedById: session.user.id }),
+      },
+      select: {
+        jobNumber: true,
+        customerName: true,
+        customerAddress: true,
+        typeOfWork: true,
+        leadInstallerName: true,
+        helperName: true,
+        workPerformedNotes: true,
+        leadInstallerPay: true,
+        helperPay: true,
+        projectId: true,
+      },
+    });
+    if (src) {
+      duplicatedFrom = src.jobNumber;
+      duplicatePrefill = {
+        customerName: src.customerName,
+        customerAddress: src.customerAddress,
+        typeOfWork: src.typeOfWork,
+        leadInstallerName: src.leadInstallerName,
+        helperName: src.helperName ?? undefined,
+        workPerformedNotes: src.workPerformedNotes || undefined,
+        leadInstallerPay: src.leadInstallerPay != null ? String(src.leadInstallerPay) : undefined,
+        helperPay: src.helperPay != null ? String(src.helperPay) : undefined,
+        // Only seed the project when the worker may pick it (team-scoped list).
+        projectId:
+          src.projectId && projects.some((p) => p.id === src.projectId)
+            ? src.projectId
+            : undefined,
+      };
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
@@ -130,6 +177,19 @@ export default async function NewRecordPage({
           <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
         </Link>
       )}
+      {duplicatedFrom && (
+        <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm dark:border-neutral-800 dark:bg-neutral-800/50">
+          <Copy className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200">
+            <span className="text-neutral-500 dark:text-neutral-400">{dict.records.duplicatingFrom}</span>
+            {" · "}
+            <span className="font-medium tabular-nums">
+              {dict.records.jobNumber}
+              {duplicatedFrom}
+            </span>
+          </span>
+        </div>
+      )}
       <WorkRecordForm
         action={createRecordAction}
         reviewBeforeSubmit
@@ -150,6 +210,9 @@ export default async function NewRecordPage({
           workPerformedNotes: org?.defaultWorkNotes || undefined,
           // Customer/project seeded from a scheduled job, when starting from one.
           ...jobPrefill,
+          // Reusable fields seeded from a record being duplicated (wins over the
+          // company defaults above).
+          ...duplicatePrefill,
         }}
         submitLabel={t.submitRecord}
         draftKey={`new-record:${session.user.id}`}

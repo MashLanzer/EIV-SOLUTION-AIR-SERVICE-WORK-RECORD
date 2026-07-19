@@ -267,6 +267,8 @@ export const es: Dictionary = {
     groupThisWeek: "Esta semana",
     groupThisMonth: "Este mes",
     groupEarlier: "Anteriores",
+    duplicate: "Duplicar",
+    duplicatingFrom: "Duplicando de",
     tapToSee: "Toca para ver qué corregir y reenviar.",
     photosCount: "Fotos ({n})",
     // Record status badge labels
