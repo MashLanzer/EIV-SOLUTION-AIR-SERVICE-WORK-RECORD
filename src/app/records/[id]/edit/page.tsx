@@ -109,6 +109,7 @@ export default async function EditRecordPage({
       )}
       <WorkRecordForm
         action={boundAction}
+        reviewBeforeSubmit
         projects={projects}
         workTypeGroups={workTypeGroups}
         currency={currency}
