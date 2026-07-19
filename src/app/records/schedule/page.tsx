@@ -7,6 +7,7 @@ import {
   Clock,
   MapPin,
   Navigation,
+  Route,
   TriangleAlert,
 } from "lucide-react";
 
@@ -18,6 +19,9 @@ import { formatTimeRange } from "@/lib/format";
 import { WorkerJobCard, type WorkerJobView } from "@/components/schedule/WorkerJobCard";
 import { ScheduleDayTimeline } from "@/components/schedule/ScheduleDayTimeline";
 import { SheetButton } from "@/components/schedule/SheetButton";
+import { ProjectsMapCard } from "@/components/projects/ProjectsMapCard";
+import type { MapPin as MapPinData } from "@/components/projects/ProjectsMap";
+import { orderByRoute } from "@/lib/route";
 import {
   ScheduleMonthCalendar,
   type CalendarDay,
@@ -42,6 +46,56 @@ function parseDateParam(value: string | undefined): Date {
     if (!Number.isNaN(d.getTime())) return d;
   }
   return startOfUtcDay(new Date());
+}
+
+type DayRoute = {
+  stops: { id: string; title: string; place: string; lat: number; lng: number }[];
+  mapsUrl: string;
+};
+
+// The selected day's geocoded jobsites, resolved once: map pins for every located
+// job and a suggested driving route (nearest-neighbour + a Google Maps link)
+// once there are two or more. Mirrors the admin day view; scoped to the worker's
+// own jobs (they already see these visits). Both empty/null when nothing's
+// geocoded.
+async function getWorkerDayGeo(
+  organizationId: string,
+  dayJobs: { id: string; title: string; status: string; projectId: string | null }[]
+): Promise<{ pins: MapPinData[]; route: DayRoute | null }> {
+  const empty = { pins: [] as MapPinData[], route: null };
+  const withProject = dayJobs.filter((j) => j.status !== "CANCELED" && j.projectId);
+  const projectIds = [...new Set(withProject.map((j) => j.projectId as string))];
+  if (projectIds.length === 0) return empty;
+
+  const projects = await prisma.project.findMany({
+    where: { organizationId, id: { in: projectIds }, latitude: { not: null }, longitude: { not: null } },
+    select: { id: true, latitude: true, longitude: true, name: true },
+  });
+  const coord = new Map(projects.map((p) => [p.id, p]));
+
+  const points = withProject
+    .map((j) => {
+      const p = coord.get(j.projectId as string);
+      return p
+        ? { id: j.id, title: j.title, place: p.name, lat: p.latitude as number, lng: p.longitude as number }
+        : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x != null);
+  if (points.length === 0) return empty;
+
+  const pins: MapPinData[] = points.map((pt) => ({
+    id: pt.id,
+    name: pt.title || pt.place,
+    latitude: pt.lat,
+    longitude: pt.lng,
+    subtitle: pt.place,
+  }));
+
+  if (points.length < 2) return { pins, route: null };
+
+  const stops = orderByRoute(points);
+  const mapsUrl = `https://www.google.com/maps/dir/${stops.map((s) => `${s.lat},${s.lng}`).join("/")}`;
+  return { pins, route: { stops, mapsUrl } };
 }
 
 export default async function WorkerSchedulePage({
@@ -159,6 +213,12 @@ export default async function WorkerSchedulePage({
   const doneCount = selectedJobs.filter((j) => j.status === "DONE").length;
   // Only worth a timeline when something is actually timed that day.
   const hasTimeline = selectedJobs.some((j) => j.status !== "CANCELED" && j.startTime);
+  // The day's map pins + suggested driving route, tucked into sheets so they add
+  // no vertical height. Fetched only when the day has jobs to geocode.
+  const dayGeo =
+    selectedJobs.length > 0
+      ? await getWorkerDayGeo(organizationId, selectedJobs)
+      : { pins: [] as MapPinData[], route: null };
 
   // The single nearest still-actionable visit across the fetched window, so the
   // worker sees where they're headed next no matter which day they're viewing.
@@ -296,18 +356,59 @@ export default async function WorkerSchedulePage({
         </div>
       )}
 
-      {/* The tall clock timeline tucks into a sheet so the day leads with the
-          actual job cards instead of a screen-tall clock (mirrors admin). */}
-      {hasTimeline && (
+      {/* Secondary day info — timeline, map and driving route — tucks into
+          sheets so the day leads with the actual job cards instead of stacking
+          a screen-tall clock, map and route down the page (mirrors admin). */}
+      {(hasTimeline || dayGeo.pins.length > 0 || dayGeo.route) && (
         <div className="flex flex-wrap items-stretch gap-2">
-          <SheetButton label={t.timeline} icon={<Clock className="h-4 w-4" />} title={t.timeline}>
-            <ScheduleDayTimeline
-              jobs={selectedJobs}
-              conflictIds={conflictIds}
-              conflictLabel={t.conflictBadge}
-              use24={use24}
-            />
-          </SheetButton>
+          {dayGeo.pins.length > 0 && (
+            <SheetButton
+              label={`${t.mapTitle} · ${dayGeo.pins.length}`}
+              icon={<MapPin className="h-4 w-4" />}
+              title={t.mapTitle}
+            >
+              <ProjectsMapCard pins={dayGeo.pins} />
+            </SheetButton>
+          )}
+          {hasTimeline && (
+            <SheetButton label={t.timeline} icon={<Clock className="h-4 w-4" />} title={t.timeline}>
+              <ScheduleDayTimeline
+                jobs={selectedJobs}
+                conflictIds={conflictIds}
+                conflictLabel={t.conflictBadge}
+                use24={use24}
+              />
+            </SheetButton>
+          )}
+          {dayGeo.route && (
+            <SheetButton
+              label={`${t.routeTitle} · ${dayGeo.route.stops.length}`}
+              icon={<Route className="h-4 w-4" />}
+              title={t.routeTitle}
+            >
+              <div className="flex flex-col gap-3">
+                <Button asChild variant="outline" className="w-full">
+                  <a href={dayGeo.route.mapsUrl} target="_blank" rel="noopener noreferrer">
+                    <Navigation className="h-4 w-4" />
+                    {t.routeOpen}
+                  </a>
+                </Button>
+                <ol className="flex flex-col gap-2.5">
+                  {dayGeo.route.stops.map((s, i) => (
+                    <li key={s.id} className="flex items-center gap-2.5 text-sm">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold tabular-nums text-white dark:bg-neutral-100 dark:text-neutral-900">
+                        {i + 1}
+                      </span>
+                      <span className="min-w-0 truncate text-neutral-900 dark:text-neutral-100">
+                        {s.title}
+                        <span className="text-neutral-500 dark:text-neutral-400"> · {s.place}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </SheetButton>
+          )}
         </div>
       )}
 
