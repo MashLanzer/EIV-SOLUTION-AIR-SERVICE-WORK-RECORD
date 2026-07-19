@@ -153,6 +153,10 @@ export default async function RecordsPage({
         departureTime: true,
         customerRating: true,
         customerFeedback: true,
+        leadInstallerName: true,
+        helperName: true,
+        leadInstallerPay: true,
+        workPerformedNotes: true,
         _count: { select: { photos: true } },
       },
       orderBy: { date: sort === "oldest" ? "asc" : "desc" },
@@ -419,9 +423,26 @@ export default async function RecordsPage({
             </div>
           </div>
           <WorkerRecordList
+            currency={currency}
             records={records.map((record) => ({
-              ...record,
+              id: record.id,
+              jobNumber: record.jobNumber,
+              date: record.date,
+              customerName: record.customerName,
+              customerAddress: record.customerAddress,
+              typeOfWork: record.typeOfWork,
+              status: record.status,
+              reviewNote: record.reviewNote,
+              arrivalTime: record.arrivalTime,
+              departureTime: record.departureTime,
+              customerRating: record.customerRating,
+              customerFeedback: record.customerFeedback,
+              leadInstallerName: record.leadInstallerName,
+              helperName: record.helperName,
+              workPerformedNotes: record.workPerformedNotes,
               photoCount: record._count.photos,
+              // Prisma Decimal isn't serializable across the RSC boundary.
+              earned: Number(record.leadInstallerPay),
             }))}
           />
           <Pagination

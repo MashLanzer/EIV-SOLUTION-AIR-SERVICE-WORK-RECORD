@@ -7,34 +7,46 @@ import {
   Clock,
   Image as ImageIcon,
   MapPin,
+  Navigation,
   Wrench,
 } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
+import { DataField } from "@/components/ui/data-field";
 import { StarRating } from "@/components/ui/star-rating";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { RecordCard, formatRecordDate, type RecordCardData } from "@/components/records/RecordCard";
 import { useT, useLocale } from "@/components/i18n/LocaleProvider";
-import { workDuration } from "@/lib/format";
+import { useUse24Hour } from "@/components/i18n/TimeFormatProvider";
+import { formatMoney, formatTime, workDuration } from "@/lib/format";
 
 const mapsHref = (address: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
 // The worker's record list. Each card opens a quick-peek bottom sheet (one sheet
 // shared across the list, keyed by the selected record) so a record can be
-// triaged — reviewer note, customer rating, hours — and acted on without
-// navigating away and losing scroll/filter position. Mirrors the admin peek
-// pattern (CustomerCards / ProjectSummarySheet).
-export function WorkerRecordList({ records }: { records: RecordCardData[] }) {
+// triaged — status, earnings, crew, hours, reviewer note, rating — and acted on
+// without navigating away and losing scroll/filter position. Mirrors the admin
+// peek pattern (CustomerCards / ProjectSummarySheet).
+export function WorkerRecordList({
+  records,
+  currency = "$",
+}: {
+  records: RecordCardData[];
+  currency?: string;
+}) {
   const t = useT().records;
   const tc = useT().common;
   const locale = useLocale();
+  const use24 = useUse24Hour();
   const [peek, setPeek] = useState<RecordCardData | null>(null);
 
   const hours = peek ? workDuration(peek.arrivalTime, peek.departureTime) : null;
   const photoCount = peek?.photoCount ?? 0;
+  const earned = peek?.earned ?? 0;
+  const notes = peek?.workPerformedNotes?.trim();
 
   return (
     <>
@@ -52,20 +64,22 @@ export function WorkerRecordList({ records }: { records: RecordCardData[] }) {
       >
         {peek && (
           <div className="flex flex-col gap-4">
-            {/* Status + date + type */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                  {formatRecordDate(peek.date, locale)}
-                </div>
-                <div className="mt-0.5 truncate text-sm text-neutral-500 dark:text-neutral-400">
-                  {peek.typeOfWork}
-                </div>
-              </div>
+            {/* Status + what this record earned the worker */}
+            <div className="flex items-center justify-between gap-2">
               <StatusBadge status={peek.status} />
+              {earned > 0 && (
+                <span className="flex items-baseline gap-1.5">
+                  <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                    {t.earned}
+                  </span>
+                  <span className="text-base font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                    {formatMoney(earned, currency)}
+                  </span>
+                </span>
+              )}
             </div>
 
-            {/* Customer + directions */}
+            {/* Customer + directions to the job site */}
             <a
               href={mapsHref(peek.customerAddress)}
               target="_blank"
@@ -81,12 +95,23 @@ export function WorkerRecordList({ records }: { records: RecordCardData[] }) {
                   {peek.customerAddress}
                 </span>
               </span>
-              <span className="shrink-0 self-center text-xs font-medium text-primary">
+              <span className="flex shrink-0 items-center gap-1 self-center text-xs font-medium text-primary">
+                <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
                 {t.directions}
               </span>
             </a>
 
-            {/* Hours + photos */}
+            {/* Key facts: date, type, times, crew */}
+            <div className="grid grid-cols-2 gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/50">
+              <DataField label={t.date} value={formatRecordDate(peek.date, locale)} />
+              <DataField label={t.typeOfWork} value={peek.typeOfWork} />
+              <DataField label={t.arrival} value={formatTime(peek.arrivalTime, use24)} />
+              <DataField label={t.departure} value={formatTime(peek.departureTime, use24)} />
+              <DataField label={t.leadInstaller} value={peek.leadInstallerName} />
+              <DataField label={t.helper} value={peek.helperName} />
+            </div>
+
+            {/* Hours on site + photos */}
             {(hours || photoCount > 0) && (
               <div className="flex flex-wrap items-center gap-2">
                 {hours && (
@@ -104,6 +129,18 @@ export function WorkerRecordList({ records }: { records: RecordCardData[] }) {
                     <span className="tabular-nums">{photoCount}</span>
                   </Link>
                 )}
+              </div>
+            )}
+
+            {/* Work performed preview */}
+            {notes && (
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                  {t.workNotes}
+                </span>
+                <p className="line-clamp-3 whitespace-pre-wrap text-sm text-neutral-700 dark:text-neutral-200">
+                  {notes}
+                </p>
               </div>
             )}
 
