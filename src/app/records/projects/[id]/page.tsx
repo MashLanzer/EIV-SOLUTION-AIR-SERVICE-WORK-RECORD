@@ -8,6 +8,8 @@ import {
   ClipboardList,
   Clock,
   FilePlus2,
+  Image as ImageIcon,
+  ListChecks,
   MapPin,
   Navigation,
   User,
@@ -28,6 +30,7 @@ import { WeatherCard } from "@/components/projects/WeatherCard";
 import { GeocodeNotice } from "@/components/projects/GeocodeNotice";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { StatusBadge } from "@/components/records/StatusBadge";
+import { SheetButton } from "@/components/schedule/SheetButton";
 import { prisma } from "@/lib/prisma";
 import { getWeather } from "@/lib/weather";
 import { formatTimeRange } from "@/lib/format";
@@ -348,95 +351,104 @@ export default async function WorkerProjectPage({
         recordHrefBase="/records/"
       />
 
-      {hasMap && (
-        <>
-          <GeoPhotoMap projectPins={projectPins} photoPins={photoPins} showAllOption={false} />
-          {located && weather && <WeatherCard weather={weather} />}
-        </>
-      )}
       {!located && project.address && (
         <GeocodeNotice projectId={project.id} address={project.address} canRetry={false} />
       )}
 
-      {/* Checklists - workers can only check items off */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          {tp.tabChecklists}
-        </h2>
-        <ProjectChecklists
-          projectId={project.id}
-          checklists={checklists}
-          templates={[]}
-          canManage={isAdmin}
-        />
-      </section>
-
-      {/* Photos - upload; delete only your own */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          {tp.tabPhotos}
-        </h2>
-        <ProjectPhotos
-          projectId={project.id}
-          initialPhotos={photos}
-          currentUserId={session.user.id}
-          canDeleteAny={isAdmin}
-          basePath="/records/projects"
-        />
-      </section>
-
-      {/* Work records on this project */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-          {tp.workRecords} ({records.length})
-        </h2>
-        {records.length === 0 ? (
-          <Card>
-            <CardContent className="p-0">
-              <EmptyState
-                icon={ClipboardList}
-                title={tp.noWorkRecords}
-                description={tp.noWorkRecordsDesc}
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <MobileCardList>
-            {records.map((record) => {
-              const canOpen = isAdmin || record.submittedById === session.user.id;
-              return (
-                <MobileCardRow
-                  key={record.id}
-                  actions={
-                    canOpen ? (
-                      <Button asChild variant="outline" size="icon">
-                        <Link
-                          href={`/records/${record.id}`}
-                          aria-label={tp.openRecordAria.replace("{n}", record.jobNumber)}
-                        >
-                          <ArrowRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    ) : undefined
-                  }
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-neutral-900 dark:text-neutral-100">
-                      {tr.jobNumber}{record.jobNumber}
-                    </span>
-                    <StatusBadge status={record.status} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <DataField label={tr.date} value={formatDate(record.date, locale)} />
-                    <DataField label={tr.typeOfWork} value={record.typeOfWork} />
-                    <DataField label={tp.submittedBy} value={record.submittedBy?.name ?? "—"} />
-                  </div>
-                </MobileCardRow>
-              );
-            })}
-          </MobileCardList>
+      {/* The heavy sections — map, checklists, photos and work records — tuck
+          into sheets so the project leads with its summary instead of a long
+          scroll down the page (mirrors the schedule day view). */}
+      <div className="flex flex-wrap items-stretch gap-2">
+        {hasMap && (
+          <SheetButton
+            label={dict.schedule.mapTitle}
+            icon={<MapPin className="h-4 w-4" />}
+            title={dict.schedule.mapTitle}
+          >
+            <div className="flex flex-col gap-3">
+              <GeoPhotoMap projectPins={projectPins} photoPins={photoPins} showAllOption={false} />
+              {located && weather && <WeatherCard weather={weather} />}
+            </div>
+          </SheetButton>
         )}
-      </section>
+        <SheetButton
+          label={
+            checklistItems.length > 0
+              ? `${tp.tabChecklists} · ${checklistDone}/${checklistItems.length}`
+              : tp.tabChecklists
+          }
+          icon={<ListChecks className="h-4 w-4" />}
+          title={tp.tabChecklists}
+        >
+          <ProjectChecklists
+            projectId={project.id}
+            checklists={checklists}
+            templates={[]}
+            canManage={isAdmin}
+          />
+        </SheetButton>
+        <SheetButton
+          label={`${tp.tabPhotos} · ${photos.length}`}
+          icon={<ImageIcon className="h-4 w-4" />}
+          title={tp.tabPhotos}
+        >
+          <ProjectPhotos
+            projectId={project.id}
+            initialPhotos={photos}
+            currentUserId={session.user.id}
+            canDeleteAny={isAdmin}
+            basePath="/records/projects"
+          />
+        </SheetButton>
+        <SheetButton
+          label={`${tp.workRecords} · ${records.length}`}
+          icon={<ClipboardList className="h-4 w-4" />}
+          title={tp.workRecords}
+        >
+          {records.length === 0 ? (
+            <EmptyState
+              icon={ClipboardList}
+              title={tp.noWorkRecords}
+              description={tp.noWorkRecordsDesc}
+            />
+          ) : (
+            <MobileCardList>
+              {records.map((record) => {
+                const canOpen = isAdmin || record.submittedById === session.user.id;
+                return (
+                  <MobileCardRow
+                    key={record.id}
+                    actions={
+                      canOpen ? (
+                        <Button asChild variant="outline" size="icon">
+                          <Link
+                            href={`/records/${record.id}`}
+                            aria-label={tp.openRecordAria.replace("{n}", record.jobNumber)}
+                          >
+                            <ArrowRight className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      ) : undefined
+                    }
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-neutral-900 dark:text-neutral-100">
+                        {tr.jobNumber}{record.jobNumber}
+                      </span>
+                      <StatusBadge status={record.status} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <DataField label={tr.date} value={formatDate(record.date, locale)} />
+                      <DataField label={tr.typeOfWork} value={record.typeOfWork} />
+                      <DataField label={tp.submittedBy} value={record.submittedBy?.name ?? "—"} />
+                    </div>
+                  </MobileCardRow>
+                );
+              })}
+            </MobileCardList>
+          )}
+        </SheetButton>
+      </div>
     </div>
   );
 }
