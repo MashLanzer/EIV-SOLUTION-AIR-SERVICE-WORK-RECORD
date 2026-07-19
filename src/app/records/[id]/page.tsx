@@ -228,7 +228,7 @@ export default async function RecordDetailPage({
         </div>
       )}
 
-      <RecordDetail record={record} currency={currency} />
+      <RecordDetail record={record} currency={currency} showCustomerContact={false} />
 
       {record.reviewEvents.length > 0 && (
         <Card>

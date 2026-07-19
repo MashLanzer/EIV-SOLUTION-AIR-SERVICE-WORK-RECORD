@@ -37,12 +37,16 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 export async function RecordDetail({
   record,
   currency = "$",
+  showCustomerContact = true,
 }: {
   record: WorkRecord & {
     photos?: WorkPhoto[];
     customer?: { phone: string | null; email: string | null } | null;
   };
   currency?: string;
+  // Call/email the customer is a company action — workers get directions only,
+  // so the worker detail passes false. Defaults to true for the admin review.
+  showCustomerContact?: boolean;
 }) {
   const t = (await getT()).records;
   const locale = await getLocale();
@@ -74,7 +78,7 @@ export async function RecordDetail({
             <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>{record.customerAddress}</span>
           </a>
-          {(phone || email) && (
+          {showCustomerContact && (phone || email) && (
             <div className="mt-1 flex flex-wrap gap-2">
               {phone && (
                 <a

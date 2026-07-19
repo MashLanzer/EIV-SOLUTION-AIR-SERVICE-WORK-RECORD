@@ -13,7 +13,6 @@ import {
   Info,
   MapPin,
   Navigation,
-  Phone,
   PlayCircle,
   Truck,
 } from "lucide-react";
@@ -66,7 +65,6 @@ export function WorkerJobCard({ job }: { job: WorkerJobView }) {
 
   const timeLabel = formatTimeRange(job.startTime, job.endTime, useUse24Hour(), t.allDay);
   const address = job.projectAddress || job.customerAddress || null;
-  const phone = job.customerPhone?.trim() || null;
 
   // One forward step at a time (Scheduled → Start → On my way → Start work →
   // Done); each tap advances the status and lands in the job's history.
@@ -198,15 +196,6 @@ export function WorkerJobCard({ job }: { job: WorkerJobView }) {
                   >
                     <Navigation className="h-3.5 w-3.5" aria-hidden="true" />
                     {t.directions}
-                  </a>
-                )}
-                {phone && (
-                  <a
-                    href={`tel:${phone}`}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
-                  >
-                    <Phone className="h-3.5 w-3.5" aria-hidden="true" />
-                    {t.call}
                   </a>
                 )}
               </div>
