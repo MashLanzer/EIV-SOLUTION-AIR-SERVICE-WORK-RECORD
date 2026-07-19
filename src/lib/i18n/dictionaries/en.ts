@@ -580,6 +580,7 @@ export const en = {
     yesterday: "Yesterday",
     openPhotoFrom: "Open photo from {name}",
     viewDetails: "View details",
+    fromRecord: "Record #{n}",
     // Bulk selection + export
     exportPdf: "Export PDF",
     select: "Select",
@@ -602,6 +603,7 @@ export const en = {
   },
   photoDetail: {
     jobsitePhoto: "Jobsite photo",
+    fromRecord: "From record #{n}",
     viewLocation: "View location",
     tags: "Tags",
     noTagsYet: "No tags yet.",

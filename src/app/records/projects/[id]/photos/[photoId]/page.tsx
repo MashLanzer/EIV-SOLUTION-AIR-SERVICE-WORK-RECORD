@@ -22,6 +22,7 @@ export default async function WorkerPhotoDetailPage({
     include: {
       project: { select: { id: true, name: true } },
       takenBy: { select: { name: true } },
+      workRecord: { select: { id: true, jobNumber: true } },
       photoTags: { include: { tag: { select: { id: true, name: true } } } },
       comments: {
         orderBy: { createdAt: "asc" },
@@ -41,6 +42,7 @@ export default async function WorkerPhotoDetailPage({
       canManageTags={isAdmin}
       currentUserId={session.user.id}
       isAdmin={isAdmin}
+      recordBasePath="/records"
     />
   );
 }

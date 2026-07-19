@@ -46,6 +46,10 @@ export interface FeedPhoto {
   // Which part of the app the photo came from (project gallery, checklist
   // proof, or a work record), for the corner badge.
   source?: PhotoSource;
+  // Set when the photo belongs to a work record, so the viewer can link back to
+  // it (needs recordBasePath on the feed).
+  workRecordId?: string | null;
+  jobNumber?: string | null;
 }
 
 // Corner badge icon per source. Project is the default upload and stays
@@ -115,12 +119,16 @@ export function PhotoFeed({
   basePath,
   canTag = false,
   tagSuggestions = [],
+  recordBasePath,
 }: {
   photos: FeedPhoto[];
   basePath: string;
   // Admins can bulk-tag (tags are a company-wide taxonomy).
   canTag?: boolean;
   tagSuggestions?: string[];
+  // Where a photo's work-record link points (e.g. "/records"). When absent, no
+  // record link is shown in the viewer.
+  recordBasePath?: string;
 }) {
   const t = useT().photos;
   const tc = useT().common;
@@ -505,13 +513,24 @@ export function PhotoFeed({
             <span className="rounded-full bg-white/10 px-3 py-1 text-sm tabular-nums text-white">
               {open + 1} / {photos.length}
             </span>
-            <Link
-              href={`${basePath}/${active.projectId}/photos/${active.id}`}
-              className="flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
-            >
-              <ExternalLink className="h-4 w-4" />
-              {t.viewDetails}
-            </Link>
+            <div className="flex items-center gap-2">
+              {recordBasePath && active.workRecordId && active.jobNumber && (
+                <Link
+                  href={`${recordBasePath}/${active.workRecordId}`}
+                  className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/20"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  {t.fromRecord.replace("{n}", active.jobNumber)}
+                </Link>
+              )}
+              <Link
+                href={`${basePath}/${active.projectId}/photos/${active.id}`}
+                className="flex items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {t.viewDetails}
+              </Link>
+            </div>
           </div>
         </div>
       )}

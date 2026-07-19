@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, MapPin, Send, Tag as TagIcon, Trash2, X } from "lucide-react";
+import { ArrowLeft, ClipboardList, MapPin, Send, Tag as TagIcon, Trash2, X } from "lucide-react";
 
 import { AvatarInitials } from "@/components/ui/avatar-initials";
 import { Button } from "@/components/ui/button";
@@ -44,6 +44,10 @@ export interface PhotoDetailData {
   longitude: number | null;
   project: { id: string; name: string };
   takenBy: { name: string } | null;
+  // Set when the photo was captured as part of a work record, so the detail can
+  // link back to it. Optional so the admin caller (which doesn't select it) still
+  // type-checks.
+  workRecord?: { id: string; jobNumber: string } | null;
   photoTags: { tag: { id: string; name: string } }[];
   comments: {
     id: string;
@@ -64,6 +68,7 @@ export async function PhotoDetailView({
   canManageTags,
   currentUserId,
   isAdmin,
+  recordBasePath,
 }: {
   photo: PhotoDetailData;
   orgTags: { name: string }[];
@@ -71,6 +76,9 @@ export async function PhotoDetailView({
   canManageTags: boolean;
   currentUserId: string;
   isAdmin: boolean;
+  // Where a work-record link points (e.g. "/records" or "/admin/records"). When
+  // absent, no record link is shown.
+  recordBasePath?: string;
 }) {
   const dict = await getT();
   const t = dict.photoDetail;
@@ -181,6 +189,15 @@ export async function PhotoDetailView({
                   <MapPin className="h-4 w-4" />
                   {t.viewLocation}
                 </a>
+              )}
+              {recordBasePath && photo.workRecord && (
+                <Link
+                  href={`${recordBasePath}/${photo.workRecord.id}`}
+                  className="flex items-center gap-1"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  {t.fromRecord.replace("{n}", photo.workRecord.jobNumber)}
+                </Link>
               )}
             </div>
           </div>

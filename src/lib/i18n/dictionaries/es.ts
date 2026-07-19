@@ -582,6 +582,7 @@ export const es: Dictionary = {
     yesterday: "Ayer",
     openPhotoFrom: "Abrir foto de {name}",
     viewDetails: "Ver detalles",
+    fromRecord: "Registro #{n}",
     // Selección múltiple + exportación
     exportPdf: "Exportar PDF",
     select: "Seleccionar",
@@ -604,6 +605,7 @@ export const es: Dictionary = {
   },
   photoDetail: {
     jobsitePhoto: "Foto de la obra",
+    fromRecord: "Del registro #{n}",
     viewLocation: "Ver ubicación",
     tags: "Etiquetas",
     noTagsYet: "Aún no hay etiquetas.",

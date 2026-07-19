@@ -99,6 +99,7 @@ export default async function WorkerPhotosPage({
         project: { select: { id: true, name: true } },
         takenBy: { select: { name: true } },
         workRecordId: true,
+        workRecord: { select: { jobNumber: true } },
         photoTags: { select: { tag: { select: { name: true } } } },
         _count: { select: { comments: true, checklistItems: true } },
       },
@@ -124,6 +125,8 @@ export default async function WorkerPhotosPage({
     tags: p.photoTags.map((pt) => pt.tag.name),
     tagCount: p.photoTags.length,
     commentCount: p._count.comments,
+    workRecordId: p.workRecordId,
+    jobNumber: p.workRecord?.jobNumber ?? null,
     source: derivePhotoSource({
       workRecordId: p.workRecordId,
       hasChecklist: p._count.checklistItems > 0,
@@ -221,7 +224,7 @@ export default async function WorkerPhotosPage({
           </CardContent>
         </Card>
       ) : (
-        <PhotoFeed photos={photos} basePath="/records/projects" />
+        <PhotoFeed photos={photos} basePath="/records/projects" recordBasePath="/records" />
       )}
 
       {canLoadMore && (
