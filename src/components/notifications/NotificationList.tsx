@@ -148,7 +148,7 @@ export async function NotificationList({ items }: { items: NotificationView[] })
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {groups.map((group, gi) => (
         <div
           key={group.key}

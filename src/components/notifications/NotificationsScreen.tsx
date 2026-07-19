@@ -70,7 +70,7 @@ export async function NotificationsScreen({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       <PageHeader title={t.notificationsTitle} description={t.notificationsSubtitle} />
 
       {/* Tabs — segmented control (matches the profile screen for visual
