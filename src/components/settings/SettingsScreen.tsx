@@ -1,9 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import {
   Building2,
   Camera,
+  ChevronRight,
   Coins,
   DollarSign,
   FileText,
@@ -22,6 +24,7 @@ import {
   Wrench,
 } from "lucide-react";
 
+import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/page-header";
 import { LogoutButton } from "@/components/layout/LogoutButton";
 import { AppearanceSettings } from "@/components/settings/AppearanceSettings";
@@ -79,6 +82,9 @@ export function SettingsScreen({
   backHref,
   company,
   inviteCode,
+  profileHref,
+  accountName,
+  accountEmail,
 }: {
   role: "ADMIN" | "SUPERVISOR" | "WORKER";
   backHref: string;
@@ -86,6 +92,11 @@ export function SettingsScreen({
   company?: CompanySettings;
   // The company's invite code, shown to admins only.
   inviteCode?: string | null;
+  // When set, an Account row at the top links to the person's profile,
+  // connecting the two account surfaces. The name/email fill the row.
+  profileHref?: string;
+  accountName?: string;
+  accountEmail?: string;
 }) {
   const t = useT();
   const s = t.settings;
@@ -102,6 +113,30 @@ export function SettingsScreen({
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">
       <PageHeader title={s.title} backHref={backHref} backLabel={t.common.back} />
+
+      {/* Account — a link to the profile, connecting the two account surfaces. */}
+      {profileHref && (
+        <SettingsSection title={s.accountSection}>
+          <Link
+            href={profileHref}
+            aria-label={s.viewProfile}
+            className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900"
+          >
+            <Avatar name={accountName || accountEmail || "?"} size={40} className="h-10 w-10 shrink-0" />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                {accountName || s.viewProfile}
+              </span>
+              {accountEmail && (
+                <span className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+                  {accountEmail}
+                </span>
+              )}
+            </div>
+            <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
+          </Link>
+        </SettingsSection>
+      )}
 
       {/* Appearance */}
       <SettingsSection

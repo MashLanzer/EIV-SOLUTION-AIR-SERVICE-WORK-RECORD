@@ -1954,6 +1954,8 @@ export const en = {
   },
   settings: {
     title: "Settings",
+    accountSection: "Account",
+    viewProfile: "View profile",
     viewFullLog: "View full log",
     paymentsRow: "Online payments",
     paymentsHint: "Connect Stripe so customers can pay invoices online",
