@@ -49,12 +49,53 @@ export function WorkerRecordList({
   const earned = peek?.earned ?? 0;
   const notes = peek?.workPerformedNotes?.trim();
 
+  // Group the current page by recency (Today / This week / This month / Earlier)
+  // so a long list reads as dated sections instead of one flat run. Buckets are
+  // rendered in the direction that matches the active sort.
+  type Bucket = "today" | "week" | "month" | "earlier";
+  const startToday = new Date();
+  startToday.setHours(0, 0, 0, 0);
+  const startWeek = new Date(startToday);
+  startWeek.setDate(startToday.getDate() - ((startToday.getDay() + 6) % 7));
+  const startMonth = new Date(startToday.getFullYear(), startToday.getMonth(), 1);
+  const bucketOf = (d: Date): Bucket => {
+    const ms = d.getTime();
+    if (ms >= startToday.getTime()) return "today";
+    if (ms >= startWeek.getTime()) return "week";
+    if (ms >= startMonth.getTime()) return "month";
+    return "earlier";
+  };
+  const groups: Record<Bucket, RecordCardData[]> = { today: [], week: [], month: [], earlier: [] };
+  for (const r of records) groups[bucketOf(new Date(r.date))].push(r);
+  const ascending =
+    records.length > 1 &&
+    new Date(records[0].date).getTime() <= new Date(records[records.length - 1].date).getTime();
+  const order: Bucket[] = ascending
+    ? ["earlier", "month", "week", "today"]
+    : ["today", "week", "month", "earlier"];
+  const groupLabels: Record<Bucket, string> = {
+    today: t.groupToday,
+    week: t.groupThisWeek,
+    month: t.groupThisMonth,
+    earlier: t.groupEarlier,
+  };
+
   return (
     <>
-      <div className="flex flex-col gap-3">
-        {records.map((record) => (
-          <RecordCard key={record.id} record={record} onOpen={setPeek} />
-        ))}
+      <div className="flex flex-col gap-5">
+        {order
+          .filter((key) => groups[key].length > 0)
+          .map((key) => (
+            <div key={key} className="flex flex-col gap-3">
+              <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                {groupLabels[key]}{" "}
+                <span className="text-neutral-400 dark:text-neutral-500">({groups[key].length})</span>
+              </span>
+              {groups[key].map((record) => (
+                <RecordCard key={record.id} record={record} onOpen={setPeek} />
+              ))}
+            </div>
+          ))}
       </div>
 
       <BottomSheet

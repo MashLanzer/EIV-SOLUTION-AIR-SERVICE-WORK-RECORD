@@ -262,6 +262,11 @@ export const es: Dictionary = {
     customerSignature: "Firma del cliente",
     installerSignature: "Firma del instalador",
     changesRequested: "Cambios solicitados:",
+    resubmitNeeded: "Pendiente de reenvío",
+    groupToday: "Hoy",
+    groupThisWeek: "Esta semana",
+    groupThisMonth: "Este mes",
+    groupEarlier: "Anteriores",
     tapToSee: "Toca para ver qué corregir y reenviar.",
     photosCount: "Fotos ({n})",
     // Record status badge labels

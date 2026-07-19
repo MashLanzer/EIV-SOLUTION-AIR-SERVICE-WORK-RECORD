@@ -262,6 +262,11 @@ export const en = {
     customerSignature: "Customer signature",
     installerSignature: "Installer signature",
     changesRequested: "Changes requested:",
+    resubmitNeeded: "Resubmit needed",
+    groupToday: "Today",
+    groupThisWeek: "This week",
+    groupThisMonth: "This month",
+    groupEarlier: "Earlier",
     tapToSee: "Tap to see what needs fixing and resubmit.",
     photosCount: "Photos ({n})",
     // Record status badge labels

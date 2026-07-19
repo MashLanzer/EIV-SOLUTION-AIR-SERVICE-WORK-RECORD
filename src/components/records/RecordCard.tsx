@@ -1,7 +1,7 @@
 "use client";
 
 import type { WorkRecord } from "@prisma/client";
-import { ChevronRight, ClipboardList, Clock, Image as ImageIcon } from "lucide-react";
+import { AlertTriangle, ChevronRight, ClipboardList, Clock, Image as ImageIcon } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/records/StatusBadge";
@@ -102,10 +102,14 @@ export function RecordCard({
             </div>
           )}
           {record.status === "NEEDS_CHANGES" && (
-            <p className="mt-1 text-xs text-warning-text">
-              <span className="font-medium">{t.changesRequested}</span>{" "}
-              {record.reviewNote || t.tapToSee}
-            </p>
+            <div className="mt-1 flex items-start gap-1.5 rounded-lg bg-warning-soft px-2.5 py-1.5 text-xs text-warning-text">
+              <AlertTriangle aria-hidden="true" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>
+                <span className="font-semibold">{t.resubmitNeeded}</span>
+                {" — "}
+                {record.reviewNote || t.tapToSee}
+              </span>
+            </div>
           )}
         </div>
         <ChevronRight aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" />
