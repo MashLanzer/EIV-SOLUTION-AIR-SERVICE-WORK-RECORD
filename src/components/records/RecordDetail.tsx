@@ -21,9 +21,9 @@ function formatDate(date: Date, locale: string) {
 
 // A titled block within the detail - gives each group of fields its own card
 // with an eyebrow, so the record reads as sections instead of one flat grid.
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
   return (
-    <Card>
+    <Card id={id} className={id ? "scroll-mt-4" : undefined}>
       <CardContent className="flex flex-col gap-3 p-4">
         <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
           {title}
@@ -183,7 +183,7 @@ export async function RecordDetail({
 
       {/* Photos */}
       {record.photos && record.photos.length > 0 && (
-        <Section title={t.photosCount.replace("{n}", String(record.photos.length))}>
+        <Section id="record-photos" title={t.photosCount.replace("{n}", String(record.photos.length))}>
           <RecordPhotoGrid
             photos={record.photos.map((p) => ({
               id: p.id,

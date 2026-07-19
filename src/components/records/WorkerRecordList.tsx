@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Clock,
+  FolderKanban,
   Image as ImageIcon,
   MapPin,
   Navigation,
@@ -101,6 +102,18 @@ export function WorkerRecordList({
               </span>
             </a>
 
+            {/* Tagged project — jump straight to it */}
+            {peek.projectId && peek.projectName && (
+              <Link
+                href={`/records/projects/${peek.projectId}`}
+                className="inline-flex w-fit items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+              >
+                <FolderKanban className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="text-neutral-500 dark:text-neutral-400">{t.inProjectLabel}:</span>
+                <span className="max-w-[12rem] truncate">{peek.projectName}</span>
+              </Link>
+            )}
+
             {/* Key facts: date, type, times, crew */}
             <div className="grid grid-cols-2 gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/50">
               <DataField label={t.date} value={formatRecordDate(peek.date, locale)} />
@@ -122,7 +135,7 @@ export function WorkerRecordList({
                 )}
                 {photoCount > 0 && (
                   <Link
-                    href={`/records/${peek.id}`}
+                    href={`/records/${peek.id}#record-photos`}
                     className="flex items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 py-1 text-xs text-neutral-600 transition-colors hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
                   >
                     <ImageIcon aria-hidden="true" className="h-3.5 w-3.5" />

@@ -222,7 +222,7 @@ export const es: Dictionary = {
     recordCountOne: "{n} registro",
     recordCountMany: "{n} registros",
     recordSaved: "Registro guardado",
-    searchPlaceholder: "Buscar por job # o cliente",
+    searchPlaceholder: "Buscar por job #, cliente, tipo o proyecto",
     searchAria: "Buscar mis registros",
     noMatches: "Sin coincidencias",
     nothingFound: 'No se encontró nada para "{q}".',

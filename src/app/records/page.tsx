@@ -81,19 +81,25 @@ export default async function RecordsPage({
     range === "week" ? weekStart : range === "month" ? rangeMonthStart : undefined;
   const rangeFilter = rangeCutoff ? { date: { gte: rangeCutoff } } : {};
 
+  // Search spans the job number, customer, type of work, and the tagged
+  // project's name — so the worker can find a record by any of them.
+  const searchFilter = query
+    ? {
+        OR: [
+          { jobNumber: { contains: query, mode: "insensitive" as const } },
+          { customerName: { contains: query, mode: "insensitive" as const } },
+          { typeOfWork: { contains: query, mode: "insensitive" as const } },
+          { project: { name: { contains: query, mode: "insensitive" as const } } },
+        ],
+      }
+    : {};
+
   const where = {
     organizationId: requireOrgId(session),
     submittedById: session.user.id,
     ...(status ? { status } : {}),
     ...rangeFilter,
-    ...(query
-      ? {
-          OR: [
-            { jobNumber: { contains: query, mode: "insensitive" as const } },
-            { customerName: { contains: query, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
+    ...searchFilter,
   };
 
   // Summary stats for this worker (unaffected by the search box): activity this
@@ -107,14 +113,7 @@ export default async function RecordsPage({
   const whereNoStatus = {
     ...mine,
     ...rangeFilter,
-    ...(query
-      ? {
-          OR: [
-            { jobNumber: { contains: query, mode: "insensitive" as const } },
-            { customerName: { contains: query, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
+    ...searchFilter,
   };
   const monthStart = new Date();
   monthStart.setDate(1);
@@ -157,6 +156,7 @@ export default async function RecordsPage({
         helperName: true,
         leadInstallerPay: true,
         workPerformedNotes: true,
+        project: { select: { id: true, name: true } },
         _count: { select: { photos: true } },
       },
       orderBy: { date: sort === "oldest" ? "asc" : "desc" },
@@ -440,6 +440,8 @@ export default async function RecordsPage({
               leadInstallerName: record.leadInstallerName,
               helperName: record.helperName,
               workPerformedNotes: record.workPerformedNotes,
+              projectId: record.project?.id ?? null,
+              projectName: record.project?.name ?? null,
               photoCount: record._count.photos,
               // Prisma Decimal isn't serializable across the RSC boundary.
               earned: Number(record.leadInstallerPay),

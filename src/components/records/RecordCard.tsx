@@ -34,7 +34,12 @@ export type RecordCardData = Pick<
   | "leadInstallerName"
   | "helperName"
   | "workPerformedNotes"
-> & { photoCount?: number; earned?: number };
+> & {
+  photoCount?: number;
+  earned?: number;
+  projectId?: string | null;
+  projectName?: string | null;
+};
 
 // A tap on the card opens a quick-peek bottom sheet (owned by WorkerRecordList)
 // instead of navigating, so the worker can triage a record — read the reviewer's

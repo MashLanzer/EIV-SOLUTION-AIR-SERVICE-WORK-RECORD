@@ -222,7 +222,7 @@ export const en = {
     recordCountOne: "{n} record",
     recordCountMany: "{n} records",
     recordSaved: "Record saved",
-    searchPlaceholder: "Search by job # or customer",
+    searchPlaceholder: "Search by job #, customer, type, or project",
     searchAria: "Search my records",
     noMatches: "No matches",
     nothingFound: 'Nothing found for "{q}".',
