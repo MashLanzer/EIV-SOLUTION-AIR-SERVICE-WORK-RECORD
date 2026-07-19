@@ -758,7 +758,7 @@ export function WorkRecordForm({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {pendingDraft && (
         <Alert variant="info">
           <div className="flex flex-col gap-2">
@@ -863,7 +863,7 @@ export function WorkRecordForm({
         onSubmit={handleSubmit}
         onInput={handleFormInput}
         onPointerUp={handleFormPointerUp}
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-3"
       >
         {scheduledJobId && (
           <input type="hidden" name="jobId" value={scheduledJobId} />
@@ -901,7 +901,7 @@ export function WorkRecordForm({
 
         {/* Step 1 - Job Details */}
         <div ref={(el) => { stepRefs.current[0] = el; }} hidden={step !== 0}>
-          <FormSection icon={Briefcase} title={t.stepJob}>
+          <FormSection icon={Briefcase} title={t.stepJob} hideHeader>
             {attributeWorkers && attributeWorkers.length > 0 && (
               <div className="flex flex-col gap-2 sm:col-span-2">
                 <Label htmlFor="submittedById" required>{t.attributeTo}</Label>
@@ -1048,7 +1048,7 @@ export function WorkRecordForm({
 
         {/* Step 2 - Customer */}
         <div ref={(el) => { stepRefs.current[1] = el; }} hidden={step !== 1}>
-          <FormSection icon={User} title={t.stepCustomer}>
+          <FormSection icon={User} title={t.stepCustomer} hideHeader>
             <div className="flex flex-col gap-2">
               <Label htmlFor="customerName" required>{t.customerName}</Label>
               {customerList.length > 0 ? (
@@ -1128,7 +1128,7 @@ export function WorkRecordForm({
 
         {/* Step 3 - Time & Work */}
         <div ref={(el) => { stepRefs.current[2] = el; }} hidden={step !== 2}>
-          <FormSection icon={Clock} title={t.stepTime}>
+          <FormSection icon={Clock} title={t.stepTime} hideHeader>
             <div className="flex flex-col gap-2">
               <Label htmlFor="arrivalTime" required>{t.arrivalTime}</Label>
               <div className="flex items-center gap-2">
@@ -1226,7 +1226,7 @@ export function WorkRecordForm({
 
         {/* Step 4 - Payment */}
         <div ref={(el) => { stepRefs.current[3] = el; }} hidden={step !== 3}>
-          <FormSection icon={DollarSign} title={t.stepPayment}>
+          <FormSection icon={DollarSign} title={t.stepPayment} hideHeader>
             <div className="flex flex-col gap-2">
               <Label htmlFor="leadInstallerPay" required>{t.leadInstallerPay} ({currency})</Label>
               <Input
@@ -1279,6 +1279,7 @@ export function WorkRecordForm({
             icon={Camera}
             title={requirePhoto ? t.photosRequired : t.photosOptional}
             emphasis="subtle"
+            hideHeader
           >
             {requirePhoto && (
               <p className="text-sm text-neutral-500 dark:text-neutral-400">

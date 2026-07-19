@@ -11,6 +11,10 @@ interface FormSectionProps {
   // weight as "Signatures" (a legally required action) or an optional
   // "Photos" section - this lets a section signal how much it matters.
   emphasis?: "default" | "critical" | "subtle";
+  // Drop the icon + title header. Used by the step wizard, where the sticky
+  // stepper already names the current step, so the in-card title would just
+  // repeat it (and eat vertical space). The emphasis border still shows.
+  hideHeader?: boolean;
   // Passthrough so callers can stagger an entrance animation per section.
   className?: string;
   style?: React.CSSProperties;
@@ -21,6 +25,7 @@ export function FormSection({
   title,
   children,
   emphasis = "default",
+  hideHeader = false,
   className,
   style,
 }: FormSectionProps) {
@@ -33,22 +38,26 @@ export function FormSection({
         className
       )}
     >
-      <CardHeader className="flex-row items-center gap-2.5 space-y-0 pb-2">
-        <span
-          className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
-            emphasis === "subtle"
-              ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
-              : "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
-          )}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-        <CardTitle className={cn(emphasis === "critical" && "font-bold")}>
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {!hideHeader && (
+        <CardHeader className="flex-row items-center gap-2.5 space-y-0 pb-2">
+          <span
+            className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-xl",
+              emphasis === "subtle"
+                ? "bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400"
+                : "bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
+            )}
+          >
+            <Icon className="h-4 w-4" />
+          </span>
+          <CardTitle className={cn(emphasis === "critical" && "font-bold")}>
+            {title}
+          </CardTitle>
+        </CardHeader>
+      )}
+      <CardContent
+        className={cn("grid grid-cols-1 gap-3 sm:grid-cols-2", hideHeader && "pt-4")}
+      >
         {children}
       </CardContent>
     </Card>
