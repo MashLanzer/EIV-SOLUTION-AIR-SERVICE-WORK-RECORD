@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { CalendarClock, ChevronRight } from "lucide-react";
+
 import { WorkRecordForm } from "@/components/forms/WorkRecordForm";
 import { PageHeader } from "@/components/ui/page-header";
 import { createRecordAction } from "@/actions/records";
@@ -113,8 +116,23 @@ export default async function NewRecordPage({
         backHref={linkedJobId ? "/records/schedule" : undefined}
         backLabel={linkedJobId ? t.backToSchedule : undefined}
       />
+      {linkedJobId && jobPrefill.customerName && (
+        <Link
+          href="/records/schedule"
+          className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-800/50 dark:hover:border-neutral-700"
+        >
+          <CalendarClock className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" aria-hidden="true" />
+          <span className="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200">
+            <span className="text-neutral-500 dark:text-neutral-400">{t.fromScheduledJob}</span>
+            {" · "}
+            <span className="font-medium">{jobPrefill.customerName}</span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-neutral-400 dark:text-neutral-500" aria-hidden="true" />
+        </Link>
+      )}
       <WorkRecordForm
         action={createRecordAction}
+        reviewBeforeSubmit
         storedSignature={session.user.storedSignature}
         defaultValues={{
           leadInstallerName: session.user.name ?? "",

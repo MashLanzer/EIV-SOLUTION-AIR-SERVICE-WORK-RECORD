@@ -14,6 +14,7 @@ import {
   Briefcase,
   User,
   Clock,
+  ClipboardCheck,
   DollarSign,
   Camera,
   PenTool,
@@ -26,8 +27,10 @@ import {
 } from "lucide-react";
 
 import { Alert } from "@/components/ui/alert";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DataField } from "@/components/ui/data-field";
 import { FieldError } from "@/components/ui/field-error";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,6 +142,36 @@ interface WorkRecordFormProps {
   // stepper and action bar then flow inline instead of sticking to / fixing at
   // the viewport, so they don't fight the sheet or the app's tab bar.
   embedded?: boolean;
+  // Worker new-record flow only: the final step's primary button opens a
+  // read-only "review & submit" bottom sheet instead of submitting directly, so
+  // the worker can verify the whole record on one screen first. Off for the edit
+  // and office flows, which keep the direct submit.
+  reviewBeforeSubmit?: boolean;
+}
+
+// The record summary shown in the review-before-submit sheet, snapshotted from
+// the live form when the worker taps "Review & submit".
+interface ReviewData {
+  date: string;
+  jobNumber: string;
+  leadInstallerName: string;
+  helperName: string;
+  projectName: string;
+  customerName: string;
+  customerAddress: string;
+  customerPhone: string;
+  customerEmail: string;
+  arrivalTime: string;
+  departureTime: string;
+  duration: string | null;
+  typeOfWork: string;
+  workPerformedNotes: string;
+  leadPay: number;
+  helperPay: number;
+  payTotal: number;
+  photoCount: number;
+  customerSigned: boolean;
+  installerSigned: boolean;
 }
 
 // The wizard steps, in order. Each carries its icon + the field ids that live
@@ -216,6 +249,7 @@ export function WorkRecordForm({
   customerOptions,
   redirectTo,
   embedded = false,
+  reviewBeforeSubmit = false,
 }: WorkRecordFormProps) {
   const t = useT().form;
   const tc = useT().common;
@@ -309,6 +343,10 @@ export function WorkRecordForm({
   // Set once the autosaved draft has persisted, to reassure the worker their
   // entry is safe (new-record flow only — gated on draftKey).
   const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
+  // Review-before-submit sheet (gated on reviewBeforeSubmit): the snapshot to
+  // show, and whether the sheet is open.
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewData, setReviewData] = useState<ReviewData | null>(null);
 
   const fieldError = (name: string) => state?.fieldErrors?.[name]?.[0];
   const invalid = (name: string) => (fieldError(name) ? true : undefined);
@@ -610,20 +648,23 @@ export function WorkRecordForm({
     return () => cancelAnimationFrame(id);
   }, [state, focusField]);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // Final-step gate: online, times in order, and the needed signatures present.
+  // Sets the inline errors and jumps to the first offending field when it fails,
+  // returning false; returns true when the record is ready to send. Shared by the
+  // direct-submit path and the "review & submit" sheet.
+  function validateFinal(): boolean {
     setSigErrors({});
 
     // The offline banner and the disabled Save button already explain why a
     // submit can't go through, so just bail out quietly here.
-    if (offline) return;
+    if (offline) return false;
 
     // Catch out-of-order times up front so the user is sent to the Time step to
     // fix them, rather than to the server and back.
     if (timesOutOfOrder()) {
       setTimeError(t.departureAfterArrivalError);
       focusField("departureTime");
-      return;
+      return false;
     }
 
     const customerSignature = customerSigRef.current?.getDataUrl();
@@ -633,15 +674,25 @@ export function WorkRecordForm({
     // the company turned that policy off (e.g. unattended jobs).
     const customerMissing = requireCustomerSignature && !customerSignature;
     if (customerMissing || !installerSignature) {
-      const next = {
+      setSigErrors({
         customer: customerMissing ? t.customerSigRequiredError : undefined,
         installer: installerSignature ? undefined : t.installerSigRequiredError,
-      };
-      setSigErrors(next);
-      focusField(next.customer ? "sig-customer" : "sig-installer");
-      return;
+      });
+      focusField(customerMissing ? "sig-customer" : "sig-installer");
+      return false;
     }
 
+    return true;
+  }
+
+  // Build the FormData and dispatch. Assumes validateFinal() already passed
+  // (still guards offline, since the review sheet can sit open across a
+  // connectivity change).
+  function doSubmit() {
+    if (offline) return;
+    const customerSignature = customerSigRef.current?.getDataUrl();
+    const installerSignature = installerSigRef.current?.getDataUrl();
+    if (!installerSignature) return;
     const formData = new FormData(formRef.current!);
     formData.set("customerSignature", customerSignature ?? "");
     formData.set("installerSignature", installerSignature);
@@ -653,6 +704,57 @@ export function WorkRecordForm({
     startTransition(() => {
       formAction(formData);
     });
+  }
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!validateFinal()) return;
+    doSubmit();
+  }
+
+  // Review flow: validate the final step, then snapshot the whole form into a
+  // read-only summary and open the sheet. Uses the same FormData read as the
+  // draft snapshot so what the worker reviews is exactly what will be sent.
+  function openReview() {
+    if (!validateFinal()) return;
+    const fd = new FormData(formRef.current!);
+    const g = (k: string) => ((fd.get(k) as string) ?? "").trim();
+    const arrival = g("arrivalTime");
+    const departure = g("departureTime");
+    const leadPay = Number.parseFloat(g("leadInstallerPay")) || 0;
+    const helperPayVal = Number.parseFloat(g("helperPay")) || 0;
+    const photoCount = fd
+      .getAll("photos")
+      .filter((v): v is string => typeof v === "string" && v.length > 0).length;
+    setReviewData({
+      date: g("date"),
+      jobNumber: g("jobNumber"),
+      leadInstallerName: g("leadInstallerName"),
+      helperName: g("helperName"),
+      projectName: projects.find((p) => p.id === g("projectId"))?.name ?? "",
+      customerName: g("customerName"),
+      customerAddress: g("customerAddress"),
+      customerPhone: g("customerPhone"),
+      customerEmail: g("customerEmail"),
+      arrivalTime: arrival,
+      departureTime: departure,
+      duration: durationLabel(arrival, departure),
+      typeOfWork: g("typeOfWork"),
+      workPerformedNotes: g("workPerformedNotes"),
+      leadPay,
+      helperPay: helperPayVal,
+      payTotal: leadPay + helperPayVal,
+      photoCount,
+      customerSigned: Boolean(customerSigRef.current?.getDataUrl()),
+      installerSigned: Boolean(installerSigRef.current?.getDataUrl()),
+    });
+    setReviewOpen(true);
+  }
+
+  // "Edit" from a review section: close the sheet and jump to that step.
+  function reviewEditStep(index: number) {
+    setReviewOpen(false);
+    goStep(index);
   }
 
   return (
@@ -1274,6 +1376,21 @@ export function WorkRecordForm({
               {t.next}
               <ChevronRight className="h-4 w-4" />
             </Button>
+          ) : reviewBeforeSubmit ? (
+            <Button
+              type="button"
+              size="lg"
+              className="flex-1"
+              disabled={pending || offline}
+              onClick={openReview}
+            >
+              {offline ? (
+                <WifiOff className="h-4 w-4" />
+              ) : (
+                <ClipboardCheck className="h-4 w-4" />
+              )}
+              {offline ? t.offline : pending ? t.saving : t.reviewCta}
+            </Button>
           ) : (
             <Button
               type="submit"
@@ -1291,6 +1408,168 @@ export function WorkRecordForm({
           )}
         </div>
       </form>
+
+      {/* Review & submit: a read-only summary of the whole record, grouped by
+          step with an "Edit" jump per section, and the real submit at the foot.
+          Only mounted for the worker new-record flow (reviewBeforeSubmit). */}
+      {reviewBeforeSubmit && (
+        <BottomSheet
+          open={reviewOpen}
+          onClose={() => setReviewOpen(false)}
+          title={t.reviewTitle}
+          closeLabel={tc.close}
+        >
+          {reviewData && (
+            <div className="flex flex-col gap-5">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                {t.reviewHint}
+              </p>
+
+              {/* Job */}
+              <ReviewSection title={t.stepJob} onEdit={() => reviewEditStep(0)} editLabel={tc.edit}>
+                <div className="grid grid-cols-2 gap-3">
+                  <DataField label={t.date} value={reviewData.date} />
+                  <DataField label={t.jobNumber} value={reviewData.jobNumber} />
+                  <DataField label={t.leadInstaller} value={reviewData.leadInstallerName} />
+                  <DataField label={t.helper} value={reviewData.helperName} />
+                  {reviewData.projectName && (
+                    <DataField label={t.project} value={reviewData.projectName} />
+                  )}
+                </div>
+              </ReviewSection>
+
+              {/* Customer */}
+              <ReviewSection title={t.stepCustomer} onEdit={() => reviewEditStep(1)} editLabel={tc.edit}>
+                <div className="grid grid-cols-2 gap-3">
+                  <DataField label={t.customerName} value={reviewData.customerName} />
+                  <DataField label={t.customerAddress} value={reviewData.customerAddress} />
+                  {reviewData.customerPhone && (
+                    <DataField label={t.customerPhone} value={reviewData.customerPhone} />
+                  )}
+                  {reviewData.customerEmail && (
+                    <DataField label={t.customerEmail} value={reviewData.customerEmail} />
+                  )}
+                </div>
+              </ReviewSection>
+
+              {/* Time & work */}
+              <ReviewSection title={t.stepTime} onEdit={() => reviewEditStep(2)} editLabel={tc.edit}>
+                <div className="grid grid-cols-2 gap-3">
+                  <DataField label={t.arrivalTime} value={reviewData.arrivalTime} />
+                  <DataField label={t.departureTime} value={reviewData.departureTime} />
+                  {reviewData.duration && (
+                    <DataField label={t.timeOnSite} value={reviewData.duration} />
+                  )}
+                  <DataField label={t.typeOfWork} value={reviewData.typeOfWork} />
+                </div>
+                <DataField label={t.workNotes} value={reviewData.workPerformedNotes} />
+              </ReviewSection>
+
+              {/* Payment */}
+              <ReviewSection title={t.stepPayment} onEdit={() => reviewEditStep(3)} editLabel={tc.edit}>
+                <div className="grid grid-cols-2 gap-3">
+                  <DataField label={t.leadInstallerPay} value={formatMoney(reviewData.leadPay, currency)} />
+                  {reviewData.helperPay > 0 && (
+                    <DataField label={t.helperPay} value={formatMoney(reviewData.helperPay, currency)} />
+                  )}
+                  <DataField label={t.totalPay} value={formatMoney(reviewData.payTotal, currency)} />
+                </div>
+              </ReviewSection>
+
+              {/* Photos */}
+              <ReviewSection title={t.stepPhotos} onEdit={() => reviewEditStep(4)} editLabel={tc.edit}>
+                <p className="flex items-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-200">
+                  <Camera className="h-4 w-4 text-neutral-500 dark:text-neutral-400" aria-hidden="true" />
+                  {t.reviewPhotos.replace("{n}", String(reviewData.photoCount))}
+                </p>
+              </ReviewSection>
+
+              {/* Signatures */}
+              <ReviewSection title={t.stepSignatures} onEdit={() => reviewEditStep(5)} editLabel={tc.edit}>
+                <div className="grid grid-cols-2 gap-3">
+                  <SigStatus label={t.customerSignature} signed={reviewData.customerSigned} okLabel={t.reviewSigned} missingLabel={t.reviewMissing} />
+                  <SigStatus label={t.installerSignature} signed={reviewData.installerSigned} okLabel={t.reviewSigned} missingLabel={t.reviewMissing} />
+                </div>
+              </ReviewSection>
+
+              <div className="border-t border-neutral-200 pt-4 dark:border-neutral-800">
+                <Button
+                  type="button"
+                  size="lg"
+                  className="w-full"
+                  disabled={pending || offline}
+                  onClick={doSubmit}
+                >
+                  {offline ? <WifiOff className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+                  {offline ? t.offline : pending ? t.saving : submitLabel}
+                </Button>
+              </div>
+            </div>
+          )}
+        </BottomSheet>
+      )}
+    </div>
+  );
+}
+
+// A review-sheet section: an uppercase eyebrow title with an "Edit" shortcut that
+// jumps back to that wizard step, over the section's read-only fields.
+function ReviewSection({
+  title,
+  editLabel,
+  onEdit,
+  children,
+}: {
+  title: string;
+  editLabel: string;
+  onEdit: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-2.5 border-t border-neutral-100 pt-4 first:border-0 first:pt-0 dark:border-neutral-800">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          {title}
+        </h3>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          {editLabel}
+        </button>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+// A signature slot's captured/missing state, shown in the review sheet.
+function SigStatus({
+  label,
+  signed,
+  okLabel,
+  missingLabel,
+}: {
+  label: string;
+  signed: boolean;
+  okLabel: string;
+  missingLabel: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+        {label}
+      </span>
+      <span
+        className={cn(
+          "flex items-center gap-1 text-sm",
+          signed ? "text-success-text" : "text-neutral-500 dark:text-neutral-400"
+        )}
+      >
+        {signed ? <Check className="h-4 w-4" aria-hidden="true" /> : <X className="h-4 w-4" aria-hidden="true" />}
+        {signed ? okLabel : missingLabel}
+      </span>
     </div>
   );
 }

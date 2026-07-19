@@ -382,6 +382,14 @@ export const es: Dictionary = {
     // Discard dialog
     discardTitle: "¿Descartar cambios?",
     discardDescription: "Tienes cambios sin guardar. Si sales ahora se perderán.",
+    // Review-before-submit sheet (worker new record)
+    reviewCta: "Revisar y enviar",
+    reviewTitle: "Revisar registro",
+    reviewHint: "Verifica los datos antes de enviar.",
+    reviewSigned: "Firmado",
+    reviewMissing: "Pendiente",
+    reviewPhotos: "{n} fotos",
+    fromScheduledJob: "Desde el trabajo agendado",
   },
   projects: {
     title: "Proyectos",

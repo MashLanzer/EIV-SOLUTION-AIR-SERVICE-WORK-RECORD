@@ -381,6 +381,14 @@ export const en = {
     // Discard dialog
     discardTitle: "Discard changes?",
     discardDescription: "You have unsaved edits. Leaving now will lose them.",
+    // Review-before-submit sheet (worker new record)
+    reviewCta: "Review & submit",
+    reviewTitle: "Review record",
+    reviewHint: "Check everything before submitting.",
+    reviewSigned: "Signed",
+    reviewMissing: "Missing",
+    reviewPhotos: "{n} photos",
+    fromScheduledJob: "From the scheduled job",
   },
   projects: {
     title: "Projects",
