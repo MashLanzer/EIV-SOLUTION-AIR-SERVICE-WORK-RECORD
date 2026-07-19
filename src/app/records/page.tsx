@@ -263,9 +263,9 @@ export default async function RecordsPage({
     { label: t.sortOldest, value: "oldest" },
   ];
   const rangeChips: { label: string; value: DateRange }[] = [
-    { label: t.rangeWeek, value: "week" },
-    { label: t.thisMonth, value: "month" },
     { label: t.rangeAll, value: "all" },
+    { label: t.thisMonth, value: "month" },
+    { label: t.rangeWeek, value: "week" },
   ];
 
   return (
