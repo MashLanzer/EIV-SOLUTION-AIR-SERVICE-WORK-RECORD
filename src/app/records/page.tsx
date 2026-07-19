@@ -452,49 +452,51 @@ export default async function RecordsPage({
         <>
           {/* Results eyebrow (count + earned) on the left, sort toggle on the
               right — keeps sort accessible without a whole extra chip row. */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="min-w-0 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-              {(total === 1 ? t.recordCountOne : t.recordCountMany).replace("{n}", String(total))}
-              {earnedTotal > 0 && (
-                <span className="normal-case text-neutral-400 dark:text-neutral-500">
-                  {" · "}
-                  {t.earned} {formatMoney(earnedTotal, currency)}
-                </span>
-              )}
-            </h2>
-            <div className="flex shrink-0 items-center gap-1.5">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            {(total === 1 ? t.recordCountOne : t.recordCountMany).replace("{n}", String(total))}
+            {earnedTotal > 0 && (
+              <span className="normal-case text-neutral-400 dark:text-neutral-500">
+                {" · "}
+                {t.earned} {formatMoney(earnedTotal, currency)}
+              </span>
+            )}
+          </h2>
+          {/* Controls on their own row so the results line stays uncluttered:
+              sort on the left, export on the right. */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
               {sortChips.map((chip) => (
                 <FilterChip key={chip.value} href={sortHref(chip.value)} active={sort === chip.value}>
                   {chip.label}
                 </FilterChip>
               ))}
-              {/* Export the current filtered set (the worker's own records). */}
-              <form method="GET" className="flex items-center gap-1">
-                {query && <input type="hidden" name="q" value={query} />}
-                {status && <input type="hidden" name="status" value={status} />}
-                {range !== "all" && <input type="hidden" name="range" value={range} />}
-                <Button
-                  type="submit"
-                  variant="outline"
-                  size="icon"
-                  formAction="/records/export/pdf"
-                  title={t.exportPdf}
-                  aria-label={t.exportPdf}
-                >
-                  <FileText className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="submit"
-                  variant="outline"
-                  size="icon"
-                  formAction="/records/export/excel"
-                  title={t.exportExcel}
-                  aria-label={t.exportExcel}
-                >
-                  <SheetIcon className="h-4 w-4" />
-                </Button>
-              </form>
             </div>
+            {/* Export the current filtered set (the worker's own records). */}
+            <form method="GET" className="flex items-center gap-1">
+              {query && <input type="hidden" name="q" value={query} />}
+              {status && <input type="hidden" name="status" value={status} />}
+              {range !== "all" && <input type="hidden" name="range" value={range} />}
+              <Button
+                type="submit"
+                variant="outline"
+                size="icon"
+                formAction="/records/export/pdf"
+                title={t.exportPdf}
+                aria-label={t.exportPdf}
+              >
+                <FileText className="h-4 w-4" />
+              </Button>
+              <Button
+                type="submit"
+                variant="outline"
+                size="icon"
+                formAction="/records/export/excel"
+                title={t.exportExcel}
+                aria-label={t.exportExcel}
+              >
+                <SheetIcon className="h-4 w-4" />
+              </Button>
+            </form>
           </div>
           <WorkerRecordList
             currency={currency}
