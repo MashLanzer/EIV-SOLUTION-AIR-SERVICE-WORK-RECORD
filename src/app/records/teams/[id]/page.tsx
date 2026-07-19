@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  CalendarDays,
   ChevronRight,
   ClipboardList,
   FolderKanban,
@@ -12,6 +13,7 @@ import type { ProjectStatus } from "@prisma/client";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TeamAvatar } from "@/components/teams/TeamColorDot";
@@ -147,6 +149,14 @@ export default async function WorkerTeamPage({
             <StatTile icon={ImageIcon} value={photoCount} label={t.photos} />
             <StatTile icon={ClipboardList} value={jobCount} label={t.jobs} />
           </div>
+
+          {/* Jump to the worker calendar pre-filtered to this crew's visits. */}
+          <Button asChild variant="outline" className="w-full">
+            <Link href={`/records/schedule?team=${team.id}`}>
+              <CalendarDays className="h-4 w-4" />
+              {t.teamSchedule}
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 

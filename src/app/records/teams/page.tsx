@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ChevronRight, FolderKanban, Users, Users2 } from "lucide-react";
+import { ChevronRight, FolderKanban, Search, SearchX, Users, Users2 } from "lucide-react";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
 import { TeamAvatar } from "@/components/teams/TeamColorDot";
@@ -20,15 +21,26 @@ export const dynamic = "force-dynamic";
 // (matches the admin teams list).
 const MAX_FACES = 4;
 
+// Only surface the search box once someone is on enough teams that scanning
+// gets tedious — most workers are on one or two crews and don't need it.
+const SEARCH_THRESHOLD = 6;
+
 // A worker's read-only view of their teams. Team management stays with admins;
 // here a worker just sees the crews they're on — who's on them, how many
 // projects, and how many are active — and can open one to see the roster and
 // its jobsites. Admins can browse it too (they also have the full admin area).
-export default async function WorkerTeamsPage() {
+export default async function WorkerTeamsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
   const userId = session.user.id;
   const isAdmin = session.user.role === "ADMIN";
+  const { q } = await searchParams;
+  const query = q?.trim() || undefined;
+  const queryLc = query?.toLowerCase();
 
   const teamWhere = isAdmin
     ? { organizationId }
@@ -70,6 +82,14 @@ export default async function WorkerTeamsPage() {
 
   const t = (await getT()).teams;
 
+  // Filter is in-memory (a worker is on few teams); the KPIs stay on the full
+  // set so they don't jump around while searching. The search box only appears
+  // once there are enough teams to be worth it.
+  const shownTeams = queryLc
+    ? teams.filter((tm) => tm.name.toLowerCase().includes(queryLc))
+    : teams;
+  const showSearch = teams.length > SEARCH_THRESHOLD;
+
   return (
     <div className="flex flex-col gap-3">
       <WorkerProjectsTabs />
@@ -83,14 +103,31 @@ export default async function WorkerTeamsPage() {
         />
       ) : (
         <>
+          {showSearch && (
+            <form method="get" className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
+              <Input
+                type="search"
+                name="q"
+                placeholder={t.searchTeams}
+                defaultValue={query}
+                className="pl-9"
+                aria-label={t.searchTeams}
+              />
+            </form>
+          )}
+
           <div className="grid animate-fade-up grid-cols-3 gap-3">
             <StatTile icon={Users2} value={teams.length} label={t.tabTeams} />
             <StatTile icon={Users} value={teammateCount} label={t.teammates} />
             <StatTile icon={FolderKanban} value={activeTotal} label={t.activeProjects} />
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {teams.map((tm) => {
+          {shownTeams.length === 0 ? (
+            <EmptyState icon={SearchX} title={t.noMatches} description={t.noMatchesDesc} />
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {shownTeams.map((tm) => {
               const active = activeCount.get(tm.id) ?? 0;
               const extraMembers = tm._count.memberships - tm.memberships.length;
               return (
@@ -152,8 +189,9 @@ export default async function WorkerTeamsPage() {
                   </Link>
                 </Card>
               );
-            })}
-          </div>
+              })}
+            </div>
+          )}
         </>
       )}
     </div>

@@ -10,6 +10,8 @@ import {
   Route,
   Search,
   TriangleAlert,
+  Users2,
+  X,
 } from "lucide-react";
 import type { ScheduledJobStatus } from "@prisma/client";
 
@@ -68,11 +70,18 @@ const WORKER_JOB_STATUSES: ScheduledJobStatus[] = [
 
 // A /records/schedule URL that carries the date + status + search so day taps,
 // month nav and the chips never drop the active filter.
-function schedHref(params: { date?: string; status?: string; q?: string; day?: boolean }): string {
+function schedHref(params: {
+  date?: string;
+  status?: string;
+  q?: string;
+  team?: string;
+  day?: boolean;
+}): string {
   const p = new URLSearchParams();
   if (params.date) p.set("date", params.date);
   if (params.status) p.set("status", params.status);
   if (params.q) p.set("q", params.q);
+  if (params.team) p.set("team", params.team);
   if (params.day) p.set("day", "1");
   const qs = p.toString();
   return qs ? `/records/schedule?${qs}` : "/records/schedule";
@@ -161,7 +170,7 @@ async function getWorkerDayGeo(
 export default async function WorkerSchedulePage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; status?: string; q?: string }>;
+  searchParams: Promise<{ date?: string; status?: string; q?: string; team?: string }>;
 }) {
   const session = await requireAuth();
   const organizationId = requireOrgId(session);
@@ -169,12 +178,16 @@ export default async function WorkerSchedulePage({
   const locale = await getLocale();
   const intlLocale = locale === "es" ? "es-ES" : "en-US";
 
-  const { date, status: statusParam, q: qParam } = await searchParams;
+  const { date, status: statusParam, q: qParam, team: teamParam } = await searchParams;
   const statusFilter = WORKER_JOB_STATUSES.includes(statusParam as ScheduledJobStatus)
     ? (statusParam as ScheduledJobStatus)
     : undefined;
   const query = qParam?.trim() || undefined;
   const queryLc = query?.toLowerCase();
+  // Optional team filter (arriving from a team's page). Only honored when it
+  // names a real team in the org; the job scope already keeps a worker to their
+  // own teams, so this just narrows the calendar to one crew's visits.
+  const teamFilter = teamParam?.trim() || undefined;
   const selected = parseDateParam(date);
   const selectedKey = dayKey(selected);
   const todayKey = dayKey(startOfUtcDay(new Date()));
@@ -202,8 +215,21 @@ export default async function WorkerSchedulePage({
     me?.scheduleOverloadThreshold ?? org?.scheduleOverloadThreshold ?? 4;
   const use24 = org?.timeFormat === "24";
 
+  // Resolve the team-filter name (also validates it exists in the org). A bogus
+  // id resolves to no name, and we then ignore the filter rather than showing an
+  // empty, unexplained calendar.
+  const teamFilterName = teamFilter
+    ? (
+        await prisma.team.findFirst({
+          where: { id: teamFilter, organizationId },
+          select: { name: true },
+        })
+      )?.name ?? null
+    : null;
+  const activeTeamId = teamFilterName ? teamFilter : undefined;
+
   // Canceled visits are hidden - they're not something to act on.
-  type Row = WorkerJobView & { day: string };
+  type Row = WorkerJobView & { day: string; teamId: string | null };
   const rows: Row[] = jobs
     .filter((j) => j.status !== "CANCELED")
     .map((j) => ({
@@ -220,6 +246,7 @@ export default async function WorkerSchedulePage({
       projectName: j.project?.name ?? null,
       projectAddress: j.project?.address ?? null,
       workRecordId: j.workRecordId,
+      teamId: j.team?.id ?? null,
       statusHistory: j.statusEvents.map((e) => ({
         status: e.status,
         actorName: e.actorName,
@@ -229,11 +256,12 @@ export default async function WorkerSchedulePage({
       day: dayKey(j.scheduledFor),
     }));
 
-  // Apply the status chip + search once, so the month counts, the day sheet and
-  // the KPIs all work off the same filtered set.
+  // Apply the status chip + search + team filter once, so the month counts, the
+  // day sheet and the KPIs all work off the same filtered set.
   const shownRows = rows.filter(
     (r) =>
       (!statusFilter || r.status === statusFilter) &&
+      (!activeTeamId || r.teamId === activeTeamId) &&
       (!queryLc ||
         `${r.title ?? ""} ${r.customerName ?? ""} ${r.projectName ?? ""}`
           .toLowerCase()
@@ -372,6 +400,7 @@ export default async function WorkerSchedulePage({
           filter and the viewed month. */}
       <form method="get" className="relative">
         {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+        {activeTeamId && <input type="hidden" name="team" value={activeTeamId} />}
         <input type="hidden" name="date" value={selectedKey} />
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500 dark:text-neutral-400" />
         <Input
@@ -406,13 +435,33 @@ export default async function WorkerSchedulePage({
         ).map((chip) => (
           <FilterChip
             key={chip.value ?? "all"}
-            href={schedHref({ date: selectedKey, status: chip.value, q: query })}
+            href={schedHref({ date: selectedKey, status: chip.value, q: query, team: activeTeamId })}
             active={statusFilter === chip.value}
           >
             {chip.label}
           </FilterChip>
         ))}
       </div>
+
+      {/* Team filter banner — shown when arriving from a team's page, with a
+          one-tap clear back to all my visits. */}
+      {activeTeamId && teamFilterName && (
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm dark:border-neutral-800 dark:bg-neutral-900/40">
+          <span className="flex min-w-0 items-center gap-1.5 font-medium text-neutral-700 dark:text-neutral-200">
+            <Users2 className="h-4 w-4 shrink-0 text-neutral-500 dark:text-neutral-400" />
+            <span className="truncate">
+              {t.viewingTeam.replace("{name}", teamFilterName)}
+            </span>
+          </span>
+          <Link
+            href={schedHref({ date: selectedKey, status: statusFilter, q: query })}
+            className="flex shrink-0 items-center gap-1 text-xs font-medium text-neutral-500 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+          >
+            <X className="h-3.5 w-3.5" />
+            {t.showAllVisits}
+          </Link>
+        </div>
+      )}
 
       {/* Month KPIs — this month's visits, completion, and how many are ahead. */}
       <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
@@ -479,10 +528,10 @@ export default async function WorkerSchedulePage({
         monthLabel={monthLabel}
         weekdayLabels={weekdayLabels}
         days={calendarDays}
-        dayHref={(key) => schedHref({ date: key, status: statusFilter, q: query, day: true })}
-        prevHref={schedHref({ date: prevMonthKey, status: statusFilter, q: query })}
-        nextHref={schedHref({ date: nextMonthKey, status: statusFilter, q: query })}
-        todayHref={schedHref({ status: statusFilter, q: query })}
+        dayHref={(key) => schedHref({ date: key, status: statusFilter, q: query, team: activeTeamId, day: true })}
+        prevHref={schedHref({ date: prevMonthKey, status: statusFilter, q: query, team: activeTeamId })}
+        nextHref={schedHref({ date: nextMonthKey, status: statusFilter, q: query, team: activeTeamId })}
+        todayHref={schedHref({ status: statusFilter, q: query, team: activeTeamId })}
         prevLabel={t.prevMonth}
         nextLabel={t.nextMonth}
         todayLabel={t.today}

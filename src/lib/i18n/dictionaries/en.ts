@@ -1400,6 +1400,9 @@ export const en = {
     filterByStatus: "Filter by status",
     searchVisits: "Search my visits",
     searchVisitsAria: "Search my scheduled visits",
+    // Team filter (arriving from a team's page)
+    viewingTeam: "Team: {name}",
+    showAllVisits: "All my visits",
     changeStatus: "Change status",
     conflictBadge: "Overlap",
     conflictTitle: "This worker has another overlapping job this day",
@@ -1660,6 +1663,10 @@ export const en = {
     notOnAnyTeamDesc:
       "When an admin adds you to a crew, it shows up here with your teammates and projects.",
     you: "You",
+    searchTeams: "Search teams",
+    noMatches: "No teams match",
+    noMatchesDesc: "Try a different search.",
+    teamSchedule: "Team schedule",
     // New page
     newTeamTitle: "New team",
     newTeamDesc:

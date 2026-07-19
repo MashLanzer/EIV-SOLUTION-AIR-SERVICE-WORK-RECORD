@@ -1394,6 +1394,9 @@ export const es: Dictionary = {
     filterByStatus: "Filtrar por estado",
     searchVisits: "Buscar mis visitas",
     searchVisitsAria: "Buscar mis visitas programadas",
+    // Filtro por equipo (al llegar desde la página de un equipo)
+    viewingTeam: "Equipo: {name}",
+    showAllVisits: "Todas mis visitas",
     changeStatus: "Cambiar estado",
     conflictBadge: "Solapamiento",
     conflictTitle: "Este trabajador tiene otro trabajo que se solapa ese día",
@@ -1654,6 +1657,10 @@ export const es: Dictionary = {
     notOnAnyTeamDesc:
       "Cuando un administrador te agregue a un equipo, aparecerá aquí con tus compañeros y proyectos.",
     you: "Tú",
+    searchTeams: "Buscar equipos",
+    noMatches: "Ningún equipo coincide",
+    noMatchesDesc: "Prueba con otra búsqueda.",
+    teamSchedule: "Agenda del equipo",
     // New page
     newTeamTitle: "Nuevo equipo",
     newTeamDesc:
