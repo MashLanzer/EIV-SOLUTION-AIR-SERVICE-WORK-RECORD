@@ -18,7 +18,7 @@ import { SuccessToast } from "@/components/ui/success-toast";
 import { FilterChip } from "@/components/ui/filter-chip";
 import { StatTile } from "@/components/ui/stat-tile";
 import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
-import { RecordCard } from "@/components/records/RecordCard";
+import { WorkerRecordList } from "@/components/records/WorkerRecordList";
 import { ResumeDraftCard } from "@/components/records/ResumeDraftCard";
 import { MorningBriefDialog } from "@/components/schedule/MorningBriefDialog";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
@@ -108,11 +108,14 @@ export default async function RecordsPage({
         jobNumber: true,
         date: true,
         customerName: true,
+        customerAddress: true,
         typeOfWork: true,
         status: true,
         reviewNote: true,
         arrivalTime: true,
         departureTime: true,
+        customerRating: true,
+        customerFeedback: true,
         _count: { select: { photos: true } },
       },
       orderBy: { date: sort === "oldest" ? "asc" : "desc" },
@@ -331,15 +334,12 @@ export default async function RecordsPage({
         )
       ) : (
         <>
-          <div className="flex flex-col gap-3">
-            {records.map((record) => (
-              <RecordCard
-                key={record.id}
-                record={{ ...record, photoCount: record._count.photos }}
-                href={`/records/${record.id}`}
-              />
-            ))}
-          </div>
+          <WorkerRecordList
+            records={records.map((record) => ({
+              ...record,
+              photoCount: record._count.photos,
+            }))}
+          />
           <Pagination
             page={page}
             pageCount={pages}

@@ -275,6 +275,12 @@ export const es: Dictionary = {
     officeReply: "Respuesta de la oficina",
     approvedLockedTitle: "Aprobado.",
     approvedLockedDesc: "Este registro está cerrado y ya no se puede editar.",
+    // Quick-peek bottom sheet (My Records list)
+    peekTitle: "Registro {n}",
+    viewFullRecord: "Ver registro",
+    directions: "Cómo llegar",
+    customerRatingLabel: "Calificación del cliente",
+    openRecordAria: "Abrir registro {n}",
   },
   form: {
     // Page titles / headers

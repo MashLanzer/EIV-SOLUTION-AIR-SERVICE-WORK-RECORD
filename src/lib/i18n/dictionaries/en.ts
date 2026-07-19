@@ -275,6 +275,12 @@ export const en = {
     officeReply: "Office reply",
     approvedLockedTitle: "Approved.",
     approvedLockedDesc: "This record is closed and can no longer be edited.",
+    // Quick-peek bottom sheet (My Records list)
+    peekTitle: "Record {n}",
+    viewFullRecord: "View record",
+    directions: "Directions",
+    customerRatingLabel: "Customer rating",
+    openRecordAria: "Open record {n}",
   },
   form: {
     // Page titles / headers
