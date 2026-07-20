@@ -256,6 +256,8 @@ export function AdminSidebar({
         <Logo />
         <div className="flex items-center gap-2">
           <SearchCommand />
+          {canReview && <HeaderOpinionsButton />}
+          {canManageMaterials && <HeaderToolsMenu />}
           <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} unreadCount={unreadNotifications} />
           <HeaderAccountMenu
             name={name}
