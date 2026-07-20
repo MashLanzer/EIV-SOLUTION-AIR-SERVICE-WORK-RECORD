@@ -23,6 +23,7 @@ import { FilterChip } from "@/components/ui/filter-chip";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionTabs } from "@/components/layout/SectionTabs";
 import { FinancialsTabs } from "@/components/financials/FinancialsTabs";
+import { FinancialDigest } from "@/components/financials/FinancialDigest";
 import { FinancialsQuickActions } from "@/components/financials/FinancialsQuickActions";
 import { MetricCard, Metric, MetricLink } from "@/components/ui/metric-card";
 import { prisma } from "@/lib/prisma";
@@ -36,11 +37,27 @@ import {
   type FinancialPeriod,
   type PipelineCell,
 } from "@/lib/financials";
+import { buildDigest, DIGEST_MONEY_TOKENS, type DigestLine } from "@/lib/digest";
 import { requireFeature } from "@/lib/features";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
 import { getLocale, getT } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
+
+// Fill a digest template: money tokens are formatted with the currency, the
+// rest inserted as-is.
+function resolveDigestLine(
+  line: DigestLine,
+  templates: Record<string, string>,
+  money: (n: number) => string
+): string {
+  let s = templates[line.key] ?? "";
+  for (const [k, v] of Object.entries(line.values)) {
+    const val = DIGEST_MONEY_TOKENS.has(k) ? money(Number(v)) : String(v);
+    s = s.replaceAll(`{${k}}`, val);
+  }
+  return s;
+}
 
 // A clickable pipeline cell: a label, its total amount and a doc count that
 // deep-links to the matching filtered list. Muted when empty.
@@ -204,6 +221,24 @@ export default async function FinancialsPage({
   const docCount = (n: number) => (n === 1 ? t.countOne : t.countMany).replace("{n}", String(n));
   const vsPrev = (prev: string) => t.vsPrevious.replace("{value}", prev);
   const moneyShort = (n: number) => `${currency}${Math.round(n).toLocaleString(locale === "es" ? "es-ES" : "en-US")}`;
+
+  // Plain-language summary of the period, shown above the KPI tabs.
+  const digestLines = buildDigest({
+    revenue: fin.revenue,
+    prevRevenue: fin.previous.revenue,
+    labor: fin.labor,
+    grossProfit: fin.grossProfit,
+    margin: Math.round(fin.margin),
+    outstanding: fin.outstanding,
+    overdueAmount: fin.collections.overdue.amount,
+    overdueCount: fin.collections.overdue.count,
+    jobCount: fin.jobCount,
+    topCustomer: fin.topCustomers[0] ?? null,
+    goalPct: fin.goal.pct,
+  }).map((line) => ({
+    tone: line.tone,
+    text: resolveDigestLine(line, dict.digest, moneyShort),
+  }));
 
   const monthFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
@@ -798,6 +833,9 @@ export default async function FinancialsPage({
           </FilterChip>
         ))}
       </div>
+
+      {/* Plain-language digest of the selected period. */}
+      <FinancialDigest heading={dict.digest.heading} lines={digestLines} />
 
       {/* Action alerts — persistent above the tabs, since they're urgent. */}
       {alerts.length > 0 ? (
