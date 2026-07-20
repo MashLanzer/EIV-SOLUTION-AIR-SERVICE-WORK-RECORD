@@ -19,6 +19,11 @@ import {
   type PayReportLabels,
 } from "@/components/pdf/PayReportPdfDocument";
 import {
+  PayStatementPdfDocument,
+  type PayStatementLabels,
+  type PayStatementRow,
+} from "@/components/pdf/PayStatementPdfDocument";
+import {
   UtilizationReportPdfDocument,
   type UtilizationLabels,
 } from "@/components/pdf/UtilizationReportPdfDocument";
@@ -83,6 +88,17 @@ export async function renderPayReportPdf(
 ) {
   return renderToBuffer(
     <PayReportPdfDocument rows={rows} grand={grand} company={company} labels={labels} />
+  );
+}
+
+export async function renderPayStatementPdf(
+  rows: PayStatementRow[],
+  totals: { hours: string; pay: number },
+  company: PdfCompany,
+  labels: PayStatementLabels
+) {
+  return renderToBuffer(
+    <PayStatementPdfDocument rows={rows} totals={totals} company={company} labels={labels} />
   );
 }
 

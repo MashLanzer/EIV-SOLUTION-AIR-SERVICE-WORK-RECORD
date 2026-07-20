@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronRight, Wallet } from "lucide-react";
+import { ChevronRight, Download, Wallet } from "lucide-react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card } from "@/components/ui/card";
@@ -92,6 +92,31 @@ export function WorkerEarningsCard({
           </div>
 
           <p className="text-xs text-neutral-500 dark:text-neutral-400">{t.earningsNote}</p>
+
+          {/* Downloadable pay statement (approved records only) per period. */}
+          <div className="flex flex-col gap-2 border-t border-neutral-200 pt-4 dark:border-neutral-800">
+            <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+              <Download className="h-3.5 w-3.5" aria-hidden="true" />
+              {t.downloadStatement}
+            </span>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  { period: "this-month", label: t.periodThisMonth },
+                  { period: "last-month", label: t.periodLastMonth },
+                  { period: "this-year", label: t.periodThisYear },
+                ] as const
+              ).map((p) => (
+                <a
+                  key={p.period}
+                  href={`/records/pay-statement/pdf?period=${p.period}`}
+                  className="rounded-lg border border-neutral-200 px-2 py-2 text-center text-xs font-medium text-neutral-700 transition-colors hover:border-neutral-300 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800"
+                >
+                  {p.label}
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </BottomSheet>
     </>

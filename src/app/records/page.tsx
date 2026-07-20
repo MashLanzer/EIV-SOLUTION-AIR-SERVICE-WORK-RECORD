@@ -23,6 +23,7 @@ import { DeltaBadge } from "@/components/ui/delta-badge";
 import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { WorkerRecordList } from "@/components/records/WorkerRecordList";
 import { WorkerEarningsCard } from "@/components/records/WorkerEarningsCard";
+import { TodayCard, type TodayJob } from "@/components/records/TodayCard";
 import { ResumeDraftCard } from "@/components/records/ResumeDraftCard";
 import { MorningBriefDialog } from "@/components/schedule/MorningBriefDialog";
 import { pageCount, paginationArgs, parsePage } from "@/lib/paginate";
@@ -253,15 +254,29 @@ export default async function RecordsPage({
     from: todayStart,
     to: addUtcDays(todayStart, 1),
   });
-  const briefJobs = briefRaw
-    .filter((j) => j.status !== "CANCELED")
-    .map((j) => ({
-      id: j.id,
-      title: j.title,
-      startTime: j.startTime,
-      customerName: j.customer?.name ?? null,
-      projectName: j.project?.name ?? null,
-    }));
+  const activeToday = briefRaw.filter((j) => j.status !== "CANCELED");
+  const briefJobs = activeToday.map((j) => ({
+    id: j.id,
+    title: j.title,
+    startTime: j.startTime,
+    customerName: j.customer?.name ?? null,
+    projectName: j.project?.name ?? null,
+  }));
+  // Same today set, richer, for the persistent "Today" card on the home.
+  const todayJobs: TodayJob[] = activeToday.map((j) => ({
+    id: j.id,
+    startTime: j.startTime,
+    endTime: j.endTime,
+    title: j.title,
+    customerName: j.customer?.name ?? null,
+    status: j.status,
+    workRecordId: j.workRecordId,
+  }));
+  const orgTimeFormat = await prisma.organization.findUnique({
+    where: { id: requireOrgId(session) },
+    select: { timeFormat: true },
+  });
+  const use24 = orgTimeFormat?.timeFormat === "24";
 
   const t = (await getT()).records;
 
@@ -373,6 +388,8 @@ export default async function RecordsPage({
       </div>
 
       {showSummary && <ResumeDraftCard draftKey={`new-record:${session.user.id}`} />}
+
+      {showSummary && <TodayCard jobs={todayJobs} use24={use24} />}
 
       {showSummary && (
         <div className="grid animate-fade-up grid-cols-3 gap-3 sm:gap-4">
