@@ -4,8 +4,9 @@ import { signIn } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/components/i18n/LocaleProvider";
+import { cn } from "@/lib/utils";
 
-export function GoogleSignInButton() {
+export function GoogleSignInButton({ className }: { className?: string }) {
   const t = useT();
   const handleClick = async () => {
     // Inside the Android app shell: MainActivity catches this custom-scheme
@@ -27,7 +28,7 @@ export function GoogleSignInButton() {
     <Button
       type="button"
       size="lg"
-      className="w-full"
+      className={cn("w-full", className)}
       onClick={handleClick}
     >
       <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
