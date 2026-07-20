@@ -42,7 +42,7 @@ export const PALETTES: Palette[] = [
     id: "dusk",
     label: "Dusk",
     family: "dark",
-    swatch: ["#06171a", "#164a44", "#2dd4bf"],
+    swatch: ["#070a0a", "#29312f", "#2dd4bf"],
   },
 ];
 
