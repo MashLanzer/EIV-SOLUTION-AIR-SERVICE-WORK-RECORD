@@ -29,6 +29,7 @@ import { GeoPhotoMap } from "@/components/projects/GeoPhotoMap";
 import { WeatherCard } from "@/components/projects/WeatherCard";
 import { GeocodeNotice } from "@/components/projects/GeocodeNotice";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
+import { PinButton } from "@/components/projects/PinButton";
 import { StatusBadge } from "@/components/records/StatusBadge";
 import { SheetButton } from "@/components/schedule/SheetButton";
 import { prisma } from "@/lib/prisma";
@@ -82,6 +83,12 @@ export default async function WorkerProjectPage({
     },
   });
   if (!project) notFound();
+
+  const pin = await prisma.pinnedProject.findUnique({
+    where: { userId_projectId: { userId: session.user.id, projectId: id } },
+    select: { id: true },
+  });
+  const isPinned = pin != null;
 
   const located = project.latitude != null && project.longitude != null;
   const weather = located
@@ -250,6 +257,9 @@ export default async function WorkerProjectPage({
               {project.name}
             </h1>
             <ProjectStatusBadge status={project.status} />
+            <span className="ml-auto">
+              <PinButton projectId={project.id} initialPinned={isPinned} />
+            </span>
           </div>
           <div className="mt-2 flex flex-col gap-1.5 text-sm text-neutral-500 dark:text-neutral-400">
             {project.customer && (

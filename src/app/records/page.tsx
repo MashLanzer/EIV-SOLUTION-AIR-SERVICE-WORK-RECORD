@@ -22,6 +22,7 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { DeltaBadge } from "@/components/ui/delta-badge";
 import { ClearDraftOnMount } from "@/components/records/ClearDraftOnMount";
 import { WorkerRecordList } from "@/components/records/WorkerRecordList";
+import { PinnedProjects } from "@/components/projects/PinnedProjects";
 import { WorkerEarningsCard } from "@/components/records/WorkerEarningsCard";
 import { TodayCard, type TodayJob } from "@/components/records/TodayCard";
 import { ResumeDraftCard } from "@/components/records/ResumeDraftCard";
@@ -326,6 +327,24 @@ export default async function RecordsPage({
     { label: t.rangeWeek, value: "week" },
   ];
 
+  // The worker's pinned projects, for the quick-access strip at the top.
+  const pinnedRows = await prisma.pinnedProject.findMany({
+    where: { userId: session.user.id, project: { organizationId: requireOrgId(session) } },
+    orderBy: { createdAt: "desc" },
+    take: 12,
+    select: {
+      project: {
+        select: { id: true, name: true, status: true, customer: { select: { name: true } } },
+      },
+    },
+  });
+  const pinnedProjects = pinnedRows.map((p) => ({
+    id: p.project.id,
+    name: p.project.name,
+    status: p.project.status,
+    customerName: p.project.customer?.name ?? null,
+  }));
+
   return (
     <div className="flex flex-col gap-3">
       <MorningBriefDialog
@@ -351,6 +370,8 @@ export default async function RecordsPage({
           </Button>
         }
       />
+
+      <PinnedProjects projects={pinnedProjects} />
 
       {/* Search sits at the very top so it's always the first control. */}
       <form method="get" className="relative">

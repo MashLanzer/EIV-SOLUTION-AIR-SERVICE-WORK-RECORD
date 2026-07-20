@@ -506,6 +506,21 @@ model Project {
   @@index([teamId])
   photos     Photo[]
   checklists Checklist[]
+  pins       PinnedProject[]
+}
+
+// A user's pinned project, surfaced as a quick-access "Pinned" strip on their
+// home. Per-user; unique so a project is pinned at most once.
+model PinnedProject {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, projectId])
+  @@index([userId])
 }
 
 // A jobsite photo stored in object storage (Vercel Blob). Always belongs to a
@@ -685,6 +700,7 @@ model User {
   auditEvents      AuditEvent[]        @relation("AuditActor")
   createdEstimates Estimate[]          @relation("EstimateCreatedBy")
   mileageEntries   MileageEntry[]
+  pinnedProjects   PinnedProject[]
   // Optional per-company position (job title + permissions). Falls back to the
   // legacy `role` defaults when unset. SetNull so deleting a position doesn't
   // remove its members.
