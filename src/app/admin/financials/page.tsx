@@ -246,6 +246,16 @@ export default async function FinancialsPage({
   const vsPrev = (prev: string) => t.vsPrevious.replace("{value}", prev);
   const moneyShort = (n: number) => `${currency}${Math.round(n).toLocaleString(locale === "es" ? "es-ES" : "en-US")}`;
 
+  const monthFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  const dueFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+
   // Plain-language summary of the period, shown above the KPI tabs.
   const digestLines = buildDigest({
     revenue: fin.revenue,
@@ -298,16 +308,6 @@ export default async function FinancialsPage({
     sharePct: Math.round(f.share * 100),
     share: f.share,
   }));
-
-  const monthFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
-    month: "short",
-    timeZone: "UTC",
-  });
-  const dueFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  });
 
   const periodLabel: Record<FinancialPeriod, string> = {
     month: t.periodMonth,
