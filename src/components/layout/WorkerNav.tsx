@@ -81,6 +81,7 @@ export function WorkerNav({
             avatarUrl={avatarUrl}
             profileHref="/records/profile"
             settingsHref="/records/settings"
+            mileageHref="/records/mileage"
           />
         </div>
       </header>

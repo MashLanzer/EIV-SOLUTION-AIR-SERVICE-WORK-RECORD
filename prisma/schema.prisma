@@ -151,6 +151,9 @@ model Organization {
   // Unguessable token for the public, read-only financial report at
   // /share/[token]. Null = sharing off; set when an admin turns it on.
   reportToken      String?  @unique
+  // Reimbursement rate per mile for the worker mileage log. Null = show miles
+  // only (no money estimate).
+  mileageRate      Decimal? @db.Decimal(6, 2)
   // --- Localization ---
   // Clock format for times shown across the app: "12" or "24".
   timeFormat       String   @default("12")
@@ -186,6 +189,25 @@ model Organization {
   expenseCategories  ExpenseCategory[]
   expenseRules       ExpenseRule[]
   materials          Material[]
+  mileageEntries     MileageEntry[]
+}
+
+// A worker's mileage log entry: miles driven on a day, optionally noted. Feeds
+// a personal running total (and a reimbursement estimate when the org sets a
+// per-mile rate).
+model MileageEntry {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime     @db.Date
+  miles          Decimal      @db.Decimal(8, 2)
+  note           String?      @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId])
+  @@index([userId, date])
 }
 
 // An org-managed catalog of materials with a unit + unit cost, attached to a
@@ -662,6 +684,7 @@ model User {
   createdInvoices  Invoice[]           @relation("InvoiceCreatedBy")
   auditEvents      AuditEvent[]        @relation("AuditActor")
   createdEstimates Estimate[]          @relation("EstimateCreatedBy")
+  mileageEntries   MileageEntry[]
   // Optional per-company position (job title + permissions). Falls back to the
   // legacy `role` defaults when unset. SetNull so deleting a position doesn't
   // remove its members.
