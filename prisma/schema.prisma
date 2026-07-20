@@ -226,6 +226,9 @@ model ExpenseCategory {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
   position       Int          @default(0)
+  // Optional monthly spend budget for this category; null = no budget set.
+  // Drives the budgets page's progress bars and over/near-budget alerts.
+  monthlyBudget  Decimal?     @db.Decimal(10, 2)
   expenses       Expense[]
   createdAt      DateTime     @default(now())
 
