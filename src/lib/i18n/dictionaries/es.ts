@@ -1190,6 +1190,19 @@ export const es: Dictionary = {
     categoryNamePlaceholder: "ej. Combustible",
     addCategory: "Agregar",
     noCategoriesYet: "Aún no hay categorías.",
+    // Reglas de auto-categorización
+    rules: "Reglas",
+    rulesTitle: "Auto-categorización",
+    rulesDesc: "Cuando un proveedor contiene una palabra clave, los gastos nuevos se clasifican en su categoría automáticamente.",
+    ruleKeywordPlaceholder: "Palabra del proveedor (ej. Shell)",
+    addRule: "Agregar",
+    noRulesYet: "Aún no hay reglas.",
+    rulesNeedCategory: "Agrega una categoría primero para crear reglas.",
+    // Revisión de anomalías
+    anomalyDuplicate: "Duplicado",
+    anomalyHigh: "Inusual",
+    reviewOne: "{n} gasto por revisar",
+    reviewMany: "{n} gastos por revisar",
     starterPack: "Añadir set inicial",
     // Errores
     amountInvalid: "Ingresa un monto válido.",

@@ -7,6 +7,7 @@ import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
 import { deleteProjectPhoto } from "@/lib/blob";
 import { EXPENSE_STARTER_CATEGORIES } from "@/lib/expenses";
+import { matchExpenseRule } from "@/lib/expenseRules";
 
 const MAX_VENDOR = 120;
 const MAX_NOTE = 500;
@@ -69,8 +70,19 @@ export async function createExpenseAction(formData: FormData) {
   const fields = await readFields(formData, organizationId);
   if (!fields) return;
 
+  // Auto-categorize a new expense with no category from the org's vendor rules.
+  let categoryId = fields.categoryId;
+  if (!categoryId) {
+    const rules = await prisma.expenseRule.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: "asc" },
+      select: { keyword: true, categoryId: true },
+    });
+    categoryId = matchExpenseRule(fields.vendor, rules);
+  }
+
   await prisma.expense.create({
-    data: { organizationId, createdById: session.user.id, ...fields },
+    data: { organizationId, createdById: session.user.id, ...fields, categoryId },
   });
   revalidate();
 }
@@ -136,6 +148,40 @@ export async function deleteExpenseCategoryAction(id: string) {
   if (!cat) return;
   // The FK is SET NULL, so expenses keep their history and just lose the tag.
   await prisma.expenseCategory.delete({ where: { id: cat.id } });
+  revalidate();
+}
+
+// ---- Auto-categorization rules --------------------------------------------
+
+export async function addExpenseRuleAction(formData: FormData) {
+  const session = await requirePermission("expenses.manage");
+  const organizationId = requireOrgId(session);
+  const keyword = ((formData.get("keyword") as string | null) ?? "").trim().slice(0, 80);
+  const rawCategory = (formData.get("categoryId") as string | null)?.trim() || null;
+  if (!keyword || !rawCategory) return;
+
+  // Only link a category that belongs to the caller's org.
+  const category = await prisma.expenseCategory.findFirst({
+    where: { id: rawCategory, organizationId },
+    select: { id: true },
+  });
+  if (!category) return;
+
+  await prisma.expenseRule.create({
+    data: { organizationId, keyword, categoryId: category.id },
+  });
+  revalidate();
+}
+
+export async function deleteExpenseRuleAction(id: string) {
+  const session = await requirePermission("expenses.manage");
+  const organizationId = requireOrgId(session);
+  const rule = await prisma.expenseRule.findFirst({
+    where: { id, organizationId },
+    select: { id: true },
+  });
+  if (!rule) return;
+  await prisma.expenseRule.delete({ where: { id: rule.id } });
   revalidate();
 }
 

@@ -181,6 +181,7 @@ model Organization {
   notifications      Notification[]
   expenses           Expense[]
   expenseCategories  ExpenseCategory[]
+  expenseRules       ExpenseRule[]
   materials          Material[]
 }
 
@@ -230,10 +231,26 @@ model ExpenseCategory {
   // Drives the budgets page's progress bars and over/near-budget alerts.
   monthlyBudget  Decimal?     @db.Decimal(10, 2)
   expenses       Expense[]
+  rules          ExpenseRule[]
   createdAt      DateTime     @default(now())
 
   @@unique([organizationId, name])
   @@index([organizationId])
+}
+
+// An auto-categorization rule: when a new expense's vendor contains `keyword`
+// and no category was chosen, it's filed under `category`. Org-managed.
+model ExpenseRule {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  keyword        String
+  categoryId     String
+  category       ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt      DateTime        @default(now())
+
+  @@index([organizationId])
+  @@index([categoryId])
 }
 
 // A business cost booked against a job or project — the other half of job

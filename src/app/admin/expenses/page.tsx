@@ -1,4 +1,4 @@
-import { Download, Search } from "lucide-react";
+import { AlertTriangle, Download, Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { FilterChip } from "@/components/ui/filter-chip";
@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
 import { SectionTabs } from "@/components/layout/SectionTabs";
-import { ExpensesManager, type ExpenseRow } from "@/components/expenses/ExpensesManager";
+import { ExpensesManager, type ExpenseRow, type RuleRow } from "@/components/expenses/ExpensesManager";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
 import { formatMoney } from "@/lib/format";
 import { buildExpenseWhere, EXPENSE_RANGES, type ExpenseRange } from "@/lib/expenses";
+import { detectExpenseAnomalies, type AnomalyReason } from "@/lib/expenseRules";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
 import { getT } from "@/lib/i18n/server";
@@ -36,7 +37,7 @@ export default async function AdminExpensesPage({
   monthStart.setUTCDate(1);
   monthStart.setUTCHours(0, 0, 0, 0);
 
-  const [rows, categories, projects, filteredAgg, monthAgg, currency] = await Promise.all([
+  const [rows, categories, ruleRows, projects, filteredAgg, monthAgg, currency] = await Promise.all([
     prisma.expense.findMany({
       where,
       orderBy: { date: "desc" },
@@ -58,6 +59,11 @@ export default async function AdminExpensesPage({
       where: { organizationId },
       orderBy: [{ position: "asc" }, { name: "asc" }],
       select: { id: true, name: true },
+    }),
+    prisma.expenseRule.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: "asc" },
+      select: { id: true, keyword: true, category: { select: { name: true } } },
     }),
     prisma.project.findMany({
       where: { organizationId, status: { not: "COMPLETED" } },
@@ -91,6 +97,26 @@ export default async function AdminExpensesPage({
   const filteredCount = filteredAgg._count._all;
   const monthTotal = Number(monthAgg._sum.amount ?? 0);
   const filtering = Boolean(query) || Boolean(categoryId) || range !== "all";
+
+  const rules: RuleRow[] = ruleRows.map((r) => ({
+    id: r.id,
+    keyword: r.keyword,
+    categoryName: r.category.name,
+  }));
+
+  // Flag likely data-entry issues across the shown expenses (duplicates +
+  // per-category outliers), for inline badges and a review banner.
+  const anomalyMap = detectExpenseAnomalies(
+    expenses.map((e) => ({
+      id: e.id,
+      vendor: e.vendor,
+      amount: e.amount,
+      date: e.date,
+      categoryId: e.categoryId,
+    }))
+  );
+  const anomalies: Record<string, AnomalyReason> = Object.fromEntries(anomalyMap);
+  const anomalyCount = anomalyMap.size;
 
   function href(next: { category?: string | null; range?: ExpenseRange }) {
     const p = new URLSearchParams();
@@ -175,10 +201,21 @@ export default async function AdminExpensesPage({
         </p>
       )}
 
+      {anomalyCount > 0 && (
+        <div className="flex items-center gap-3 rounded-xl border border-amber-300/50 bg-amber-50 px-4 py-2.5 text-sm dark:border-amber-800/50 dark:bg-amber-950/40">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span className="font-medium text-amber-800 dark:text-amber-200">
+            {(anomalyCount === 1 ? t.reviewOne : t.reviewMany).replace("{n}", String(anomalyCount))}
+          </span>
+        </div>
+      )}
+
       <ExpensesManager
         expenses={expenses}
         categories={categories}
         projects={projects}
+        rules={rules}
+        anomalies={anomalies}
         currency={currency}
         filtering={filtering}
       />

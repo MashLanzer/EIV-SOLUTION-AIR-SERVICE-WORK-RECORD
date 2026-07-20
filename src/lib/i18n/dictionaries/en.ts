@@ -1197,6 +1197,19 @@ export const en = {
     addCategory: "Add",
     noCategoriesYet: "No categories yet.",
     starterPack: "Add starter set",
+    // Auto-categorization rules
+    rules: "Rules",
+    rulesTitle: "Auto-categorization",
+    rulesDesc: "When a vendor contains a keyword, new expenses file under its category automatically.",
+    ruleKeywordPlaceholder: "Vendor keyword (e.g. Shell)",
+    addRule: "Add",
+    noRulesYet: "No rules yet.",
+    rulesNeedCategory: "Add a category first to create rules.",
+    // Anomaly review
+    anomalyDuplicate: "Duplicate",
+    anomalyHigh: "Unusual",
+    reviewOne: "{n} expense to review",
+    reviewMany: "{n} expenses to review",
     // Errors
     amountInvalid: "Enter a valid amount.",
     vendorRequired: "Enter a vendor.",

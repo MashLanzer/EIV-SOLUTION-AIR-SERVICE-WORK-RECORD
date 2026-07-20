@@ -2,12 +2,14 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import {
+  AlertTriangle,
   Camera,
   FolderKanban,
   Plus,
   Receipt,
   Tag as TagIcon,
   Trash2,
+  Wand2,
   X,
 } from "lucide-react";
 
@@ -18,11 +20,14 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
   addExpenseCategoryAction,
+  addExpenseRuleAction,
   createExpenseAction,
   deleteExpenseAction,
   deleteExpenseCategoryAction,
+  deleteExpenseRuleAction,
   updateExpenseAction,
 } from "@/actions/expenses";
+import type { AnomalyReason } from "@/lib/expenseRules";
 import { useT } from "@/components/i18n/LocaleProvider";
 import { formatMoney } from "@/lib/format";
 
@@ -41,6 +46,11 @@ export interface ExpenseRow {
 interface Named {
   id: string;
   name: string;
+}
+export interface RuleRow {
+  id: string;
+  keyword: string;
+  categoryName: string;
 }
 
 const MAX_DIMENSION = 1600;
@@ -86,12 +96,16 @@ export function ExpensesManager({
   expenses,
   categories,
   projects,
+  rules,
+  anomalies,
   currency,
   filtering,
 }: {
   expenses: ExpenseRow[];
   categories: Named[];
   projects: Named[];
+  rules: RuleRow[];
+  anomalies: Record<string, AnomalyReason>;
   currency: string;
   filtering: boolean;
 }) {
@@ -99,6 +113,7 @@ export function ExpensesManager({
   const tc = useT().common;
   const [editing, setEditing] = useState<ExpenseRow | "new" | null>(null);
   const [catsOpen, setCatsOpen] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const fmt = (n: number) => formatMoney(n, currency);
 
   const dateFmt = useMemo(
@@ -116,6 +131,10 @@ export function ExpensesManager({
         <Button type="button" size="sm" variant="outline" onClick={() => setCatsOpen(true)}>
           <TagIcon className="h-4 w-4" />
           {t.manageCategories}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => setRulesOpen(true)}>
+          <Wand2 className="h-4 w-4" />
+          {t.rules}
         </Button>
       </div>
 
@@ -138,8 +157,17 @@ export function ExpensesManager({
                 {e.receiptUrl ? <Receipt className="h-4 w-4" /> : <TagIcon className="h-4 w-4" />}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                  {e.vendor}
+                <p className="flex items-center gap-1.5 truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                  <span className="truncate">{e.vendor}</span>
+                  {anomalies[e.id] && (
+                    <span
+                      className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                      title={anomalies[e.id] === "duplicate" ? t.anomalyDuplicate : t.anomalyHigh}
+                    >
+                      <AlertTriangle className="h-3 w-3" />
+                      {anomalies[e.id] === "duplicate" ? t.anomalyDuplicate : t.anomalyHigh}
+                    </span>
+                  )}
                 </p>
                 <p className="flex flex-wrap items-center gap-x-2 truncate text-xs text-neutral-500 dark:text-neutral-400">
                   <span className="tabular-nums">{dateFmt.format(new Date(e.date))}</span>
@@ -186,6 +214,16 @@ export function ExpensesManager({
         closeLabel={tc.close}
       >
         <CategoryManager categories={categories} />
+      </BottomSheet>
+
+      {/* Auto-categorization rules sheet */}
+      <BottomSheet
+        open={rulesOpen}
+        onClose={() => setRulesOpen(false)}
+        title={t.rulesTitle}
+        closeLabel={tc.close}
+      >
+        <RuleManager rules={rules} categories={categories} />
       </BottomSheet>
     </>
   );
@@ -374,6 +412,62 @@ function CategoryManager({ categories }: { categories: Named[] }) {
           {t.addCategory}
         </Button>
       </form>
+    </div>
+  );
+}
+
+function RuleManager({ rules, categories }: { rules: RuleRow[]; categories: Named[] }) {
+  const t = useT().expenses;
+  const [, startTransition] = useTransition();
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-neutral-500 dark:text-neutral-400">{t.rulesDesc}</p>
+      {rules.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          {rules.map((r) => (
+            <div
+              key={r.id}
+              className="flex items-center justify-between gap-2 rounded-lg border border-neutral-200 px-3 py-2 text-sm dark:border-neutral-800"
+            >
+              <span className="min-w-0 flex-1 truncate text-neutral-700 dark:text-neutral-200">
+                <span className="font-medium">“{r.keyword}”</span>
+                <span className="text-neutral-400 dark:text-neutral-500"> → </span>
+                {r.categoryName}
+              </span>
+              <button
+                type="button"
+                onClick={() => startTransition(() => deleteExpenseRuleAction(r.id))}
+                className="shrink-0 text-neutral-400 hover:text-destructive"
+                aria-label={`${t.delete} ${r.keyword}`}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-neutral-400">{t.noRulesYet}</p>
+      )}
+      {categories.length > 0 ? (
+        <form action={addExpenseRuleAction} className="flex flex-col gap-2">
+          <Input name="keyword" placeholder={t.ruleKeywordPlaceholder} maxLength={80} required />
+          <div className="flex gap-2">
+            <Select name="categoryId" defaultValue={categories[0]?.id ?? ""} className="flex-1">
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+            <Button type="submit" variant="outline" size="sm">
+              <Plus className="h-4 w-4" />
+              {t.addRule}
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <p className="text-sm text-neutral-400">{t.rulesNeedCategory}</p>
+      )}
     </div>
   );
 }
