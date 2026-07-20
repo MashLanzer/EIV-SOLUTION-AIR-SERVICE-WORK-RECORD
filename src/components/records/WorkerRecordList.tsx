@@ -8,6 +8,8 @@ import {
   Copy,
   FolderKanban,
   Image as ImageIcon,
+  LayoutGrid,
+  List as ListIcon,
   MapPin,
   Navigation,
   Wrench,
@@ -23,9 +25,55 @@ import { RecordCard, formatRecordDate, type RecordCardData } from "@/components/
 import { useT, useLocale } from "@/components/i18n/LocaleProvider";
 import { useUse24Hour } from "@/components/i18n/TimeFormatProvider";
 import { formatMoney, formatTime, workDuration } from "@/lib/format";
+import { setViewMode, useViewMode } from "@/lib/viewMode";
+import { cn } from "@/lib/utils";
 
 const mapsHref = (address: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+
+// A compact record tile for grid view: job number, date, status, and earnings.
+function RecordTile({
+  record,
+  currency,
+  onOpen,
+  locale,
+  jobLabel,
+}: {
+  record: RecordCardData;
+  currency: string;
+  onOpen: (r: RecordCardData) => void;
+  locale: string;
+  jobLabel: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(record)}
+      className="flex flex-col gap-2 rounded-xl border border-neutral-200 bg-white p-3 text-left transition-colors hover:border-neutral-300 dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+          {jobLabel}
+          {record.jobNumber}
+        </span>
+        <StatusBadge status={record.status} />
+      </div>
+      <span className="truncate text-xs text-neutral-500 dark:text-neutral-400">
+        {record.customerName}
+      </span>
+      <div className="flex items-center justify-between gap-2 border-t border-neutral-100 pt-2 text-xs dark:border-neutral-800">
+        <span className="tabular-nums text-neutral-400 dark:text-neutral-500">
+          {formatRecordDate(new Date(record.date), locale)}
+        </span>
+        {(record.earned ?? 0) > 0 && (
+          <span className="font-semibold tabular-nums text-neutral-700 dark:text-neutral-200">
+            {formatMoney(record.earned ?? 0, currency)}
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
 
 // The worker's record list. Each card opens a quick-peek bottom sheet (one sheet
 // shared across the list, keyed by the selected record) so a record can be
@@ -43,6 +91,7 @@ export function WorkerRecordList({
   const tc = useT().common;
   const locale = useLocale();
   const use24 = useUse24Hour();
+  const view = useViewMode("worker-records");
   const [peek, setPeek] = useState<RecordCardData | null>(null);
 
   const hours = peek ? workDuration(peek.arrivalTime, peek.departureTime) : null;
@@ -81,8 +130,43 @@ export function WorkerRecordList({
     earlier: t.groupEarlier,
   };
 
+  const gridMode = view === "grid";
+
   return (
     <>
+      {records.length > 0 && (
+        <div className="flex justify-end">
+          <div
+            role="radiogroup"
+            aria-label={t.viewMode}
+            className="flex rounded-lg border border-neutral-200 bg-neutral-100/60 p-0.5 dark:border-neutral-800 dark:bg-neutral-900"
+          >
+            {(["list", "grid"] as const).map((mode) => {
+              const active = view === mode;
+              const Icon = mode === "list" ? ListIcon : LayoutGrid;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  aria-label={mode === "list" ? t.viewList : t.viewGrid}
+                  onClick={() => setViewMode("worker-records", mode)}
+                  className={cn(
+                    "flex h-8 w-9 items-center justify-center rounded-md transition-colors",
+                    active
+                      ? "bg-white text-neutral-900 shadow-sm dark:bg-neutral-800 dark:text-neutral-100"
+                      : "text-neutral-500 hover:text-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-5">
         {order
           .filter((key) => groups[key].length > 0)
@@ -92,9 +176,22 @@ export function WorkerRecordList({
                 {groupLabels[key]}{" "}
                 <span className="text-neutral-400 dark:text-neutral-500">({groups[key].length})</span>
               </span>
-              {groups[key].map((record) => (
-                <RecordCard key={record.id} record={record} onOpen={setPeek} />
-              ))}
+              <div className={gridMode ? "grid grid-cols-2 gap-2.5" : "flex flex-col gap-3"}>
+                {groups[key].map((record) =>
+                  gridMode ? (
+                    <RecordTile
+                      key={record.id}
+                      record={record}
+                      currency={currency}
+                      onOpen={setPeek}
+                      locale={locale}
+                      jobLabel={t.jobNumber}
+                    />
+                  ) : (
+                    <RecordCard key={record.id} record={record} onOpen={setPeek} />
+                  )
+                )}
+              </div>
             </div>
           ))}
       </div>
