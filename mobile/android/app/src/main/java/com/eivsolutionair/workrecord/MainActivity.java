@@ -23,6 +23,7 @@ import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.CustomCredential;
 import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.GetCredentialCancellationException;
 import androidx.credentials.exceptions.GetCredentialException;
 import com.getcapacitor.BridgeActivity;
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
@@ -174,13 +175,20 @@ public class MainActivity extends BridgeActivity {
 
                 @Override
                 public void onError(GetCredentialException e) {
-                    // No Google Play services, misconfigured OAuth client, or
-                    // the user backed out of the picker - fall back to the
-                    // browser-based flow rather than dead-ending here. Surface
-                    // the exception type on-device so a persistent fallback
-                    // (e.g. a missing Android OAuth client / SHA-256) is
-                    // diagnosable without logcat.
-                    Log.w(TAG, "Credential Manager sign-in unavailable: " + e);
+                    Log.w(TAG, "Credential Manager sign-in: " + e);
+                    // The user dismissed the native picker (or it was
+                    // cancelled): the native flow IS available, so stay on the
+                    // login and let them tap again - don't bounce to the
+                    // browser, which would be a jarring app-switch after a
+                    // deliberate cancel.
+                    if (e instanceof GetCredentialCancellationException) {
+                        return;
+                    }
+                    // Otherwise it's a genuine "picker unavailable" (no Play
+                    // services, misconfigured/propagating OAuth client, etc.) -
+                    // fall back to the browser-based flow rather than
+                    // dead-ending. Surface the error string on-device so a
+                    // persistent fallback is diagnosable without logcat.
                     // Surface Play Services' own error string (it carries codes
                     // like "10:" = DEVELOPER_ERROR / SHA-1+package+client-ID
                     // mismatch, vs a transient/propagation error) so a stuck
