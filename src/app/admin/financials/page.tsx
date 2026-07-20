@@ -25,6 +25,7 @@ import { SectionTabs } from "@/components/layout/SectionTabs";
 import { FinancialsTabs } from "@/components/financials/FinancialsTabs";
 import { FinancialDigest } from "@/components/financials/FinancialDigest";
 import { ForecastChart } from "@/components/financials/ForecastChart";
+import { ShareReportButton } from "@/components/financials/ShareReportButton";
 import { SankeyChart, type SankeySegment } from "@/components/financials/SankeyChart";
 import { FinancialsQuickActions } from "@/components/financials/FinancialsQuickActions";
 import { MetricCard, Metric, MetricLink } from "@/components/ui/metric-card";
@@ -215,7 +216,7 @@ export default async function FinancialsPage({
     }),
     prisma.organization.findUnique({
       where: { id: organizationId },
-      select: { defaultTaxRate: true },
+      select: { defaultTaxRate: true, reportToken: true },
     }),
   ]);
   const quickCustomers = customerRows.map((c) => ({ id: c.id, name: c.name, address: c.address ?? "" }));
@@ -874,12 +875,15 @@ export default async function FinancialsPage({
       <PageHeader
         title={t.title}
         action={
-          <Button asChild variant="outline" size="sm">
-            <a href={`/admin/financials/export?period=${period}`}>
-              <Sheet className="h-4 w-4" />
-              <span className="hidden sm:inline">{t.exportCsv}</span>
-            </a>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ShareReportButton initialToken={orgDefaults?.reportToken ?? null} />
+            <Button asChild variant="outline" size="sm">
+              <a href={`/admin/financials/export?period=${period}`}>
+                <Sheet className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.exportCsv}</span>
+              </a>
+            </Button>
+          </div>
         }
       />
 

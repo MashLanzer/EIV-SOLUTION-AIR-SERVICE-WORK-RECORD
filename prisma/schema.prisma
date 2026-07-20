@@ -148,6 +148,9 @@ model Organization {
   pdfFooter        String?  @db.Text
   // Default number of days a shared receipt link stays valid. Null = never.
   receiptExpiryDays Int?
+  // Unguessable token for the public, read-only financial report at
+  // /share/[token]. Null = sharing off; set when an admin turns it on.
+  reportToken      String?  @unique
   // --- Localization ---
   // Clock format for times shown across the app: "12" or "24".
   timeFormat       String   @default("12")
