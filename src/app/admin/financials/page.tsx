@@ -477,7 +477,7 @@ export default async function FinancialsPage({
             <div className="h-2.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all",
+                  "bar-grow-in h-full rounded-full transition-all",
                   goalPct >= 100 ? "bg-success-text" : "bg-neutral-900 dark:bg-neutral-100"
                 )}
                 style={{ width: `${goalClamped}%` }}

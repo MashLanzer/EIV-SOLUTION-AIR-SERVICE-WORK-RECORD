@@ -48,7 +48,7 @@ export function BarList({
               aria-label={`${d.label}: ${formatValue(d.value)}`}
             >
               <span
-                className="block h-full rounded-full bg-primary"
+                className="bar-grow-in block h-full rounded-full bg-primary"
                 style={{ width: `${Math.max(pct, d.value > 0 ? 4 : 0)}%` }}
                 title={`${d.label}: ${formatValue(d.value)}`}
               />

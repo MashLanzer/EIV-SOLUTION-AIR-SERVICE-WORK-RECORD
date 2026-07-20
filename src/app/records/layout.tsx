@@ -1,3 +1,4 @@
+import { RouteTransition } from "@/components/layout/RouteTransition";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { WorkerNav } from "@/components/layout/WorkerNav";
 import { BiometricLock } from "@/components/security/BiometricLock";
@@ -49,7 +50,7 @@ export default async function RecordsLayout({
           id="main-content"
           className="mx-auto max-w-3xl px-4 py-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] native:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-6"
         >
-          {children}
+          <RouteTransition>{children}</RouteTransition>
         </main>
       </div>
     </TimeFormatProvider>

@@ -9,7 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 // badges vs. money figures). Pair with `hidden sm:block` on the real
 // `<Table>` and `sm:hidden` here (built into MobileCardList).
 export function MobileCardList({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-3 sm:hidden">{children}</div>;
+  // stagger-children gives the stacked cards a gentle cascading entrance
+  // (capped + reduced-motion aware) — one place lights up every admin list.
+  return <div className="stagger-children flex flex-col gap-3 sm:hidden">{children}</div>;
 }
 
 export function MobileCardRow({

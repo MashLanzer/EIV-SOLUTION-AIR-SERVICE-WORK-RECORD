@@ -2,9 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { CheckCircle2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+
+// A checkmark that draws itself in — the small "well done" moment on a
+// successful save. Pure SVG; the reduced-motion guards make it appear instant.
+function DrawnCheck() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="var(--color-success)" opacity="0.9" />
+      <path
+        d="M7.5 12.5 L10.7 15.7 L16.5 9"
+        stroke="white"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        pathLength={1}
+        className="check-draw"
+      />
+    </svg>
+  );
+}
 
 // Small self-dismissing confirmation shown after a save redirect
 // (?saved=1). Cleans the query param from the URL so a refresh or
@@ -39,7 +57,7 @@ export function SuccessToast({
       )}
     >
       <div className="flex animate-fade-up items-center gap-2 rounded-full bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg">
-        <CheckCircle2 className="h-4 w-4 text-success-soft" />
+        <DrawnCheck />
         {message}
       </div>
     </div>

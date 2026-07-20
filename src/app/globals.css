@@ -462,6 +462,22 @@
 .stagger-children > *:nth-child(7) { animation-delay: 270ms; }
 .stagger-children > *:nth-child(n + 8) { animation-delay: 300ms; }
 
+/* Chart/meter grow-ins. Each keyframe defines only the from-state, so the
+   100% resolves to the element's own set width/height (the inline % the data
+   produced) — the bar animates up to its real value with no JS. */
+@keyframes bar-grow { from { width: 0; } }
+@keyframes bar-rise { from { height: 0; } }
+.bar-grow-in { animation: bar-grow 0.6s var(--ease-out) both; }
+.bar-rise-in { animation: bar-rise 0.6s var(--ease-out) both; }
+
+/* A checkmark that draws itself (paired with pathLength="1" on the path). */
+@keyframes check-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.check-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: check-draw 0.5s var(--ease-out) 0.12s forwards;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

@@ -22,7 +22,7 @@ export function MiniBarChart({
               {b.display}
             </span>
             <div
-              className="w-full max-w-[2.5rem] rounded-t bg-neutral-800 transition-all dark:bg-neutral-200"
+              className="bar-rise-in w-full max-w-[2.5rem] rounded-t bg-neutral-800 transition-all dark:bg-neutral-200"
               style={{ height: `${Math.max(2, (b.value / max) * 100)}%` }}
               title={`${b.label}: ${b.display}`}
             />

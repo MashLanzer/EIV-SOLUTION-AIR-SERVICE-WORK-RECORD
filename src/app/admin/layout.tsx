@@ -1,4 +1,5 @@
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
+import { RouteTransition } from "@/components/layout/RouteTransition";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { BiometricLock } from "@/components/security/BiometricLock";
 import { TimeFormatProvider } from "@/components/i18n/TimeFormatProvider";
@@ -129,7 +130,7 @@ export default async function AdminLayout({
         id="main-content"
         className="mx-auto max-w-6xl px-4 py-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] native:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:ml-60 sm:px-8 sm:pb-6"
       >
-        {children}
+        <RouteTransition>{children}</RouteTransition>
       </main>
     </div>
     </TimeFormatProvider>
