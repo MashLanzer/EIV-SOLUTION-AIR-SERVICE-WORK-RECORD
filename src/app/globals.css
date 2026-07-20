@@ -261,6 +261,51 @@
   --color-neutral-950: #120a1e;
 }
 
+/* Dusk — the "jobsite at dusk" scheme from the login, as an app-wide teal-dark
+   palette (dark-family). Pairs with the ambient glow rule below. */
+:root[data-palette="dusk"] {
+  --background: #06171a;
+  --foreground: #d6efe9;
+  --color-primary: #2dd4bf;
+  --color-primary-hover: #5eead4;
+  --color-primary-foreground: #04141a;
+  --color-accent: #2dd4bf;
+  --color-accent-foreground: #04141a;
+  --color-accent-soft: #0e3a35;
+  --color-accent-text: #b6efe4;
+  --color-success: #34d399;
+  --color-success-soft: #0c3a30;
+  --color-success-text: #a7f3d0;
+  --color-destructive: #fb7185;
+  --color-destructive-hover: #fda4af;
+  --color-destructive-soft: #45141f;
+  --color-destructive-text: #fecdd3;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #3a2c0a;
+  --color-warning-text: #fde68a;
+  --color-neutral-50: #e9f6f3;
+  --color-neutral-100: #cfeae4;
+  --color-neutral-200: #a9d9d0;
+  --color-neutral-300: #79c2b6;
+  --color-neutral-400: #4fa89b;
+  --color-neutral-500: #3a8a7f;
+  --color-neutral-600: #2c6b62;
+  --color-neutral-700: #164a44;
+  --color-neutral-800: #0e3a35;
+  --color-neutral-900: #0c2c29;
+  --color-neutral-950: #06171a;
+}
+
+/* Ambient dusk glow behind the standard page background, so the whole app
+   picks up the login's teal-lit depth (not just a flat colour). Kept subtle +
+   viewport-anchored; opaque cards sit on top so dense screens stay readable. */
+:root[data-palette="dusk"] .bg-background {
+  background-image:
+    radial-gradient(120% 55% at 50% -8%, rgba(30, 200, 182, 0.14), transparent 60%),
+    linear-gradient(180deg, #0a2226 0%, #06171a 42%, #04120f 100%);
+  background-attachment: fixed;
+}
+
 /* Design conventions (documented here, not new tokens - Tailwind's
    built-in scales already cover all of these):
 
