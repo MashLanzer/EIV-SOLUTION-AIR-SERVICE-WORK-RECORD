@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  Boxes,
   CalendarDays,
   ClipboardList,
   ClipboardCheck,
@@ -29,7 +30,6 @@ import type { CreateData, CreateItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { HeaderOpinionsButton } from "@/components/layout/HeaderOpinionsButton";
-import { HeaderToolsMenu } from "@/components/layout/HeaderToolsMenu";
 import { Logo } from "@/components/layout/Logo";
 import { SearchCommand } from "@/components/search/SearchCommand";
 import { useT } from "@/components/i18n/LocaleProvider";
@@ -96,6 +96,8 @@ function createItems(n: Dictionary["nav"]): CreateItem[] {
   { href: "/admin/teams/new", label: n.newTeam, icon: Users2 },
   { href: "/admin/estimates/new", label: n.newEstimate, icon: FileText },
   { href: "/admin/invoices/new", label: n.newInvoice, icon: Receipt },
+  // Not a /new form — jumps to the Materials catalog page to add one there.
+  { href: "/admin/materials", label: n.newMaterial, icon: Boxes },
   ];
 }
 
@@ -185,8 +187,7 @@ export function AdminSidebar({
   const platformHref = isSuperAdmin ? "/super" : null;
   const pathname = usePathname();
   const t = useT();
-  // Header quick-tools visibility mirrors the pages they open.
-  const canManageMaterials = permissions.includes("expenses.manage");
+  // The Opinions sheet mirrors the feedback page's permission.
   const canReview = permissions.includes("records.review");
   // Hrefs to hide because their module is turned off for this company.
   const disabledHrefs = new Set<string>();
@@ -237,7 +238,6 @@ export function AdminSidebar({
           <div className="flex items-center gap-2">
             <SearchCommand />
             {canReview && <HeaderOpinionsButton />}
-            {canManageMaterials && <HeaderToolsMenu />}
             <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} unreadCount={unreadNotifications} />
             <HeaderAccountMenu
               name={name}
@@ -257,7 +257,6 @@ export function AdminSidebar({
         <div className="flex items-center gap-2">
           <SearchCommand />
           {canReview && <HeaderOpinionsButton />}
-          {canManageMaterials && <HeaderToolsMenu />}
           <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} unreadCount={unreadNotifications} />
           <HeaderAccountMenu
             name={name}

@@ -35,9 +35,6 @@ export const es: Dictionary = {
     billing: "Plan y facturación",
     platformConsole: "Consola de plataforma",
   },
-  tools: {
-    title: "Herramientas",
-  },
   opinions: {
     title: "Opiniones",
     loading: "Cargando…",
@@ -2234,6 +2231,7 @@ export const es: Dictionary = {
     newTeam: "Nuevo equipo",
     newEstimate: "Nuevo estimado",
     newInvoice: "Nueva factura",
+    newMaterial: "Nuevo material",
     newRecord: "Nuevo registro",
     newShort: "Nuevo",
     create: "Crear",

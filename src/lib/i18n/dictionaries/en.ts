@@ -35,9 +35,6 @@ export const en = {
     billing: "Plan & billing",
     platformConsole: "Platform console",
   },
-  tools: {
-    title: "Tools",
-  },
   opinions: {
     title: "Opinions",
     loading: "Loading…",
@@ -2239,6 +2236,7 @@ export const en = {
     newTeam: "New team",
     newEstimate: "New estimate",
     newInvoice: "New invoice",
+    newMaterial: "New material",
     newRecord: "New record",
     newShort: "New",
     create: "Create",

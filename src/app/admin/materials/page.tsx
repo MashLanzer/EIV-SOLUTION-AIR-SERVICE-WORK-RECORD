@@ -3,7 +3,6 @@ import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatTile } from "@/components/ui/stat-tile";
-import { SectionTabs } from "@/components/layout/SectionTabs";
 import { MaterialsManager, type MaterialRow } from "@/components/materials/MaterialsManager";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currency";
@@ -50,7 +49,6 @@ export default async function AdminMaterialsPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <SectionTabs family="money" />
       <PageHeader title={t.title} description={t.subtitle} />
 
       <div className="grid animate-fade-up grid-cols-1 gap-3 sm:grid-cols-2">
