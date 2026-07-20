@@ -28,6 +28,8 @@ import { AppTabBar } from "@/components/layout/AppTabBar";
 import type { CreateData, CreateItem } from "@/components/layout/AppMenuSheet";
 import { BottomTabBar, isTabActive, type TabItem } from "@/components/layout/BottomTabBar";
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
+import { HeaderOpinionsButton } from "@/components/layout/HeaderOpinionsButton";
+import { HeaderToolsMenu } from "@/components/layout/HeaderToolsMenu";
 import { Logo } from "@/components/layout/Logo";
 import { SearchCommand } from "@/components/search/SearchCommand";
 import { useT } from "@/components/i18n/LocaleProvider";
@@ -68,7 +70,7 @@ function appTabItems(n: Dictionary["nav"], invoicingOn: boolean): TabItem[] {
         shortLabel: n.financials,
         icon: Wallet,
         exact: false,
-        alsoActiveFor: ["/admin/estimates", "/admin/invoices", "/admin/reports"],
+        alsoActiveFor: ["/admin/sales", "/admin/estimates", "/admin/invoices", "/admin/reports"],
       }
     : {
         href: "/admin/reports",
@@ -183,6 +185,9 @@ export function AdminSidebar({
   const platformHref = isSuperAdmin ? "/super" : null;
   const pathname = usePathname();
   const t = useT();
+  // Header quick-tools visibility mirrors the pages they open.
+  const canManageMaterials = permissions.includes("expenses.manage");
+  const canReview = permissions.includes("records.review");
   // Hrefs to hide because their module is turned off for this company.
   const disabledHrefs = new Set<string>();
   if (features && !features.invoicing) {
@@ -231,6 +236,8 @@ export function AdminSidebar({
           <span className="truncate text-sm text-neutral-500 dark:text-neutral-400">{name}</span>
           <div className="flex items-center gap-2">
             <SearchCommand />
+            {canReview && <HeaderOpinionsButton />}
+            {canManageMaterials && <HeaderToolsMenu />}
             <ActivityBell href="/admin/activity" latestActivityAt={latestActivityAt} unreadCount={unreadNotifications} />
             <HeaderAccountMenu
               name={name}

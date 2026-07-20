@@ -35,6 +35,18 @@ export const en = {
     billing: "Plan & billing",
     platformConsole: "Platform console",
   },
+  tools: {
+    title: "Tools",
+  },
+  opinions: {
+    title: "Opinions",
+    loading: "Loading…",
+    countOne: "{n} rating",
+    countMany: "{n} ratings",
+    emptyTitle: "No opinions yet",
+    emptyDesc: "Customer ratings show up here once jobs are rated.",
+    viewAll: "View all",
+  },
   drafts: {
     title: "Drafts",
     subtitle: "Unfinished records saved on this device.",
@@ -2216,6 +2228,7 @@ export const en = {
     materials: "Materials",
     budgets: "Budgets",
     estimates: "Estimates",
+    sales: "Sales",
     schedule: "Schedule",
     workers: "Workers",
     checklistTemplates: "Checklist templates",

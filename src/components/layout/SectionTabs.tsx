@@ -26,11 +26,11 @@ const FAMILIES: Record<
   ],
   money: [
     { href: "/admin/financials", label: (d) => d.nav.financials },
-    { href: "/admin/estimates", label: (d) => d.nav.estimates },
-    { href: "/admin/invoices", label: (d) => d.nav.invoices },
+    // Sales unifies Estimates + Invoices behind one tab (nested sub-nav lives
+    // on the page itself). Materials moved to the header Tools menu.
+    { href: "/admin/sales", label: (d) => d.nav.sales },
     { href: "/admin/collections", label: (d) => d.nav.collections },
     { href: "/admin/expenses", label: (d) => d.nav.expenses },
-    { href: "/admin/materials", label: (d) => d.nav.materials },
     { href: "/admin/budgets", label: (d) => d.nav.budgets },
     { href: "/admin/reports", label: (d) => d.nav.payReport },
   ],
@@ -58,6 +58,12 @@ export async function SectionTabs({ family }: { family: SectionFamily }) {
     disabled.add("/admin/payments");
   }
   if (!features.estimates) disabled.add("/admin/estimates");
+  // Sales hosts Estimates + Invoices, so it needs at least one of those modules
+  // on AND the matching permission. canSeeHref can't express "either", so gate
+  // it here (it carries no NAV_PERMISSION entry).
+  const canSellEstimates = features.estimates && permissions.includes("estimates.manage");
+  const canSellInvoices = features.invoicing && permissions.includes("invoices.manage");
+  if (!canSellEstimates && !canSellInvoices) disabled.add("/admin/sales");
 
   const dict = await getT();
   const items = FAMILIES[family]

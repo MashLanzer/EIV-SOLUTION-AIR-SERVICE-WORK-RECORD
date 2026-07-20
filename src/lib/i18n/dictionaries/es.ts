@@ -35,6 +35,18 @@ export const es: Dictionary = {
     billing: "Plan y facturación",
     platformConsole: "Consola de plataforma",
   },
+  tools: {
+    title: "Herramientas",
+  },
+  opinions: {
+    title: "Opiniones",
+    loading: "Cargando…",
+    countOne: "{n} calificación",
+    countMany: "{n} calificaciones",
+    emptyTitle: "Aún no hay opiniones",
+    emptyDesc: "Las calificaciones de clientes aparecerán aquí cuando califiquen los trabajos.",
+    viewAll: "Ver todas",
+  },
   drafts: {
     title: "Borradores",
     subtitle: "Registros sin terminar guardados en este dispositivo.",
@@ -2211,6 +2223,7 @@ export const es: Dictionary = {
     materials: "Materiales",
     budgets: "Límites",
     estimates: "Presupuestos",
+    sales: "Ventas",
     schedule: "Agenda",
     workers: "Trabajadores",
     checklistTemplates: "Plantillas de listas",
