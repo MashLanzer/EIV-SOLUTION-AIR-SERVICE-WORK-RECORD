@@ -1,12 +1,16 @@
 import { ProfileScreen } from "@/components/profile/ProfileScreen";
-import { getProfileData } from "@/lib/profileData";
+import { getAdminProfileStats, getProfileData } from "@/lib/profileData";
 import { getLocale } from "@/lib/i18n/server";
 import { requireOrgId } from "@/lib/orgScope";
 import { requireOfficeAccess } from "@/lib/authz";
 
 export default async function AdminProfilePage() {
   const { session } = await requireOfficeAccess();
-  const data = await getProfileData(session.user.id, requireOrgId(session));
+  const organizationId = requireOrgId(session);
+  const [data, adminStats] = await Promise.all([
+    getProfileData(session.user.id, organizationId),
+    getAdminProfileStats(session.user.id, organizationId),
+  ]);
   const locale = await getLocale();
   const dateFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     weekday: "short",
@@ -60,6 +64,7 @@ export default async function AdminProfilePage() {
       monthCompare={data.monthCompare}
       activityDays={data.activityDays}
       timeOff={data.timeOff}
+      adminStats={adminStats}
     />
   );
 }

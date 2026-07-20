@@ -115,6 +115,13 @@ export const en = {
     // Insights sheet (weekly trend + activity heatmap)
     insights: "Activity & trends",
     insightsDesc: "Weekly trend and 12-week heatmap",
+    // Admin (reviewer) stats — admins review records rather than submit them
+    statReviewed: "Reviewed",
+    statReturned: "Returned",
+    statQueue: "Queue",
+    adminStatsDesc: "Records you reviewed this month.",
+    adminTrendLabel: "Records reviewed, last 6 weeks",
+    adminActivityMapDesc: "Records you reviewed over the last 12 weeks.",
     // Time off
     timeOffTitle: "Time off",
     timeOffDesc: "Your upcoming days off and pending requests.",

@@ -266,3 +266,79 @@ export async function getProfileData(userId: string, organizationId: string) {
     needsAttention,
   };
 }
+
+// Admin-facing profile stats. An admin doesn't submit records — they *review*
+// them — so their contribution can't be read off submittedById. This reads the
+// review trail (RecordReviewEvent) for the actions this person took: how many
+// records they approved/returned this month vs last, plus a review heatmap and
+// weekly trend, and the org's still-pending queue as an actionable figure.
+export async function getAdminProfileStats(userId: string, organizationId: string) {
+  const today = startOfUtcDay(new Date());
+  const monthStart = utcDay(today.getUTCFullYear(), today.getUTCMonth(), 1);
+  const prevMonthStart = utcDay(today.getUTCFullYear(), today.getUTCMonth() - 1, 1);
+  const monthEnd = addUtcDays(today, 1);
+
+  const HEATMAP_DAYS = 84; // 12 weeks
+  const heatmapStart = addUtcDays(today, -(HEATMAP_DAYS - 1));
+  const thisWeekStart = weekRange(today).from;
+  const trendStart = addUtcDays(thisWeekStart, -(TREND_WEEKS - 1) * 7);
+  // Pull enough history to cover the heatmap, the trend, and last month.
+  const windowStart = [heatmapStart, trendStart, prevMonthStart].reduce((a, b) =>
+    a < b ? a : b
+  );
+
+  const [reviewEvents, pendingQueue] = await Promise.all([
+    prisma.recordReviewEvent.findMany({
+      where: {
+        organizationId,
+        actorId: userId,
+        action: { in: ["APPROVED", "RETURNED"] },
+        createdAt: { gte: windowStart },
+      },
+      select: { action: true, createdAt: true },
+    }),
+    // The org's outstanding review queue — the number an admin acts on.
+    prisma.workRecord.count({ where: { organizationId, status: "SUBMITTED" } }),
+  ]);
+
+  let revCur = 0, revPrev = 0, apCur = 0, apPrev = 0, rtCur = 0, rtPrev = 0;
+  const dayCounts = new Map<string, number>();
+  const weekly = Array<number>(TREND_WEEKS).fill(0);
+  for (const e of reviewEvents) {
+    const at = e.createdAt;
+    const isApproved = e.action === "APPROVED";
+    if (at >= monthStart && at < monthEnd) {
+      revCur += 1;
+      if (isApproved) apCur += 1;
+      else rtCur += 1;
+    } else if (at >= prevMonthStart && at < monthStart) {
+      revPrev += 1;
+      if (isApproved) apPrev += 1;
+      else rtPrev += 1;
+    }
+    if (at >= heatmapStart) {
+      const key = at.toISOString().slice(0, 10);
+      dayCounts.set(key, (dayCounts.get(key) ?? 0) + 1);
+    }
+    const wkStart = weekRange(at).from;
+    const idx = Math.round((thisWeekStart.getTime() - wkStart.getTime()) / MS_PER_WEEK);
+    if (idx >= 0 && idx < TREND_WEEKS) weekly[TREND_WEEKS - 1 - idx] += 1;
+  }
+
+  const activityDays: { date: string; count: number }[] = [];
+  for (let i = 0; i < HEATMAP_DAYS; i++) {
+    const key = addUtcDays(heatmapStart, i).toISOString().slice(0, 10);
+    activityDays.push({ date: key, count: dayCounts.get(key) ?? 0 });
+  }
+
+  return {
+    reviewed: { current: revCur, previous: revPrev },
+    approved: { current: apCur, previous: apPrev },
+    returned: { current: rtCur, previous: rtPrev },
+    pendingQueue,
+    activityDays,
+    weekly,
+  };
+}
+
+export type AdminProfileStats = Awaited<ReturnType<typeof getAdminProfileStats>>;

@@ -115,6 +115,13 @@ export const es: Dictionary = {
     // Sheet de análisis (tendencia semanal + mapa de actividad)
     insights: "Actividad y tendencias",
     insightsDesc: "Tendencia semanal y mapa de 12 semanas",
+    // Estadísticas de admin (revisor) — los admin revisan, no envían
+    statReviewed: "Revisados",
+    statReturned: "Devueltos",
+    statQueue: "Cola",
+    adminStatsDesc: "Registros que revisaste este mes.",
+    adminTrendLabel: "Registros revisados, últimas 6 semanas",
+    adminActivityMapDesc: "Registros que revisaste en las últimas 12 semanas.",
     // Días libres
     timeOffTitle: "Días libres",
     timeOffDesc: "Tus próximos días libres y solicitudes pendientes.",

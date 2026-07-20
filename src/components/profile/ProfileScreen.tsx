@@ -85,6 +85,17 @@ interface TimeOffEntry {
   // The office's note (e.g. why it was denied), shown to the worker.
   reviewNote: string | null;
 }
+// Admins review rather than submit, so their stats read off the review trail:
+// how many records they approved/returned this month vs last, a review heatmap
+// + weekly trend, and the org's outstanding queue.
+interface AdminStats {
+  reviewed: MetricPair;
+  approved: MetricPair;
+  returned: MetricPair;
+  pendingQueue: number;
+  activityDays: ActivityDay[];
+  weekly: number[];
+}
 
 export function ProfileScreen({
   name,
@@ -111,6 +122,7 @@ export function ProfileScreen({
   monthCompare,
   activityDays,
   timeOff,
+  adminStats,
 }: {
   name: string;
   email: string;
@@ -144,6 +156,8 @@ export function ProfileScreen({
   monthCompare: MonthCompare;
   activityDays: ActivityDay[];
   timeOff: TimeOffEntry[];
+  // Review-based stats for admins; omitted for workers.
+  adminStats?: AdminStats;
 }) {
   const isAdmin = role === "ADMIN";
   const t = useT().profile;
@@ -174,11 +188,16 @@ export function ProfileScreen({
   // Which tabs to show. Workers get a rich Summary; the Activity tab only
   // appears when there's something in it; Account is always present. When only
   // one tab qualifies we drop the tab bar entirely (nothing to switch to).
-  // Which rich Summary cards have data (workers submit records; admins don't).
-  const hasActivityMap = activityDays.some((d) => d.count > 0);
+  // Which rich Summary cards have data. Workers read off submissions; admins
+  // read off their review trail (adminStats), so the heatmap/trend swap source.
+  const insightsDays = isAdmin && adminStats ? adminStats.activityDays : activityDays;
+  const insightsWeekly = isAdmin && adminStats ? adminStats.weekly : metrics.weekly;
+  const hasActivityMap = insightsDays.some((d) => d.count > 0);
   // The insights sheet (weekly trend + heatmap) is only worth surfacing when
   // there's something to show in it.
-  const hasInsights = !isAdmin && (hasActivityMap || metrics.weekly.some((n) => n > 0));
+  const hasInsights =
+    (!isAdmin || Boolean(adminStats)) &&
+    (hasActivityMap || insightsWeekly.some((n) => n > 0));
   // Always show Summary now that the time-off request lives there and is
   // available to everyone.
   const hasSummary = true;
@@ -342,6 +361,44 @@ export function ProfileScreen({
             })}
           </div>
         )}
+
+        {/* Admins review rather than submit, so their strip counts this month's
+            review actions, with the outstanding queue linking to the bandeja. */}
+        {isAdmin && adminStats && (
+          <div className="grid grid-cols-4 divide-x divide-neutral-200 border-t border-neutral-200 dark:divide-neutral-800 dark:border-neutral-800">
+            {[
+              { value: String(adminStats.reviewed.current), label: t.statReviewed, href: undefined },
+              { value: String(adminStats.approved.current), label: t.approved, href: undefined },
+              { value: String(adminStats.returned.current), label: t.statReturned, href: undefined },
+              { value: String(adminStats.pendingQueue), label: t.statQueue, href: "/admin/review" },
+            ].map((s) => {
+              const cellClass = "flex flex-col items-center gap-0.5 px-1 py-3";
+              const inner = (
+                <>
+                  <span className="text-base font-bold tabular-nums text-neutral-900 dark:text-neutral-100">
+                    {s.value}
+                  </span>
+                  <span className="text-center text-[10px] uppercase leading-tight tracking-wide text-neutral-500 dark:text-neutral-400">
+                    {s.label}
+                  </span>
+                </>
+              );
+              return s.href ? (
+                <Link
+                  key={s.label}
+                  href={s.href}
+                  className={cn(cellClass, "transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900")}
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div key={s.label} className={cellClass}>
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Tab bar (only when there's more than one tab to switch between) */}
@@ -417,6 +474,29 @@ export function ProfileScreen({
               </div>
               {/* The weekly-trend + 12-week heatmap charts live in a sheet, so
                   they don't stretch the page. */}
+              {hasInsights && (
+                <SettingsRow
+                  icon={BarChart3}
+                  label={t.insights}
+                  sublabel={t.insightsDesc}
+                  onClick={() => setSheet("insights")}
+                  trailing={
+                    <ChevronRight className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                  }
+                />
+              )}
+            </SettingsSection>
+          )}
+
+          {/* This month (admins) — the review actions they took vs last month,
+              plus the same tap-through to their review activity charts. */}
+          {isAdmin && adminStats && (
+            <SettingsSection title={t.monthVsLast} description={t.adminStatsDesc}>
+              <div className="grid grid-cols-3 divide-x divide-neutral-200 dark:divide-neutral-800">
+                <CompareCell label={t.statReviewed} pair={adminStats.reviewed} sameLabel={t.samAsLast} />
+                <CompareCell label={t.approved} pair={adminStats.approved} sameLabel={t.samAsLast} />
+                <CompareCell label={t.statReturned} pair={adminStats.returned} sameLabel={t.samAsLast} />
+              </div>
               {hasInsights && (
                 <SettingsRow
                   icon={BarChart3}
@@ -858,8 +938,8 @@ export function ProfileScreen({
       >
         <div className="flex flex-col gap-4">
           <WeeklyTrend
-            weekly={metrics.weekly}
-            label={t.trendLabel}
+            weekly={insightsWeekly}
+            label={isAdmin ? t.adminTrendLabel : t.trendLabel}
             thisWeekLabel={t.thisWeek}
           />
           {hasActivityMap && (
@@ -869,18 +949,18 @@ export function ProfileScreen({
                   {t.activityMapTitle}
                 </p>
                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  {t.activityMapDesc}
+                  {isAdmin ? t.adminActivityMapDesc : t.activityMapDesc}
                 </p>
               </div>
               <ActivityHeatmap
-                days={activityDays}
+                days={insightsDays}
                 lessLabel={t.activityLess}
                 moreLabel={t.activityMore}
               />
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
                 {t.activeDays.replace(
                   "{n}",
-                  String(activityDays.filter((d) => d.count > 0).length)
+                  String(insightsDays.filter((d) => d.count > 0).length)
                 )}
               </p>
             </div>
