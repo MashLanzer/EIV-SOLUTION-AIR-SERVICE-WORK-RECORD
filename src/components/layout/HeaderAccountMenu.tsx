@@ -86,7 +86,7 @@ export function HeaderAccountMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-40 mt-2 w-56 origin-top-right animate-fade-up rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1.5 shadow-lg shadow-black/10"
+          className="absolute right-0 top-full z-40 mt-2 w-56 origin-top-right animate-scale-in rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 p-1.5 shadow-lg shadow-black/10"
         >
           <div className="flex items-center gap-2 px-2.5 py-2">
             <span className="truncate text-sm font-semibold text-neutral-900 dark:text-neutral-100">

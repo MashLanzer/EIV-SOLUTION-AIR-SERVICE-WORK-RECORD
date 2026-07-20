@@ -52,6 +52,14 @@
      otherwise-monochrome UI. Navy resolves to the near-black ink via
      currentColor; teal is the one fixed color. */
   --brand-teal: #14cdbd;
+
+  /* Motion tokens — one easing + a small duration scale so every animation and
+     transition in the app breathes the same way. Kept GPU-friendly (transform/
+     opacity only) and always overridable by the reduced-motion guards below. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 360ms;
 }
 
 /* Dark palette. Declared as a mixin-like block applied in two places so the
@@ -401,6 +409,8 @@
   /* `both` keeps the from-state during any animation-delay, so staggered
      entrances (e.g. dashboard sections) don't flash visible then reset. */
   --animate-fade-up: fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-scale-in: scale-in 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes fade-up {
@@ -413,6 +423,44 @@
     transform: none;
   }
 }
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* A gentle pop for menus/popovers — pairs with an `origin-*` utility so it
+   grows from the trigger corner, not the centre. */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Elegant staggered entrance for a list or grid: direct children fade-up with a
+   small incremental delay. The cascade is capped so a long list never waits
+   seconds before the last row appears. `both` holds the from-state during the
+   delay so nothing flashes. Reduced-motion guards below neutralise it. */
+.stagger-children > * {
+  animation: fade-up 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 45ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 90ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 135ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 225ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 270ms; }
+.stagger-children > *:nth-child(n + 8) { animation-delay: 300ms; }
 
 body {
   background: var(--background);

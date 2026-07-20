@@ -45,7 +45,7 @@ export function SectionTabsBar({
               aria-selected={active}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "whitespace-nowrap rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors",
+                "whitespace-nowrap rounded-md px-3 py-1.5 text-center text-sm font-medium transition-[color,background-color,box-shadow,transform] duration-200 ease-[var(--ease-out)] active:scale-[0.97]",
                 active
                   ? "bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-sm"
                   : "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
