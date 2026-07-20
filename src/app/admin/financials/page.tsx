@@ -453,6 +453,11 @@ export default async function FinancialsPage({
       {/* Alerts sit directly under Quick actions. */}
       {alertsBlock}
 
+      {/* Charts (trend, forecast, money-flow) — one tap, above the goal. */}
+      {hasAnalytics && (
+        <FinancialsInsightsSheet label={t.insights}>{analytics}</FinancialsInsightsSheet>
+      )}
+
       {/* Revenue goal thermometer. */}
       {fin.goal.target != null ? (
         <Card>
@@ -963,11 +968,6 @@ export default async function FinancialsPage({
 
       {/* Plain-language digest of the selected period. */}
       <FinancialDigest heading={dict.digest.heading} lines={digestLines} />
-
-      {/* Charts (trend, forecast, money-flow) tucked into a sheet. */}
-      {hasAnalytics && (
-        <FinancialsInsightsSheet label={t.insights}>{analytics}</FinancialsInsightsSheet>
-      )}
     </div>
   );
 }
