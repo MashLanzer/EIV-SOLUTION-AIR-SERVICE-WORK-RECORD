@@ -1552,9 +1552,9 @@ export const en = {
     allClear: "All clear — nothing needs attention",
     // In-page section tabs
     tabSummary: "Summary",
-    tabCollections: "Collections",
-    tabSales: "Sales",
-    tabCosts: "Costs",
+    tabCollections: "Receivables",
+    tabSales: "Deals",
+    tabCosts: "Spending",
     // KPI card groups
     kpiResult: "Result",
     kpiRatios: "Indicators",

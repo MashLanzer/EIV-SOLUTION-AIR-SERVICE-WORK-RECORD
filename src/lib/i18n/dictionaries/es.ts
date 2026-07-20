@@ -1546,9 +1546,9 @@ export const es: Dictionary = {
     allClear: "Todo en orden — nada requiere atención",
     // Pestañas de sección en la página
     tabSummary: "Resumen",
-    tabCollections: "Cobros",
-    tabSales: "Ventas",
-    tabCosts: "Gastos",
+    tabCollections: "Por cobrar",
+    tabSales: "Cierres",
+    tabCosts: "Egresos",
     // Grupos de tarjetas KPI
     kpiResult: "Resultado",
     kpiRatios: "Indicadores",
