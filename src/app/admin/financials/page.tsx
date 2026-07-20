@@ -411,6 +411,32 @@ export default async function FinancialsPage({
     </>
   );
 
+  // Action alerts (overdue / unsent drafts / pending estimates), shown right
+  // under Quick actions so the nudges sit with the create shortcuts.
+  const alertsBlock =
+    alerts.length > 0 ? (
+      <Card className="bg-warning-soft">
+        <CardContent className="flex flex-col divide-y divide-warning-text/15 p-0">
+          {alerts.map((a) => (
+            <Link
+              key={a.key}
+              href={a.href}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-warning-text/5"
+            >
+              <AlertTriangle className="h-4 w-4 shrink-0 text-warning-text" />
+              <span className="min-w-0 flex-1 font-medium text-warning-text">{a.text}</span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-warning-text/70" />
+            </Link>
+          ))}
+        </CardContent>
+      </Card>
+    ) : (
+      <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-success-text" />
+        {t.allClear}
+      </div>
+    );
+
   // ---- Tab panels ------------------------------------------------------
 
   const summaryPanel = (
@@ -423,6 +449,9 @@ export default async function FinancialsPage({
           defaultTaxRate={quickTaxRate}
         />
       </Section>
+
+      {/* Alerts sit directly under Quick actions. */}
+      {alertsBlock}
 
       {/* Revenue goal thermometer. */}
       {fin.goal.target != null ? (
@@ -938,30 +967,6 @@ export default async function FinancialsPage({
       {/* Charts (trend, forecast, money-flow) tucked into a sheet. */}
       {hasAnalytics && (
         <FinancialsInsightsSheet label={t.insights}>{analytics}</FinancialsInsightsSheet>
-      )}
-
-      {/* Action alerts — kept visible so overdue/draft nudges aren't missed. */}
-      {alerts.length > 0 ? (
-        <Card className="bg-warning-soft">
-          <CardContent className="flex flex-col divide-y divide-warning-text/15 p-0">
-            {alerts.map((a) => (
-              <Link
-                key={a.key}
-                href={a.href}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-warning-text/5"
-              >
-                <AlertTriangle className="h-4 w-4 shrink-0 text-warning-text" />
-                <span className="min-w-0 flex-1 font-medium text-warning-text">{a.text}</span>
-                <ArrowRight className="h-4 w-4 shrink-0 text-warning-text/70" />
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-success-text" />
-          {t.allClear}
-        </div>
       )}
     </div>
   );
