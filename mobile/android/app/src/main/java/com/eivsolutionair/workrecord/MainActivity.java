@@ -48,9 +48,12 @@ public class MainActivity extends BridgeActivity {
     // Public OAuth client identifier (not a secret - safe to embed), used as
     // Credential Manager's serverClientId so the ID token it returns is
     // audience-scoped to this app's backend, which verifies it against the
-    // same value (AUTH_GOOGLE_ID).
+    // same value (AUTH_GOOGLE_ID). MUST be the project's real *Web* OAuth
+    // client - the same one the browser flow / AUTH_GOOGLE_ID uses. A wrong or
+    // non-existent client here makes Google Play Services fail the native
+    // picker with "[28444] Developer console is not set up correctly".
     private static final String WEB_CLIENT_ID =
-        "337399331790-174ml85osblhorb88tm6e2jhhl8ee2l2.apps.googleusercontent.com";
+        "337399331790-g07gdquevc975n0kq35orgs4aqv07540.apps.googleusercontent.com";
     private final ExecutorService networkExecutor = Executors.newSingleThreadExecutor();
 
     @Override
