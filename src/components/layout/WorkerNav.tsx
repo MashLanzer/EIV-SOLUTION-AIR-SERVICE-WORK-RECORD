@@ -82,6 +82,7 @@ export function WorkerNav({
             profileHref="/records/profile"
             settingsHref="/records/settings"
             mileageHref="/records/mileage"
+            draftsHref="/records/drafts"
           />
         </div>
       </header>

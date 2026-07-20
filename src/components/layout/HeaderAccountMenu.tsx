@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Car, ChevronDown, LogOut, Settings, ShieldCheck, User as UserIcon } from "lucide-react";
+import { Car, ChevronDown, FileText, LogOut, Settings, ShieldCheck, User as UserIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 import { Avatar } from "@/components/ui/avatar";
@@ -21,6 +21,7 @@ export function HeaderAccountMenu({
   settingsHref,
   platformHref = null,
   mileageHref = null,
+  draftsHref = null,
 }: {
   name: string;
   avatarUrl?: string | null;
@@ -31,6 +32,8 @@ export function HeaderAccountMenu({
   platformHref?: string | null;
   // Set to expose a mileage-log link (workers). Null hides it.
   mileageHref?: string | null;
+  // Set to expose a drafts-inbox link (workers). Null hides it.
+  draftsHref?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -130,6 +133,17 @@ export function HeaderAccountMenu({
             <Settings className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
             {t.settings}
           </Link>
+          {draftsHref && (
+            <Link
+              href={draftsHref}
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className={itemClass}
+            >
+              <FileText className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+              {t.drafts}
+            </Link>
+          )}
           {mileageHref && (
             <Link
               href={mileageHref}

@@ -59,6 +59,18 @@ export async function clearDraft(key: string): Promise<void> {
   }
 }
 
+// Every stored draft as [key, value] pairs, for the unified drafts inbox.
+// getAllKeys() and getAll() both return in key order, so they zip cleanly.
+export async function listDrafts(): Promise<{ key: string; value: unknown }[]> {
+  try {
+    const keys = (await withStore<IDBValidKey[]>("readonly", (s) => s.getAllKeys())) ?? [];
+    const values = (await withStore<unknown[]>("readonly", (s) => s.getAll())) ?? [];
+    return keys.map((k, i) => ({ key: String(k), value: values[i] }));
+  } catch {
+    return [];
+  }
+}
+
 // The content-bearing fields of a new-record draft. Every key is optional and
 // loosely typed so both the form's value object and a raw draft blob read back
 // from IndexedDB satisfy it without an index signature.
