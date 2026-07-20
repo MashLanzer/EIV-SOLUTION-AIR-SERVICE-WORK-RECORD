@@ -13,7 +13,7 @@ const MAX_VENDOR = 120;
 const MAX_NOTE = 500;
 
 function revalidate() {
-  revalidatePath("/admin/expenses");
+  revalidatePath("/admin/costs");
   revalidatePath("/admin/financials");
 }
 

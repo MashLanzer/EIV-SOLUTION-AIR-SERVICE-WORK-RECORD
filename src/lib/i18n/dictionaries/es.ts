@@ -2220,6 +2220,7 @@ export const es: Dictionary = {
     expenses: "Gastos",
     materials: "Materiales",
     budgets: "Límites",
+    costs: "Costos",
     estimates: "Presupuestos",
     sales: "Ventas",
     schedule: "Agenda",

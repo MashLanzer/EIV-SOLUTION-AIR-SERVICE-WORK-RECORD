@@ -29,8 +29,9 @@ const FAMILIES: Record<
     // on the page itself). Materials moved to the header Tools menu.
     { href: "/admin/sales", label: (d) => d.nav.sales },
     { href: "/admin/collections", label: (d) => d.nav.collections },
-    { href: "/admin/expenses", label: (d) => d.nav.expenses },
-    { href: "/admin/budgets", label: (d) => d.nav.budgets },
+    // Costs unifies Expenses + Budgets behind one tab (nested sub-nav on the
+    // page itself).
+    { href: "/admin/costs", label: (d) => d.nav.costs },
     { href: "/admin/reports", label: (d) => d.nav.payReport },
   ],
   structure: [

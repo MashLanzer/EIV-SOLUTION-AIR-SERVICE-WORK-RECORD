@@ -2225,6 +2225,7 @@ export const en = {
     expenses: "Expenses",
     materials: "Materials",
     budgets: "Budgets",
+    costs: "Costs",
     estimates: "Estimates",
     sales: "Sales",
     schedule: "Schedule",

@@ -25,6 +25,5 @@ export async function setCategoryBudgetAction(categoryId: string, formData: Form
   }
 
   await prisma.expenseCategory.update({ where: { id: cat.id }, data: { monthlyBudget } });
-  revalidatePath("/admin/budgets");
-  revalidatePath("/admin/expenses");
+  revalidatePath("/admin/costs");
 }
