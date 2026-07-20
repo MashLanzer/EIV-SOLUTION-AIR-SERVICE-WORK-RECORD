@@ -19,6 +19,7 @@ export const NAV_PERMISSION: Record<string, string | undefined> = {
   "/admin/estimates/new": "estimates.manage",
   "/admin/invoices": "invoices.manage",
   "/admin/invoices/new": "invoices.manage",
+  "/admin/collections": "invoices.manage",
   "/admin/expenses": "expenses.manage",
   "/admin/materials": "expenses.manage",
   "/admin/financials": "financials.view",

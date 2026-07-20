@@ -28,6 +28,7 @@ const FAMILIES: Record<
     { href: "/admin/financials", label: (d) => d.nav.financials },
     { href: "/admin/estimates", label: (d) => d.nav.estimates },
     { href: "/admin/invoices", label: (d) => d.nav.invoices },
+    { href: "/admin/collections", label: (d) => d.nav.collections },
     { href: "/admin/expenses", label: (d) => d.nav.expenses },
     { href: "/admin/materials", label: (d) => d.nav.materials },
     { href: "/admin/reports", label: (d) => d.nav.payReport },
@@ -51,6 +52,7 @@ export async function SectionTabs({ family }: { family: SectionFamily }) {
   const disabled = new Set<string>();
   if (!features.invoicing) {
     disabled.add("/admin/invoices");
+    disabled.add("/admin/collections");
     disabled.add("/admin/financials");
     disabled.add("/admin/payments");
   }
