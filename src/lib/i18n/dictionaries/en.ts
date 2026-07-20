@@ -1300,6 +1300,15 @@ export const en = {
     range: "{low} – {high} likely range",
     confidence: "{n}% confidence",
   },
+  sankey: {
+    heading: "Where the money goes",
+    revenue: "Revenue",
+    labor: "Labor",
+    materials: "Materials",
+    expenses: "Expenses",
+    profit: "Profit",
+    loss: "Costs exceed revenue",
+  },
   financials: {
     title: "Financials",
     thisMonth: "This month",

@@ -25,6 +25,7 @@ import { SectionTabs } from "@/components/layout/SectionTabs";
 import { FinancialsTabs } from "@/components/financials/FinancialsTabs";
 import { FinancialDigest } from "@/components/financials/FinancialDigest";
 import { ForecastChart } from "@/components/financials/ForecastChart";
+import { SankeyChart, type SankeySegment } from "@/components/financials/SankeyChart";
 import { FinancialsQuickActions } from "@/components/financials/FinancialsQuickActions";
 import { MetricCard, Metric, MetricLink } from "@/components/ui/metric-card";
 import { prisma } from "@/lib/prisma";
@@ -40,6 +41,7 @@ import {
 } from "@/lib/financials";
 import { buildDigest, DIGEST_MONEY_TOKENS, type DigestLine } from "@/lib/digest";
 import { forecastRevenue } from "@/lib/forecast";
+import { buildMoneyFlow, type FlowKey } from "@/lib/sankey";
 import { requireFeature } from "@/lib/features";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
@@ -218,6 +220,25 @@ export default async function FinancialsPage({
   ]);
   const quickCustomers = customerRows.map((c) => ({ id: c.id, name: c.name, address: c.address ?? "" }));
   const quickTaxRate = orgDefaults?.defaultTaxRate != null ? String(Number(orgDefaults.defaultTaxRate)) : "0";
+
+  // Period material + expense cost, for the money-flow (Sankey). Materials come
+  // from lines on approved records dated in the window; expenses from the
+  // expense ledger dated in the window — matching how labor is scoped.
+  const [periodExpenses, periodMaterials] = await Promise.all([
+    prisma.expense.aggregate({
+      where: { organizationId, date: { gte: fin.start, lt: fin.end } },
+      _sum: { amount: true },
+    }),
+    prisma.recordMaterial.findMany({
+      where: { record: { organizationId, status: "APPROVED", date: { gte: fin.start, lt: fin.end } } },
+      select: { quantity: true, unitCost: true },
+    }),
+  ]);
+  const expensesTotal = Number(periodExpenses._sum.amount ?? 0);
+  const materialsTotal = periodMaterials.reduce(
+    (s, m) => s + Number(m.quantity) * Number(m.unitCost),
+    0
+  );
   const t = dict.financials;
   const money = (n: number) => `${currency}${n.toFixed(2)}`;
   const docCount = (n: number) => (n === 1 ? t.countOne : t.countMany).replace("{n}", String(n));
@@ -253,6 +274,29 @@ export default async function FinancialsPage({
     ...fc.points.map((p) => monthFmt.format(new Date(Date.UTC(lastTrend.year, lastTrend.month + p.step, 1)))),
   ];
   const nextPoint = fc.points[0];
+
+  // Money-flow (Sankey): revenue fanning out into labor, materials, expenses,
+  // and the leftover profit.
+  const tsk = dict.sankey;
+  const flowLabel: Record<FlowKey, string> = {
+    labor: tsk.labor,
+    materials: tsk.materials,
+    expenses: tsk.expenses,
+    profit: tsk.profit,
+  };
+  const moneyFlow = buildMoneyFlow({
+    revenue: fin.revenue,
+    labor: fin.labor,
+    materials: materialsTotal,
+    expenses: expensesTotal,
+  });
+  const sankeySegments: SankeySegment[] = moneyFlow.flows.map((f) => ({
+    key: f.key,
+    label: flowLabel[f.key],
+    amount: moneyShort(f.value),
+    sharePct: Math.round(f.share * 100),
+    share: f.share,
+  }));
 
   const monthFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
@@ -865,6 +909,18 @@ export default async function FinancialsPage({
             .replace("{high}", moneyShort(nextPoint.high))}
           confidenceLabel={tf.confidence.replace("{n}", String(fc.confidencePct))}
           slope={fc.slope}
+        />
+      )}
+
+      {/* Money-flow: revenue into cost buckets + profit. */}
+      {sankeySegments.length > 0 && (
+        <SankeyChart
+          heading={tsk.heading}
+          revenueLabel={tsk.revenue}
+          revenueAmount={moneyShort(moneyFlow.revenue)}
+          segments={sankeySegments}
+          loss={moneyFlow.loss}
+          lossLabel={tsk.loss}
         />
       )}
 

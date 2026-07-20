@@ -1294,6 +1294,15 @@ export const es: Dictionary = {
     range: "rango probable {low} – {high}",
     confidence: "{n}% de confianza",
   },
+  sankey: {
+    heading: "A dónde va el dinero",
+    revenue: "Ingresos",
+    labor: "Mano de obra",
+    materials: "Materiales",
+    expenses: "Gastos",
+    profit: "Ganancia",
+    loss: "Los costos superan los ingresos",
+  },
   financials: {
     title: "Finanzas",
     thisMonth: "Este mes",
