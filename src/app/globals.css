@@ -123,16 +123,16 @@
 
    Ocean — a deep-blue "ocean dark" scheme (dark-family). */
 :root[data-palette="ocean"] {
-  --background: #001d39;
-  --foreground: #cfe4f4;
+  --background: #070a0e;
+  --foreground: #e6ecf2;
 
   --color-primary: #7bbde8;
   --color-primary-hover: #93cbef;
-  --color-primary-foreground: #001d39;
+  --color-primary-foreground: #05121d;
   --color-accent: #7bbde8;
-  --color-accent-foreground: #001d39;
-  --color-accent-soft: #0d3a63;
-  --color-accent-text: #bdd8e9;
+  --color-accent-foreground: #05121d;
+  --color-accent-soft: #122a3a;
+  --color-accent-text: #bcd8ea;
   --color-success: #34d399;
   --color-success-soft: #0c3f4a;
   --color-success-text: #99f6e4;
@@ -144,31 +144,31 @@
   --color-warning-soft: #422b0a;
   --color-warning-text: #fde68a;
 
-  /* Re-tint the neutral ramp blue (same light→dark ordering as the grey
-     scale, so every existing neutral-* utility keeps its intent). */
-  --color-neutral-50: #eef5fb;
-  --color-neutral-100: #d5e6f4;
-  --color-neutral-200: #b7d3ea;
-  --color-neutral-300: #8fb6d7;
-  --color-neutral-400: #6b97bb;
-  --color-neutral-500: #527ca1;
-  --color-neutral-600: #3c6188;
-  --color-neutral-700: #17456f;
-  --color-neutral-800: #0c3760;
-  --color-neutral-900: #0a2c4f;
-  --color-neutral-950: #04203f;
+  /* Near-neutral dark ramp with only a whisper of blue — the colour lives in
+     the accent, not the surfaces. */
+  --color-neutral-50: #eef1f4;
+  --color-neutral-100: #dbe1e8;
+  --color-neutral-200: #bcc6d1;
+  --color-neutral-300: #93a0b0;
+  --color-neutral-400: #6d7b8c;
+  --color-neutral-500: #55616f;
+  --color-neutral-600: #404a56;
+  --color-neutral-700: #29323c;
+  --color-neutral-800: #1a2028;
+  --color-neutral-900: #12171d;
+  --color-neutral-950: #0a0e12;
 }
 
 /* Forest — a deep-green dark scheme (dark-family). */
 :root[data-palette="forest"] {
-  --background: #07130d;
-  --foreground: #d7ecdb;
+  --background: #070b09;
+  --foreground: #e6ece9;
   --color-primary: #6ee7a6;
   --color-primary-hover: #8ff0bd;
   --color-primary-foreground: #06130d;
   --color-accent: #6ee7a6;
   --color-accent-foreground: #06130d;
-  --color-accent-soft: #123524;
+  --color-accent-soft: #123024;
   --color-accent-text: #bff0cf;
   --color-success: #34d399;
   --color-success-soft: #0c3a28;
@@ -180,29 +180,30 @@
   --color-warning: #fbbf24;
   --color-warning-soft: #3a2c0a;
   --color-warning-text: #fde68a;
-  --color-neutral-50: #eef6f0;
-  --color-neutral-100: #d7ecdb;
-  --color-neutral-200: #b7dcc0;
-  --color-neutral-300: #8fc59e;
-  --color-neutral-400: #6aa67d;
-  --color-neutral-500: #4f8863;
-  --color-neutral-600: #3a6b4b;
-  --color-neutral-700: #164a30;
-  --color-neutral-800: #0d3a25;
-  --color-neutral-900: #0c2e1e;
-  --color-neutral-950: #06170e;
+  /* Near-neutral dark ramp with only a whisper of green. */
+  --color-neutral-50: #eef2ef;
+  --color-neutral-100: #dbe3dd;
+  --color-neutral-200: #bcc9c1;
+  --color-neutral-300: #93a49a;
+  --color-neutral-400: #6d7d74;
+  --color-neutral-500: #55625b;
+  --color-neutral-600: #404b45;
+  --color-neutral-700: #293430;
+  --color-neutral-800: #1a211d;
+  --color-neutral-900: #121814;
+  --color-neutral-950: #0a0e0b;
 }
 
 /* Sunset — a warm amber-on-brown dark scheme (dark-family). */
 :root[data-palette="sunset"] {
-  --background: #1a0f0a;
-  --foreground: #f4e2d5;
+  --background: #0c0806;
+  --foreground: #f0ebe6;
   --color-primary: #fb923c;
   --color-primary-hover: #fdba74;
-  --color-primary-foreground: #1a0f0a;
+  --color-primary-foreground: #150b06;
   --color-accent: #fb923c;
-  --color-accent-foreground: #1a0f0a;
-  --color-accent-soft: #3a1e12;
+  --color-accent-foreground: #150b06;
+  --color-accent-soft: #2e1e12;
   --color-accent-text: #fcd9b8;
   --color-success: #4ade80;
   --color-success-soft: #10331f;
@@ -214,29 +215,30 @@
   --color-warning: #fbbf24;
   --color-warning-soft: #3f2c0a;
   --color-warning-text: #fde68a;
-  --color-neutral-50: #fbf3ec;
-  --color-neutral-100: #f4e2d5;
-  --color-neutral-200: #ecccb6;
-  --color-neutral-300: #dca98a;
-  --color-neutral-400: #c08765;
-  --color-neutral-500: #a06a4c;
-  --color-neutral-600: #7f5138;
-  --color-neutral-700: #593524;
-  --color-neutral-800: #46281a;
-  --color-neutral-900: #351d12;
-  --color-neutral-950: #1c0f09;
+  /* Near-neutral dark ramp with only a whisper of warmth. */
+  --color-neutral-50: #f4f1ee;
+  --color-neutral-100: #e8e1db;
+  --color-neutral-200: #d3c6bb;
+  --color-neutral-300: #b3a191;
+  --color-neutral-400: #8f7d6d;
+  --color-neutral-500: #726355;
+  --color-neutral-600: #564a40;
+  --color-neutral-700: #3a3129;
+  --color-neutral-800: #26201b;
+  --color-neutral-900: #1a1512;
+  --color-neutral-950: #0f0b08;
 }
 
 /* Grape — a violet-on-black dark scheme (dark-family). */
 :root[data-palette="grape"] {
-  --background: #130a1f;
-  --foreground: #e6dcf5;
+  --background: #0a070e;
+  --foreground: #ebe6f2;
   --color-primary: #c084fc;
   --color-primary-hover: #d0a5fd;
-  --color-primary-foreground: #130a1f;
+  --color-primary-foreground: #0f0716;
   --color-accent: #c084fc;
-  --color-accent-foreground: #130a1f;
-  --color-accent-soft: #2e1a45;
+  --color-accent-foreground: #0f0716;
+  --color-accent-soft: #241a34;
   --color-accent-text: #ddd0f5;
   --color-success: #4ade80;
   --color-success-soft: #12331f;
@@ -248,17 +250,18 @@
   --color-warning: #fbbf24;
   --color-warning-soft: #3a2b0e;
   --color-warning-text: #fde68a;
-  --color-neutral-50: #f2eefa;
-  --color-neutral-100: #e6dcf5;
-  --color-neutral-200: #d2c1ec;
-  --color-neutral-300: #b298d9;
-  --color-neutral-400: #9070bd;
-  --color-neutral-500: #6f5299;
-  --color-neutral-600: #543c78;
-  --color-neutral-700: #392558;
-  --color-neutral-800: #2c1c46;
-  --color-neutral-900: #221537;
-  --color-neutral-950: #120a1e;
+  /* Near-neutral dark ramp with only a whisper of violet. */
+  --color-neutral-50: #f1eef4;
+  --color-neutral-100: #e0dbe8;
+  --color-neutral-200: #cabcd1;
+  --color-neutral-300: #a793b0;
+  --color-neutral-400: #856d8c;
+  --color-neutral-500: #67556f;
+  --color-neutral-600: #4e4056;
+  --color-neutral-700: #33293c;
+  --color-neutral-800: #211a28;
+  --color-neutral-900: #17121d;
+  --color-neutral-950: #0d0a12;
 }
 
 /* Dusk — the "jobsite at dusk" scheme from the login, as an app-wide teal-dark
@@ -306,6 +309,33 @@
   background-image:
     radial-gradient(120% 50% at 50% -10%, rgba(45, 212, 191, 0.08), transparent 62%),
     linear-gradient(180deg, #0a1010 0%, #070a0a 46%, #040606 100%);
+  background-attachment: fixed;
+}
+
+/* Matching near-black ambient for the other palettes — a faint glow in each
+   scheme's accent hue over a near-black base, so they read dark, not coloured. */
+:root[data-palette="ocean"] .bg-background {
+  background-image:
+    radial-gradient(120% 50% at 50% -10%, rgba(123, 189, 232, 0.08), transparent 62%),
+    linear-gradient(180deg, #0b1016 0%, #070a0e 46%, #040609 100%);
+  background-attachment: fixed;
+}
+:root[data-palette="forest"] .bg-background {
+  background-image:
+    radial-gradient(120% 50% at 50% -10%, rgba(110, 231, 166, 0.08), transparent 62%),
+    linear-gradient(180deg, #0a120d 0%, #070b09 46%, #040705 100%);
+  background-attachment: fixed;
+}
+:root[data-palette="sunset"] .bg-background {
+  background-image:
+    radial-gradient(120% 50% at 50% -10%, rgba(251, 146, 60, 0.07), transparent 62%),
+    linear-gradient(180deg, #130d09 0%, #0c0806 46%, #070403 100%);
+  background-attachment: fixed;
+}
+:root[data-palette="grape"] .bg-background {
+  background-image:
+    radial-gradient(120% 50% at 50% -10%, rgba(192, 132, 252, 0.08), transparent 62%),
+    linear-gradient(180deg, #100b16 0%, #0a070e 46%, #060409 100%);
   background-attachment: fixed;
 }
 
