@@ -1288,6 +1288,12 @@ export const es: Dictionary = {
     goalHit: "Alcanzaste el {goalPct}% de tu meta de ingresos.",
     goalProgress: "Vas por el {goalPct}% de tu meta de ingresos.",
   },
+  forecast: {
+    heading: "Proyección de ingresos",
+    nextMonth: "Proyectado el próximo mes",
+    range: "rango probable {low} – {high}",
+    confidence: "{n}% de confianza",
+  },
   financials: {
     title: "Finanzas",
     thisMonth: "Este mes",

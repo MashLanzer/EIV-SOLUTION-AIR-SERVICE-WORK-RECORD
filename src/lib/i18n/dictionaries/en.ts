@@ -1294,6 +1294,12 @@ export const en = {
     goalHit: "You've hit {goalPct}% of your revenue goal.",
     goalProgress: "You're at {goalPct}% of your revenue goal.",
   },
+  forecast: {
+    heading: "Revenue forecast",
+    nextMonth: "Projected next month",
+    range: "{low} – {high} likely range",
+    confidence: "{n}% confidence",
+  },
   financials: {
     title: "Financials",
     thisMonth: "This month",

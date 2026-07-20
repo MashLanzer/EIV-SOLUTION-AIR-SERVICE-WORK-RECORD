@@ -24,6 +24,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SectionTabs } from "@/components/layout/SectionTabs";
 import { FinancialsTabs } from "@/components/financials/FinancialsTabs";
 import { FinancialDigest } from "@/components/financials/FinancialDigest";
+import { ForecastChart } from "@/components/financials/ForecastChart";
 import { FinancialsQuickActions } from "@/components/financials/FinancialsQuickActions";
 import { MetricCard, Metric, MetricLink } from "@/components/ui/metric-card";
 import { prisma } from "@/lib/prisma";
@@ -38,6 +39,7 @@ import {
   type PipelineCell,
 } from "@/lib/financials";
 import { buildDigest, DIGEST_MONEY_TOKENS, type DigestLine } from "@/lib/digest";
+import { forecastRevenue } from "@/lib/forecast";
 import { requireFeature } from "@/lib/features";
 import { requireOrgId } from "@/lib/orgScope";
 import { requirePermission } from "@/lib/authz";
@@ -239,6 +241,18 @@ export default async function FinancialsPage({
     tone: line.tone,
     text: resolveDigestLine(line, dict.digest, moneyShort),
   }));
+
+  // Revenue forecast from the 6-month trend, projecting the next 3 months.
+  const tf = dict.forecast;
+  const history = fin.trend.map((p) => p.value);
+  const fc = forecastRevenue(history, 3);
+  const showForecast = history.some((v) => v > 0);
+  const lastTrend = fin.trend[fin.trend.length - 1];
+  const forecastMonthLabels = [
+    ...fin.trend.map((p) => monthFmt.format(new Date(Date.UTC(p.year, p.month, 1)))),
+    ...fc.points.map((p) => monthFmt.format(new Date(Date.UTC(lastTrend.year, lastTrend.month + p.step, 1)))),
+  ];
+  const nextPoint = fc.points[0];
 
   const monthFmt = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
@@ -836,6 +850,23 @@ export default async function FinancialsPage({
 
       {/* Plain-language digest of the selected period. */}
       <FinancialDigest heading={dict.digest.heading} lines={digestLines} />
+
+      {/* Revenue forecast with a confidence band. */}
+      {showForecast && (
+        <ForecastChart
+          heading={tf.heading}
+          history={history}
+          points={fc.points}
+          monthLabels={forecastMonthLabels}
+          nextLabel={tf.nextMonth}
+          nextValue={moneyShort(nextPoint.value)}
+          rangeLabel={tf.range
+            .replace("{low}", moneyShort(nextPoint.low))
+            .replace("{high}", moneyShort(nextPoint.high))}
+          confidenceLabel={tf.confidence.replace("{n}", String(fc.confidencePct))}
+          slope={fc.slope}
+        />
+      )}
 
       {/* Action alerts — persistent above the tabs, since they're urgent. */}
       {alerts.length > 0 ? (
