@@ -25,7 +25,7 @@ import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
 import com.getcapacitor.BridgeActivity;
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -143,22 +143,22 @@ public class MainActivity extends BridgeActivity {
     // then hands the resulting ID token to the backend directly over HTTPS -
     // no browser hop needed at all for this path.
     private void signInWithGoogleNatively() {
-        // A fresh random nonce per attempt forces Google to mint a NEW ID
-        // token bound to the account the user actually taps. Without it,
-        // Google Play Services can hand back a cached ID token from a prior
-        // sign-in (keyed only by serverClientId) - which is how choosing the
-        // worker account could silently return the admin's token, logging the
-        // user into the wrong account. autoSelect stays off so the picker is
-        // always shown rather than a remembered account being reused.
-        GetGoogleIdOption googleIdOption = new GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setAutoSelectEnabled(false)
-            .setServerClientId(WEB_CLIENT_ID)
-            .setNonce(newNonce())
-            .build();
+        // GetSignInWithGoogleOption drives the branded "Sign in with Google"
+        // account chooser, which reliably lists EVERY Google account on the
+        // device and always shows the picker - even when no account has
+        // authorized this app yet. GetGoogleIdOption (the One-Tap style option)
+        // throws NoCredentialException in that "no authorized account" case,
+        // which is exactly what made the app bail out to the browser instead of
+        // the native picker. A fresh random nonce per attempt still forces
+        // Google to mint a NEW ID token bound to the account the user taps, so
+        // a cached token from a prior sign-in can't return the wrong account.
+        GetSignInWithGoogleOption signInOption =
+            new GetSignInWithGoogleOption.Builder(WEB_CLIENT_ID)
+                .setNonce(newNonce())
+                .build();
 
         GetCredentialRequest request = new GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
+            .addCredentialOption(signInOption)
             .build();
 
         CredentialManager.create(this).getCredentialAsync(
@@ -174,14 +174,18 @@ public class MainActivity extends BridgeActivity {
 
                 @Override
                 public void onError(GetCredentialException e) {
-                    // No Google Play services, no saved account, or the
-                    // user backed out of the picker - fall back to the
-                    // browser-based flow rather than dead-ending here.
+                    // No Google Play services, misconfigured OAuth client, or
+                    // the user backed out of the picker - fall back to the
+                    // browser-based flow rather than dead-ending here. Surface
+                    // the exception type on-device so a persistent fallback
+                    // (e.g. a missing Android OAuth client / SHA-256) is
+                    // diagnosable without logcat.
                     Log.w(TAG, "Credential Manager sign-in unavailable: " + e);
+                    String reason = e.getClass().getSimpleName();
                     runOnUiThread(() -> Toast.makeText(
                         MainActivity.this,
-                        "Using browser sign-in (native picker unavailable)",
-                        Toast.LENGTH_SHORT).show());
+                        "Native picker unavailable (" + reason + ") - using browser",
+                        Toast.LENGTH_LONG).show());
                     try {
                         openInBrowserTab(SITE + "/login?native=1");
                     } catch (ActivityNotFoundException ignored) {

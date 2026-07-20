@@ -244,6 +244,11 @@ export const en = {
     signedInTitle: "You're signed in",
     returningToApp: "Returning to the AeroTrack app…",
     returnToApp: "Return to the app",
+    welcomeTitle: "Welcome",
+    welcomeLead: "Log your crew's work in the field — visits, photos, and hours, all in one place.",
+    getStarted: "Get started",
+    back: "Back",
+    signInTitle: "Welcome back",
   },
   onboarding: {
     welcome: "Welcome, {name}. ",

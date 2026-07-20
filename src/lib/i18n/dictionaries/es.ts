@@ -244,6 +244,11 @@ export const es: Dictionary = {
     signedInTitle: "Sesión iniciada",
     returningToApp: "Volviendo a la app de AeroTrack…",
     returnToApp: "Volver a la app",
+    welcomeTitle: "Bienvenido",
+    welcomeLead: "Registra el trabajo de tu equipo en campo — visitas, fotos y horas, todo en un solo lugar.",
+    getStarted: "Empezar",
+    back: "Atrás",
+    signInTitle: "Hola de nuevo",
   },
   onboarding: {
     welcome: "Bienvenido, {name}. ",
