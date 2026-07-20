@@ -545,6 +545,12 @@ export const es: Dictionary = {
     deleteItemAria: "Eliminar elemento {text}",
     addItemPlaceholder: "Agregar un elemento",
     addItem: "Agregar",
+    // Foto de prueba del ítem de checklist
+    proofAdd: "Foto",
+    proofUploading: "Subiendo…",
+    proofView: "Ver foto de prueba",
+    proofRemove: "Quitar foto",
+    proofFailed: "No se pudo subir la foto. Inténtalo de nuevo.",
   },
   photos: {
     title: "Fotos",

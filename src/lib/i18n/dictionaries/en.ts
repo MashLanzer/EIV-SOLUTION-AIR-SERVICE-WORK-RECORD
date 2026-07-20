@@ -544,6 +544,12 @@ export const en = {
     deleteItemAria: "Delete item {text}",
     addItemPlaceholder: "Add an item",
     addItem: "Add",
+    // Checklist item proof photo
+    proofAdd: "Photo",
+    proofUploading: "Uploading…",
+    proofView: "View proof photo",
+    proofRemove: "Remove photo",
+    proofFailed: "Couldn't upload the photo. Try again.",
   },
   photos: {
     title: "Photos",

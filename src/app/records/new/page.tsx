@@ -47,9 +47,20 @@ export default async function NewRecordPage({
         requireCustomerSignature: true,
         defaultWorkNotes: true,
         currencySymbol: true,
+        timeZone: true,
       },
     }),
   ]);
+
+  // Turn a status-event instant into the "HH:MM" a time input wants, read in the
+  // company's zone so it matches the wall clock the crew worked.
+  const toHHMM = (d: Date) =>
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: org?.timeZone || "UTC",
+    }).format(d);
   const suggestedJobNumber = await suggestNextJobNumber(organizationId);
   const workTypeGroups = await getWorkTypeGroups(organizationId);
   const dict = await getT();
@@ -65,6 +76,8 @@ export default async function NewRecordPage({
     customerPhone?: string;
     customerEmail?: string;
     projectId?: string;
+    arrivalTime?: string;
+    departureTime?: string;
   } = {};
   // Only thread the job id through to the record on submit once we've confirmed
   // the job is real and the worker's - keeps a bogus ?jobId from linking.
@@ -76,10 +89,20 @@ export default async function NewRecordPage({
       select: {
         projectId: true,
         customer: { select: { name: true, address: true, phone: true, email: true } },
+        // The lifecycle already timestamped when the crew started and finished,
+        // so we can suggest the hours instead of making them retype what the
+        // status buttons already captured.
+        statusEvents: { select: { status: true, createdAt: true }, orderBy: { createdAt: "asc" } },
       },
     });
     if (job) {
       linkedJobId = jobId;
+      // Arrival ≈ when they started on site (fall back to "on the way");
+      // departure ≈ when they marked it done. Only prefilled when present.
+      const started =
+        job.statusEvents.find((e) => e.status === "STARTED") ??
+        job.statusEvents.find((e) => e.status === "EN_ROUTE");
+      const done = job.statusEvents.find((e) => e.status === "DONE");
       jobPrefill = {
         customerName: job.customer?.name || undefined,
         customerAddress: job.customer?.address || undefined,
@@ -91,6 +114,8 @@ export default async function NewRecordPage({
           job.projectId && projects.some((p) => p.id === job.projectId)
             ? job.projectId
             : undefined,
+        arrivalTime: started ? toHHMM(started.createdAt) : undefined,
+        departureTime: done ? toHHMM(done.createdAt) : undefined,
       };
     }
   }

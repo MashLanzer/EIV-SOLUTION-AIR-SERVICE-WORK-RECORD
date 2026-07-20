@@ -1,25 +1,25 @@
 import Link from "next/link";
-import { Check, ChevronDown, ListChecks, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ListChecks, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { ChecklistItemRow } from "@/components/projects/ChecklistItemRow";
 import {
   addChecklistAction,
   addChecklistItemAction,
   deleteChecklistAction,
-  deleteChecklistItemAction,
-  toggleChecklistItemAction,
 } from "@/actions/checklists";
 import { getT } from "@/lib/i18n/server";
-import { cn } from "@/lib/utils";
 
 export interface ChecklistItemView {
   id: string;
   text: string;
   done: boolean;
+  // Optional proof photo attached to the item.
+  photo: { id: string; url: string } | null;
 }
 
 export interface ChecklistView {
@@ -33,13 +33,16 @@ export async function ProjectChecklists({
   checklists,
   templates,
   canManage = true,
+  basePath = "/admin/projects",
 }: {
   projectId: string;
   checklists: ChecklistView[];
   templates: { id: string; name: string }[];
   // Admins manage checklists (add/delete lists + items); workers can only
-  // check items off.
+  // check items off and attach proof photos.
   canManage?: boolean;
+  // Route prefix for a proof photo's detail link (admin vs worker area).
+  basePath?: string;
 }) {
   const dict = await getT();
   const t = dict.projects;
@@ -151,48 +154,13 @@ export async function ProjectChecklists({
 
                 <ul className="flex flex-col">
                   {checklist.items.map((item) => (
-                    <li
+                    <ChecklistItemRow
                       key={item.id}
-                      className="group flex items-center gap-3 border-b border-neutral-100 dark:border-neutral-800 py-2 last:border-0"
-                    >
-                      <form action={toggleChecklistItemAction.bind(null, item.id)}>
-                        <button
-                          type="submit"
-                          aria-label={
-                            (item.done ? t.markNotDone : t.markDone).replace("{text}", item.text)
-                          }
-                          className={cn(
-                            "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors",
-                            item.done
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-neutral-300 dark:border-neutral-600 hover:border-primary"
-                          )}
-                        >
-                          {item.done && <Check className="h-3.5 w-3.5" />}
-                        </button>
-                      </form>
-                      <span
-                        className={cn(
-                          "flex-1 text-sm",
-                          item.done
-                            ? "text-neutral-400 line-through"
-                            : "text-neutral-900 dark:text-neutral-100"
-                        )}
-                      >
-                        {item.text}
-                      </span>
-                      {canManage && (
-                        <form action={deleteChecklistItemAction.bind(null, item.id)}>
-                          <button
-                            type="submit"
-                            aria-label={t.deleteItemAria.replace("{text}", item.text)}
-                            className="shrink-0 text-neutral-300 dark:text-neutral-600 opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </form>
-                      )}
-                    </li>
+                      item={item}
+                      projectId={projectId}
+                      basePath={basePath}
+                      canManage={canManage}
+                    />
                   ))}
                 </ul>
 

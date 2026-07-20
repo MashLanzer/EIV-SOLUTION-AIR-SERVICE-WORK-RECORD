@@ -126,7 +126,12 @@ export default async function WorkerProjectPage({
         name: true,
         items: {
           orderBy: { position: "asc" },
-          select: { id: true, text: true, done: true },
+          select: {
+            id: true,
+            text: true,
+            done: true,
+            photo: { select: { id: true, url: true } },
+          },
         },
       },
     }),
@@ -387,6 +392,7 @@ export default async function WorkerProjectPage({
             checklists={checklists}
             templates={[]}
             canManage={isAdmin}
+            basePath="/records/projects"
           />
         </SheetButton>
         <SheetButton

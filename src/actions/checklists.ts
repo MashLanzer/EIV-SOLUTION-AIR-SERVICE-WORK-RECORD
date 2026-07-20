@@ -200,6 +200,41 @@ export async function toggleChecklistItemAction(itemId: string) {
   revalidateProject(item.checklist.projectId);
 }
 
+// Attach (or clear) a proof photo on a checklist item. Attaching a photo also
+// marks the item done. Same access rule as toggling — the caller must be able to
+// reach the project — and the photo must belong to that same project so a
+// crafted id can't cross-link another job's photo.
+export async function setChecklistItemPhotoAction(
+  itemId: string,
+  photoId: string | null
+) {
+  const session = await requireAuth();
+  const organizationId = requireOrgId(session);
+
+  const item = await ownedItem(itemId, organizationId);
+  if (!item) return;
+  if (!(await canAccessProject(session, item.checklist.projectId))) return;
+
+  if (photoId) {
+    const photo = await prisma.photo.findFirst({
+      where: { id: photoId, organizationId, projectId: item.checklist.projectId },
+      select: { id: true },
+    });
+    if (!photo) return;
+    await prisma.checklistItem.update({
+      where: { id: item.id },
+      // Evidence completes the item; keep an existing doneAt, else stamp now.
+      data: { photoId, done: true, doneAt: item.done ? undefined : new Date() },
+    });
+  } else {
+    await prisma.checklistItem.update({
+      where: { id: item.id },
+      data: { photoId: null },
+    });
+  }
+  revalidateProject(item.checklist.projectId);
+}
+
 export async function addChecklistItemAction(checklistId: string, formData: FormData) {
   const session = await requirePermission("checklists.manage");
   const organizationId = requireOrgId(session);

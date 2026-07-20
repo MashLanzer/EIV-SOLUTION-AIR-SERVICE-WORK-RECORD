@@ -144,7 +144,12 @@ export default async function AdminProjectPage({
           name: true,
           items: {
             orderBy: { position: "asc" },
-            select: { id: true, text: true, done: true },
+            select: {
+              id: true,
+              text: true,
+              done: true,
+              photo: { select: { id: true, url: true } },
+            },
           },
         },
       }),
