@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { SettingsCustomRow, SettingsRow } from "@/components/settings/SettingsList";
 import { LanguageSetting } from "@/components/settings/LanguageSetting";
 import { TimeFormatSetting } from "@/components/settings/TimeFormatSetting";
+import { BiometricSetting } from "@/components/settings/BiometricSetting";
 import { useT } from "@/components/i18n/LocaleProvider";
 import {
   DEFAULT_PALETTE_ID,
@@ -259,6 +260,8 @@ export function AppearanceSettings() {
       <TimeFormatSetting />
 
       <LanguageSetting />
+
+      <BiometricSetting />
     </>
   );
 }

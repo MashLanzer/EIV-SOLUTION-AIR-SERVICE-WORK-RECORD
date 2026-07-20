@@ -1,5 +1,6 @@
 import { SkipLink } from "@/components/layout/SkipLink";
 import { WorkerNav } from "@/components/layout/WorkerNav";
+import { BiometricLock } from "@/components/security/BiometricLock";
 import { TimeFormatProvider } from "@/components/i18n/TimeFormatProvider";
 import { getLatestActivityAt } from "@/lib/activity";
 import { getUnreadNotificationCount } from "@/lib/inappNotify";
@@ -35,6 +36,7 @@ export default async function RecordsLayout({
   return (
     <TimeFormatProvider use24={use24}>
       <div className="min-h-screen bg-background">
+        <BiometricLock />
         <SkipLink />
         <WorkerNav
           name={session.user.name ?? session.user.email ?? ""}

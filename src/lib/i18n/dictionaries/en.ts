@@ -52,6 +52,16 @@ export const en = {
     emptyTitle: "No mileage yet",
     emptyDesc: "Log the miles you drive between jobs to track them for reimbursement.",
   },
+  biometric: {
+    settingLabel: "Biometric app lock",
+    settingHint: "Require Face ID / fingerprint to open the app on this device.",
+    lockedTitle: "Locked",
+    lockedDesc: "Confirm it's you to open the app.",
+    unlock: "Unlock",
+    verifying: "Verifying…",
+    failed: "Couldn't verify. Try again.",
+    signOutInstead: "Sign out instead",
+  },
   profile: {
     title: "Profile",
     yourAccount: "Your account",

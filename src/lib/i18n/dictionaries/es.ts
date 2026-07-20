@@ -52,6 +52,16 @@ export const es: Dictionary = {
     emptyTitle: "Aún no hay kilometraje",
     emptyDesc: "Registra las millas que manejas entre trabajos para controlarlas para el reembolso.",
   },
+  biometric: {
+    settingLabel: "Bloqueo biométrico",
+    settingHint: "Pide Face ID / huella para abrir la app en este dispositivo.",
+    lockedTitle: "Bloqueado",
+    lockedDesc: "Confirma que eres tú para abrir la app.",
+    unlock: "Desbloquear",
+    verifying: "Verificando…",
+    failed: "No se pudo verificar. Intenta de nuevo.",
+    signOutInstead: "Cerrar sesión",
+  },
   profile: {
     title: "Perfil",
     yourAccount: "Tu cuenta",

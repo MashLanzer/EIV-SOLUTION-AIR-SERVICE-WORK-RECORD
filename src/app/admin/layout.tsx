@@ -1,5 +1,6 @@
 import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { BiometricLock } from "@/components/security/BiometricLock";
 import { TimeFormatProvider } from "@/components/i18n/TimeFormatProvider";
 import { ImpersonationBanner } from "@/components/super/ImpersonationBanner";
 import { SupportActiveNotice } from "@/components/super/SupportActiveNotice";
@@ -102,6 +103,7 @@ export default async function AdminLayout({
   return (
     <TimeFormatProvider use24={use24}>
     <div className="min-h-screen bg-background">
+      <BiometricLock />
       {session.user.impersonating && (
         <ImpersonationBanner
           orgName={session.user.impersonating.name}
