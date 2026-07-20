@@ -920,16 +920,27 @@ export default async function FinancialsPage({
         ))}
       </div>
 
+      {/* Tabs (with Quick actions + KPIs) sit up top — the actionable stuff
+          the office reaches for first, above the summary + charts + alerts. */}
+      <FinancialsTabs
+        ariaLabel={t.title}
+        panels={[
+          { key: "summary", label: t.tabSummary, icon: <Wallet className="h-4 w-4" />, content: summaryPanel },
+          { key: "collections", label: t.tabCollections, icon: <PiggyBank className="h-4 w-4" />, content: collectionsPanel },
+          { key: "sales", label: t.tabSales, icon: <FileText className="h-4 w-4" />, content: salesPanel },
+          { key: "costs", label: t.tabCosts, icon: <HandCoins className="h-4 w-4" />, content: costsPanel },
+        ]}
+      />
+
       {/* Plain-language digest of the selected period. */}
       <FinancialDigest heading={dict.digest.heading} lines={digestLines} />
 
-      {/* Charts (trend, forecast, money-flow) tucked into a sheet so they no
-          longer stack on top of the KPIs and the tab nav. */}
+      {/* Charts (trend, forecast, money-flow) tucked into a sheet. */}
       {hasAnalytics && (
         <FinancialsInsightsSheet label={t.insights}>{analytics}</FinancialsInsightsSheet>
       )}
 
-      {/* Action alerts — persistent above the tabs, since they're urgent. */}
+      {/* Action alerts — kept visible so overdue/draft nudges aren't missed. */}
       {alerts.length > 0 ? (
         <Card className="bg-warning-soft">
           <CardContent className="flex flex-col divide-y divide-warning-text/15 p-0">
@@ -952,16 +963,6 @@ export default async function FinancialsPage({
           {t.allClear}
         </div>
       )}
-
-      <FinancialsTabs
-        ariaLabel={t.title}
-        panels={[
-          { key: "summary", label: t.tabSummary, icon: <Wallet className="h-4 w-4" />, content: summaryPanel },
-          { key: "collections", label: t.tabCollections, icon: <PiggyBank className="h-4 w-4" />, content: collectionsPanel },
-          { key: "sales", label: t.tabSales, icon: <FileText className="h-4 w-4" />, content: salesPanel },
-          { key: "costs", label: t.tabCosts, icon: <HandCoins className="h-4 w-4" />, content: costsPanel },
-        ]}
-      />
     </div>
   );
 }
