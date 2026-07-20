@@ -9,6 +9,7 @@ import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
 import { EditRecordButton } from "@/components/records/EditRecordButton";
 import { RecordDetail } from "@/components/records/RecordDetail";
+import { ProfitabilityCard } from "@/components/records/ProfitabilityCard";
 import { RecordMaterials } from "@/components/materials/RecordMaterials";
 import { RequestChangesButton } from "@/components/records/RequestChangesButton";
 import { ReviewTimeline } from "@/components/records/ReviewTimeline";
@@ -86,26 +87,61 @@ export default async function AdminReviewRecordPage({
   const t = dict.adminRecords;
   const locale = await getLocale();
 
-  // Data for the "Edit" sheet's WorkRecordForm.
-  const [projects, workTypeGroups, materialCatalog] = await Promise.all([
-    prisma.project.findMany({
-      where: { organizationId: requireOrgId(session) },
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        customer: { select: { name: true, address: true, phone: true, email: true } },
-      },
-    }),
-    getWorkTypeGroups(requireOrgId(session)),
-    canManageMaterials
-      ? prisma.material.findMany({
-          where: { organizationId: requireOrgId(session) },
-          orderBy: { name: "asc" },
-          select: { id: true, name: true, unit: true, unitCost: true },
-        })
-      : Promise.resolve([]),
-  ]);
+  // Data for the "Edit" sheet's WorkRecordForm, plus (for the costing views)
+  // the material catalog, this job's non-void invoice line items (revenue), and
+  // its linked expenses.
+  const [projects, workTypeGroups, materialCatalog, invoiceLines, recordExpenses] =
+    await Promise.all([
+      prisma.project.findMany({
+        where: { organizationId: requireOrgId(session) },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          customer: { select: { name: true, address: true, phone: true, email: true } },
+        },
+      }),
+      getWorkTypeGroups(requireOrgId(session)),
+      canManageMaterials
+        ? prisma.material.findMany({
+            where: { organizationId: requireOrgId(session) },
+            orderBy: { name: "asc" },
+            select: { id: true, name: true, unit: true, unitCost: true },
+          })
+        : Promise.resolve([]),
+      canManageMaterials
+        ? prisma.invoice.findMany({
+            where: {
+              workRecordId: id,
+              organizationId: requireOrgId(session),
+              status: { not: "VOID" },
+            },
+            select: { lineItems: { select: { quantity: true, unitPrice: true } } },
+          })
+        : Promise.resolve([]),
+      canManageMaterials
+        ? prisma.expense.findMany({
+            where: { workRecordId: id, organizationId: requireOrgId(session) },
+            select: { amount: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+  // Revenue for the profitability card: a non-void invoice's subtotal wins;
+  // otherwise the record's manual job value (cash jobs).
+  const invoiceRevenue = invoiceLines.reduce(
+    (sum, inv) =>
+      sum + inv.lineItems.reduce((s, li) => s + Number(li.quantity) * Number(li.unitPrice), 0),
+    0
+  );
+  const revenueFromInvoice = invoiceLines.length > 0;
+  const profitRevenue = revenueFromInvoice ? invoiceRevenue : Number(record.jobValue ?? 0);
+  const laborCost = Number(record.leadInstallerPay) + Number(record.helperPay ?? 0);
+  const materialsCost = record.recordMaterials.reduce(
+    (sum, l) => sum + Number(l.quantity) * Number(l.unitCost),
+    0
+  );
+  const expensesCost = recordExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
   const summaryDate = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
     month: "short",
@@ -267,6 +303,19 @@ export default async function AdminReviewRecordPage({
       )}
 
       <RecordDetail record={record} currency={currency} />
+
+      {canManageMaterials && (
+        <ProfitabilityCard
+          recordId={record.id}
+          revenue={profitRevenue}
+          revenueFromInvoice={revenueFromInvoice}
+          jobValue={record.jobValue != null ? Number(record.jobValue) : null}
+          labor={laborCost}
+          materials={materialsCost}
+          expenses={expensesCost}
+          currency={currency}
+        />
+      )}
 
       {canManageMaterials && (
         <RecordMaterials

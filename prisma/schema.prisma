@@ -734,6 +734,10 @@ model WorkRecord {
   workPerformedNotes String   @db.Text
   leadInstallerPay   Decimal  @db.Decimal(10, 2)
   helperPay          Decimal? @db.Decimal(10, 2)
+  // Manual revenue for the job's profitability card, used when the job isn't
+  // invoiced (cash work). Ignored when a non-void invoice exists — that
+  // invoice's subtotal is the revenue instead. Null = unset.
+  jobValue           Decimal? @db.Decimal(10, 2)
   customerSignature  String       @db.Text
   installerSignature String       @db.Text
   status             RecordStatus @default(SUBMITTED)
