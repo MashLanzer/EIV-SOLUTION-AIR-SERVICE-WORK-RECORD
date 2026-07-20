@@ -9,7 +9,6 @@ import {
   PiggyBank,
   Sheet,
   Target,
-  TrendingUp,
   Wallet,
 } from "lucide-react";
 
@@ -23,6 +22,7 @@ import { FilterChip } from "@/components/ui/filter-chip";
 import { PageHeader } from "@/components/ui/page-header";
 import { SectionTabs } from "@/components/layout/SectionTabs";
 import { FinancialsTabs } from "@/components/financials/FinancialsTabs";
+import { FinancialsInsightsSheet } from "@/components/financials/FinancialsInsightsSheet";
 import { FinancialDigest } from "@/components/financials/FinancialDigest";
 import { ForecastChart } from "@/components/financials/ForecastChart";
 import { ShareReportButton } from "@/components/financials/ShareReportButton";
@@ -376,6 +376,41 @@ export default async function FinancialsPage({
   // Estimate funnel stages (created → sent → accepted → invoiced).
   const funnelSent = fin.estimateStats.total - fin.estimateStats.draft;
 
+  // The heavier charts (trend, forecast, money-flow) live together in a sheet
+  // so they don't sit on top of the KPIs and the tab nav. Built here, opened
+  // from a single compact trigger below the digest.
+  const hasAnalytics = hasTrend || showForecast || sankeySegments.length > 0;
+  const analytics = (
+    <>
+      {hasTrend && <MiniBarChart title={t.revenueTrend} bars={trendBars} />}
+      {showForecast && (
+        <ForecastChart
+          heading={tf.heading}
+          history={history}
+          points={fc.points}
+          monthLabels={forecastMonthLabels}
+          nextLabel={tf.nextMonth}
+          nextValue={moneyShort(nextPoint.value)}
+          rangeLabel={tf.range
+            .replace("{low}", moneyShort(nextPoint.low))
+            .replace("{high}", moneyShort(nextPoint.high))}
+          confidenceLabel={tf.confidence.replace("{n}", String(fc.confidencePct))}
+          slope={fc.slope}
+        />
+      )}
+      {sankeySegments.length > 0 && (
+        <SankeyChart
+          heading={tsk.heading}
+          revenueLabel={tsk.revenue}
+          revenueAmount={moneyShort(moneyFlow.revenue)}
+          segments={sankeySegments}
+          loss={moneyFlow.loss}
+          lossLabel={tsk.loss}
+        />
+      )}
+    </>
+  );
+
   // ---- Tab panels ------------------------------------------------------
 
   const summaryPanel = (
@@ -490,17 +525,6 @@ export default async function FinancialsPage({
           </CardContent>
         </Card>
       </Section>
-
-      {/* Revenue trend */}
-      {hasTrend ? (
-        <MiniBarChart title={t.revenueTrend} bars={trendBars} />
-      ) : (
-        <Card>
-          <CardContent className="p-0">
-            <EmptyState icon={TrendingUp} title={t.noRevenue} description={t.revenueTrendDesc} />
-          </CardContent>
-        </Card>
-      )}
     </>
   );
 
@@ -899,33 +923,10 @@ export default async function FinancialsPage({
       {/* Plain-language digest of the selected period. */}
       <FinancialDigest heading={dict.digest.heading} lines={digestLines} />
 
-      {/* Revenue forecast with a confidence band. */}
-      {showForecast && (
-        <ForecastChart
-          heading={tf.heading}
-          history={history}
-          points={fc.points}
-          monthLabels={forecastMonthLabels}
-          nextLabel={tf.nextMonth}
-          nextValue={moneyShort(nextPoint.value)}
-          rangeLabel={tf.range
-            .replace("{low}", moneyShort(nextPoint.low))
-            .replace("{high}", moneyShort(nextPoint.high))}
-          confidenceLabel={tf.confidence.replace("{n}", String(fc.confidencePct))}
-          slope={fc.slope}
-        />
-      )}
-
-      {/* Money-flow: revenue into cost buckets + profit. */}
-      {sankeySegments.length > 0 && (
-        <SankeyChart
-          heading={tsk.heading}
-          revenueLabel={tsk.revenue}
-          revenueAmount={moneyShort(moneyFlow.revenue)}
-          segments={sankeySegments}
-          loss={moneyFlow.loss}
-          lossLabel={tsk.loss}
-        />
+      {/* Charts (trend, forecast, money-flow) tucked into a sheet so they no
+          longer stack on top of the KPIs and the tab nav. */}
+      {hasAnalytics && (
+        <FinancialsInsightsSheet label={t.insights}>{analytics}</FinancialsInsightsSheet>
       )}
 
       {/* Action alerts — persistent above the tabs, since they're urgent. */}

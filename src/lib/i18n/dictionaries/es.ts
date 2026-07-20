@@ -1428,6 +1428,7 @@ export const es: Dictionary = {
     // KPIs
     margin: "Margen",
     // Tendencia de ingresos
+    insights: "Tendencia, proyección y flujo",
     revenueTrend: "Tendencia de ingresos",
     revenueTrendDesc: "Ingresos cobrados en los últimos 6 meses.",
     noRevenue: "Aún no hay ingresos cobrados",

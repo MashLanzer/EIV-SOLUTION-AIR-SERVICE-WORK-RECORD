@@ -1434,6 +1434,7 @@ export const en = {
     // KPIs
     margin: "Margin",
     // Revenue trend
+    insights: "Trend, forecast & money flow",
     revenueTrend: "Revenue trend",
     revenueTrendDesc: "Paid revenue over the last 6 months.",
     noRevenue: "No paid revenue yet",
