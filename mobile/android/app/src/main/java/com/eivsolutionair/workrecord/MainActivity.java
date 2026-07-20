@@ -181,10 +181,19 @@ public class MainActivity extends BridgeActivity {
                     // (e.g. a missing Android OAuth client / SHA-256) is
                     // diagnosable without logcat.
                     Log.w(TAG, "Credential Manager sign-in unavailable: " + e);
+                    // Surface Play Services' own error string (it carries codes
+                    // like "10:" = DEVELOPER_ERROR / SHA-1+package+client-ID
+                    // mismatch, vs a transient/propagation error) so a stuck
+                    // fallback is pinpointable on-device without logcat.
                     String reason = e.getClass().getSimpleName();
+                    String msg = e.getMessage();
+                    if (msg != null && !msg.isEmpty()) {
+                        reason = reason + " — " + (msg.length() > 150 ? msg.substring(0, 150) : msg);
+                    }
+                    final String shown = reason;
                     runOnUiThread(() -> Toast.makeText(
                         MainActivity.this,
-                        "Native picker unavailable (" + reason + ") - using browser",
+                        "Native picker unavailable: " + shown,
                         Toast.LENGTH_LONG).show());
                     try {
                         openInBrowserTab(SITE + "/login?native=1");
