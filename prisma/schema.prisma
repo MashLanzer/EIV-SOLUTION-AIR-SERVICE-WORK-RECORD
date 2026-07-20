@@ -179,6 +179,53 @@ model Organization {
   positions          Position[]
   timeOff            TimeOff[]
   notifications      Notification[]
+  expenses           Expense[]
+  expenseCategories  ExpenseCategory[]
+}
+
+// An org-managed list of expense categories (Fuel, Permits, Subcontractor…),
+// mirroring how work-type categories work. Optional on an expense.
+model ExpenseCategory {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  position       Int          @default(0)
+  expenses       Expense[]
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+// A business cost booked against a job or project — the other half of job
+// costing (records already carry the crew's pay). Optional links so an expense
+// can be general, tied to a project, or to a specific work record.
+model Expense {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectId      String?
+  project        Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  workRecordId   String?
+  workRecord     WorkRecord?      @relation(fields: [workRecordId], references: [id], onDelete: SetNull)
+  categoryId     String?
+  category       ExpenseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  vendor         String
+  amount         Decimal          @db.Decimal(10, 2)
+  date           DateTime
+  note           String?          @db.Text
+  // Optional receipt image (Vercel Blob URL).
+  receiptUrl     String?          @db.Text
+  // Who logged it (denormalized id; name resolved on read). Nullable so a
+  // deleted account keeps the expense.
+  createdById    String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organizationId, date])
+  @@index([projectId])
+  @@index([workRecordId])
 }
 
 enum SupportMode {
@@ -370,6 +417,7 @@ model Project {
   scheduledJobs  ScheduledJob[]
   invoices       Invoice[]
   estimates      Estimate[]
+  expenses       Expense[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -683,6 +731,7 @@ model WorkRecord {
   scheduledJob       ScheduledJob?
   reviewEvents       RecordReviewEvent[]
   invoices           Invoice[]
+  expenses           Expense[]
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 

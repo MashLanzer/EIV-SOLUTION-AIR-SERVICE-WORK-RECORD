@@ -22,6 +22,18 @@ export async function deleteProjectPhoto(url: string): Promise<void> {
   }
 }
 
+// A receipt image attached to an expense. Keyed per org (randomized to bust
+// CDN caches on replace); the caller deletes the old blob after the row updates.
+export async function uploadExpenseReceipt(
+  organizationId: string,
+  body: Blob | ArrayBuffer | Buffer,
+  contentType = "image/jpeg"
+): Promise<string> {
+  const key = `orgs/${organizationId}/receipts/${crypto.randomUUID()}.jpg`;
+  const blob = await put(key, body, { access: "public", contentType });
+  return blob.url;
+}
+
 // The company logo shown on the work-record PDF. One per org, so the key is
 // stable-ish (still randomized to bust CDN caches on replace).
 export async function uploadCompanyLogo(

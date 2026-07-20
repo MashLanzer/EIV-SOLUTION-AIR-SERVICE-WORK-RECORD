@@ -57,6 +57,7 @@ export const PERMISSIONS = [
   { key: "schedule.manage", group: "work", en: "Manage the schedule", es: "Gestionar la agenda" },
   { key: "customers.manage", group: "customers", en: "Manage customers", es: "Gestionar clientes" },
   { key: "invoices.manage", group: "money", en: "Manage invoices", es: "Gestionar facturas" },
+  { key: "expenses.manage", group: "money", en: "Manage expenses", es: "Gestionar gastos" },
   { key: "estimates.manage", group: "money", en: "Manage estimates", es: "Gestionar estimados" },
   { key: "payments.manage", group: "money", en: "Manage online payments", es: "Gestionar cobros en línea" },
   { key: "financials.view", group: "money", en: "View financials", es: "Ver finanzas" },
