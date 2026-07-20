@@ -9,6 +9,7 @@ import { ApproveRecordButton } from "@/components/records/ApproveRecordButton";
 import { DeleteRecordButton } from "@/components/records/DeleteRecordButton";
 import { EditRecordButton } from "@/components/records/EditRecordButton";
 import { RecordDetail } from "@/components/records/RecordDetail";
+import { RecordMaterials } from "@/components/materials/RecordMaterials";
 import { RequestChangesButton } from "@/components/records/RequestChangesButton";
 import { ReviewTimeline } from "@/components/records/ReviewTimeline";
 import { ShareReceiptButton } from "@/components/records/ShareReceiptButton";
@@ -44,8 +45,9 @@ export default async function AdminReviewRecordPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ saved?: string }>;
 }) {
-  const { session } = await requireOfficeAccess();
+  const { session, permissions } = await requireOfficeAccess();
   const { id } = await params;
+  const canManageMaterials = permissions.includes("expenses.manage");
   const { saved } = await searchParams;
   const record = await prisma.workRecord.findFirst({
     where: { id, organizationId: requireOrgId(session) },
@@ -62,6 +64,11 @@ export default async function AdminReviewRecordPage({
         orderBy: { createdAt: "asc" },
         take: 1,
         select: { id: true, number: true },
+      },
+      // Material lines booked against this job (for the costing section).
+      recordMaterials: {
+        orderBy: { createdAt: "asc" },
+        select: { id: true, name: true, quantity: true, unitCost: true },
       },
     },
   });
@@ -80,7 +87,7 @@ export default async function AdminReviewRecordPage({
   const locale = await getLocale();
 
   // Data for the "Edit" sheet's WorkRecordForm.
-  const [projects, workTypeGroups] = await Promise.all([
+  const [projects, workTypeGroups, materialCatalog] = await Promise.all([
     prisma.project.findMany({
       where: { organizationId: requireOrgId(session) },
       orderBy: { name: "asc" },
@@ -91,6 +98,13 @@ export default async function AdminReviewRecordPage({
       },
     }),
     getWorkTypeGroups(requireOrgId(session)),
+    canManageMaterials
+      ? prisma.material.findMany({
+          where: { organizationId: requireOrgId(session) },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true, unit: true, unitCost: true },
+        })
+      : Promise.resolve([]),
   ]);
 
   const summaryDate = new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-US", {
@@ -253,6 +267,25 @@ export default async function AdminReviewRecordPage({
       )}
 
       <RecordDetail record={record} currency={currency} />
+
+      {canManageMaterials && (
+        <RecordMaterials
+          recordId={record.id}
+          currency={currency}
+          catalog={materialCatalog.map((m) => ({
+            id: m.id,
+            name: m.name,
+            unit: m.unit,
+            unitCost: Number(m.unitCost),
+          }))}
+          lines={record.recordMaterials.map((l) => ({
+            id: l.id,
+            name: l.name,
+            quantity: Number(l.quantity),
+            unitCost: Number(l.unitCost),
+          }))}
+        />
+      )}
 
       {record.reviewEvents.length > 0 && (
         <Card>

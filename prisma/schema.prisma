@@ -181,6 +181,41 @@ model Organization {
   notifications      Notification[]
   expenses           Expense[]
   expenseCategories  ExpenseCategory[]
+  materials          Material[]
+}
+
+// An org-managed catalog of materials with a unit + unit cost, attached to a
+// work record (with a snapshot) to build the material side of job costing.
+model Material {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  // Free-text unit label (ft, box, each…); optional.
+  unit           String?
+  unitCost       Decimal          @db.Decimal(10, 2)
+  createdAt      DateTime         @default(now())
+  recordMaterials RecordMaterial[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+// A material line on a work record. Name + unit cost are snapshotted so a line
+// survives the catalog item being renamed or deleted.
+model RecordMaterial {
+  id         String     @id @default(cuid())
+  recordId   String
+  record     WorkRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  materialId String?
+  material   Material?  @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  name       String
+  quantity   Decimal    @db.Decimal(10, 2)
+  unitCost   Decimal    @db.Decimal(10, 2)
+  createdAt  DateTime   @default(now())
+
+  @@index([recordId])
+  @@index([materialId])
 }
 
 // An org-managed list of expense categories (Fuel, Permits, Subcontractor…),
@@ -732,6 +767,7 @@ model WorkRecord {
   reviewEvents       RecordReviewEvent[]
   invoices           Invoice[]
   expenses           Expense[]
+  recordMaterials    RecordMaterial[]
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 

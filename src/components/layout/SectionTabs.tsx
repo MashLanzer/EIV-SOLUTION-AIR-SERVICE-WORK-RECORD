@@ -29,6 +29,7 @@ const FAMILIES: Record<
     { href: "/admin/estimates", label: (d) => d.nav.estimates },
     { href: "/admin/invoices", label: (d) => d.nav.invoices },
     { href: "/admin/expenses", label: (d) => d.nav.expenses },
+    { href: "/admin/materials", label: (d) => d.nav.materials },
     { href: "/admin/reports", label: (d) => d.nav.payReport },
   ],
   structure: [
