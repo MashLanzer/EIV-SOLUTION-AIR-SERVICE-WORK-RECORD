@@ -339,6 +339,9 @@ model ImpersonationSession {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   // The platform owner's email (from the allowlist), denormalized for display.
   actorEmail     String
+  // Set when "viewing as" a specific user: the session adopts that user's exact
+  // identity/permissions. Null = whole-company support (owner acts as admin).
+  targetUserId   String?
   mode           SupportMode  @default(FULL)
   startedAt      DateTime     @default(now())
   expiresAt      DateTime

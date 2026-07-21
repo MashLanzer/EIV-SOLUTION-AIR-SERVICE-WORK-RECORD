@@ -14,6 +14,7 @@ import { InviteAdminForm } from "@/components/super/InviteAdminForm";
 import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
 import { OrgManageSheet } from "@/components/super/OrgManageSheet";
 import { EnterSupportButton } from "@/components/super/EnterSupportButton";
+import { ViewAsUserButton } from "@/components/super/ViewAsUserButton";
 import { planLabel } from "@/lib/plans";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgActivity, getOrgDetail } from "@/lib/platform";
@@ -178,7 +179,10 @@ export default async function SuperOrgDetailPage({
                   </div>
                   <span className="truncate text-xs text-neutral-400">{u.email}</span>
                 </div>
-                <Badge variant={u.role === "ADMIN" ? "default" : "secondary"}>{ROLE_LABEL[u.role] ?? u.role}</Badge>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge variant={u.role === "ADMIN" ? "default" : "secondary"}>{ROLE_LABEL[u.role] ?? u.role}</Badge>
+                  {u.active && <ViewAsUserButton orgId={org.id} userId={u.id} />}
+                </div>
               </div>
             ))}
           </CardContent>

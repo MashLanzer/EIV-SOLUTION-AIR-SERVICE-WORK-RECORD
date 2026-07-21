@@ -33,7 +33,7 @@ export function EnterSupportButton({ orgId }: { orgId: string }) {
 
   return (
     <div ref={ref} className="relative inline-flex">
-      <form action={enterOrgAction.bind(null, orgId, "FULL")}>
+      <form action={enterOrgAction.bind(null, orgId, "FULL", undefined)}>
         <Button type="submit" size="sm" className="rounded-r-none">
           <LogIn className="h-4 w-4" />
           Enter as support
@@ -56,7 +56,7 @@ export function EnterSupportButton({ orgId }: { orgId: string }) {
           role="menu"
           className="absolute right-0 top-full z-40 mt-1 w-44 origin-top-right animate-scale-in rounded-lg border border-neutral-200 bg-white p-1 shadow-lg shadow-black/10 dark:border-neutral-800 dark:bg-neutral-900"
         >
-          <form action={enterOrgAction.bind(null, orgId, "READ_ONLY")}>
+          <form action={enterOrgAction.bind(null, orgId, "READ_ONLY", undefined)}>
             <button
               type="submit"
               role="menuitem"

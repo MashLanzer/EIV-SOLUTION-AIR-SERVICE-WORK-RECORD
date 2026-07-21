@@ -110,6 +110,7 @@ export default async function AdminLayout({
           orgName={session.user.impersonating.name}
           readOnly={session.user.impersonating.readOnly}
           expiresAt={session.user.impersonating.expiresAt}
+          asUser={session.user.impersonating.asUser}
         />
       )}
       {supportActive && <SupportActiveNotice expiresAt={supportActive.expiresAt.toISOString()} />}

@@ -29,7 +29,12 @@ export async function loadAccess(
     return { accessLevel: "ADMIN", permissions: [...ALL_PERMISSION_KEYS] };
   }
 
-  if (session.user.impersonating) {
+  // Whole-company support (no asUser): the session id is the platform owner, who
+  // has no Position in the target org, so use the impersonation role directly.
+  // View-as-user (asUser set) is different — the session id is now the target
+  // user, so we fall through and load THEIR real Position below, reproducing
+  // exactly what they can do.
+  if (session.user.impersonating && !session.user.impersonating.asUser) {
     return effectiveAccess({ role, position: null });
   }
 

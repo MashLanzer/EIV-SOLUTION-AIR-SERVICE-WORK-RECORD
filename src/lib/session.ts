@@ -50,6 +50,57 @@ async function applyImpersonation(session: Session): Promise<Session> {
   }
 
   const readOnly = support.mode === "READ_ONLY";
+
+  // View-as-user: the session BECOMES that exact user, so the owner sees the app
+  // with the target's real identity, role and permissions (loaded from their
+  // Position by loadAccess, keyed on the now-swapped id). Never more than the
+  // existing full support — a user's rights are ≤ a full admin's.
+  if (support.targetUserId) {
+    const target = await prisma.user.findUnique({
+      where: { id: support.targetUserId },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        organizationId: true,
+        active: true,
+        phone: true,
+        storedSignature: true,
+        avatarUrl: true,
+        position: { select: { accessLevel: true } },
+      },
+    });
+    // Fall back to whole-company support if the target became invalid (removed,
+    // deactivated, or moved) since the session was opened.
+    if (target && target.active && target.organizationId === support.organization.id) {
+      const accessLevel: "ADMIN" | "WORKER" =
+        target.role === "ADMIN"
+          ? "ADMIN"
+          : target.position?.accessLevel ?? (target.role === "WORKER" ? "WORKER" : "ADMIN");
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: target.id,
+          name: target.name,
+          organizationId: target.organizationId,
+          role: target.role,
+          accessLevel,
+          phone: target.phone,
+          storedSignature: target.storedSignature,
+          avatarUrl: target.avatarUrl,
+          impersonating: {
+            orgId: support.organization.id,
+            name: support.organization.name,
+            readOnly: false,
+            expiresAt: support.expiresAt.toISOString(),
+            asUser: target.name ?? "a user",
+          },
+        },
+      };
+    }
+  }
+
   return {
     ...session,
     user: {
@@ -66,6 +117,7 @@ async function applyImpersonation(session: Session): Promise<Session> {
         name: support.organization.name,
         readOnly,
         expiresAt: support.expiresAt.toISOString(),
+        asUser: null,
       },
     },
   };

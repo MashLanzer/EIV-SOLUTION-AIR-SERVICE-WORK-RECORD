@@ -1,6 +1,7 @@
 import { RouteTransition } from "@/components/layout/RouteTransition";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { WorkerNav } from "@/components/layout/WorkerNav";
+import { ImpersonationBanner } from "@/components/super/ImpersonationBanner";
 import { BiometricLock } from "@/components/security/BiometricLock";
 import { TimeFormatProvider } from "@/components/i18n/TimeFormatProvider";
 import { getLatestActivityAt } from "@/lib/activity";
@@ -38,6 +39,14 @@ export default async function RecordsLayout({
     <TimeFormatProvider use24={use24}>
       <div className="min-h-screen bg-background">
         <BiometricLock />
+        {session.user.impersonating && (
+          <ImpersonationBanner
+            orgName={session.user.impersonating.name}
+            readOnly={session.user.impersonating.readOnly}
+            expiresAt={session.user.impersonating.expiresAt}
+            asUser={session.user.impersonating.asUser}
+          />
+        )}
         <SkipLink />
         <WorkerNav
           name={session.user.name ?? session.user.email ?? ""}

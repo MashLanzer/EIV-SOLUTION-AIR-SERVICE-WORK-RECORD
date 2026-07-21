@@ -13,9 +13,14 @@ import { SUPPORT_SESSION_MINUTES } from "@/lib/support";
 type Mode = "FULL" | "READ_ONLY";
 
 // Enter "support mode": creates a time-boxed, persisted support session and
-// points the cookie at it. requireAuth re-scopes the owner's session to the
-// company until the session ends or expires. Recorded in the company's audit.
-export async function enterOrgAction(orgId: string, mode: Mode = "FULL") {
+// points the cookie at it. requireAuth re-scopes the session until it ends or
+// expires. Two shapes:
+//   - whole-company (no targetUserId): the owner acts as an admin of the org.
+//   - view-as-user (targetUserId): the session becomes that exact user, with
+//     their real role/permissions, to reproduce what they see. Never grants
+//     more than the existing full support (a user's rights ≤ full admin).
+// Recorded in the company's audit either way.
+export async function enterOrgAction(orgId: string, mode: Mode = "FULL", targetUserId?: string) {
   const { email } = await requireSuperAdmin();
   const org = await prisma.organization.findUnique({
     where: { id: orgId },
@@ -23,9 +28,28 @@ export async function enterOrgAction(orgId: string, mode: Mode = "FULL") {
   });
   if (!org) return;
 
+  let target: { id: string; name: string | null; toWorkerApp: boolean } | null = null;
+  if (targetUserId) {
+    const u = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        active: true,
+        organizationId: true,
+        position: { select: { accessLevel: true } },
+      },
+    });
+    // Only a real, active member of THIS company can be impersonated.
+    if (!u || !u.active || u.organizationId !== org.id) return;
+    const level = u.role === "ADMIN" ? "ADMIN" : u.position?.accessLevel ?? (u.role === "WORKER" ? "WORKER" : "ADMIN");
+    target = { id: u.id, name: u.name, toWorkerApp: level === "WORKER" };
+  }
+
   const expiresAt = new Date(Date.now() + SUPPORT_SESSION_MINUTES * 60 * 1000);
   const support = await prisma.impersonationSession.create({
-    data: { organizationId: org.id, actorEmail: email, mode, expiresAt },
+    data: { organizationId: org.id, actorEmail: email, mode, expiresAt, targetUserId: target?.id ?? null },
     select: { id: true },
   });
 
@@ -40,14 +64,16 @@ export async function enterOrgAction(orgId: string, mode: Mode = "FULL") {
   await logAudit({
     organizationId: org.id,
     actor: { id: null, name: `Platform (${email})` },
-    action: "organization.impersonate.enter",
-    entityType: "organization",
-    entityId: org.id,
-    summary: `Platform owner entered support mode (${mode === "READ_ONLY" ? "read-only" : "full"})`,
+    action: target ? "organization.impersonate.view_as" : "organization.impersonate.enter",
+    entityType: target ? "user" : "organization",
+    entityId: target ? target.id : org.id,
+    summary: target
+      ? `Platform owner started viewing as ${target.name ?? "a user"}`
+      : `Platform owner entered support mode (${mode === "READ_ONLY" ? "read-only" : "full"})`,
     isPlatform: true,
   });
 
-  redirect("/admin");
+  redirect(target?.toWorkerApp ? "/records" : "/admin");
 }
 
 // Leave support mode: ends the session and clears the cookie.

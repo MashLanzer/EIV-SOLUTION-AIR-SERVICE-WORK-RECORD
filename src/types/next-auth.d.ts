@@ -35,6 +35,9 @@ declare module "next-auth" {
         name: string;
         readOnly: boolean;
         expiresAt: string;
+        // Set when viewing as a specific user (their name); null for
+        // whole-company support.
+        asUser?: string | null;
       } | null;
     } & DefaultSession["user"];
   }
