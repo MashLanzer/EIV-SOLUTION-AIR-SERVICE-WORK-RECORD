@@ -12,6 +12,7 @@ import { OrgFeatureToggles } from "@/components/super/OrgFeatureToggles";
 import { OrgPlanSelect } from "@/components/super/OrgPlanSelect";
 import { InviteAdminForm } from "@/components/super/InviteAdminForm";
 import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
+import { OrgManageSheet } from "@/components/super/OrgManageSheet";
 import { planLabel } from "@/lib/plans";
 import { enterOrgAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
@@ -64,6 +65,19 @@ export default async function SuperOrgDetailPage({
             <Badge variant="secondary">{planLabel(org.plan)}</Badge>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <OrgManageSheet>
+              <OrgPlanSelect orgId={org.id} current={org.plan} />
+              <InviteAdminForm orgId={org.id} />
+              <OrgFeatureToggles
+                orgId={org.id}
+                features={{
+                  invoicing: org.featureInvoicing,
+                  estimates: org.featureEstimates,
+                  portal: org.featurePortal,
+                }}
+              />
+              <OrgLifecycleControls orgId={org.id} name={org.name} active={org.active} />
+            </OrgManageSheet>
             <Button asChild size="sm" variant="outline">
               <a href={`/super/orgs/${org.id}/export`}>
                 <Download className="h-4 w-4" />
@@ -122,21 +136,6 @@ export default async function SuperOrgDetailPage({
           </CardContent>
         </Card>
       </section>
-
-      <OrgPlanSelect orgId={org.id} current={org.plan} />
-
-      <InviteAdminForm orgId={org.id} />
-
-      <OrgFeatureToggles
-        orgId={org.id}
-        features={{
-          invoicing: org.featureInvoicing,
-          estimates: org.featureEstimates,
-          portal: org.featurePortal,
-        }}
-      />
-
-      <OrgLifecycleControls orgId={org.id} name={org.name} active={org.active} />
     </div>
   );
 }

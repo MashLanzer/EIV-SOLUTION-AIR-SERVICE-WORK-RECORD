@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 
+import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { RouteTransition } from "@/components/layout/RouteTransition";
 import { SuperNav } from "@/components/super/SuperNav";
 import { SuperTabBar } from "@/components/super/SuperTabBar";
@@ -12,7 +13,7 @@ import { requireSuperAdmin } from "@/lib/superAdmin";
 // rest of the app, with distinct "Platform" chrome so it's never mistaken for
 // a customer-facing screen.
 export default async function SuperLayout({ children }: { children: React.ReactNode }) {
-  const { email } = await requireSuperAdmin();
+  const { session, email } = await requireSuperAdmin();
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
@@ -30,16 +31,21 @@ export default async function SuperLayout({ children }: { children: React.ReactN
               </Link>
               <SuperNav className="hidden items-center gap-1 text-sm sm:flex" />
             </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <span className="hidden max-w-[12rem] truncate text-xs text-neutral-500 dark:text-neutral-400 sm:inline">
-                {email}
-              </span>
+            <div className="flex shrink-0 items-center gap-2">
               <Link
                 href="/admin"
-                className="shrink-0 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition-[color,background-color,transform] duration-200 ease-[var(--ease-out)] hover:bg-neutral-100 active:scale-[0.97] dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                aria-label="Exit to app"
+                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-neutral-200 px-2 py-1.5 text-xs font-medium text-neutral-600 transition-[color,background-color,transform] duration-200 ease-[var(--ease-out)] hover:bg-neutral-100 active:scale-[0.97] dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 sm:px-2.5"
               >
-                Exit to app
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Exit to app</span>
               </Link>
+              <HeaderAccountMenu
+                name={session.user.name ?? email}
+                avatarUrl={session.user.avatarUrl ?? null}
+                profileHref="/admin/profile"
+                settingsHref="/admin/settings"
+              />
             </div>
           </div>
         </div>
