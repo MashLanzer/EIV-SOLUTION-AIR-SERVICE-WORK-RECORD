@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
@@ -69,6 +70,19 @@ export async function sendOrgMessageAction(
     actorName: "AeroTrack",
   });
 
+  // Record the send itself so the company page can show a "messages sent"
+  // history (the notifications above are per-recipient copies).
+  await prisma.platformMessage.create({
+    data: {
+      organizationId: org.id,
+      senderEmail: email,
+      title,
+      body,
+      audience,
+      recipientCount: recipients.length,
+    },
+  });
+
   await logAudit({
     organizationId: org.id,
     actor: { id: null, name: `Platform (${email})` },
@@ -81,5 +95,6 @@ export async function sendOrgMessageAction(
     isPlatform: true,
   });
 
+  revalidatePath(`/super/orgs/${org.id}`);
   return { ok: true, sentTo: recipients.length };
 }

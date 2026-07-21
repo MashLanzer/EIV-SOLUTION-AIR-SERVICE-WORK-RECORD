@@ -21,7 +21,7 @@ import { OrgNotesPanel } from "@/components/super/OrgNotesPanel";
 import { SupportHistory } from "@/components/super/SupportHistory";
 import { planLabel } from "@/lib/plans";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getOrgActivity, getOrgDetail, getOrgSupportHistory } from "@/lib/platform";
+import { getOrgActivity, getOrgDetail, getOrgMessages, getOrgSupportHistory } from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
 
@@ -38,10 +38,11 @@ export default async function SuperOrgDetailPage({
 }) {
   await requireSuperAdmin();
   const { id } = await params;
-  const [org, activity, supportHistory] = await Promise.all([
+  const [org, activity, supportHistory, messages] = await Promise.all([
     getOrgDetail(id),
     getOrgActivity(id),
     getOrgSupportHistory(id),
+    getOrgMessages(id),
   ]);
   if (!org) notFound();
 
@@ -94,7 +95,7 @@ export default async function SuperOrgDetailPage({
               <OrgLifecycleControls orgId={org.id} name={org.name} active={org.active} />
             </OrgManageSheet>
             <WatchOrgButton orgId={org.id} watched={org.watchedAt !== null} note={org.watchNote} />
-            <OrgMessageSheet orgId={org.id} orgName={org.name} />
+            <OrgMessageSheet orgId={org.id} orgName={org.name} history={messages} />
             <Button asChild size="sm" variant="outline">
               <a href={`/super/orgs/${org.id}/export`}>
                 <Download className="h-4 w-4" />

@@ -9,11 +9,28 @@ import { Input } from "@/components/ui/input";
 import { useBackDismiss } from "@/hooks/useBackDismiss";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scrollLock";
 import { sendOrgMessageAction, type MessageActionState } from "@/actions/orgMessage";
+import type { OrgMessage } from "@/lib/platform";
+
+const historyFmt = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 // Compose a targeted in-app message to a company's people, opened as a bottom
 // sheet from the company page. In-app only (no email/push): it lands in each
 // recipient's notification bell. Audience is admins-only by default, or everyone.
-export function OrgMessageSheet({ orgId, orgName }: { orgId: string; orgName: string }) {
+// Past sends are listed below the form as a history.
+export function OrgMessageSheet({
+  orgId,
+  orgName,
+  history = [],
+}: {
+  orgId: string;
+  orgName: string;
+  history?: OrgMessage[];
+}) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const formRef = useRef<HTMLFormElement>(null);
@@ -126,6 +143,28 @@ export function OrgMessageSheet({ orgId, orgName }: { orgId: string; orgName: st
                     </Button>
                   </div>
                 </form>
+
+                {history.length > 0 && (
+                  <div className="mt-5 border-t border-neutral-100 pt-4 dark:border-neutral-800">
+                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                      Sent
+                    </h3>
+                    <ul className="flex flex-col divide-y divide-neutral-100 dark:divide-neutral-800">
+                      {history.map((m) => (
+                        <li key={m.id} className="py-2.5">
+                          <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{m.title}</p>
+                          <p className="mt-0.5 line-clamp-2 whitespace-pre-wrap text-xs text-neutral-500 dark:text-neutral-400">
+                            {m.body}
+                          </p>
+                          <p className="mt-1 text-xs text-neutral-400">
+                            {historyFmt.format(m.createdAt)} · {m.audience === "admins" ? "Admins" : "Everyone"} ·{" "}
+                            {m.recipientCount} {m.recipientCount === 1 ? "recipient" : "recipients"}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           </div>,

@@ -499,6 +499,34 @@ export async function getOrgSupportHistory(
   }));
 }
 
+// --- Sent messages: history of targeted in-app messages to a company ---
+export type OrgMessage = {
+  id: string;
+  senderEmail: string;
+  title: string;
+  body: string;
+  audience: string;
+  recipientCount: number;
+  createdAt: Date;
+};
+
+export async function getOrgMessages(organizationId: string, take = 10): Promise<OrgMessage[]> {
+  return prisma.platformMessage.findMany({
+    where: { organizationId },
+    orderBy: { createdAt: "desc" },
+    take,
+    select: {
+      id: true,
+      senderEmail: true,
+      title: true,
+      body: true,
+      audience: true,
+      recipientCount: true,
+      createdAt: true,
+    },
+  });
+}
+
 // --- Platform activity feed: the owner's in-app "what's happening" pulse ---
 export type PlatformFeedItem =
   | { kind: "signup"; id: string; date: Date; orgId: string; orgName: string }

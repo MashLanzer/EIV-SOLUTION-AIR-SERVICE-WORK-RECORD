@@ -189,6 +189,7 @@ model Organization {
   estimates          Estimate[]
   supportSessions    ImpersonationSession[]
   notes              OrgNote[]
+  platformMessages   PlatformMessage[]
   positions          Position[]
   timeOff            TimeOff[]
   notifications      Notification[]
@@ -1187,6 +1188,24 @@ model OrgNote {
   // Author's platform email, denormalized for display (like ImpersonationSession).
   authorEmail    String
   body           String       @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+}
+
+// A record of a targeted in-app message the platform sent to a company. The
+// message is also fanned out as per-recipient notifications; this row is the
+// single "sent" entry that powers the history on the company page.
+model PlatformMessage {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  senderEmail    String
+  title          String
+  body           String       @db.Text
+  // "admins" | "all" — who it was addressed to.
+  audience       String
+  recipientCount Int
   createdAt      DateTime     @default(now())
 
   @@index([organizationId, createdAt])
