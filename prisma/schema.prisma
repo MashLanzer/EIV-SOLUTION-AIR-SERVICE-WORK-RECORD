@@ -190,6 +190,7 @@ model Organization {
   supportSessions    ImpersonationSession[]
   notes              OrgNote[]
   platformMessages   PlatformMessage[]
+  reminders          OrgReminder[]
   positions          Position[]
   timeOff            TimeOff[]
   notifications      Notification[]
@@ -1191,6 +1192,23 @@ model OrgNote {
   createdAt      DateTime     @default(now())
 
   @@index([organizationId, createdAt])
+}
+
+// A dated follow-up the platform sets on a company ("check in on onboarding by
+// Friday"). Console-only; surfaces on the platform Home when due/overdue until
+// marked done. Separate model so a company can carry several open follow-ups.
+model OrgReminder {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy      String
+  note           String       @db.Text
+  dueAt          DateTime
+  doneAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([doneAt, dueAt])
+  @@index([organizationId, dueAt])
 }
 
 // A record of a targeted in-app message the platform sent to a company. The

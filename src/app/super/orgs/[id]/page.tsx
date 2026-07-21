@@ -18,6 +18,7 @@ import { WatchOrgButton } from "@/components/super/WatchOrgButton";
 import { EnterSupportButton } from "@/components/super/EnterSupportButton";
 import { ViewAsUserButton } from "@/components/super/ViewAsUserButton";
 import { OrgNotesPanel } from "@/components/super/OrgNotesPanel";
+import { OrgRemindersPanel } from "@/components/super/OrgRemindersPanel";
 import { SupportHistory } from "@/components/super/SupportHistory";
 import { HealthDot } from "@/components/super/HealthDot";
 import { MiniBarChart } from "@/components/super/MiniBarChart";
@@ -28,6 +29,7 @@ import {
   getOrgActivity,
   getOrgDetail,
   getOrgMessages,
+  getOrgReminders,
   getOrgSupportHistory,
   getOrgTrend,
 } from "@/lib/platform";
@@ -47,12 +49,13 @@ export default async function SuperOrgDetailPage({
 }) {
   await requireSuperAdmin();
   const { id } = await params;
-  const [org, activity, supportHistory, messages, trend] = await Promise.all([
+  const [org, activity, supportHistory, messages, trend, reminders] = await Promise.all([
     getOrgDetail(id),
     getOrgActivity(id),
     getOrgSupportHistory(id),
     getOrgMessages(id),
     getOrgTrend(id),
+    getOrgReminders(id),
   ]);
   if (!org) notFound();
 
@@ -225,6 +228,8 @@ export default async function SuperOrgDetailPage({
           </Card>
         </section>
       </div>
+
+      <OrgRemindersPanel orgId={org.id} reminders={reminders} />
 
       <OrgNotesPanel orgId={org.id} notes={org.notes} />
 

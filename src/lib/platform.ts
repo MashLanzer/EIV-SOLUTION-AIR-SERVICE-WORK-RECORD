@@ -517,6 +517,65 @@ export async function getOrgSupportHistory(
   }));
 }
 
+// --- Follow-up reminders: dated tasks the owner sets on a company ---
+export type OrgReminderItem = {
+  id: string;
+  note: string;
+  dueAt: Date;
+  createdBy: string;
+  done: boolean;
+  overdue: boolean;
+};
+
+// Open + recently-done follow-ups for one company (its detail page).
+export async function getOrgReminders(organizationId: string): Promise<OrgReminderItem[]> {
+  const rows = await prisma.orgReminder.findMany({
+    where: { organizationId },
+    orderBy: [{ doneAt: "asc" }, { dueAt: "asc" }],
+    take: 20,
+    select: { id: true, note: true, dueAt: true, createdBy: true, doneAt: true },
+  });
+  const now = Date.now();
+  return rows.map((r) => ({
+    id: r.id,
+    note: r.note,
+    dueAt: r.dueAt,
+    createdBy: r.createdBy,
+    done: r.doneAt !== null,
+    overdue: r.doneAt === null && r.dueAt.getTime() < now,
+  }));
+}
+
+export type DueReminder = {
+  id: string;
+  note: string;
+  dueAt: Date;
+  overdue: boolean;
+  orgId: string;
+  orgName: string;
+};
+
+// Open follow-ups that are due now or within the next week, across all
+// companies — the "follow-ups" panel on the platform Home. Overdue first.
+export async function getDueReminders(withinDays = 7): Promise<DueReminder[]> {
+  const horizon = new Date(Date.now() + withinDays * 86400000);
+  const rows = await prisma.orgReminder.findMany({
+    where: { doneAt: null, dueAt: { lte: horizon } },
+    orderBy: { dueAt: "asc" },
+    take: 25,
+    select: { id: true, note: true, dueAt: true, organizationId: true, organization: { select: { name: true } } },
+  });
+  const now = Date.now();
+  return rows.map((r) => ({
+    id: r.id,
+    note: r.note,
+    dueAt: r.dueAt,
+    overdue: r.dueAt.getTime() < now,
+    orgId: r.organizationId,
+    orgName: r.organization.name,
+  }));
+}
+
 // --- Per-company trend: monthly work records + paid revenue, for the small
 // sparkline-style bars on the company page. Buckets in JS (single tenant, cheap).
 export type OrgTrendPoint = { label: string; records: number; revenue: number };

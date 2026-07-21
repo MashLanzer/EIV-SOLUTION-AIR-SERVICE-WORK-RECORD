@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Building2, ClipboardList, Eye, LifeBuoy, Receipt, Users } from "lucide-react";
+import { Activity, BellRing, Building2, Check, ClipboardList, Eye, LifeBuoy, Receipt, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,19 +7,21 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { DeltaBadge } from "@/components/ui/delta-badge";
 import { AttentionPanel } from "@/components/super/AttentionPanel";
 import { endSupportSessionAction } from "@/actions/impersonation";
+import { completeOrgReminderAction } from "@/actions/orgReminders";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getPlatformAttention, getPlatformFeed, getPlatformOverview } from "@/lib/platform";
+import { getDueReminders, getPlatformAttention, getPlatformFeed, getPlatformOverview } from "@/lib/platform";
 import { getActiveSupportSessions } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
 
 export default async function SuperOverviewPage() {
   await requireSuperAdmin();
-  const [o, support, attention, feed] = await Promise.all([
+  const [o, support, attention, feed, dueReminders] = await Promise.all([
     getPlatformOverview(),
     getActiveSupportSessions(),
     getPlatformAttention(),
     getPlatformFeed(5),
+    getDueReminders(),
   ]);
 
   const timeFmt = new Intl.DateTimeFormat("en-US", {
@@ -28,6 +30,7 @@ export default async function SuperOverviewPage() {
     hour: "numeric",
     minute: "2-digit",
   });
+  const dueFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
 
   return (
     <div className="flex flex-col gap-4">
@@ -60,6 +63,43 @@ export default async function SuperOverviewPage() {
       </div>
 
       <AttentionPanel attention={attention} />
+
+      {dueReminders.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            <BellRing className="h-4 w-4" />
+            Follow-ups due ({dueReminders.length})
+          </h2>
+          <Card>
+            <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+              {dueReminders.map((r) => (
+                <div key={r.id} className="flex items-start justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm text-neutral-900 dark:text-neutral-100">{r.note}</p>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-xs">
+                      <Link
+                        href={`/super/orgs/${r.orgId}`}
+                        className="truncate font-medium text-neutral-600 hover:text-primary dark:text-neutral-300"
+                      >
+                        {r.orgName}
+                      </Link>
+                      <span className={r.overdue ? "font-medium text-destructive-text" : "text-neutral-400"}>
+                        · {r.overdue ? "Overdue" : "Due"} {dueFmt.format(r.dueAt)}
+                      </span>
+                    </p>
+                  </div>
+                  <form action={completeOrgReminderAction.bind(null, r.id)}>
+                    <Button type="submit" size="sm" variant="ghost" aria-label="Mark done">
+                      <Check className="h-4 w-4" />
+                      Done
+                    </Button>
+                  </form>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       {support.length > 0 && (
         <section className="flex flex-col gap-3">
