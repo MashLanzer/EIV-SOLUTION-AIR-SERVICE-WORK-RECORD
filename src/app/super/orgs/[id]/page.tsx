@@ -19,7 +19,9 @@ import { EnterSupportButton } from "@/components/super/EnterSupportButton";
 import { ViewAsUserButton } from "@/components/super/ViewAsUserButton";
 import { OrgNotesPanel } from "@/components/super/OrgNotesPanel";
 import { SupportHistory } from "@/components/super/SupportHistory";
+import { HealthDot } from "@/components/super/HealthDot";
 import { planLabel } from "@/lib/plans";
+import { computeHealth } from "@/lib/health";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgActivity, getOrgDetail, getOrgMessages, getOrgSupportHistory } from "@/lib/platform";
 
@@ -60,6 +62,14 @@ export default async function SuperOrgDetailPage({
   });
   const money = (n: number) => `${org.currencySymbol || "$"}${n.toFixed(2)}`;
 
+  const health = computeHealth({
+    active: org.active,
+    records: org._count.records,
+    users: org._count.users,
+    invoices: org._count.invoices,
+    lastActivityAt: activity.lastActivity ?? null,
+  });
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
@@ -79,6 +89,9 @@ export default async function SuperOrgDetailPage({
               <Badge variant="destructive">Suspended</Badge>
             )}
             <Badge variant="secondary">{planLabel(org.plan)}</Badge>
+            <span className="inline-flex items-center rounded-full border border-neutral-200 px-2.5 py-1 dark:border-neutral-700">
+              <HealthDot health={health} withLabel />
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <OrgManageSheet>

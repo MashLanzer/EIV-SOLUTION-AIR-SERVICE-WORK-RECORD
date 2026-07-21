@@ -29,6 +29,7 @@ const SORT: { value: OrgSort; label: string }[] = [
   { value: "newest", label: "Newest" },
   { value: "oldest", label: "Oldest" },
   { value: "name", label: "Name (A–Z)" },
+  { value: "health", label: "Lowest health first" },
   { value: "recent", label: "Most recently active" },
   { value: "idle", label: "Gone quiet (most idle)" },
   { value: "users", label: "Most users" },

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { computeTotals } from "@/lib/invoices";
 import { getAuditLog } from "@/lib/audit";
 import { PLANS } from "@/lib/plans";
+import { computeHealth, type Health } from "@/lib/health";
 
 // Cross-tenant platform metrics for the owner console. These bypass the normal
 // org scoping ON PURPOSE, so they must only ever be called from pages/actions
@@ -63,11 +64,12 @@ export type OrgSummary = {
   invoices: number;
   lastActivityAt: Date | null;
   watched: boolean;
+  health: Health;
 };
 
 export type OrgStatusFilter = "all" | "active" | "suspended";
 export type OrgPlanFilter = "all" | "FREE" | "PRO" | "none";
-export type OrgSort = "newest" | "oldest" | "name" | "users" | "records" | "recent" | "idle";
+export type OrgSort = "newest" | "oldest" | "name" | "users" | "records" | "recent" | "idle" | "health";
 
 export type OrgListOptions = {
   status?: OrgStatusFilter;
@@ -111,19 +113,31 @@ export async function getOrgSummaries(opts: OrgListOptions = {}): Promise<OrgSum
   ]);
   const lastRecord = new Map(lastByOrg.map((r) => [r.organizationId, r._max.createdAt ?? null]));
 
-  const list: OrgSummary[] = rows.map((o) => ({
-    id: o.id,
-    name: o.name,
-    slug: o.slug,
-    createdAt: o.createdAt,
-    active: o.active,
-    plan: o.plan,
-    users: o._count.users,
-    records: o._count.records,
-    invoices: o._count.invoices,
-    lastActivityAt: lastRecord.get(o.id) ?? null,
-    watched: o.watchedAt !== null,
-  }));
+  const now = new Date();
+  const list: OrgSummary[] = rows.map((o) => {
+    const lastActivityAt = lastRecord.get(o.id) ?? null;
+    return {
+      id: o.id,
+      name: o.name,
+      slug: o.slug,
+      createdAt: o.createdAt,
+      active: o.active,
+      plan: o.plan,
+      users: o._count.users,
+      records: o._count.records,
+      invoices: o._count.invoices,
+      lastActivityAt,
+      watched: o.watchedAt !== null,
+      health: computeHealth({
+        active: o.active,
+        records: o._count.records,
+        users: o._count.users,
+        invoices: o._count.invoices,
+        lastActivityAt,
+        now,
+      }),
+    };
+  });
 
   const time = (d: Date | null) => (d ? d.getTime() : 0);
   switch (sort) {
@@ -138,6 +152,10 @@ export async function getOrgSummaries(opts: OrgListOptions = {}): Promise<OrgSum
       break;
     case "records":
       list.sort((a, b) => b.records - a.records);
+      break;
+    case "health":
+      // Lowest health first — the companies that need attention rise to the top.
+      list.sort((a, b) => a.health.score - b.health.score);
       break;
     case "recent":
       list.sort((a, b) => time(b.lastActivityAt) - time(a.lastActivityAt));

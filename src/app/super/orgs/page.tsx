@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OrgListControls } from "@/components/super/OrgListControls";
+import { HealthDot } from "@/components/super/HealthDot";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import {
   getOrgSummaries,
@@ -18,7 +19,7 @@ export const dynamic = "force-dynamic";
 
 const STATUS_VALUES: OrgStatusFilter[] = ["all", "active", "suspended"];
 const PLAN_VALUES: OrgPlanFilter[] = ["all", "FREE", "PRO", "none"];
-const SORT_VALUES: OrgSort[] = ["newest", "oldest", "name", "recent", "idle", "users", "records"];
+const SORT_VALUES: OrgSort[] = ["newest", "oldest", "name", "health", "recent", "idle", "users", "records"];
 
 function oneOf<T extends string>(raw: string | undefined, allowed: T[], fallback: T): T {
   return allowed.includes(raw as T) ? (raw as T) : fallback;
@@ -126,6 +127,7 @@ export default async function SuperOrgsPage({
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
+                    <HealthDot health={org.health} />
                     {org.watched && (
                       <Flag className="h-3.5 w-3.5 shrink-0 fill-current text-primary" aria-label="Watching" />
                     )}

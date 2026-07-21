@@ -13,7 +13,7 @@ export const runtime = "nodejs";
 
 const STATUS_VALUES: OrgStatusFilter[] = ["all", "active", "suspended"];
 const PLAN_VALUES: OrgPlanFilter[] = ["all", "FREE", "PRO", "none"];
-const SORT_VALUES: OrgSort[] = ["newest", "oldest", "name", "recent", "idle", "users", "records"];
+const SORT_VALUES: OrgSort[] = ["newest", "oldest", "name", "health", "recent", "idle", "users", "records"];
 
 function oneOf<T extends string>(raw: string | null, allowed: T[], fallback: T): T {
   return raw && allowed.includes(raw as T) ? (raw as T) : fallback;
@@ -41,6 +41,8 @@ export async function GET(request: Request) {
     "Slug",
     "Status",
     "Plan",
+    "Health",
+    "Score",
     "Watched",
     "Users",
     "Records",
@@ -56,6 +58,8 @@ export async function GET(request: Request) {
         csvCell(o.slug),
         csvCell(o.active ? "Active" : "Suspended"),
         csvCell(planLabel(o.plan)),
+        csvCell(o.health.label),
+        csvCell(o.health.score),
         csvCell(o.watched ? "Yes" : "No"),
         csvCell(o.users),
         csvCell(o.records),
