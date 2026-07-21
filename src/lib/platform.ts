@@ -447,6 +447,58 @@ export async function getOrgActivity(id: string) {
   return { lastActivity: lastRecord._max.createdAt, topUsers, recent };
 }
 
+// --- Support access history: an accountability trail of every time the
+// platform entered this company (support mode or view-as-user), open or past.
+export type SupportHistoryEntry = {
+  id: string;
+  actorEmail: string;
+  // "full" | "read_only" | "view_as" — view-as when a specific user was targeted.
+  kind: "full" | "read_only" | "view_as";
+  targetName: string | null;
+  startedAt: Date;
+  endedAt: Date | null;
+  expiresAt: Date;
+  active: boolean;
+};
+
+export async function getOrgSupportHistory(
+  organizationId: string,
+  take = 12
+): Promise<SupportHistoryEntry[]> {
+  const rows = await prisma.impersonationSession.findMany({
+    where: { organizationId },
+    orderBy: { startedAt: "desc" },
+    take,
+    select: {
+      id: true,
+      actorEmail: true,
+      mode: true,
+      targetUserId: true,
+      startedAt: true,
+      endedAt: true,
+      expiresAt: true,
+    },
+  });
+
+  const targetIds = [...new Set(rows.map((r) => r.targetUserId).filter((v): v is string => Boolean(v)))];
+  const targets = targetIds.length
+    ? await prisma.user.findMany({ where: { id: { in: targetIds } }, select: { id: true, name: true } })
+    : [];
+  const nameById = new Map(targets.map((u) => [u.id, u.name]));
+
+  const now = Date.now();
+  return rows.map((r) => ({
+    id: r.id,
+    actorEmail: r.actorEmail,
+    kind: r.targetUserId ? "view_as" : r.mode === "READ_ONLY" ? "read_only" : "full",
+    targetName: r.targetUserId ? nameById.get(r.targetUserId) ?? "a user" : null,
+    startedAt: r.startedAt,
+    endedAt: r.endedAt,
+    expiresAt: r.expiresAt,
+    active: r.endedAt === null && r.expiresAt.getTime() > now,
+  }));
+}
+
 // --- Platform activity feed: the owner's in-app "what's happening" pulse ---
 export type PlatformFeedItem =
   | { kind: "signup"; id: string; date: Date; orgId: string; orgName: string }

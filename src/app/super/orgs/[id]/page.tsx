@@ -18,9 +18,10 @@ import { WatchOrgButton } from "@/components/super/WatchOrgButton";
 import { EnterSupportButton } from "@/components/super/EnterSupportButton";
 import { ViewAsUserButton } from "@/components/super/ViewAsUserButton";
 import { OrgNotesPanel } from "@/components/super/OrgNotesPanel";
+import { SupportHistory } from "@/components/super/SupportHistory";
 import { planLabel } from "@/lib/plans";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getOrgActivity, getOrgDetail } from "@/lib/platform";
+import { getOrgActivity, getOrgDetail, getOrgSupportHistory } from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,11 @@ export default async function SuperOrgDetailPage({
 }) {
   await requireSuperAdmin();
   const { id } = await params;
-  const [org, activity] = await Promise.all([getOrgDetail(id), getOrgActivity(id)]);
+  const [org, activity, supportHistory] = await Promise.all([
+    getOrgDetail(id),
+    getOrgActivity(id),
+    getOrgSupportHistory(id),
+  ]);
   if (!org) notFound();
 
   const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -180,6 +185,8 @@ export default async function SuperOrgDetailPage({
       </div>
 
       <OrgNotesPanel orgId={org.id} notes={org.notes} />
+
+      <SupportHistory entries={supportHistory} />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
