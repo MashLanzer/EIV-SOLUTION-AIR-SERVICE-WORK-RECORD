@@ -1,26 +1,30 @@
 import Link from "next/link";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { RouteTransition } from "@/components/layout/RouteTransition";
+import { ConsoleMenu } from "@/components/super/ConsoleMenu";
 import { SuperNav } from "@/components/super/SuperNav";
 import { SuperSearch } from "@/components/super/SuperSearch";
 import { SuperTabBar } from "@/components/super/SuperTabBar";
 import { requireSuperAdmin } from "@/lib/superAdmin";
+import { getActiveAnnouncement } from "@/lib/announcements";
 
 // The platform console lives outside the per-company /admin area and is gated
 // by requireSuperAdmin (env allowlist) — it's the app owner's own console.
 // Shares the app's palette, background glow and motion so it feels like the
 // rest of the app, with distinct "Platform" chrome so it's never mistaken for
-// a customer-facing screen.
+// a customer-facing screen. Four core tabs; owner tools + one-off actions live
+// in the header's Console menu.
 export default async function SuperLayout({ children }: { children: React.ReactNode }) {
   const { session, email, isOwner } = await requireSuperAdmin();
+  const announcement = await getActiveAnnouncement();
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
       <header className="sticky top-0 z-20 border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur native:pt-[env(safe-area-inset-top)]">
         <div className="mx-auto max-w-5xl px-4">
-          {/* Top row: brand + account. Nav sits inline here on desktop. */}
+          {/* Top row: brand + nav (desktop) + search / console menu / account. */}
           <div className="flex h-14 items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-4">
               <Link
@@ -30,18 +34,11 @@ export default async function SuperLayout({ children }: { children: React.ReactN
                 <ShieldCheck className="h-5 w-5" />
                 <span>Platform</span>
               </Link>
-              <SuperNav className="hidden items-center gap-1 text-sm sm:flex" showAdmins={isOwner} />
+              <SuperNav className="hidden items-center gap-1 text-sm sm:flex" />
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               <SuperSearch />
-              <Link
-                href="/admin"
-                aria-label="Exit to app"
-                className="flex shrink-0 items-center gap-1.5 rounded-lg border border-neutral-200 px-2 py-1.5 text-xs font-medium text-neutral-600 transition-[color,background-color,transform] duration-200 ease-[var(--ease-out)] hover:bg-neutral-100 active:scale-[0.97] dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800 sm:px-2.5"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">Exit to app</span>
-              </Link>
+              <ConsoleMenu announcement={announcement?.message ?? null} isOwner={isOwner} />
               <HeaderAccountMenu
                 name={session.user.name ?? email}
                 avatarUrl={session.user.avatarUrl ?? null}
@@ -58,7 +55,7 @@ export default async function SuperLayout({ children }: { children: React.ReactN
 
       {/* Phone nav: the app's fixed bottom tab bar (desktop keeps the inline
           nav in the header above). */}
-      <SuperTabBar showAdmins={isOwner} />
+      <SuperTabBar />
     </div>
   );
 }

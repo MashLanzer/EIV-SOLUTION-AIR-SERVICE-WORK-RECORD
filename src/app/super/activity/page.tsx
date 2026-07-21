@@ -12,9 +12,10 @@ import {
 
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { AttentionPanel } from "@/components/super/AttentionPanel";
+import { FilterChip } from "@/components/ui/filter-chip";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getPlatformAttention, getPlatformFeed, type PlatformFeedItem } from "@/lib/platform";
+import { getPlatformFeed, type PlatformFeedItem } from "@/lib/platform";
+import { getGlobalAuditLog } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
 
@@ -39,14 +40,52 @@ function dayLabel(date: Date, now: Date): string {
   return date.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
 }
 
-export default async function SuperActivityPage() {
+export default async function SuperActivityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
   await requireSuperAdmin();
-  const [feed, attention] = await Promise.all([getPlatformFeed(), getPlatformAttention()]);
+  const { view } = await searchParams;
+  const allMode = view === "all";
   const now = new Date();
-
   const timeFmt = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit" });
+  const auditTimeFmt = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
-  // Group the stream by day, preserving reverse-chronological order.
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Activity</h1>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+          {allMode
+            ? "Every logged change across every company, newest first."
+            : "The platform pulse — signups, plan and lifecycle changes, admin grants and support sessions."}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <FilterChip href="/super/activity" active={!allMode}>
+          Pulse
+        </FilterChip>
+        <FilterChip href="/super/activity?view=all" active={allMode}>
+          All activity
+        </FilterChip>
+      </div>
+
+      {allMode ? <AllActivity fmt={auditTimeFmt} /> : <Pulse now={now} timeFmt={timeFmt} />}
+    </div>
+  );
+}
+
+// The curated platform pulse: signups + platform-level events, grouped by day.
+async function Pulse({ now, timeFmt }: { now: Date; timeFmt: Intl.DateTimeFormat }) {
+  const feed = await getPlatformFeed();
+
   const groups: { key: string; label: string; items: PlatformFeedItem[] }[] = [];
   const byKey = new Map<string, PlatformFeedItem[]>();
   for (const item of feed) {
@@ -60,71 +99,111 @@ export default async function SuperActivityPage() {
     arr.push(item);
   }
 
+  if (groups.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-0">
+          <EmptyState icon={Activity} title="Nothing yet" description="" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Activity</h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          What&apos;s happening across the platform — signups, plan and lifecycle changes,
-          admin grants and support sessions.
-        </p>
-      </div>
+    <>
+      {groups.map((group) => (
+        <section key={group.key} className="flex flex-col gap-2">
+          <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+            {group.label}
+          </h2>
+          <Card>
+            <CardContent className="stagger-children flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+              {group.items.map((item) => {
+                const { Icon, tone } =
+                  item.kind === "signup"
+                    ? { Icon: Building2, tone: "text-success-text" }
+                    : eventStyle(item.action);
+                const title = item.kind === "signup" ? `${item.orgName} signed up` : item.summary;
+                const orgId = item.orgId;
+                const meta =
+                  item.kind === "signup"
+                    ? "New company"
+                    : [item.actorName, item.orgName].filter(Boolean).join(" · ");
 
-      <AttentionPanel attention={attention} />
-
-      {groups.length === 0 ? (
-        <Card>
-          <CardContent className="p-0">
-            <EmptyState icon={Activity} title="Nothing yet" description="" />
-          </CardContent>
-        </Card>
-      ) : (
-        groups.map((group) => (
-          <section key={group.key} className="flex flex-col gap-2">
-            <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
-              {group.label}
-            </h2>
-            <Card>
-              <CardContent className="stagger-children flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
-                {group.items.map((item) => {
-                  const { Icon, tone } =
-                    item.kind === "signup"
-                      ? { Icon: Building2, tone: "text-success-text" }
-                      : eventStyle(item.action);
-                  const title =
-                    item.kind === "signup" ? `${item.orgName} signed up` : item.summary;
-                  const orgId = item.orgId;
-                  const meta =
-                    item.kind === "signup"
-                      ? "New company"
-                      : [item.actorName, item.orgName].filter(Boolean).join(" · ");
-
-                  return (
-                    <div key={item.id} className="flex items-start gap-3 px-4 py-3">
-                      <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${tone}`} />
-                      <div className="min-w-0 flex-1">
-                        <div className="text-sm text-neutral-900 dark:text-neutral-100">
-                          {orgId ? (
-                            <Link href={`/super/orgs/${orgId}`} className="hover:text-primary">
-                              {title}
-                            </Link>
-                          ) : (
-                            title
-                          )}
-                        </div>
-                        {meta && <div className="truncate text-xs text-neutral-400">{meta}</div>}
+                return (
+                  <div key={item.id} className="flex items-start gap-3 px-4 py-3">
+                    <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${tone}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm text-neutral-900 dark:text-neutral-100">
+                        {orgId ? (
+                          <Link href={`/super/orgs/${orgId}`} className="hover:text-primary">
+                            {title}
+                          </Link>
+                        ) : (
+                          title
+                        )}
                       </div>
-                      <span className="shrink-0 text-xs tabular-nums text-neutral-400">
-                        {timeFmt.format(item.date)}
-                      </span>
+                      {meta && <div className="truncate text-xs text-neutral-400">{meta}</div>}
                     </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          </section>
-        ))
-      )}
-    </div>
+                    <span className="shrink-0 text-xs tabular-nums text-neutral-400">
+                      {timeFmt.format(item.date)}
+                    </span>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </section>
+      ))}
+    </>
+  );
+}
+
+// The full audit log across every company (the old Audit tab).
+async function AllActivity({ fmt }: { fmt: Intl.DateTimeFormat }) {
+  const events = await getGlobalAuditLog();
+
+  if (events.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-0">
+          <EmptyState icon={Activity} title="Nothing logged yet" description="" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+        {events.map((e) => (
+          <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-neutral-900 dark:text-neutral-100">{e.summary}</span>
+                {e.isPlatform && (
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                    <ShieldCheck className="h-3 w-3" />
+                    Platform
+                  </span>
+                )}
+              </div>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-neutral-400">
+                {e.organization ? (
+                  <Link href={`/super/orgs/${e.organization.id}`} className="hover:text-primary">
+                    {e.organization.name}
+                  </Link>
+                ) : (
+                  <span>Platform</span>
+                )}
+                <span>·</span>
+                <span>{e.actorName}</span>
+              </div>
+            </div>
+            <span className="shrink-0 text-xs tabular-nums text-neutral-400">{fmt.format(e.createdAt)}</span>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }

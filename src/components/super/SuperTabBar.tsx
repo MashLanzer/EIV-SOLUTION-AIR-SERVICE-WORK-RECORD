@@ -2,35 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Building2, LayoutDashboard, ScrollText, TrendingUp, UserCog, type LucideIcon } from "lucide-react";
+import { Activity, Building2, LayoutDashboard, TrendingUp, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const TABS: { href: string; label: string; icon: LucideIcon; exact: boolean }[] = [
-  { href: "/super", label: "Overview", icon: LayoutDashboard, exact: true },
-  { href: "/super/activity", label: "Activity", icon: Activity, exact: false },
+  { href: "/super", label: "Home", icon: LayoutDashboard, exact: true },
   { href: "/super/orgs", label: "Companies", icon: Building2, exact: false },
-  { href: "/super/growth", label: "Growth", icon: TrendingUp, exact: false },
-  { href: "/super/audit", label: "Audit", icon: ScrollText, exact: false },
+  { href: "/super/activity", label: "Activity", icon: Activity, exact: false },
+  { href: "/super/growth", label: "Insights", icon: TrendingUp, exact: false },
 ];
 
-const ADMIN_TAB = { href: "/super/admins", label: "Admins", icon: UserCog, exact: false };
-
-// The platform console's phone navigation: the same fixed bottom tab bar the
-// rest of the app uses, so /super reads as a native mobile app instead of a
-// desktop page with a scrolling nav strip. Unlike the app's BottomTabBar this
-// also shows inside the native APK (no `native:hidden`), since the console has
-// no create-FAB flow to defer to.
-export function SuperTabBar({ showAdmins = false }: { showAdmins?: boolean }) {
+// The platform console's phone navigation: the app's fixed bottom tab bar with
+// four core destinations. Owner tools and one-off actions live in the header's
+// Console menu. Shows inside the native APK too (no `native:hidden`), since the
+// console has no create-FAB flow.
+export function SuperTabBar() {
   const pathname = usePathname();
-  const tabs = showAdmins ? [...TABS, ADMIN_TAB] : TABS;
 
   return (
     <nav
       aria-label="Platform"
       className="fixed inset-x-0 bottom-0 z-20 flex border-t border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-lg shadow-[0_-1px_16px_rgba(0,0,0,0.06)] dark:shadow-[0_-1px_16px_rgba(0,0,0,0.35)] pb-[env(safe-area-inset-bottom)] sm:hidden"
     >
-      {tabs.map((item) => {
+      {TABS.map((item) => {
         const Icon = item.icon;
         const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
         return (

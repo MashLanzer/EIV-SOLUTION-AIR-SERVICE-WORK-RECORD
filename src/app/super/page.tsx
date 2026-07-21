@@ -1,35 +1,33 @@
 import Link from "next/link";
-import { Building2, ClipboardList, Eye, LifeBuoy, Receipt, Users } from "lucide-react";
+import { Activity, Building2, ClipboardList, Eye, LifeBuoy, Receipt, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
 import { DeltaBadge } from "@/components/ui/delta-badge";
-import { AnnouncementControls } from "@/components/super/AnnouncementControls";
+import { AttentionPanel } from "@/components/super/AttentionPanel";
 import { endSupportSessionAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getOrgSummaries, getPlatformOverview } from "@/lib/platform";
+import { getPlatformAttention, getPlatformFeed, getPlatformOverview } from "@/lib/platform";
 import { getActiveSupportSessions } from "@/lib/support";
-import { getActiveAnnouncement } from "@/lib/announcements";
 
 export const dynamic = "force-dynamic";
 
 export default async function SuperOverviewPage() {
   await requireSuperAdmin();
-  const [o, orgs, support, announcement] = await Promise.all([
+  const [o, support, attention, feed] = await Promise.all([
     getPlatformOverview(),
-    getOrgSummaries(),
     getActiveSupportSessions(),
-    getActiveAnnouncement(),
+    getPlatformAttention(),
+    getPlatformFeed(5),
   ]);
 
-  const dateFmt = new Intl.DateTimeFormat("en-US", {
+  const timeFmt = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
-    timeZone: "UTC",
+    hour: "numeric",
+    minute: "2-digit",
   });
-  const recent = orgs.slice(0, 5);
 
   return (
     <div className="flex flex-col gap-4">
@@ -41,7 +39,7 @@ export default async function SuperOverviewPage() {
       </div>
 
       {/* One compact KPI row: the 30-day growth folds into each headline tile
-          as a sub-line + delta, instead of a second grid of tiles. */}
+          as a sub-line + delta. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
           icon={Building2}
@@ -58,15 +56,10 @@ export default async function SuperOverviewPage() {
           delta={<DeltaBadge current={o.newRecords} previous={o.prevNewRecords} />}
         />
         <StatTile icon={Users} value={String(o.users)} label="Users" />
-        <StatTile
-          icon={Receipt}
-          value={String(o.invoices)}
-          label="Invoices"
-          sub={`${o.paidInvoices} paid`}
-        />
+        <StatTile icon={Receipt} value={String(o.invoices)} label="Invoices" sub={`${o.paidInvoices} paid`} />
       </div>
 
-      <AnnouncementControls current={announcement?.message ?? null} />
+      <AttentionPanel attention={attention} />
 
       {support.length > 0 && (
         <section className="flex flex-col gap-3">
@@ -110,42 +103,47 @@ export default async function SuperOverviewPage() {
         </section>
       )}
 
+      {/* Compact preview of the platform pulse; the full feed lives in Activity. */}
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            Newest companies
+          <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            <Activity className="h-4 w-4" />
+            Recent activity
           </h2>
-          <Link href="/super/orgs" className="text-sm text-primary hover:underline">
+          <Link href="/super/activity" className="text-sm text-primary hover:underline">
             View all
           </Link>
         </div>
         <Card>
           <CardContent className="stagger-children flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
-            {recent.map((org) => (
-              <Link
-                key={org.id}
-                href={`/super/orgs/${org.id}`}
-                className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-900"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">
-                      {org.name}
+            {feed.length === 0 ? (
+              <p className="px-4 py-4 text-sm text-neutral-400">Nothing yet.</p>
+            ) : (
+              feed.map((item) => {
+                const title = item.kind === "signup" ? `${item.orgName} signed up` : item.summary;
+                return (
+                  <div key={item.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <div className="min-w-0">
+                      {item.orgId ? (
+                        <Link
+                          href={`/super/orgs/${item.orgId}`}
+                          className="block truncate text-sm text-neutral-900 hover:text-primary dark:text-neutral-100"
+                        >
+                          {title}
+                        </Link>
+                      ) : (
+                        <span className="block truncate text-sm text-neutral-900 dark:text-neutral-100">
+                          {title}
+                        </span>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-xs tabular-nums text-neutral-400">
+                      {timeFmt.format(item.date)}
                     </span>
-                    {!org.active && (
-                      <span className="rounded-full bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold uppercase text-destructive-text">
-                        Suspended
-                      </span>
-                    )}
                   </div>
-                  <span className="text-xs text-neutral-400">{dateFmt.format(org.createdAt)}</span>
-                </div>
-                <div className="flex shrink-0 items-center gap-4 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
-                  <span>{org.users} users</span>
-                  <span>{org.records} records</span>
-                </div>
-              </Link>
-            ))}
+                );
+              })
+            )}
           </CardContent>
         </Card>
       </section>

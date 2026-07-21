@@ -30,9 +30,9 @@ export default async function SuperGrowthPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Growth</h1>
+        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Insights</h1>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          Platform trends over the last 6 months.
+          Revenue, plans and growth trends over the last 6 months.
         </p>
       </div>
 

@@ -2,29 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Building2, LayoutDashboard, ScrollText, TrendingUp, UserCog, type LucideIcon } from "lucide-react";
+import { Activity, Building2, LayoutDashboard, TrendingUp, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+// The four core destinations. Owner tools (admins) and one-off actions
+// (announcements, exit) live in the header's Console menu, not the nav.
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
-  { href: "/super", label: "Overview", icon: LayoutDashboard },
-  { href: "/super/activity", label: "Activity", icon: Activity },
+  { href: "/super", label: "Home", icon: LayoutDashboard },
   { href: "/super/orgs", label: "Companies", icon: Building2 },
-  { href: "/super/growth", label: "Growth", icon: TrendingUp },
-  { href: "/super/audit", label: "Audit", icon: ScrollText },
+  { href: "/super/activity", label: "Activity", icon: Activity },
+  { href: "/super/growth", label: "Insights", icon: TrendingUp },
 ];
 
-// Platform console nav, styled like the app's section tabs: an active pill with
+// Desktop console nav, styled like the app's section tabs: an active pill with
 // the shared easing/press so the owner console feels like the rest of the app.
-// `showAdmins` (env owners only) reveals the admin-management tab.
-export function SuperNav({ className, showAdmins = false }: { className?: string; showAdmins?: boolean }) {
+export function SuperNav({ className }: { className?: string }) {
   const pathname = usePathname();
-  const items = showAdmins
-    ? [...NAV, { href: "/super/admins", label: "Admins", icon: UserCog }]
-    : NAV;
   return (
     <nav className={className}>
-      {items.map(({ href, label, icon: Icon }) => {
+      {NAV.map(({ href, label, icon: Icon }) => {
         const active = href === "/super" ? pathname === "/super" : pathname.startsWith(href);
         return (
           <Link
