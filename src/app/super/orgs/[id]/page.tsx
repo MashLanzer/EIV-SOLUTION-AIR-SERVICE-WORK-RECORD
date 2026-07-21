@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Activity, ArrowLeft, Building2, ClipboardList, DollarSign, FolderKanban, Receipt, Users } from "lucide-react";
 
-import { Download, Eye, LogIn } from "lucide-react";
+import { Download } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,8 @@ import { OrgPlanSelect } from "@/components/super/OrgPlanSelect";
 import { InviteAdminForm } from "@/components/super/InviteAdminForm";
 import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
 import { OrgManageSheet } from "@/components/super/OrgManageSheet";
+import { EnterSupportButton } from "@/components/super/EnterSupportButton";
 import { planLabel } from "@/lib/plans";
-import { enterOrgAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgActivity, getOrgDetail } from "@/lib/platform";
 
@@ -90,18 +90,7 @@ export default async function SuperOrgDetailPage({
                 Export
               </a>
             </Button>
-            <form action={enterOrgAction.bind(null, org.id, "READ_ONLY")}>
-              <Button type="submit" size="sm" variant="outline">
-                <Eye className="h-4 w-4" />
-                View only
-              </Button>
-            </form>
-            <form action={enterOrgAction.bind(null, org.id, "FULL")}>
-              <Button type="submit" size="sm" variant="outline">
-                <LogIn className="h-4 w-4" />
-                Enter as support
-              </Button>
-            </form>
+            <EnterSupportButton orgId={org.id} />
           </div>
         </div>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
