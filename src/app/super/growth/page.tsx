@@ -5,7 +5,7 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { BarList } from "@/components/charts/BarList";
 import { MiniBarChart } from "@/components/super/MiniBarChart";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getPlatformGrowth, getPlatformRevenue } from "@/lib/platform";
+import { getPlatformGrowth, getPlatformRevenue, getTopRevenueCompanies } from "@/lib/platform";
 import { planLabel } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
@@ -18,10 +18,12 @@ function shortMoney(n: number): string {
 
 export default async function SuperGrowthPage() {
   await requireSuperAdmin();
-  const [{ points, activeOrgs, suspendedOrgs }, revenue] = await Promise.all([
+  const [{ points, activeOrgs, suspendedOrgs }, revenue, topRevenue] = await Promise.all([
     getPlatformGrowth(6),
     getPlatformRevenue(),
+    getTopRevenueCompanies(8),
   ]);
+  const money = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 
   const totalOrgs = activeOrgs + suspendedOrgs;
   const suspendedRate = totalOrgs > 0 ? Math.round((suspendedOrgs / totalOrgs) * 100) : 0;
@@ -64,6 +66,25 @@ export default async function SuperGrowthPage() {
         </Card>
         <p className="px-1 text-xs text-neutral-400 dark:text-neutral-500">
           Est. MRR uses the plan catalog price across active companies.
+        </p>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Top companies by paid revenue
+        </h2>
+        <Card>
+          <CardContent className="p-4">
+            <BarList
+              data={topRevenue.map((c) => ({ label: c.name, value: c.revenue }))}
+              formatValue={money}
+              emptyLabel="No paid invoices yet"
+              labelWidth="8rem"
+            />
+          </CardContent>
+        </Card>
+        <p className="px-1 text-xs text-neutral-400 dark:text-neutral-500">
+          All-time revenue from paid invoices, across every company.
         </p>
       </section>
 

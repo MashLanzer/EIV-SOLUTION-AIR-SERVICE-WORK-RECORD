@@ -737,3 +737,44 @@ export async function getPlatformRevenue(): Promise<{
     .sort((a, b) => b.count - a.count);
   return { distribution, mrr };
 }
+
+// Top companies by all-time paid revenue — a "who's actually generating money"
+// leaderboard for Insights. Aggregated in JS from paid invoices (owner-console
+// scale); returns the top `limit`.
+export type CompanyRevenue = { id: string; name: string; revenue: number };
+
+export async function getTopRevenueCompanies(limit = 8): Promise<CompanyRevenue[]> {
+  const paid = await prisma.invoice.findMany({
+    where: { status: "PAID" },
+    select: {
+      organizationId: true,
+      taxRate: true,
+      lineItems: { select: { quantity: true, unitPrice: true } },
+    },
+  });
+
+  const totals = new Map<string, number>();
+  for (const inv of paid) {
+    const total = computeTotals(
+      inv.lineItems.map((li) => ({ quantity: Number(li.quantity), unitPrice: Number(li.unitPrice) })),
+      Number(inv.taxRate)
+    ).total;
+    totals.set(inv.organizationId, (totals.get(inv.organizationId) ?? 0) + total);
+  }
+
+  const ids = [...totals.keys()];
+  const orgs = ids.length
+    ? await prisma.organization.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } })
+    : [];
+  const nameById = new Map(orgs.map((o) => [o.id, o.name]));
+
+  return ids
+    .map((id) => ({
+      id,
+      name: nameById.get(id) ?? "—",
+      revenue: Math.round((totals.get(id) ?? 0) * 100) / 100,
+    }))
+    .filter((c) => c.revenue > 0)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, limit);
+}
