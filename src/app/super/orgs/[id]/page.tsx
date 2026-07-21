@@ -20,10 +20,17 @@ import { ViewAsUserButton } from "@/components/super/ViewAsUserButton";
 import { OrgNotesPanel } from "@/components/super/OrgNotesPanel";
 import { SupportHistory } from "@/components/super/SupportHistory";
 import { HealthDot } from "@/components/super/HealthDot";
+import { MiniBarChart } from "@/components/super/MiniBarChart";
 import { planLabel } from "@/lib/plans";
 import { computeHealth } from "@/lib/health";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getOrgActivity, getOrgDetail, getOrgMessages, getOrgSupportHistory } from "@/lib/platform";
+import {
+  getOrgActivity,
+  getOrgDetail,
+  getOrgMessages,
+  getOrgSupportHistory,
+  getOrgTrend,
+} from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
 
@@ -40,11 +47,12 @@ export default async function SuperOrgDetailPage({
 }) {
   await requireSuperAdmin();
   const { id } = await params;
-  const [org, activity, supportHistory, messages] = await Promise.all([
+  const [org, activity, supportHistory, messages, trend] = await Promise.all([
     getOrgDetail(id),
     getOrgActivity(id),
     getOrgSupportHistory(id),
     getOrgMessages(id),
+    getOrgTrend(id),
   ]);
   if (!org) notFound();
 
@@ -61,6 +69,14 @@ export default async function SuperOrgDetailPage({
     minute: "2-digit",
   });
   const money = (n: number) => `${org.currencySymbol || "$"}${n.toFixed(2)}`;
+  const sym = org.currencySymbol || "$";
+  // Compact money for the tiny bar labels: $1.2k above ~1000, else the integer.
+  const compactMoney = (n: number) =>
+    n >= 1000 ? `${sym}${(n / 1000).toFixed(1)}k` : `${sym}${Math.round(n)}`;
+
+  const recordBars = trend.map((p) => ({ label: p.label, value: p.records, display: String(p.records) }));
+  const revenueBars = trend.map((p) => ({ label: p.label, value: p.revenue, display: compactMoney(p.revenue) }));
+  const hasTrend = trend.some((p) => p.records > 0 || p.revenue > 0);
 
   const health = computeHealth({
     active: org.active,
@@ -147,6 +163,18 @@ export default async function SuperOrgDetailPage({
         <StatTile icon={Receipt} value={String(org._count.invoices)} label="Invoices" />
         <StatTile icon={DollarSign} value={money(org.revenue)} label="Paid revenue" tone="success" />
       </div>
+
+      {hasTrend && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            Last 6 months
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <MiniBarChart title="Work records / month" bars={recordBars} />
+            <MiniBarChart title="Paid revenue / month" bars={revenueBars} />
+          </div>
+        </section>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <section className="flex flex-col gap-3">

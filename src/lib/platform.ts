@@ -517,6 +517,57 @@ export async function getOrgSupportHistory(
   }));
 }
 
+// --- Per-company trend: monthly work records + paid revenue, for the small
+// sparkline-style bars on the company page. Buckets in JS (single tenant, cheap).
+export type OrgTrendPoint = { label: string; records: number; revenue: number };
+
+export async function getOrgTrend(organizationId: string, months = 6): Promise<OrgTrendPoint[]> {
+  const now = new Date();
+  const startMonthIndex = now.getUTCMonth() - (months - 1);
+  const start = new Date(Date.UTC(now.getUTCFullYear(), startMonthIndex, 1));
+  const monthKey = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+
+  const buckets: { key: string; label: string }[] = [];
+  for (let i = 0; i < months; i++) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), startMonthIndex + i, 1));
+    buckets.push({ key: monthKey(d), label: d.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }) });
+  }
+  const indexOf = new Map(buckets.map((b, i) => [b.key, i]));
+  const recordsArr = new Array<number>(months).fill(0);
+  const revenueArr = new Array<number>(months).fill(0);
+
+  const [recordRows, paidInvoices] = await Promise.all([
+    prisma.workRecord.findMany({
+      where: { organizationId, createdAt: { gte: start } },
+      select: { createdAt: true },
+    }),
+    prisma.invoice.findMany({
+      where: { organizationId, status: "PAID", paidAt: { gte: start } },
+      select: { paidAt: true, taxRate: true, lineItems: { select: { quantity: true, unitPrice: true } } },
+    }),
+  ]);
+
+  for (const r of recordRows) {
+    const i = indexOf.get(monthKey(r.createdAt));
+    if (i !== undefined) recordsArr[i]++;
+  }
+  for (const inv of paidInvoices) {
+    if (!inv.paidAt) continue;
+    const i = indexOf.get(monthKey(inv.paidAt));
+    if (i === undefined) continue;
+    revenueArr[i] += computeTotals(
+      inv.lineItems.map((li) => ({ quantity: Number(li.quantity), unitPrice: Number(li.unitPrice) })),
+      Number(inv.taxRate)
+    ).total;
+  }
+
+  return buckets.map((b, i) => ({
+    label: b.label,
+    records: recordsArr[i],
+    revenue: Math.round(revenueArr[i] * 100) / 100,
+  }));
+}
+
 // --- Sent messages: history of targeted in-app messages to a company ---
 export type OrgMessage = {
   id: string;
