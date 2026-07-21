@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, ChevronRight, Flag, Plus, SearchX } from "lucide-react";
+import { Building2, ChevronRight, Download, Flag, Plus, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,6 +51,14 @@ export default async function SuperOrgsPage({
   const orgs = await getOrgSummaries({ status, plan, sort, watched });
   const filtered = status !== "all" || plan !== "all" || watched;
 
+  // Export honors the current view: carry the same filters/sort into the CSV.
+  const exportParams = new URLSearchParams();
+  if (status !== "all") exportParams.set("status", status);
+  if (plan !== "all") exportParams.set("plan", plan);
+  if (sort !== "newest") exportParams.set("sort", sort);
+  if (watched) exportParams.set("watched", "1");
+  const exportHref = `/super/orgs/export${exportParams.toString() ? `?${exportParams}` : ""}`;
+
   const dateFmt = new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
@@ -68,12 +76,22 @@ export default async function SuperOrgsPage({
             {filtered ? " match" : " on the platform"}.
           </p>
         </div>
-        <Button asChild size="sm">
-          <Link href="/super/orgs/new">
-            <Plus className="h-4 w-4" />
-            New company
-          </Link>
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          {orgs.length > 0 && (
+            <Button asChild size="sm" variant="outline">
+              <a href={exportHref}>
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Export CSV</span>
+              </a>
+            </Button>
+          )}
+          <Button asChild size="sm">
+            <Link href="/super/orgs/new">
+              <Plus className="h-4 w-4" />
+              New company
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <OrgListControls current={{ status, plan, sort, watched }} />
