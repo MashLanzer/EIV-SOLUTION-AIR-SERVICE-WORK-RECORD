@@ -1,18 +1,54 @@
 import Link from "next/link";
-import { Building2, ChevronRight, Plus } from "lucide-react";
+import { Building2, ChevronRight, Plus, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { OrgListControls } from "@/components/super/OrgListControls";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getOrgSummaries } from "@/lib/platform";
+import {
+  getOrgSummaries,
+  type OrgPlanFilter,
+  type OrgSort,
+  type OrgStatusFilter,
+} from "@/lib/platform";
 import { planLabel } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
-export default async function SuperOrgsPage() {
+const STATUS_VALUES: OrgStatusFilter[] = ["all", "active", "suspended"];
+const PLAN_VALUES: OrgPlanFilter[] = ["all", "FREE", "PRO", "none"];
+const SORT_VALUES: OrgSort[] = ["newest", "oldest", "name", "recent", "idle", "users", "records"];
+
+function oneOf<T extends string>(raw: string | undefined, allowed: T[], fallback: T): T {
+  return allowed.includes(raw as T) ? (raw as T) : fallback;
+}
+
+// "3d ago" style relative label for last activity, kept terse for the list.
+function relativeLabel(d: Date | null): string {
+  if (!d) return "never active";
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days <= 0) return "active today";
+  if (days === 1) return "active yesterday";
+  if (days < 30) return `active ${days}d ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `active ${months}mo ago`;
+  return `active ${Math.floor(months / 12)}y ago`;
+}
+
+export default async function SuperOrgsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; plan?: string; sort?: string }>;
+}) {
   await requireSuperAdmin();
-  const orgs = await getOrgSummaries();
+  const sp = await searchParams;
+  const status = oneOf(sp.status, STATUS_VALUES, "all");
+  const plan = oneOf(sp.plan, PLAN_VALUES, "all");
+  const sort = oneOf(sp.sort, SORT_VALUES, "newest");
+
+  const orgs = await getOrgSummaries({ status, plan, sort });
+  const filtered = status !== "all" || plan !== "all";
 
   const dateFmt = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -27,7 +63,8 @@ export default async function SuperOrgsPage() {
         <div>
           <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Companies</h1>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            {orgs.length} {orgs.length === 1 ? "company" : "companies"} on the platform.
+            {orgs.length} {orgs.length === 1 ? "company" : "companies"}
+            {filtered ? " match" : " on the platform"}.
           </p>
         </div>
         <Button asChild size="sm">
@@ -38,10 +75,25 @@ export default async function SuperOrgsPage() {
         </Button>
       </div>
 
+      <OrgListControls current={{ status, plan, sort }} />
+
       {orgs.length === 0 ? (
         <Card>
           <CardContent className="p-0">
-            <EmptyState icon={Building2} title="No companies yet" />
+            {filtered ? (
+              <EmptyState
+                icon={SearchX}
+                title="No companies match"
+                description="Try clearing the filters."
+                action={
+                  <Button asChild variant="outline" className="mt-2">
+                    <Link href="/super/orgs">Clear filters</Link>
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState icon={Building2} title="No companies yet" />
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -68,7 +120,7 @@ export default async function SuperOrgsPage() {
                     </span>
                   </div>
                   <span className="text-xs text-neutral-400">
-                    /{org.slug} · {dateFmt.format(org.createdAt)}
+                    /{org.slug} · {dateFmt.format(org.createdAt)} · {relativeLabel(org.lastActivityAt)}
                   </span>
                 </div>
                 <div className="hidden shrink-0 items-center gap-5 text-xs tabular-nums text-neutral-500 dark:text-neutral-400 sm:flex">

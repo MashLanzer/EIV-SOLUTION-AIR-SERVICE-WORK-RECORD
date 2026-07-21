@@ -1,4 +1,4 @@
-import type { Plan } from "@prisma/client";
+import type { Plan, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { computeTotals } from "@/lib/invoices";
@@ -61,22 +61,52 @@ export type OrgSummary = {
   users: number;
   records: number;
   invoices: number;
+  lastActivityAt: Date | null;
 };
 
-export async function getOrgSummaries(): Promise<OrgSummary[]> {
-  const rows = await prisma.organization.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      createdAt: true,
-      active: true,
-      plan: true,
-      _count: { select: { users: true, records: true, invoices: true } },
-    },
-  });
-  return rows.map((o) => ({
+export type OrgStatusFilter = "all" | "active" | "suspended";
+export type OrgPlanFilter = "all" | "FREE" | "PRO" | "none";
+export type OrgSort = "newest" | "oldest" | "name" | "users" | "records" | "recent" | "idle";
+
+export type OrgListOptions = {
+  status?: OrgStatusFilter;
+  plan?: OrgPlanFilter;
+  sort?: OrgSort;
+};
+
+// Companies for the console list, with optional status/plan filtering and sort.
+// Status and plan narrow the DB query; sort (including by size and last
+// activity) is applied in JS — fine at owner-console scale and keeps the
+// last-activity join simple. lastActivityAt is the newest work record per org
+// (the same signal the attention panel uses).
+export async function getOrgSummaries(opts: OrgListOptions = {}): Promise<OrgSummary[]> {
+  const { status = "all", plan = "all", sort = "newest" } = opts;
+
+  const where: Prisma.OrganizationWhereInput = {};
+  if (status === "active") where.active = true;
+  else if (status === "suspended") where.active = false;
+  if (plan === "none") where.plan = null;
+  else if (plan !== "all") where.plan = plan as Plan;
+
+  const [rows, lastByOrg] = await Promise.all([
+    prisma.organization.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        createdAt: true,
+        active: true,
+        plan: true,
+        _count: { select: { users: true, records: true, invoices: true } },
+      },
+    }),
+    prisma.workRecord.groupBy({ by: ["organizationId"], _max: { createdAt: true } }),
+  ]);
+  const lastRecord = new Map(lastByOrg.map((r) => [r.organizationId, r._max.createdAt ?? null]));
+
+  const list: OrgSummary[] = rows.map((o) => ({
     id: o.id,
     name: o.name,
     slug: o.slug,
@@ -86,7 +116,44 @@ export async function getOrgSummaries(): Promise<OrgSummary[]> {
     users: o._count.users,
     records: o._count.records,
     invoices: o._count.invoices,
+    lastActivityAt: lastRecord.get(o.id) ?? null,
   }));
+
+  const time = (d: Date | null) => (d ? d.getTime() : 0);
+  switch (sort) {
+    case "oldest":
+      list.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+      break;
+    case "name":
+      list.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "users":
+      list.sort((a, b) => b.users - a.users);
+      break;
+    case "records":
+      list.sort((a, b) => b.records - a.records);
+      break;
+    case "recent":
+      list.sort((a, b) => time(b.lastActivityAt) - time(a.lastActivityAt));
+      break;
+    case "idle":
+      // Most-stale first: never-active (0) sinks to the bottom so real
+      // "gone quiet" companies surface at the top.
+      list.sort((a, b) => {
+        const ta = time(a.lastActivityAt);
+        const tb = time(b.lastActivityAt);
+        if (ta === 0 && tb === 0) return 0;
+        if (ta === 0) return 1;
+        if (tb === 0) return -1;
+        return ta - tb;
+      });
+      break;
+    case "newest":
+    default:
+      list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      break;
+  }
+  return list;
 }
 
 export type GrowthPoint = {
