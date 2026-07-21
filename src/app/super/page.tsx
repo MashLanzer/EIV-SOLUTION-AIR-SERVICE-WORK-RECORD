@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, ClipboardList, Eye, LifeBuoy, Receipt, TrendingUp, Users } from "lucide-react";
+import { Building2, ClipboardList, Eye, LifeBuoy, Receipt, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,27 +40,30 @@ export default async function SuperOverviewPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile icon={Building2} value={String(o.organizations)} label="Companies" />
-        <StatTile icon={Users} value={String(o.users)} label="Users" />
-        <StatTile icon={ClipboardList} value={String(o.records)} label="Work records" />
-        <StatTile icon={Receipt} value={String(o.invoices)} label="Invoices" />
-      </div>
-
+      {/* One compact KPI row: the 30-day growth folds into each headline tile
+          as a sub-line + delta, instead of a second grid of tiles. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile
-          icon={TrendingUp}
-          value={`+${o.newOrgs}`}
-          label="New companies (30d)"
+          icon={Building2}
+          value={String(o.organizations)}
+          label="Companies"
+          sub={`+${o.newOrgs} in 30d`}
           delta={<DeltaBadge current={o.newOrgs} previous={o.prevNewOrgs} />}
         />
         <StatTile
-          icon={TrendingUp}
-          value={`+${o.newRecords}`}
-          label="New records (30d)"
+          icon={ClipboardList}
+          value={String(o.records)}
+          label="Work records"
+          sub={`+${o.newRecords} in 30d`}
           delta={<DeltaBadge current={o.newRecords} previous={o.prevNewRecords} />}
         />
-        <StatTile icon={Receipt} value={String(o.paidInvoices)} label="Paid invoices" />
+        <StatTile icon={Users} value={String(o.users)} label="Users" />
+        <StatTile
+          icon={Receipt}
+          value={String(o.invoices)}
+          label="Invoices"
+          sub={`${o.paidInvoices} paid`}
+        />
       </div>
 
       <AnnouncementControls current={announcement?.message ?? null} />
