@@ -46,7 +46,7 @@ export default async function SuperOrgsPage() {
         </Card>
       ) : (
         <Card>
-          <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+          <CardContent className="stagger-children flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
             {orgs.map((org) => (
               <Link
                 key={org.id}

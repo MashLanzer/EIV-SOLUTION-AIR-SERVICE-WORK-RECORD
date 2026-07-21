@@ -1,26 +1,20 @@
 import Link from "next/link";
-import { Building2, LayoutDashboard, ScrollText, ShieldCheck, TrendingUp } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
+import { RouteTransition } from "@/components/layout/RouteTransition";
+import { SuperNav } from "@/components/super/SuperNav";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 
-const NAV = [
-  { href: "/super", label: "Overview", icon: LayoutDashboard },
-  { href: "/super/orgs", label: "Companies", icon: Building2 },
-  { href: "/super/growth", label: "Growth", icon: TrendingUp },
-  { href: "/super/audit", label: "Audit", icon: ScrollText },
-];
-
-const navLinkClass =
-  "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 whitespace-nowrap text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800";
-
 // The platform console lives outside the per-company /admin area and is gated
-// by requireSuperAdmin (env allowlist). Deliberately plain chrome so it never
-// gets mistaken for a customer-facing screen.
+// by requireSuperAdmin (env allowlist) — it's the app owner's own console.
+// Shares the app's palette, background glow and motion so it feels like the
+// rest of the app, with distinct "Platform" chrome so it's never mistaken for
+// a customer-facing screen.
 export default async function SuperLayout({ children }: { children: React.ReactNode }) {
   const { email } = await requireSuperAdmin();
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-neutral-50 dark:bg-neutral-950">
+    <div className="min-h-screen overflow-x-hidden bg-background">
       <header className="sticky top-0 z-20 border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur native:pt-[env(safe-area-inset-top)]">
         <div className="mx-auto max-w-5xl px-4">
           {/* Top row: brand + account. Nav sits inline here on desktop. */}
@@ -33,14 +27,7 @@ export default async function SuperLayout({ children }: { children: React.ReactN
                 <ShieldCheck className="h-5 w-5" />
                 <span>Platform</span>
               </Link>
-              <nav className="hidden items-center gap-1 text-sm sm:flex">
-                {NAV.map(({ href, label, icon: Icon }) => (
-                  <Link key={href} href={href} className={navLinkClass}>
-                    <Icon className="h-4 w-4" />
-                    {label}
-                  </Link>
-                ))}
-              </nav>
+              <SuperNav className="hidden items-center gap-1 text-sm sm:flex" />
             </div>
             <div className="flex shrink-0 items-center gap-3">
               <span className="hidden max-w-[12rem] truncate text-xs text-neutral-500 dark:text-neutral-400 sm:inline">
@@ -48,7 +35,7 @@ export default async function SuperLayout({ children }: { children: React.ReactN
               </span>
               <Link
                 href="/admin"
-                className="shrink-0 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                className="shrink-0 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-xs font-medium text-neutral-600 transition-[color,background-color,transform] duration-200 ease-[var(--ease-out)] hover:bg-neutral-100 active:scale-[0.97] dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
               >
                 Exit to app
               </Link>
@@ -57,18 +44,11 @@ export default async function SuperLayout({ children }: { children: React.ReactN
 
           {/* Mobile nav: a horizontally scrollable strip, so the tabs never
               push the page wider than the screen. */}
-          <nav className="-mx-4 flex items-center gap-1 overflow-x-auto px-4 pb-2 text-sm sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {NAV.map(({ href, label, icon: Icon }) => (
-              <Link key={href} href={href} className={navLinkClass}>
-                <Icon className="h-4 w-4" />
-                {label}
-              </Link>
-            ))}
-          </nav>
+          <SuperNav className="-mx-4 flex items-center gap-1 overflow-x-auto px-4 pb-2 text-sm sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" />
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-6 native:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-        {children}
+        <RouteTransition>{children}</RouteTransition>
       </main>
     </div>
   );

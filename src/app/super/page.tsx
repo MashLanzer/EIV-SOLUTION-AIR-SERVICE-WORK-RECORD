@@ -32,7 +32,7 @@ export default async function SuperOverviewPage() {
   const recent = orgs.slice(0, 6);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Platform overview</h1>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
@@ -117,7 +117,7 @@ export default async function SuperOverviewPage() {
           </Link>
         </div>
         <Card>
-          <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+          <CardContent className="stagger-children flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
             {recent.map((org) => (
               <Link
                 key={org.id}
