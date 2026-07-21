@@ -21,7 +21,7 @@ export default async function SuperGrowthPage() {
   const suspendedRate = totalOrgs > 0 ? Math.round((suspendedOrgs / totalOrgs) * 100) : 0;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Growth</h1>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">

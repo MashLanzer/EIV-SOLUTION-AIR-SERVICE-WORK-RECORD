@@ -29,7 +29,7 @@ export default async function SuperOverviewPage() {
     year: "numeric",
     timeZone: "UTC",
   });
-  const recent = orgs.slice(0, 6);
+  const recent = orgs.slice(0, 5);
 
   return (
     <div className="flex flex-col gap-4">

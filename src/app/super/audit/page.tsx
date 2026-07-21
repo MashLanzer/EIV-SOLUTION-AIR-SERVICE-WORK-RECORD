@@ -53,7 +53,7 @@ export default async function SuperAuditPage({
         </Card>
       ) : (
         <Card>
-          <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+          <CardContent className="stagger-children flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
             {events.map((e) => (
               <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-3">
                 <div className="min-w-0">

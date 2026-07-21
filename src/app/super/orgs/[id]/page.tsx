@@ -44,7 +44,7 @@ export default async function SuperOrgDetailPage({
   const money = (n: number) => `${org.currencySymbol || "$"}${n.toFixed(2)}`;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <Link
           href="/super/orgs"
@@ -104,7 +104,7 @@ export default async function SuperOrgDetailPage({
           Users ({org.users.length})
         </h2>
         <Card>
-          <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+          <CardContent className="stagger-children flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
             {org.users.map((u) => (
               <div key={u.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
                 <div className="min-w-0">
