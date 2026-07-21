@@ -6,7 +6,7 @@ import { AeroMark } from "@/components/brand/AeroMark";
 import { AeroWordmark } from "@/components/brand/AeroWordmark";
 import { OnboardingForms } from "@/components/onboarding/OnboardingForms";
 import { requireAuth } from "@/lib/session";
-import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
+import { isPlatformAdmin } from "@/lib/platformAdmins";
 import { getT } from "@/lib/i18n/server";
 
 export default async function OnboardingPage() {
@@ -16,6 +16,10 @@ export default async function OnboardingPage() {
   if (session.user.organizationId) {
     redirect(session.user.role === "ADMIN" ? "/admin" : "/records");
   }
+
+  // Platform admins (env owners or granted from /super) land here with no
+  // company, so surface a direct way into the console.
+  const showPlatformAccess = await isPlatformAdmin(session.user.email);
 
   return (
     <div className="min-h-screen bg-background px-4 py-10 native:pt-[calc(2.5rem+env(safe-area-inset-top))]">
@@ -44,7 +48,7 @@ export default async function OnboardingPage() {
         {/* Platform owners (email allowlist) have no company to join — this is
             their way straight into /super from the post-login screen, without
             touching the join/create flow everyone else sees. */}
-        {isSuperAdminEmail(session.user.email) && (
+        {showPlatformAccess && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <span className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />

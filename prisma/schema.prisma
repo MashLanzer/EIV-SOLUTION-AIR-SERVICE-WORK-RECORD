@@ -1151,3 +1151,15 @@ model EstimateLineItem {
 
   @@index([estimateId])
 }
+
+// Platform admins granted from the /super console, in addition to the
+// SUPER_ADMIN_EMAILS environment allowlist. Env owners are the trust root and
+// the only ones who can add/remove rows here; a DB-granted admin gets console
+// access but cannot manage this list. `email` is stored normalized (the same
+// normalization used for duplicate detection) so lookups match sign-in emails.
+model PlatformAdmin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  invitedBy String?
+  createdAt DateTime @default(now())
+}

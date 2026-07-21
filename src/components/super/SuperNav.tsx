@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, LayoutDashboard, ScrollText, TrendingUp, type LucideIcon } from "lucide-react";
+import { Building2, LayoutDashboard, ScrollText, TrendingUp, UserCog, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -15,11 +15,15 @@ const NAV: { href: string; label: string; icon: LucideIcon }[] = [
 
 // Platform console nav, styled like the app's section tabs: an active pill with
 // the shared easing/press so the owner console feels like the rest of the app.
-export function SuperNav({ className }: { className?: string }) {
+// `showAdmins` (env owners only) reveals the admin-management tab.
+export function SuperNav({ className, showAdmins = false }: { className?: string; showAdmins?: boolean }) {
   const pathname = usePathname();
+  const items = showAdmins
+    ? [...NAV, { href: "/super/admins", label: "Admins", icon: UserCog }]
+    : NAV;
   return (
     <nav className={className}>
-      {NAV.map(({ href, label, icon: Icon }) => {
+      {items.map(({ href, label, icon: Icon }) => {
         const active = href === "/super" ? pathname === "/super" : pathname.startsWith(href);
         return (
           <Link

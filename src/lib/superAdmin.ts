@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
 import { isSuperAdminEmail } from "@/lib/superAdminAllowlist";
+import { isPlatformAdmin } from "@/lib/platformAdmins";
 import { requireAuth } from "@/lib/session";
 
 export { isSuperAdminEmail };
@@ -24,6 +25,8 @@ export async function requireSuperAdmin() {
     });
     email = user?.email ?? null;
   }
-  if (!isSuperAdminEmail(email)) notFound();
-  return { session, email: email! };
+  // Console access = env owner OR a DB-granted admin. `isOwner` (env allowlist
+  // only) stays the trust root: it gates who may manage the admin list.
+  if (!(await isPlatformAdmin(email))) notFound();
+  return { session, email: email!, isOwner: isSuperAdminEmail(email) };
 }

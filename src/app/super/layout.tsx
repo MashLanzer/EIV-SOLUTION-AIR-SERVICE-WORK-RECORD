@@ -13,7 +13,7 @@ import { requireSuperAdmin } from "@/lib/superAdmin";
 // rest of the app, with distinct "Platform" chrome so it's never mistaken for
 // a customer-facing screen.
 export default async function SuperLayout({ children }: { children: React.ReactNode }) {
-  const { session, email } = await requireSuperAdmin();
+  const { session, email, isOwner } = await requireSuperAdmin();
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
@@ -29,7 +29,7 @@ export default async function SuperLayout({ children }: { children: React.ReactN
                 <ShieldCheck className="h-5 w-5" />
                 <span>Platform</span>
               </Link>
-              <SuperNav className="hidden items-center gap-1 text-sm sm:flex" />
+              <SuperNav className="hidden items-center gap-1 text-sm sm:flex" showAdmins={isOwner} />
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Link
@@ -56,7 +56,7 @@ export default async function SuperLayout({ children }: { children: React.ReactN
 
       {/* Phone nav: the app's fixed bottom tab bar (desktop keeps the inline
           nav in the header above). */}
-      <SuperTabBar />
+      <SuperTabBar showAdmins={isOwner} />
     </div>
   );
 }
