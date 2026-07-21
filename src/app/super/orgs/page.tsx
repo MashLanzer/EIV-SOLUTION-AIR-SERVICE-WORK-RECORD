@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { OrgListControls } from "@/components/super/OrgListControls";
 import { HealthDot } from "@/components/super/HealthDot";
+import { OrgBulkBar } from "@/components/super/OrgBulkBar";
+import { OrgSelectAll } from "@/components/super/OrgSelectAll";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import {
   getOrgSummaries,
@@ -117,47 +119,63 @@ export default async function SuperOrgsPage({
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <CardContent className="stagger-children flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
-            {orgs.map((org) => (
-              <Link
-                key={org.id}
-                href={`/super/orgs/${org.id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-900"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <HealthDot health={org.health} />
-                    {org.watched && (
-                      <Flag className="h-3.5 w-3.5 shrink-0 fill-current text-primary" aria-label="Watching" />
-                    )}
-                    <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">
-                      {org.name}
-                    </span>
-                    {!org.active && (
-                      <span className="rounded-full bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold uppercase text-destructive-text">
-                        Suspended
+        <>
+          <div className="flex items-center justify-between px-1">
+            <OrgSelectAll />
+            <span className="text-xs text-neutral-400">Select rows for bulk actions</span>
+          </div>
+          <Card>
+            <CardContent className="stagger-children flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+              {orgs.map((org) => (
+                <div
+                  key={org.id}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50 dark:hover:bg-neutral-900"
+                >
+                  <input
+                    type="checkbox"
+                    name="orgids"
+                    value={org.id}
+                    aria-label={`Select ${org.name}`}
+                    className="h-4 w-4 shrink-0 rounded border-neutral-300 accent-primary dark:border-neutral-600"
+                  />
+                  <Link href={`/super/orgs/${org.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <HealthDot health={org.health} />
+                        {org.watched && (
+                          <Flag className="h-3.5 w-3.5 shrink-0 fill-current text-primary" aria-label="Watching" />
+                        )}
+                        <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">
+                          {org.name}
+                        </span>
+                        {!org.active && (
+                          <span className="rounded-full bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold uppercase text-destructive-text">
+                            Suspended
+                          </span>
+                        )}
+                        <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
+                          {planLabel(org.plan)}
+                        </span>
+                      </div>
+                      <span className="text-xs text-neutral-400">
+                        /{org.slug} · {dateFmt.format(org.createdAt)} · {relativeLabel(org.lastActivityAt)}
                       </span>
-                    )}
-                    <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
-                      {planLabel(org.plan)}
-                    </span>
-                  </div>
-                  <span className="text-xs text-neutral-400">
-                    /{org.slug} · {dateFmt.format(org.createdAt)} · {relativeLabel(org.lastActivityAt)}
-                  </span>
+                    </div>
+                    <div className="hidden shrink-0 items-center gap-5 text-xs tabular-nums text-neutral-500 dark:text-neutral-400 sm:flex">
+                      <span>{org.users} users</span>
+                      <span>{org.records} records</span>
+                      <span>{org.invoices} invoices</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-neutral-300 dark:text-neutral-600" />
+                  </Link>
                 </div>
-                <div className="hidden shrink-0 items-center gap-5 text-xs tabular-nums text-neutral-500 dark:text-neutral-400 sm:flex">
-                  <span>{org.users} users</span>
-                  <span>{org.records} records</span>
-                  <span>{org.invoices} invoices</span>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-neutral-300 dark:text-neutral-600" />
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>
+        </>
       )}
+
+      <OrgBulkBar />
     </div>
   );
 }
