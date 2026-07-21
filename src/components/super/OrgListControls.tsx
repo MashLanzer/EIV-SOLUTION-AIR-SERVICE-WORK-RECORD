@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowUpDown, Flag } from "lucide-react";
+import { ArrowUpDown, Flag, LayoutList, Table2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type {
@@ -10,7 +10,15 @@ import type {
   OrgStatusFilter,
 } from "@/lib/platform";
 
-type Controls = { status: OrgStatusFilter; plan: OrgPlanFilter; sort: OrgSort; watched: boolean };
+export type OrgView = "list" | "table";
+
+type Controls = {
+  status: OrgStatusFilter;
+  plan: OrgPlanFilter;
+  sort: OrgSort;
+  watched: boolean;
+  view: OrgView;
+};
 
 const STATUS: { value: OrgStatusFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -49,6 +57,7 @@ export function OrgListControls({ current }: { current: Controls }) {
     if (merged.plan !== "all") p.set("plan", merged.plan);
     if (merged.sort !== "newest") p.set("sort", merged.sort);
     if (merged.watched) p.set("watched", "1");
+    if (merged.view !== "list") p.set("view", merged.view);
     const qs = p.toString();
     router.push(qs ? `/super/orgs?${qs}` : "/super/orgs");
   };
@@ -78,22 +87,62 @@ export function OrgListControls({ current }: { current: Controls }) {
         </Pill>
       </div>
 
-      <label className="relative flex shrink-0 items-center">
-        <ArrowUpDown className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
-        <span className="sr-only">Sort companies</span>
-        <select
-          value={current.sort}
-          onChange={(e) => go({ sort: e.target.value as OrgSort })}
-          className="appearance-none rounded-full border border-neutral-300 bg-white py-1.5 pl-8 pr-8 text-sm font-medium text-neutral-700 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
-        >
-          {SORT.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="flex shrink-0 items-center gap-2">
+        <label className="relative flex items-center">
+          <ArrowUpDown className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+          <span className="sr-only">Sort companies</span>
+          <select
+            value={current.sort}
+            onChange={(e) => go({ sort: e.target.value as OrgSort })}
+            className="appearance-none rounded-full border border-neutral-300 bg-white py-1.5 pl-8 pr-8 text-sm font-medium text-neutral-700 focus:border-neutral-400 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
+          >
+            {SORT.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <div className="flex items-center rounded-full border border-neutral-300 p-0.5 dark:border-neutral-700">
+          <ViewButton active={current.view === "list"} onClick={() => go({ view: "list" })} label="List view">
+            <LayoutList className="h-4 w-4" />
+          </ViewButton>
+          <ViewButton active={current.view === "table"} onClick={() => go({ view: "table" })} label="Table view">
+            <Table2 className="h-4 w-4" />
+          </ViewButton>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function ViewButton({
+  active,
+  onClick,
+  label,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      aria-pressed={active}
+      className={cn(
+        "flex h-7 w-7 items-center justify-center rounded-full transition-colors",
+        active
+          ? "bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
+          : "text-neutral-500 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800"
+      )}
+    >
+      {children}
+    </button>
   );
 }
 

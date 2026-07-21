@@ -4,10 +4,11 @@ import { Building2, ChevronRight, Download, Flag, Plus, SearchX } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { OrgListControls } from "@/components/super/OrgListControls";
+import { OrgListControls, type OrgView } from "@/components/super/OrgListControls";
 import { HealthDot } from "@/components/super/HealthDot";
 import { OrgBulkBar } from "@/components/super/OrgBulkBar";
 import { OrgSelectAll } from "@/components/super/OrgSelectAll";
+import { OrgTable } from "@/components/super/OrgTable";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import {
   getOrgSummaries,
@@ -42,7 +43,7 @@ function relativeLabel(d: Date | null): string {
 export default async function SuperOrgsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; plan?: string; sort?: string; watched?: string }>;
+  searchParams: Promise<{ status?: string; plan?: string; sort?: string; watched?: string; view?: string }>;
 }) {
   await requireSuperAdmin();
   const sp = await searchParams;
@@ -50,17 +51,29 @@ export default async function SuperOrgsPage({
   const plan = oneOf(sp.plan, PLAN_VALUES, "all");
   const sort = oneOf(sp.sort, SORT_VALUES, "newest");
   const watched = sp.watched === "1";
+  const view: OrgView = sp.view === "table" ? "table" : "list";
 
   const orgs = await getOrgSummaries({ status, plan, sort, watched });
   const filtered = status !== "all" || plan !== "all" || watched;
 
-  // Export honors the current view: carry the same filters/sort into the CSV.
-  const exportParams = new URLSearchParams();
-  if (status !== "all") exportParams.set("status", status);
-  if (plan !== "all") exportParams.set("plan", plan);
-  if (sort !== "newest") exportParams.set("sort", sort);
-  if (watched) exportParams.set("watched", "1");
-  const exportHref = `/super/orgs/export${exportParams.toString() ? `?${exportParams}` : ""}`;
+  // Shared param builder so export and the table's sort links keep the same
+  // active filters/view.
+  const buildParams = (over: { sort?: OrgSort; view?: OrgView } = {}) => {
+    const p = new URLSearchParams();
+    if (status !== "all") p.set("status", status);
+    if (plan !== "all") p.set("plan", plan);
+    const s = over.sort ?? sort;
+    if (s !== "newest") p.set("sort", s);
+    if (watched) p.set("watched", "1");
+    const v = over.view ?? view;
+    if (v !== "list") p.set("view", v);
+    return p.toString();
+  };
+  const exportHref = `/super/orgs/export${buildParams({ view: "list" }) ? `?${buildParams({ view: "list" })}` : ""}`;
+  const sortHref = (nextSort: OrgSort) => {
+    const qs = buildParams({ sort: nextSort });
+    return qs ? `/super/orgs?${qs}` : "/super/orgs";
+  };
 
   const dateFmt = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -97,7 +110,7 @@ export default async function SuperOrgsPage({
         </div>
       </div>
 
-      <OrgListControls current={{ status, plan, sort, watched }} />
+      <OrgListControls current={{ status, plan, sort, watched, view }} />
 
       {orgs.length === 0 ? (
         <Card>
@@ -118,6 +131,8 @@ export default async function SuperOrgsPage({
             )}
           </CardContent>
         </Card>
+      ) : view === "table" ? (
+        <OrgTable orgs={orgs} currentSort={sort} sortHref={sortHref} />
       ) : (
         <>
           <div className="flex items-center justify-between px-1">
@@ -175,7 +190,7 @@ export default async function SuperOrgsPage({
         </>
       )}
 
-      <OrgBulkBar />
+      {view === "list" && <OrgBulkBar />}
     </div>
   );
 }
