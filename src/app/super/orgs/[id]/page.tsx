@@ -13,6 +13,7 @@ import { OrgPlanSelect } from "@/components/super/OrgPlanSelect";
 import { InviteAdminForm } from "@/components/super/InviteAdminForm";
 import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
 import { OrgManageSheet } from "@/components/super/OrgManageSheet";
+import { OrgMessageSheet } from "@/components/super/OrgMessageSheet";
 import { EnterSupportButton } from "@/components/super/EnterSupportButton";
 import { ViewAsUserButton } from "@/components/super/ViewAsUserButton";
 import { OrgNotesPanel } from "@/components/super/OrgNotesPanel";
@@ -86,6 +87,7 @@ export default async function SuperOrgDetailPage({
               />
               <OrgLifecycleControls orgId={org.id} name={org.name} active={org.active} />
             </OrgManageSheet>
+            <OrgMessageSheet orgId={org.id} orgName={org.name} />
             <Button asChild size="sm" variant="outline">
               <a href={`/super/orgs/${org.id}/export`}>
                 <Download className="h-4 w-4" />

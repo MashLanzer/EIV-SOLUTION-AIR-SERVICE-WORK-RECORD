@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ClipboardList,
   CreditCard,
+  Megaphone,
   MessageSquare,
   Repeat,
   UserCheck,
@@ -32,6 +33,7 @@ const META: Record<string, { icon: LucideIcon; tone: "neutral" | "success" | "wa
   job_series: { icon: Repeat, tone: "neutral" },
   time_off_added: { icon: CalendarOff, tone: "neutral" },
   photo_comment: { icon: MessageSquare, tone: "neutral" },
+  platform_message: { icon: Megaphone, tone: "neutral" },
   system: { icon: CreditCard, tone: "neutral" },
 };
 
