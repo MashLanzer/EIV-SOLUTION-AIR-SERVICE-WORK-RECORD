@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 
+import { ArrowRight, ShieldCheck } from "lucide-react";
+
 import { AeroMark } from "@/components/brand/AeroMark";
 import { AeroWordmark } from "@/components/brand/AeroWordmark";
 import { OnboardingForms } from "@/components/onboarding/OnboardingForms";
@@ -39,13 +41,36 @@ export default async function OnboardingPage() {
           }}
         />
 
+        {/* Platform owners (email allowlist) have no company to join — this is
+            their way straight into /super from the post-login screen, without
+            touching the join/create flow everyone else sees. */}
         {isSuperAdminEmail(session.user.email) && (
-          <a
-            href="/super"
-            className="text-center text-sm font-medium text-neutral-500 underline underline-offset-4 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
-          >
-            {t.platformConsole}
-          </a>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+              <span className="text-[11px] font-medium uppercase tracking-wide text-neutral-400 dark:text-neutral-500">
+                {t.platformOwner}
+              </span>
+              <span className="h-px flex-1 bg-neutral-200 dark:bg-neutral-800" />
+            </div>
+            <a
+              href="/super"
+              className="group flex items-center gap-3 rounded-xl border border-neutral-200 bg-white p-3.5 transition-[border-color,transform] duration-200 ease-[var(--ease-out)] hover:border-neutral-300 active:scale-[0.99] dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900">
+                <ShieldCheck className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-neutral-900 dark:text-neutral-100">
+                  {t.platformConsole}
+                </span>
+                <span className="block text-xs text-neutral-500 dark:text-neutral-400">
+                  {t.platformConsoleSub}
+                </span>
+              </span>
+              <ArrowRight className="h-4 w-4 shrink-0 text-neutral-400 transition-transform duration-200 group-hover:translate-x-0.5" />
+            </a>
+          </div>
         )}
       </div>
     </div>
