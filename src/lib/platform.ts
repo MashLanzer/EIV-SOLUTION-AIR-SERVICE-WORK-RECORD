@@ -190,6 +190,10 @@ export async function getOrgDetail(id: string) {
         orderBy: [{ role: "asc" }, { name: "asc" }],
         select: { id: true, name: true, email: true, role: true, active: true },
       },
+      notes: {
+        orderBy: { createdAt: "desc" },
+        select: { id: true, body: true, authorEmail: true, createdAt: true },
+      },
     },
   });
   if (!org) return null;

@@ -15,6 +15,7 @@ import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
 import { OrgManageSheet } from "@/components/super/OrgManageSheet";
 import { EnterSupportButton } from "@/components/super/EnterSupportButton";
 import { ViewAsUserButton } from "@/components/super/ViewAsUserButton";
+import { OrgNotesPanel } from "@/components/super/OrgNotesPanel";
 import { planLabel } from "@/lib/plans";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getOrgActivity, getOrgDetail } from "@/lib/platform";
@@ -161,6 +162,8 @@ export default async function SuperOrgDetailPage({
           </Card>
         </section>
       </div>
+
+      <OrgNotesPanel orgId={org.id} notes={org.notes} />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">

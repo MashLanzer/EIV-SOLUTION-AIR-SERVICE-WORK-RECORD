@@ -182,6 +182,7 @@ model Organization {
   auditEvents        AuditEvent[]
   estimates          Estimate[]
   supportSessions    ImpersonationSession[]
+  notes              OrgNote[]
   positions          Position[]
   timeOff            TimeOff[]
   notifications      Notification[]
@@ -1167,4 +1168,20 @@ model PlatformAdmin {
   email     String   @unique
   invitedBy String?
   createdAt DateTime @default(now())
+}
+
+// A private, platform-only note pinned to a company, written by the owner/admins
+// from the /super console. Never visible to the company itself — it's an
+// internal memo (context, follow-ups, "watch this account"). Kept as a separate
+// model so it's cleanly walled off from tenant data and cascades on org delete.
+model OrgNote {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // Author's platform email, denormalized for display (like ImpersonationSession).
+  authorEmail    String
+  body           String       @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
 }
