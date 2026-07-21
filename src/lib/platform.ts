@@ -2,6 +2,8 @@ import type { Plan } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { computeTotals } from "@/lib/invoices";
+import { getAuditLog } from "@/lib/audit";
+import { PLANS } from "@/lib/plans";
 
 // Cross-tenant platform metrics for the owner console. These bypass the normal
 // org scoping ON PURPOSE, so they must only ever be called from pages/actions
@@ -209,4 +211,155 @@ export async function getOrgDetail(id: string) {
   );
 
   return { ...org, revenue };
+}
+
+// --- Global platform search (companies + users across every tenant) ---
+export type PlatformSearchResult = {
+  companies: { id: string; name: string; slug: string; active: boolean }[];
+  users: {
+    id: string;
+    name: string | null;
+    email: string;
+    role: string;
+    orgId: string | null;
+    orgName: string | null;
+  }[];
+};
+
+export async function platformSearch(query: string): Promise<PlatformSearchResult> {
+  const q = query.trim();
+  if (!q) return { companies: [], users: [] };
+  const [companies, users] = await Promise.all([
+    prisma.organization.findMany({
+      where: {
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { slug: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      select: { id: true, name: true, slug: true, active: true },
+      orderBy: { name: "asc" },
+      take: 8,
+    }),
+    prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        organizationId: true,
+        organization: { select: { id: true, name: true } },
+      },
+      orderBy: { name: "asc" },
+      take: 8,
+    }),
+  ]);
+  return {
+    companies,
+    users: users.map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      orgId: u.organization?.id ?? null,
+      orgName: u.organization?.name ?? null,
+    })),
+  };
+}
+
+// --- "Needs attention": companies that likely need a nudge ---
+export type AttentionOrg = { id: string; name: string; lastActivity?: Date | null; createdAt?: Date };
+export type PlatformAttention = {
+  suspended: AttentionOrg[];
+  neverActivated: AttentionOrg[];
+  inactive: AttentionOrg[];
+};
+
+export async function getPlatformAttention(): Promise<PlatformAttention> {
+  const now = new Date();
+  const inactiveCutoff = new Date(now);
+  inactiveCutoff.setUTCDate(now.getUTCDate() - 30);
+  // Grace so a company signed up yesterday isn't flagged "never activated".
+  const grace = new Date(now);
+  grace.setUTCDate(now.getUTCDate() - 3);
+
+  const [orgs, lastByOrg] = await Promise.all([
+    prisma.organization.findMany({
+      select: { id: true, name: true, active: true, createdAt: true, _count: { select: { records: true } } },
+    }),
+    prisma.workRecord.groupBy({ by: ["organizationId"], _max: { createdAt: true } }),
+  ]);
+  const lastRecord = new Map(lastByOrg.map((r) => [r.organizationId, r._max.createdAt]));
+
+  const suspended: AttentionOrg[] = [];
+  const neverActivated: AttentionOrg[] = [];
+  const inactive: AttentionOrg[] = [];
+
+  for (const o of orgs) {
+    if (!o.active) {
+      suspended.push({ id: o.id, name: o.name });
+      continue;
+    }
+    if (o._count.records === 0) {
+      if (o.createdAt < grace) neverActivated.push({ id: o.id, name: o.name, createdAt: o.createdAt });
+      continue;
+    }
+    const last = lastRecord.get(o.id) ?? null;
+    if (last && last < inactiveCutoff) inactive.push({ id: o.id, name: o.name, lastActivity: last });
+  }
+  // Most-stale first for the inactive list.
+  inactive.sort((a, b) => (a.lastActivity?.getTime() ?? 0) - (b.lastActivity?.getTime() ?? 0));
+  return { suspended, neverActivated, inactive };
+}
+
+// --- Company 360: last activity, most-active users, recent audit timeline ---
+export async function getOrgActivity(id: string) {
+  const [lastRecord, topRaw, recent] = await Promise.all([
+    prisma.workRecord.aggregate({ where: { organizationId: id }, _max: { createdAt: true } }),
+    prisma.workRecord.groupBy({
+      by: ["submittedById"],
+      where: { organizationId: id, submittedById: { not: null } },
+      _count: { _all: true },
+      orderBy: { _count: { submittedById: "desc" } },
+      take: 5,
+    }),
+    getAuditLog(id, { take: 6 }),
+  ]);
+
+  const ids = topRaw.map((t) => t.submittedById).filter((v): v is string => Boolean(v));
+  const users = ids.length
+    ? await prisma.user.findMany({ where: { id: { in: ids } }, select: { id: true, name: true } })
+    : [];
+  const nameById = new Map(users.map((u) => [u.id, u.name]));
+  const topUsers = topRaw
+    .filter((t) => t.submittedById)
+    .map((t) => ({ id: t.submittedById!, name: nameById.get(t.submittedById!) ?? "—", records: t._count._all }));
+
+  return { lastActivity: lastRecord._max.createdAt, topUsers, recent };
+}
+
+// --- Revenue: plan distribution + estimated MRR from the plan catalog ---
+export async function getPlatformRevenue(): Promise<{
+  distribution: { plan: Plan | null; count: number }[];
+  mrr: number;
+}> {
+  const byPlan = await prisma.organization.groupBy({
+    by: ["plan"],
+    where: { active: true },
+    _count: { _all: true },
+  });
+  let mrr = 0;
+  for (const r of byPlan) {
+    if (r.plan) mrr += PLANS[r.plan].priceMonthly * r._count._all;
+  }
+  const distribution = byPlan
+    .map((r) => ({ plan: r.plan, count: r._count._all }))
+    .sort((a, b) => b.count - a.count);
+  return { distribution, mrr };
 }

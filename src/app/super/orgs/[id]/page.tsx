@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Building2, ClipboardList, DollarSign, FolderKanban, Receipt, Users } from "lucide-react";
+import { Activity, ArrowLeft, Building2, ClipboardList, DollarSign, FolderKanban, Receipt, Users } from "lucide-react";
 
 import { Download, Eye, LogIn } from "lucide-react";
 
@@ -16,7 +16,7 @@ import { OrgManageSheet } from "@/components/super/OrgManageSheet";
 import { planLabel } from "@/lib/plans";
 import { enterOrgAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getOrgDetail } from "@/lib/platform";
+import { getOrgActivity, getOrgDetail } from "@/lib/platform";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +33,7 @@ export default async function SuperOrgDetailPage({
 }) {
   await requireSuperAdmin();
   const { id } = await params;
-  const org = await getOrgDetail(id);
+  const [org, activity] = await Promise.all([getOrgDetail(id), getOrgActivity(id)]);
   if (!org) notFound();
 
   const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -41,6 +41,12 @@ export default async function SuperOrgDetailPage({
     day: "numeric",
     year: "numeric",
     timeZone: "UTC",
+  });
+  const timeFmt = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
   const money = (n: number) => `${org.currencySymbol || "$"}${n.toFixed(2)}`;
 
@@ -100,6 +106,9 @@ export default async function SuperOrgDetailPage({
         </div>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
           /{org.slug} · created {dateFmt.format(org.createdAt)}
+          {activity.lastActivity
+            ? ` · last active ${dateFmt.format(activity.lastActivity)}`
+            : " · no activity yet"}
           {org.joinCode ? ` · join code ${org.joinCode}` : ""}
         </p>
       </div>
@@ -111,6 +120,56 @@ export default async function SuperOrgDetailPage({
         <StatTile icon={Building2} value={String(org._count.customers)} label="Customers" />
         <StatTile icon={Receipt} value={String(org._count.invoices)} label="Invoices" />
         <StatTile icon={DollarSign} value={money(org.revenue)} label="Paid revenue" tone="success" />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            Most active
+          </h2>
+          <Card>
+            <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+              {activity.topUsers.length === 0 ? (
+                <p className="px-4 py-4 text-sm text-neutral-400">No work records yet.</p>
+              ) : (
+                activity.topUsers.map((u) => (
+                  <div key={u.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                    <span className="truncate text-sm text-neutral-900 dark:text-neutral-100">{u.name}</span>
+                    <span className="shrink-0 text-xs tabular-nums text-neutral-500 dark:text-neutral-400">
+                      {u.records} records
+                    </span>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            <Activity className="h-4 w-4" />
+            Recent activity
+          </h2>
+          <Card>
+            <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+              {activity.recent.length === 0 ? (
+                <p className="px-4 py-4 text-sm text-neutral-400">Nothing logged yet.</p>
+              ) : (
+                activity.recent.map((e) => (
+                  <div key={e.id} className="flex items-start justify-between gap-3 px-4 py-2.5">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm text-neutral-900 dark:text-neutral-100">{e.summary}</div>
+                      <div className="truncate text-xs text-neutral-400">{e.actorName}</div>
+                    </div>
+                    <span className="shrink-0 text-xs tabular-nums text-neutral-400">
+                      {timeFmt.format(e.createdAt)}
+                    </span>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </section>
       </div>
 
       <section className="flex flex-col gap-3">

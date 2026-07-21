@@ -4,6 +4,7 @@ import { ArrowLeft, ShieldCheck } from "lucide-react";
 import { HeaderAccountMenu } from "@/components/layout/HeaderAccountMenu";
 import { RouteTransition } from "@/components/layout/RouteTransition";
 import { SuperNav } from "@/components/super/SuperNav";
+import { SuperSearch } from "@/components/super/SuperSearch";
 import { SuperTabBar } from "@/components/super/SuperTabBar";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 
@@ -32,6 +33,7 @@ export default async function SuperLayout({ children }: { children: React.ReactN
               <SuperNav className="hidden items-center gap-1 text-sm sm:flex" showAdmins={isOwner} />
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              <SuperSearch />
               <Link
                 href="/admin"
                 aria-label="Exit to app"

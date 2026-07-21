@@ -6,9 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
 import { DeltaBadge } from "@/components/ui/delta-badge";
 import { AnnouncementControls } from "@/components/super/AnnouncementControls";
+import { AttentionPanel } from "@/components/super/AttentionPanel";
 import { endSupportSessionAction } from "@/actions/impersonation";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getOrgSummaries, getPlatformOverview } from "@/lib/platform";
+import { getOrgSummaries, getPlatformAttention, getPlatformOverview } from "@/lib/platform";
 import { getActiveSupportSessions } from "@/lib/support";
 import { getActiveAnnouncement } from "@/lib/announcements";
 
@@ -16,11 +17,12 @@ export const dynamic = "force-dynamic";
 
 export default async function SuperOverviewPage() {
   await requireSuperAdmin();
-  const [o, orgs, support, announcement] = await Promise.all([
+  const [o, orgs, support, announcement, attention] = await Promise.all([
     getPlatformOverview(),
     getOrgSummaries(),
     getActiveSupportSessions(),
     getActiveAnnouncement(),
+    getPlatformAttention(),
   ]);
 
   const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -65,6 +67,8 @@ export default async function SuperOverviewPage() {
           sub={`${o.paidInvoices} paid`}
         />
       </div>
+
+      <AttentionPanel attention={attention} />
 
       <AnnouncementControls current={announcement?.message ?? null} />
 

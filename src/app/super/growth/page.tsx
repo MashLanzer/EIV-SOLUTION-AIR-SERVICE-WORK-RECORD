@@ -1,9 +1,12 @@
-import { Building2, PauseCircle, TrendingDown } from "lucide-react";
+import { Building2, DollarSign, PauseCircle, TrendingDown } from "lucide-react";
 
+import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
+import { BarList } from "@/components/charts/BarList";
 import { MiniBarChart } from "@/components/super/MiniBarChart";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getPlatformGrowth } from "@/lib/platform";
+import { getPlatformGrowth, getPlatformRevenue } from "@/lib/platform";
+import { planLabel } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +18,14 @@ function shortMoney(n: number): string {
 
 export default async function SuperGrowthPage() {
   await requireSuperAdmin();
-  const { points, activeOrgs, suspendedOrgs } = await getPlatformGrowth(6);
+  const [{ points, activeOrgs, suspendedOrgs }, revenue] = await Promise.all([
+    getPlatformGrowth(6),
+    getPlatformRevenue(),
+  ]);
 
   const totalOrgs = activeOrgs + suspendedOrgs;
   const suspendedRate = totalOrgs > 0 ? Math.round((suspendedOrgs / totalOrgs) * 100) : 0;
+  const mrr = `$${Math.round(revenue.mrr).toLocaleString("en-US")}`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -29,7 +36,8 @@ export default async function SuperGrowthPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatTile icon={DollarSign} value={`${mrr}/mo`} label="Est. MRR" tone="success" />
         <StatTile icon={Building2} value={String(activeOrgs)} label="Active companies" />
         <StatTile icon={PauseCircle} value={String(suspendedOrgs)} label="Suspended" />
         <StatTile
@@ -39,6 +47,25 @@ export default async function SuperGrowthPage() {
           tone={suspendedRate > 0 ? "warning" : "default"}
         />
       </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          Companies by plan
+        </h2>
+        <Card>
+          <CardContent className="p-4">
+            <BarList
+              data={revenue.distribution.map((d) => ({ label: planLabel(d.plan), value: d.count }))}
+              formatValue={(v) => String(v)}
+              emptyLabel="No active companies yet"
+              labelWidth="5rem"
+            />
+          </CardContent>
+        </Card>
+        <p className="px-1 text-xs text-neutral-400 dark:text-neutral-500">
+          Est. MRR uses the plan catalog price across active companies.
+        </p>
+      </section>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <MiniBarChart
