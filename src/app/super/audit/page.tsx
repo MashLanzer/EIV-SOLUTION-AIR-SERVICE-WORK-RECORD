@@ -67,9 +67,13 @@ export default async function SuperAuditPage({
                     )}
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-neutral-400">
-                    <Link href={`/super/orgs/${e.organization.id}`} className="hover:text-primary">
-                      {e.organization.name}
-                    </Link>
+                    {e.organization ? (
+                      <Link href={`/super/orgs/${e.organization.id}`} className="hover:text-primary">
+                        {e.organization.name}
+                      </Link>
+                    ) : (
+                      <span>Platform</span>
+                    )}
                     <span>·</span>
                     <span>{e.actorName}</span>
                   </div>

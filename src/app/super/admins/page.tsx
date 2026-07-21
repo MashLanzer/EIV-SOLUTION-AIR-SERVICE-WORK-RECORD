@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
-import { ShieldCheck, Trash2, UserCog } from "lucide-react";
+import { Mail, ShieldCheck, Trash2, UserCog } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { AddPlatformAdminForm } from "@/components/super/AddPlatformAdminForm";
-import { removePlatformAdminAction } from "@/actions/platformAdmins";
+import { notifyPlatformAdminAction, removePlatformAdminAction } from "@/actions/platformAdmins";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { listPlatformAdmins } from "@/lib/platformAdmins";
+import { emailConfigured } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ export default async function SuperAdminsPage() {
   if (!isOwner) redirect("/super");
 
   const admins = await listPlatformAdmins();
+  const canEmail = emailConfigured();
   const envOwners = (process.env.SUPER_ADMIN_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim())
@@ -47,6 +49,16 @@ export default async function SuperAdminsPage() {
           <AddPlatformAdminForm />
         </CardContent>
       </Card>
+      {canEmail ? (
+        <p className="px-1 text-xs text-neutral-400 dark:text-neutral-500">
+          Added admins are emailed an invite automatically. Use Notify to resend it.
+        </p>
+      ) : (
+        <p className="px-1 text-xs text-warning-text">
+          Email isn&apos;t set up (RESEND_API_KEY / RESEND_FROM), so admins won&apos;t be
+          notified automatically — share the sign-in link with them yourself.
+        </p>
+      )}
 
       {/* Env allowlist owners: the trust root, managed in the hosting env var. */}
       <section className="flex flex-col gap-3">
@@ -102,18 +114,33 @@ export default async function SuperAdminsPage() {
                       {a.invitedBy ? ` · by ${a.invitedBy}` : ""}
                     </div>
                   </div>
-                  <form action={removePlatformAdminAction.bind(null, a.id)}>
-                    <Button
-                      type="submit"
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive-text"
-                      aria-label={`Remove ${a.email}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="hidden sm:inline">Remove</span>
-                    </Button>
-                  </form>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {canEmail && (
+                      <form action={notifyPlatformAdminAction.bind(null, a.id)}>
+                        <Button
+                          type="submit"
+                          size="sm"
+                          variant="ghost"
+                          aria-label={`Notify ${a.email}`}
+                        >
+                          <Mail className="h-4 w-4" />
+                          <span className="hidden sm:inline">Notify</span>
+                        </Button>
+                      </form>
+                    )}
+                    <form action={removePlatformAdminAction.bind(null, a.id)}>
+                      <Button
+                        type="submit"
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive-text"
+                        aria-label={`Remove ${a.email}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="hidden sm:inline">Remove</span>
+                      </Button>
+                    </form>
+                  </div>
                 </div>
               ))}
             </CardContent>

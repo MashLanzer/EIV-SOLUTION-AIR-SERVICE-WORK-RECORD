@@ -12,7 +12,8 @@ export type AuditActor = { id: string | null; name?: string | null };
 // Append one entry to the org's audit trail. Fire-and-forget: a logging
 // failure must never break the action that triggered it.
 export async function logAudit(params: {
-  organizationId: string;
+  // Null for platform-level events not tied to a single company.
+  organizationId: string | null;
   actor: AuditActor;
   action: string;
   entityType: string;

@@ -1073,9 +1073,11 @@ model InvoiceLineItem {
 // change logs with a single "who changed what, when" timeline. actorName is
 // denormalized so the entry survives account deletion.
 model AuditEvent {
-  id             String       @id @default(cuid())
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String        @id @default(cuid())
+  // Null for platform-level events (e.g. granting a platform admin) that don't
+  // belong to any one company; set for every company-scoped event.
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   actorId        String?
   actor          User?        @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
   actorName      String
