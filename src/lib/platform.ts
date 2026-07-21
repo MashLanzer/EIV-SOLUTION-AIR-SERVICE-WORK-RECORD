@@ -344,6 +344,69 @@ export async function getOrgActivity(id: string) {
   return { lastActivity: lastRecord._max.createdAt, topUsers, recent };
 }
 
+// --- Platform activity feed: the owner's in-app "what's happening" pulse ---
+export type PlatformFeedItem =
+  | { kind: "signup"; id: string; date: Date; orgId: string; orgName: string }
+  | {
+      kind: "event";
+      id: string;
+      date: Date;
+      action: string;
+      summary: string;
+      actorName: string;
+      orgId: string | null;
+      orgName: string | null;
+    };
+
+// Merges company signups with platform-level audit events (suspensions, plan
+// changes, admin grants, support sessions) into one reverse-chronological
+// stream. Sourced from existing data — no new tables, no email/push.
+export async function getPlatformFeed(limit = 60): Promise<PlatformFeedItem[]> {
+  const [signups, events] = await Promise.all([
+    prisma.organization.findMany({
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      select: { id: true, name: true, createdAt: true },
+    }),
+    prisma.auditEvent.findMany({
+      where: { isPlatform: true },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      select: {
+        id: true,
+        action: true,
+        summary: true,
+        actorName: true,
+        createdAt: true,
+        organization: { select: { id: true, name: true } },
+      },
+    }),
+  ]);
+
+  const items: PlatformFeedItem[] = [
+    ...signups.map((o) => ({
+      kind: "signup" as const,
+      id: `signup-${o.id}`,
+      date: o.createdAt,
+      orgId: o.id,
+      orgName: o.name,
+    })),
+    ...events.map((e) => ({
+      kind: "event" as const,
+      id: e.id,
+      date: e.createdAt,
+      action: e.action,
+      summary: e.summary,
+      actorName: e.actorName,
+      orgId: e.organization?.id ?? null,
+      orgName: e.organization?.name ?? null,
+    })),
+  ];
+
+  items.sort((a, b) => b.date.getTime() - a.date.getTime());
+  return items.slice(0, limit);
+}
+
 // --- Revenue: plan distribution + estimated MRR from the plan catalog ---
 export async function getPlatformRevenue(): Promise<{
   distribution: { plan: Plan | null; count: number }[];

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, LayoutDashboard, ScrollText, TrendingUp, UserCog, type LucideIcon } from "lucide-react";
+import { Activity, Building2, LayoutDashboard, ScrollText, TrendingUp, UserCog, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const NAV: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/super", label: "Overview", icon: LayoutDashboard },
+  { href: "/super/activity", label: "Activity", icon: Activity },
   { href: "/super/orgs", label: "Companies", icon: Building2 },
   { href: "/super/growth", label: "Growth", icon: TrendingUp },
   { href: "/super/audit", label: "Audit", icon: ScrollText },

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, LayoutDashboard, ScrollText, TrendingUp, UserCog, type LucideIcon } from "lucide-react";
+import { Activity, Building2, LayoutDashboard, ScrollText, TrendingUp, UserCog, type LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const TABS: { href: string; label: string; icon: LucideIcon; exact: boolean }[] = [
   { href: "/super", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/super/activity", label: "Activity", icon: Activity, exact: false },
   { href: "/super/orgs", label: "Companies", icon: Building2, exact: false },
   { href: "/super/growth", label: "Growth", icon: TrendingUp, exact: false },
   { href: "/super/audit", label: "Audit", icon: ScrollText, exact: false },
