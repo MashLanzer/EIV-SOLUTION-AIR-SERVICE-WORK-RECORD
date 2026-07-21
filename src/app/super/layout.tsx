@@ -3,6 +3,7 @@ import { ShieldCheck } from "lucide-react";
 
 import { RouteTransition } from "@/components/layout/RouteTransition";
 import { SuperNav } from "@/components/super/SuperNav";
+import { SuperTabBar } from "@/components/super/SuperTabBar";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 
 // The platform console lives outside the per-company /admin area and is gated
@@ -41,15 +42,15 @@ export default async function SuperLayout({ children }: { children: React.ReactN
               </Link>
             </div>
           </div>
-
-          {/* Mobile nav: a horizontally scrollable strip, so the tabs never
-              push the page wider than the screen. */}
-          <SuperNav className="-mx-4 flex items-center gap-1 overflow-x-auto px-4 pb-2 text-sm sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" />
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-6 native:pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <main className="mx-auto max-w-5xl px-4 py-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:pb-6">
         <RouteTransition>{children}</RouteTransition>
       </main>
+
+      {/* Phone nav: the app's fixed bottom tab bar (desktop keeps the inline
+          nav in the header above). */}
+      <SuperTabBar />
     </div>
   );
 }
