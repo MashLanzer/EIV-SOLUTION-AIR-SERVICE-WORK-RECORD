@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, ChevronRight, Plus, SearchX } from "lucide-react";
+import { Building2, ChevronRight, Flag, Plus, SearchX } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,16 +39,17 @@ function relativeLabel(d: Date | null): string {
 export default async function SuperOrgsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; plan?: string; sort?: string }>;
+  searchParams: Promise<{ status?: string; plan?: string; sort?: string; watched?: string }>;
 }) {
   await requireSuperAdmin();
   const sp = await searchParams;
   const status = oneOf(sp.status, STATUS_VALUES, "all");
   const plan = oneOf(sp.plan, PLAN_VALUES, "all");
   const sort = oneOf(sp.sort, SORT_VALUES, "newest");
+  const watched = sp.watched === "1";
 
-  const orgs = await getOrgSummaries({ status, plan, sort });
-  const filtered = status !== "all" || plan !== "all";
+  const orgs = await getOrgSummaries({ status, plan, sort, watched });
+  const filtered = status !== "all" || plan !== "all" || watched;
 
   const dateFmt = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -75,7 +76,7 @@ export default async function SuperOrgsPage({
         </Button>
       </div>
 
-      <OrgListControls current={{ status, plan, sort }} />
+      <OrgListControls current={{ status, plan, sort, watched }} />
 
       {orgs.length === 0 ? (
         <Card>
@@ -107,6 +108,9 @@ export default async function SuperOrgsPage({
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
+                    {org.watched && (
+                      <Flag className="h-3.5 w-3.5 shrink-0 fill-current text-primary" aria-label="Watching" />
+                    )}
                     <span className="truncate font-medium text-neutral-900 dark:text-neutral-100">
                       {org.name}
                     </span>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Activity, ArrowLeft, Building2, ClipboardList, DollarSign, FolderKanban, Receipt, Users } from "lucide-react";
+import { Activity, ArrowLeft, Building2, ClipboardList, DollarSign, Flag, FolderKanban, Receipt, Users } from "lucide-react";
 
 import { Download } from "lucide-react";
 
@@ -14,6 +14,7 @@ import { InviteAdminForm } from "@/components/super/InviteAdminForm";
 import { OrgLifecycleControls } from "@/components/super/OrgLifecycleControls";
 import { OrgManageSheet } from "@/components/super/OrgManageSheet";
 import { OrgMessageSheet } from "@/components/super/OrgMessageSheet";
+import { WatchOrgButton } from "@/components/super/WatchOrgButton";
 import { EnterSupportButton } from "@/components/super/EnterSupportButton";
 import { ViewAsUserButton } from "@/components/super/ViewAsUserButton";
 import { OrgNotesPanel } from "@/components/super/OrgNotesPanel";
@@ -87,6 +88,7 @@ export default async function SuperOrgDetailPage({
               />
               <OrgLifecycleControls orgId={org.id} name={org.name} active={org.active} />
             </OrgManageSheet>
+            <WatchOrgButton orgId={org.id} watched={org.watchedAt !== null} note={org.watchNote} />
             <OrgMessageSheet orgId={org.id} orgName={org.name} />
             <Button asChild size="sm" variant="outline">
               <a href={`/super/orgs/${org.id}/export`}>
@@ -104,6 +106,18 @@ export default async function SuperOrgDetailPage({
             : " · no activity yet"}
           {org.joinCode ? ` · join code ${org.joinCode}` : ""}
         </p>
+        {org.watchedAt && (
+          <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/[0.06] px-3 py-2 text-sm text-neutral-700 dark:text-neutral-200">
+            <Flag className="mt-0.5 h-4 w-4 shrink-0 fill-current text-primary" />
+            <span className="min-w-0">
+              <strong className="font-medium">Watching</strong>
+              {org.watchNote ? ` — ${org.watchNote}` : ""}
+              {org.watchedBy ? (
+                <span className="text-neutral-400"> · flagged by {org.watchedBy}</span>
+              ) : null}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

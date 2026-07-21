@@ -62,6 +62,7 @@ export type OrgSummary = {
   records: number;
   invoices: number;
   lastActivityAt: Date | null;
+  watched: boolean;
 };
 
 export type OrgStatusFilter = "all" | "active" | "suspended";
@@ -72,6 +73,8 @@ export type OrgListOptions = {
   status?: OrgStatusFilter;
   plan?: OrgPlanFilter;
   sort?: OrgSort;
+  // When true, restrict to companies flagged with the platform watch flag.
+  watched?: boolean;
 };
 
 // Companies for the console list, with optional status/plan filtering and sort.
@@ -80,13 +83,14 @@ export type OrgListOptions = {
 // last-activity join simple. lastActivityAt is the newest work record per org
 // (the same signal the attention panel uses).
 export async function getOrgSummaries(opts: OrgListOptions = {}): Promise<OrgSummary[]> {
-  const { status = "all", plan = "all", sort = "newest" } = opts;
+  const { status = "all", plan = "all", sort = "newest", watched = false } = opts;
 
   const where: Prisma.OrganizationWhereInput = {};
   if (status === "active") where.active = true;
   else if (status === "suspended") where.active = false;
   if (plan === "none") where.plan = null;
   else if (plan !== "all") where.plan = plan as Plan;
+  if (watched) where.watchedAt = { not: null };
 
   const [rows, lastByOrg] = await Promise.all([
     prisma.organization.findMany({
@@ -99,6 +103,7 @@ export async function getOrgSummaries(opts: OrgListOptions = {}): Promise<OrgSum
         createdAt: true,
         active: true,
         plan: true,
+        watchedAt: true,
         _count: { select: { users: true, records: true, invoices: true } },
       },
     }),
@@ -117,6 +122,7 @@ export async function getOrgSummaries(opts: OrgListOptions = {}): Promise<OrgSum
     records: o._count.records,
     invoices: o._count.invoices,
     lastActivityAt: lastRecord.get(o.id) ?? null,
+    watched: o.watchedAt !== null,
   }));
 
   const time = (d: Date | null) => (d ? d.getTime() : 0);
@@ -240,6 +246,9 @@ export async function getOrgDetail(id: string) {
       active: true,
       plan: true,
       createdAt: true,
+      watchedAt: true,
+      watchNote: true,
+      watchedBy: true,
       currencySymbol: true,
       featureInvoicing: true,
       featureEstimates: true,
@@ -345,8 +354,15 @@ export async function platformSearch(query: string): Promise<PlatformSearchResul
 }
 
 // --- "Needs attention": companies that likely need a nudge ---
-export type AttentionOrg = { id: string; name: string; lastActivity?: Date | null; createdAt?: Date };
+export type AttentionOrg = {
+  id: string;
+  name: string;
+  lastActivity?: Date | null;
+  createdAt?: Date;
+  note?: string | null;
+};
 export type PlatformAttention = {
+  watched: AttentionOrg[];
   suspended: AttentionOrg[];
   neverActivated: AttentionOrg[];
   inactive: AttentionOrg[];
@@ -362,17 +378,32 @@ export async function getPlatformAttention(): Promise<PlatformAttention> {
 
   const [orgs, lastByOrg] = await Promise.all([
     prisma.organization.findMany({
-      select: { id: true, name: true, active: true, createdAt: true, _count: { select: { records: true } } },
+      select: {
+        id: true,
+        name: true,
+        active: true,
+        createdAt: true,
+        watchedAt: true,
+        watchNote: true,
+        _count: { select: { records: true } },
+      },
     }),
     prisma.workRecord.groupBy({ by: ["organizationId"], _max: { createdAt: true } }),
   ]);
   const lastRecord = new Map(lastByOrg.map((r) => [r.organizationId, r._max.createdAt]));
 
+  const watched: AttentionOrg[] = [];
   const suspended: AttentionOrg[] = [];
   const neverActivated: AttentionOrg[] = [];
   const inactive: AttentionOrg[] = [];
 
   for (const o of orgs) {
+    // Watched is an explicit follow-up flag, so it takes precedence and a
+    // company appears there rather than double-listed under a signal group.
+    if (o.watchedAt) {
+      watched.push({ id: o.id, name: o.name, note: o.watchNote });
+      continue;
+    }
     if (!o.active) {
       suspended.push({ id: o.id, name: o.name });
       continue;
@@ -384,9 +415,10 @@ export async function getPlatformAttention(): Promise<PlatformAttention> {
     const last = lastRecord.get(o.id) ?? null;
     if (last && last < inactiveCutoff) inactive.push({ id: o.id, name: o.name, lastActivity: last });
   }
-  // Most-stale first for the inactive list.
+  // Most-recently-flagged first for watched; most-stale first for inactive.
+  watched.sort((a, b) => a.name.localeCompare(b.name));
   inactive.sort((a, b) => (a.lastActivity?.getTime() ?? 0) - (b.lastActivity?.getTime() ?? 0));
-  return { suspended, neverActivated, inactive };
+  return { watched, suspended, neverActivated, inactive };
 }
 
 // --- Company 360: last activity, most-active users, recent audit timeline ---

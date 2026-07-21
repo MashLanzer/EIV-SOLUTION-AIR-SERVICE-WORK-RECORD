@@ -82,6 +82,12 @@ model Organization {
   // True = normal. False = suspended (enforcement wired in a follow-up).
   active           Boolean  @default(true)
   suspendedAt      DateTime?
+  // Platform "watch": the owner flags a company to keep an eye on (churn risk,
+  // onboarding follow-up, VIP). Purely a console signal — invisible to the
+  // tenant. Null watchedAt = not watched; watchNote is the optional reason.
+  watchedAt        DateTime?
+  watchNote        String?
+  watchedBy        String?
   // Per-company module toggles (feature flags), managed from the super-admin
   // console. Default on so every existing org keeps all modules.
   featureInvoicing Boolean  @default(true)

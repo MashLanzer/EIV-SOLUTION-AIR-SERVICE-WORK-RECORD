@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Flag } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type {
@@ -10,7 +10,7 @@ import type {
   OrgStatusFilter,
 } from "@/lib/platform";
 
-type Controls = { status: OrgStatusFilter; plan: OrgPlanFilter; sort: OrgSort };
+type Controls = { status: OrgStatusFilter; plan: OrgPlanFilter; sort: OrgSort; watched: boolean };
 
 const STATUS: { value: OrgStatusFilter; label: string }[] = [
   { value: "all", label: "All" },
@@ -47,6 +47,7 @@ export function OrgListControls({ current }: { current: Controls }) {
     if (merged.status !== "all") p.set("status", merged.status);
     if (merged.plan !== "all") p.set("plan", merged.plan);
     if (merged.sort !== "newest") p.set("sort", merged.sort);
+    if (merged.watched) p.set("watched", "1");
     const qs = p.toString();
     router.push(qs ? `/super/orgs?${qs}` : "/super/orgs");
   };
@@ -69,6 +70,11 @@ export function OrgListControls({ current }: { current: Controls }) {
             </Pill>
           ))}
         </div>
+        <span className="hidden h-4 w-px bg-neutral-200 dark:bg-neutral-700 sm:inline-block" />
+        <Pill active={current.watched} onClick={() => go({ watched: !current.watched })}>
+          <Flag className={cn("h-3.5 w-3.5", current.watched && "fill-current")} />
+          Watched
+        </Pill>
       </div>
 
       <label className="relative flex shrink-0 items-center">
@@ -105,7 +111,7 @@ function Pill({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "shrink-0 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
         active
           ? "border-transparent bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900"
           : "border-neutral-300 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
