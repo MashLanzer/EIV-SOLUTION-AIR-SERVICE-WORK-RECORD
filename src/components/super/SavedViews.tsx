@@ -62,7 +62,7 @@ export function SavedViews({
           <span
             key={v.id}
             className={cn(
-              "group inline-flex items-center gap-1 rounded-full border py-1 pl-3 pr-1.5 text-sm transition-colors",
+              "group inline-flex items-center rounded-full border py-1 pl-3 pr-1 text-sm transition-colors",
               active
                 ? "border-transparent bg-primary/10 text-primary"
                 : "border-neutral-300 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
@@ -75,9 +75,9 @@ export function SavedViews({
               <button
                 type="submit"
                 aria-label={`Delete view ${v.name}`}
-                className="flex h-4 w-4 items-center justify-center rounded-full text-neutral-400 opacity-60 transition hover:bg-neutral-200 hover:text-neutral-700 group-hover:opacity-100 dark:hover:bg-neutral-700"
+                className="ml-0.5 flex h-6 w-6 items-center justify-center rounded-full text-neutral-400 opacity-70 transition hover:bg-neutral-200 hover:text-neutral-700 group-hover:opacity-100 dark:hover:bg-neutral-700"
               >
-                <X className="h-3 w-3" />
+                <X className="h-3.5 w-3.5" />
               </button>
             </form>
           </span>

@@ -6,6 +6,7 @@ import { StickyNote, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   addOrgNoteAction,
   deleteOrgNoteAction,
@@ -71,12 +72,12 @@ export function OrgNotesPanel({ orgId, notes }: { orgId: string; notes: Note[] }
       </h2>
 
       <form ref={formRef} action={action} className="flex flex-col gap-2">
-        <textarea
+        <Textarea
           name="body"
           rows={2}
           maxLength={2000}
           placeholder="Private note about this company (not visible to them)…"
-          className="w-full resize-y rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+          className="min-h-0"
         />
         <div className="flex items-center justify-between gap-3">
           {state.error ? (

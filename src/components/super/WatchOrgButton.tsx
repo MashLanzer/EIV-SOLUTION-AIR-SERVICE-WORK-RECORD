@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Flag, FlagOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { watchOrgAction, unwatchOrgAction } from "@/actions/orgWatch";
 
 // Toggle the platform "watch" flag on a company. When not watched, the button
@@ -70,13 +71,13 @@ export function WatchOrgButton({
             <label htmlFor="watch-note" className="text-xs text-neutral-500 dark:text-neutral-400">
               Why watch this company? (optional)
             </label>
-            <textarea
+            <Textarea
               id="watch-note"
               name="note"
               rows={2}
               maxLength={300}
               placeholder="e.g. churn risk, follow up on onboarding"
-              className="w-full resize-y rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
+              className="min-h-0"
             />
             <Button type="submit" size="sm" onClick={() => setOpen(false)}>
               <Flag className="h-4 w-4" />

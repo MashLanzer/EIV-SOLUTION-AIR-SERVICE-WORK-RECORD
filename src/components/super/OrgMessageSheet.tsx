@@ -6,6 +6,7 @@ import { CheckCircle2, Send, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useBackDismiss } from "@/hooks/useBackDismiss";
 import { lockBodyScroll, unlockBodyScroll } from "@/lib/scrollLock";
 import { sendOrgMessageAction, type MessageActionState } from "@/actions/orgMessage";
@@ -105,14 +106,13 @@ export function OrgMessageSheet({
                     <label htmlFor="msg-body" className="mb-1 block text-xs text-neutral-500 dark:text-neutral-400">
                       Message
                     </label>
-                    <textarea
+                    <Textarea
                       id="msg-body"
                       name="body"
                       rows={4}
                       maxLength={2000}
                       required
                       placeholder="Write your message…"
-                      className="w-full resize-y rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
                     />
                   </div>
 
