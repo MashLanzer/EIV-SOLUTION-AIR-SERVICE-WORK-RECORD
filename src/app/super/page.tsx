@@ -1,5 +1,17 @@
 import Link from "next/link";
-import { Activity, BellRing, Building2, Check, ClipboardList, Eye, LifeBuoy, Receipt, Users } from "lucide-react";
+import {
+  Activity,
+  BellRing,
+  Building2,
+  Check,
+  ClipboardList,
+  DollarSign,
+  Eye,
+  LifeBuoy,
+  Receipt,
+  Sparkles,
+  Users,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,20 +22,28 @@ import { SnoozeButton } from "@/components/super/SnoozeButton";
 import { endSupportSessionAction } from "@/actions/impersonation";
 import { completeOrgReminderAction } from "@/actions/orgReminders";
 import { requireSuperAdmin } from "@/lib/superAdmin";
-import { getDueReminders, getPlatformAttention, getPlatformFeed, getPlatformOverview } from "@/lib/platform";
+import {
+  getDueReminders,
+  getPlatformAttention,
+  getPlatformFeed,
+  getPlatformOverview,
+  getPlatformWeekly,
+} from "@/lib/platform";
 import { getActiveSupportSessions } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
 
 export default async function SuperOverviewPage() {
   await requireSuperAdmin();
-  const [o, support, attention, feed, dueReminders] = await Promise.all([
+  const [o, support, attention, feed, dueReminders, weekly] = await Promise.all([
     getPlatformOverview(),
     getActiveSupportSessions(),
     getPlatformAttention(),
     getPlatformFeed(5),
     getDueReminders(),
+    getPlatformWeekly(),
   ]);
+  const weeklyMoney = `$${Math.round(weekly.revenue).toLocaleString("en-US")}`;
 
   const timeFmt = new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -62,6 +82,22 @@ export default async function SuperOverviewPage() {
         <StatTile icon={Users} value={String(o.users)} label="Users" />
         <StatTile icon={Receipt} value={String(o.invoices)} label="Invoices" sub={`${o.paidInvoices} paid`} />
       </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          <Sparkles className="h-4 w-4" />
+          This week
+        </h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile icon={Building2} value={`+${weekly.newOrgs}`} label="New companies" />
+          <StatTile icon={ClipboardList} value={`+${weekly.newRecords}`} label="New work records" />
+          <StatTile icon={Users} value={String(weekly.activeCompanies)} label="Active companies" />
+          <StatTile icon={DollarSign} value={weeklyMoney} label="Revenue collected" tone="success" />
+        </div>
+        <p className="px-1 text-xs text-neutral-400 dark:text-neutral-500">
+          Across the whole platform over the last 7 days.
+        </p>
+      </section>
 
       <AttentionPanel attention={attention} />
 

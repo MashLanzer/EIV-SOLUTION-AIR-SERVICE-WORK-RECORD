@@ -52,6 +52,48 @@ export async function getPlatformOverview() {
   };
 }
 
+// A tight "last 7 days" pulse for the Home header: what moved this week across
+// the whole platform. Revenue is from invoices paid in the window; active
+// companies are those with at least one new work record this week.
+export type PlatformWeekly = {
+  newOrgs: number;
+  newRecords: number;
+  revenue: number;
+  activeCompanies: number;
+};
+
+export async function getPlatformWeekly(): Promise<PlatformWeekly> {
+  const since = new Date();
+  since.setUTCDate(since.getUTCDate() - 7);
+
+  const [newOrgs, newRecords, paid, activeGroups] = await Promise.all([
+    prisma.organization.count({ where: { createdAt: { gte: since } } }),
+    prisma.workRecord.count({ where: { createdAt: { gte: since } } }),
+    prisma.invoice.findMany({
+      where: { status: "PAID", paidAt: { gte: since } },
+      select: { taxRate: true, lineItems: { select: { quantity: true, unitPrice: true } } },
+    }),
+    prisma.workRecord.groupBy({ by: ["organizationId"], where: { createdAt: { gte: since } } }),
+  ]);
+
+  const revenue = paid.reduce(
+    (sum, inv) =>
+      sum +
+      computeTotals(
+        inv.lineItems.map((li) => ({ quantity: Number(li.quantity), unitPrice: Number(li.unitPrice) })),
+        Number(inv.taxRate)
+      ).total,
+    0
+  );
+
+  return {
+    newOrgs,
+    newRecords,
+    revenue: Math.round(revenue * 100) / 100,
+    activeCompanies: activeGroups.length,
+  };
+}
+
 export type OrgSummary = {
   id: string;
   name: string;
