@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowDown, Flag } from "lucide-react";
 
 import { HealthDot } from "@/components/super/HealthDot";
+import { OrgMetaBadges } from "@/components/super/OrgMetaBadges";
 import { planLabel } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import type { OrgSort, OrgSummary } from "@/lib/platform";
@@ -97,6 +98,7 @@ export function OrgTable({
                       Susp
                     </span>
                   )}
+                  <OrgMetaBadges noteCount={org.noteCount} openReminderCount={org.openReminderCount} />
                 </Link>
               </td>
               <td className="whitespace-nowrap px-3 py-2 tabular-nums text-neutral-600 dark:text-neutral-300">

@@ -107,6 +107,8 @@ export type OrgSummary = {
   lastActivityAt: Date | null;
   watched: boolean;
   health: Health;
+  noteCount: number;
+  openReminderCount: number;
 };
 
 export type OrgStatusFilter = "all" | "active" | "suspended";
@@ -136,7 +138,7 @@ export async function getOrgSummaries(opts: OrgListOptions = {}): Promise<OrgSum
   else if (plan !== "all") where.plan = plan as Plan;
   if (watched) where.watchedAt = { not: null };
 
-  const [rows, lastByOrg] = await Promise.all([
+  const [rows, lastByOrg, notesByOrg, openRemByOrg] = await Promise.all([
     prisma.organization.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -152,8 +154,12 @@ export async function getOrgSummaries(opts: OrgListOptions = {}): Promise<OrgSum
       },
     }),
     prisma.workRecord.groupBy({ by: ["organizationId"], _max: { createdAt: true } }),
+    prisma.orgNote.groupBy({ by: ["organizationId"], _count: { _all: true } }),
+    prisma.orgReminder.groupBy({ by: ["organizationId"], where: { doneAt: null }, _count: { _all: true } }),
   ]);
   const lastRecord = new Map(lastByOrg.map((r) => [r.organizationId, r._max.createdAt ?? null]));
+  const noteCounts = new Map(notesByOrg.map((r) => [r.organizationId, r._count._all]));
+  const openReminderCounts = new Map(openRemByOrg.map((r) => [r.organizationId, r._count._all]));
 
   const now = new Date();
   const list: OrgSummary[] = rows.map((o) => {
@@ -170,6 +176,8 @@ export async function getOrgSummaries(opts: OrgListOptions = {}): Promise<OrgSum
       invoices: o._count.invoices,
       lastActivityAt,
       watched: o.watchedAt !== null,
+      noteCount: noteCounts.get(o.id) ?? 0,
+      openReminderCount: openReminderCounts.get(o.id) ?? 0,
       health: computeHealth({
         active: o.active,
         records: o._count.records,

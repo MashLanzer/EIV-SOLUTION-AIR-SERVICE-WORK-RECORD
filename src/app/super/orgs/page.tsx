@@ -9,6 +9,7 @@ import { HealthDot } from "@/components/super/HealthDot";
 import { OrgBulkBar } from "@/components/super/OrgBulkBar";
 import { OrgSelectAll } from "@/components/super/OrgSelectAll";
 import { OrgTable } from "@/components/super/OrgTable";
+import { OrgMetaBadges } from "@/components/super/OrgMetaBadges";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import {
   getOrgSummaries,
@@ -171,6 +172,7 @@ export default async function SuperOrgsPage({
                         <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400">
                           {planLabel(org.plan)}
                         </span>
+                        <OrgMetaBadges noteCount={org.noteCount} openReminderCount={org.openReminderCount} />
                       </div>
                       <span className="text-xs text-neutral-400">
                         /{org.slug} · {dateFmt.format(org.createdAt)} · {relativeLabel(org.lastActivityAt)}
