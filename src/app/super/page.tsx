@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { StatTile } from "@/components/ui/stat-tile";
 import { DeltaBadge } from "@/components/ui/delta-badge";
 import { AttentionPanel } from "@/components/super/AttentionPanel";
+import { SnoozeButton } from "@/components/super/SnoozeButton";
 import { endSupportSessionAction } from "@/actions/impersonation";
 import { completeOrgReminderAction } from "@/actions/orgReminders";
 import { requireSuperAdmin } from "@/lib/superAdmin";
@@ -88,12 +89,15 @@ export default async function SuperOverviewPage() {
                       </span>
                     </p>
                   </div>
-                  <form action={completeOrgReminderAction.bind(null, r.id)}>
-                    <Button type="submit" size="sm" variant="ghost" aria-label="Mark done">
-                      <Check className="h-4 w-4" />
-                      Done
-                    </Button>
-                  </form>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <SnoozeButton reminderId={r.id} />
+                    <form action={completeOrgReminderAction.bind(null, r.id)}>
+                      <Button type="submit" size="sm" variant="ghost" aria-label="Mark done">
+                        <Check className="h-4 w-4" />
+                        Done
+                      </Button>
+                    </form>
+                  </div>
                 </div>
               ))}
             </CardContent>

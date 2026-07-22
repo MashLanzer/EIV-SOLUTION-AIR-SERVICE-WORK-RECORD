@@ -55,6 +55,29 @@ export async function addOrgReminderAction(
   return { ok: true };
 }
 
+// Push a follow-up's due date out by N days ("snooze"). Measured from the later
+// of now or the current due date, so snoozing an overdue item lands in the
+// future rather than still in the past.
+export async function snoozeOrgReminderAction(reminderId: string, days: number): Promise<void> {
+  await requireSuperAdmin();
+  const allowed = [1, 3, 7];
+  if (!allowed.includes(days)) return;
+
+  const reminder = await prisma.orgReminder.findUnique({
+    where: { id: reminderId },
+    select: { id: true, organizationId: true, dueAt: true, doneAt: true },
+  });
+  if (!reminder || reminder.doneAt) return;
+
+  const base = reminder.dueAt.getTime() > Date.now() ? reminder.dueAt : new Date();
+  const next = new Date(base.getTime() + days * 86400000);
+  next.setUTCHours(23, 59, 59, 0);
+
+  await prisma.orgReminder.update({ where: { id: reminder.id }, data: { dueAt: next } });
+  revalidatePath(`/super/orgs/${reminder.organizationId}`);
+  revalidatePath("/super");
+}
+
 // Mark a follow-up done (clears it from the due list). Toggling back is a
 // delete-and-recreate concern; done is one-way here for simplicity.
 export async function completeOrgReminderAction(reminderId: string): Promise<void> {

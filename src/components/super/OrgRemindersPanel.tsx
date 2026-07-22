@@ -13,6 +13,7 @@ import {
   deleteOrgReminderAction,
   type ReminderActionState,
 } from "@/actions/orgReminders";
+import { SnoozeButton } from "@/components/super/SnoozeButton";
 import type { OrgReminderItem } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 
@@ -115,6 +116,7 @@ export function OrgRemindersPanel({
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center">
+                  <SnoozeButton reminderId={r.id} compact />
                   <form action={completeOrgReminderAction.bind(null, r.id)}>
                     <IconSubmit label="Mark done">
                       <Check className="h-4 w-4" />
