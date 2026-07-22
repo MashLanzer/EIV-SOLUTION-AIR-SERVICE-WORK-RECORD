@@ -6,7 +6,7 @@ import { BarList } from "@/components/charts/BarList";
 import { MiniBarChart } from "@/components/super/MiniBarChart";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import { getPlatformGrowth, getPlatformRevenue, getTopRevenueCompanies } from "@/lib/platform";
-import { planLabel } from "@/lib/plans";
+import { PLANS, planLabel } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,15 @@ export default async function SuperGrowthPage() {
   const totalOrgs = activeOrgs + suspendedOrgs;
   const suspendedRate = totalOrgs > 0 ? Math.round((suspendedOrgs / totalOrgs) * 100) : 0;
   const mrr = `$${Math.round(revenue.mrr).toLocaleString("en-US")}`;
+
+  // How the estimated MRR splits across paid plans (count × catalog price).
+  const mrrByPlan = revenue.distribution
+    .filter((d) => d.plan && PLANS[d.plan].priceMonthly > 0)
+    .map((d) => {
+      const price = PLANS[d.plan!].priceMonthly;
+      return { plan: d.plan!, count: d.count, price, subtotal: d.count * price };
+    })
+    .sort((a, b) => b.subtotal - a.subtotal);
 
   return (
     <div className="flex flex-col gap-4">
@@ -68,6 +77,37 @@ export default async function SuperGrowthPage() {
           Est. MRR uses the plan catalog price across active companies.
         </p>
       </section>
+
+      {mrrByPlan.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+            MRR by plan
+          </h2>
+          <Card>
+            <CardContent className="flex flex-col divide-y divide-neutral-100 p-0 dark:divide-neutral-800">
+              {mrrByPlan.map((r) => (
+                <div key={r.plan} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                      {planLabel(r.plan)}
+                    </div>
+                    <div className="text-xs text-neutral-400">
+                      {r.count} {r.count === 1 ? "company" : "companies"} × ${r.price}/mo
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-neutral-900 dark:text-neutral-100">
+                    {money(r.subtotal)}/mo
+                  </span>
+                </div>
+              ))}
+              <div className="flex items-center justify-between gap-3 bg-neutral-50 px-4 py-3 dark:bg-neutral-900/50">
+                <span className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Total</span>
+                <span className="shrink-0 text-sm font-bold tabular-nums text-success-text">{mrr}/mo</span>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
