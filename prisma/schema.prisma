@@ -1178,6 +1178,20 @@ model PlatformAdmin {
   createdAt DateTime @default(now())
 }
 
+// A saved Companies-list filter combination ("segment"), shown as a quick-access
+// chip on the console. Shared across platform admins (the console is a single
+// owner surface). `query` is the canonical searchParams string (status, plan,
+// sort, watched, view) that the chip restores.
+model PlatformSavedView {
+  id        String   @id @default(cuid())
+  name      String
+  query     String
+  createdBy String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // A private, platform-only note pinned to a company, written by the owner/admins
 // from the /super console. Never visible to the company itself — it's an
 // internal memo (context, follow-ups, "watch this account"). Kept as a separate

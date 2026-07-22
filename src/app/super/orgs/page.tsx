@@ -10,9 +10,11 @@ import { OrgBulkBar } from "@/components/super/OrgBulkBar";
 import { OrgSelectAll } from "@/components/super/OrgSelectAll";
 import { OrgTable } from "@/components/super/OrgTable";
 import { OrgMetaBadges } from "@/components/super/OrgMetaBadges";
+import { SavedViews } from "@/components/super/SavedViews";
 import { requireSuperAdmin } from "@/lib/superAdmin";
 import {
   getOrgSummaries,
+  getSavedViews,
   type OrgPlanFilter,
   type OrgSort,
   type OrgStatusFilter,
@@ -54,7 +56,10 @@ export default async function SuperOrgsPage({
   const watched = sp.watched === "1";
   const view: OrgView = sp.view === "table" ? "table" : "list";
 
-  const orgs = await getOrgSummaries({ status, plan, sort, watched });
+  const [orgs, savedViews] = await Promise.all([
+    getOrgSummaries({ status, plan, sort, watched }),
+    getSavedViews(),
+  ]);
   const filtered = status !== "all" || plan !== "all" || watched;
 
   // Shared param builder so export and the table's sort links keep the same
@@ -112,6 +117,8 @@ export default async function SuperOrgsPage({
       </div>
 
       <OrgListControls current={{ status, plan, sort, watched, view }} />
+
+      <SavedViews views={savedViews} currentQuery={buildParams()} />
 
       {orgs.length === 0 ? (
         <Card>

@@ -52,6 +52,17 @@ export async function getPlatformOverview() {
   };
 }
 
+// Saved Companies filter segments (quick-access chips), newest first.
+export type SavedView = { id: string; name: string; query: string };
+
+export async function getSavedViews(): Promise<SavedView[]> {
+  return prisma.platformSavedView.findMany({
+    orderBy: { createdAt: "asc" },
+    take: 30,
+    select: { id: true, name: true, query: true },
+  });
+}
+
 // A tight "last 7 days" pulse for the Home header: what moved this week across
 // the whole platform. Revenue is from invoices paid in the window; active
 // companies are those with at least one new work record this week.
