@@ -3,6 +3,7 @@ import {
   Activity,
   Building2,
   CreditCard,
+  Download,
   LogIn,
   PauseCircle,
   PlayCircle,
@@ -10,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FilterChip } from "@/components/ui/filter-chip";
@@ -59,13 +61,23 @@ export default async function SuperActivityPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Activity</h1>
-        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          {allMode
-            ? "Every logged change across every company, newest first."
-            : "The platform pulse — signups, plan and lifecycle changes, admin grants and support sessions."}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">Activity</h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            {allMode
+              ? "Every logged change across every company, newest first."
+              : "The platform pulse — signups, plan and lifecycle changes, admin grants and support sessions."}
+          </p>
+        </div>
+        {allMode && (
+          <Button asChild size="sm" variant="outline">
+            <a href="/super/activity/export">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </a>
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">
