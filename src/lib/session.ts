@@ -94,7 +94,9 @@ async function applyImpersonation(session: Session): Promise<Session> {
             name: support.organization.name,
             readOnly: false,
             expiresAt: support.expiresAt.toISOString(),
-            asUser: target.name ?? "a user",
+            // Use || (not ??) so an empty-string name still yields a truthy
+            // asUser — loadAccess keys the view-as-user branch off its truthiness.
+            asUser: target.name || "a user",
           },
         },
       };

@@ -57,7 +57,7 @@ export type SavedView = { id: string; name: string; query: string };
 
 export async function getSavedViews(): Promise<SavedView[]> {
   return prisma.platformSavedView.findMany({
-    orderBy: { createdAt: "asc" },
+    orderBy: { createdAt: "desc" },
     take: 30,
     select: { id: true, name: true, query: true },
   });
@@ -592,7 +592,11 @@ export type OrgReminderItem = {
 export async function getOrgReminders(organizationId: string): Promise<OrgReminderItem[]> {
   const rows = await prisma.orgReminder.findMany({
     where: { organizationId },
-    orderBy: [{ doneAt: "asc" }, { dueAt: "asc" }],
+    // Open (doneAt null) first, then most-recently-done. Postgres sorts NULLs
+    // last for ASC, so a plain `doneAt: "asc"` would push completed items ahead
+    // of open ones and, with the take limit, hide open follow-ups once enough
+    // have been completed. Force nulls first so open items always surface.
+    orderBy: [{ doneAt: { sort: "desc", nulls: "first" } }, { dueAt: "asc" }],
     take: 20,
     select: { id: true, note: true, dueAt: true, createdBy: true, doneAt: true },
   });
