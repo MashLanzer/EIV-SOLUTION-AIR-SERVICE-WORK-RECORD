@@ -112,7 +112,7 @@ export default async function SuperOrgDetailPage({
               <HealthDot health={health} withLabel />
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <OrgManageSheet>
               <OrgPlanSelect orgId={org.id} current={org.plan} />
               <InviteAdminForm orgId={org.id} />
@@ -131,7 +131,7 @@ export default async function SuperOrgDetailPage({
             <Button asChild size="sm" variant="outline">
               <a href={`/super/orgs/${org.id}/export`}>
                 <Download className="h-4 w-4" />
-                Export
+                <span className="hidden sm:inline">Export</span>
               </a>
             </Button>
             <EnterSupportButton orgId={org.id} />

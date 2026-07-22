@@ -64,23 +64,20 @@ export function OrgListControls({ current }: { current: Controls }) {
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {STATUS.map((s) => (
-            <Pill key={s.value} active={current.status === s.value} onClick={() => go({ status: s.value })}>
-              {s.label}
-            </Pill>
-          ))}
-        </div>
-        <span className="hidden h-4 w-px bg-neutral-200 dark:bg-neutral-700 sm:inline-block" />
-        <div className="flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {PLAN.map((p) => (
-            <Pill key={p.value} active={current.plan === p.value} onClick={() => go({ plan: p.value })}>
-              {p.label}
-            </Pill>
-          ))}
-        </div>
-        <span className="hidden h-4 w-px bg-neutral-200 dark:bg-neutral-700 sm:inline-block" />
+      {/* One swipeable strip on mobile; wraps with dividers on desktop. */}
+      <div className="flex items-center gap-1 overflow-x-auto pb-1 [scrollbar-width:none] sm:flex-wrap sm:gap-2 sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
+        {STATUS.map((s) => (
+          <Pill key={s.value} active={current.status === s.value} onClick={() => go({ status: s.value })}>
+            {s.label}
+          </Pill>
+        ))}
+        <span className="hidden h-4 w-px shrink-0 bg-neutral-200 dark:bg-neutral-700 sm:inline-block" />
+        {PLAN.map((p) => (
+          <Pill key={p.value} active={current.plan === p.value} onClick={() => go({ plan: p.value })}>
+            {p.label}
+          </Pill>
+        ))}
+        <span className="hidden h-4 w-px shrink-0 bg-neutral-200 dark:bg-neutral-700 sm:inline-block" />
         <Pill active={current.watched} onClick={() => go({ watched: !current.watched })}>
           <Flag className={cn("h-3.5 w-3.5", current.watched && "fill-current")} />
           Watched
