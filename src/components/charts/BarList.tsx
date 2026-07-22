@@ -1,9 +1,13 @@
+import Link from "next/link";
 import { EmptyState } from "@/components/ui/empty-state";
 import { BarChart3 } from "lucide-react";
 
 export interface BarDatum {
   label: string;
   value: number;
+  // Optional: makes the row's label a link (e.g. jump to a company). Rows
+  // without an href stay plain text, so existing callers are unchanged.
+  href?: string;
 }
 
 // Single-series magnitude chart rendered as a horizontal bar list - reads
@@ -39,9 +43,19 @@ export function BarList({
             className="grid items-center gap-3"
             style={{ gridTemplateColumns: `${labelWidth} 1fr auto` }}
           >
-            <span className="truncate text-sm text-neutral-600 dark:text-neutral-300" title={d.label}>
-              {d.label}
-            </span>
+            {d.href ? (
+              <Link
+                href={d.href}
+                className="truncate text-sm text-neutral-600 hover:text-primary hover:underline dark:text-neutral-300"
+                title={d.label}
+              >
+                {d.label}
+              </Link>
+            ) : (
+              <span className="truncate text-sm text-neutral-600 dark:text-neutral-300" title={d.label}>
+                {d.label}
+              </span>
+            )}
             <span
               className="h-2.5 overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800"
               role="img"

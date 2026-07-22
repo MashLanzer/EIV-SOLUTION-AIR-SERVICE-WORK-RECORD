@@ -76,7 +76,11 @@ export default async function SuperGrowthPage() {
         <Card>
           <CardContent className="p-4">
             <BarList
-              data={topRevenue.map((c) => ({ label: c.name, value: c.revenue }))}
+              data={topRevenue.map((c) => ({
+                label: c.name,
+                value: c.revenue,
+                href: `/super/orgs/${c.id}`,
+              }))}
               formatValue={money}
               emptyLabel="No paid invoices yet"
               labelWidth="8rem"
