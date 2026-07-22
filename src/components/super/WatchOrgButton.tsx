@@ -76,7 +76,7 @@ export function WatchOrgButton({
               rows={2}
               maxLength={300}
               placeholder="e.g. churn risk, follow up on onboarding"
-              className="w-full resize-y rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100"
+              className="w-full resize-y rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100"
             />
             <Button type="submit" size="sm" onClick={() => setOpen(false)}>
               <Flag className="h-4 w-4" />
